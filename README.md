@@ -9,11 +9,10 @@
 
 **Mémoire de Master 2 — Apprentissage par Renforcement appliqué à la Logistique Minière**
 
-Présenté par **Jean-Luc Mupasa Kalunga**  
-Supervisé par **[Nom du directeur de mémoire]**  
-Co-dirigé par **[Nom du co-directeur]** *(si applicable)*
+Présenté par **Jean-Luc MUPASA KALAUNGA**  
+Supervisé par **Dr. Olfa FERCHICHI**  
 
-Université **[Nom de l'université]** — Année académique 2024-2025
+Université **Université Don Bosco de Lubumbashi (UDBL)** — Année académique 2025-2026
 
 ---
 
@@ -401,9 +400,9 @@ memoire-master-rl-logistique/
 ## Contributions
 
 Les contributions sont bienvenues ! Si vous souhaitez :
-- Signaler un bug → Ouvrir une [issue](https://github.com/[ton-username]/memoire-master-rl-logistique/issues)
-- Proposer une amélioration → Créer une [pull request](https://github.com/[ton-username]/memoire-master-rl-logistique/pulls)
-- Discuter du projet → [Discussions](https://github.com/[ton-username]/memoire-master-rl-logistique/discussions)
+- Signaler un bug → Ouvrir une [issue](https://github.com/Juan-Lucas/memoire-master-rl-logistique/issues)
+- Proposer une amélioration → Créer une [pull request](https://github.com/Juan-Lucas/memoire-master-rl-logistique/pulls)
+- Discuter du projet → [Discussions](https://github.com/Juan-Lucas/memoire-master-rl-logistique/discussions)
 
 ---
 
@@ -425,15 +424,15 @@ Vous êtes libre de :
 Si vous utilisez ce code dans vos recherches, merci de citer :
 
 ```bibtex
-@mastersthesis{mupasa2025rl-mining,
-  author  = {Jean-Luc Mupasa Kalunga},
+@mastersthesis{mupasa2026rl-mining,
+  author  = {Jean-Luc MUPASA KALUNGA},
   title   = {Au-delà des Heuristiques Statiques : Conception et Mise en Œuvre 
              d'un Agent d'Apprentissage par Renforcement pour l'Optimisation 
              Holistique et Dynamique de la Logistique Minière},
-  school  = {[Nom de l'université]},
-  year    = {2025},
+  school  = {Université Don Bosco de Lubumbashi (UDBL)},
+  year    = {2026},
   type    = {Mémoire de Master},
-  url     = {https://github.com/[ton-username]/memoire-master-rl-logistique}
+  url     = {https://github.com/Juan-Lucas/memoire-master-rl-logistique}
 }
 ```
 
@@ -442,9 +441,9 @@ Si vous utilisez ce code dans vos recherches, merci de citer :
 ## Contact
 
 **Jean-Luc Mupasa Kalunga**  
-📧 Email : [0997699393jm@gmail.com](mailto:0997699393jm@gmail.com)  
-🔗 GitHub : [@[ton-username]](https://github.com/[ton-username])  
-🎓 Université : [Nom de l'université]
+📧 Email : [16mk293@esisalama.org](mailto:16mk293@esisalama.org)  
+🔗 GitHub : [@Juan-Lucas](https://github.com/Juan-Lucas)  
+🎓 Université : Université Don Bosco de Lubumbashi (UDBL)
 
 Pour toute question concernant ce projet, n'hésitez pas à me contacter ou à ouvrir une issue sur GitHub.
 
@@ -452,8 +451,7 @@ Pour toute question concernant ce projet, n'hésitez pas à me contacter ou à o
 
 ## Remerciements
 
-- **[Nom du directeur]** pour l'encadrement et les conseils avisés
-- **[Nom du co-directeur]** pour son expertise technique
+- **Dr. Olfa FERCHICHI** pour l'encadrement et les conseils avisés
 - **Communauté Stable-Baselines3** pour l'excellent framework RL
 - **Auteurs des articles de référence** listés dans `references/`
 - **Collègues du Master** pour les discussions enrichissantes
@@ -461,7 +459,7 @@ Pour toute question concernant ce projet, n'hésitez pas à me contacter ou à o
 ---
 
 <p align="center">
-  <i>Ce projet est développé dans le cadre d'un mémoire de Master 2 en [Spécialité].<br>
+  <i>Ce projet est développé dans le cadre d'un mémoire de Master 2 en Data science spécialité Logistique.<br>
   Dernière mise à jour : Octobre 2025</i>
 </p>
 
