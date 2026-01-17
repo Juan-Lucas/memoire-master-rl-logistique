@@ -145,7 +145,7 @@ Ce projet vise à développer un **agent d'Apprentissage par Renforcement (RL)**
 
 1. **Cloner le dépôt**
    ```bash
-   git clone https://github.com/[ton-username]/memoire-master-rl-logistique.git
+   git clone https://github.com/Juan-Lucas/memoire-master-rl-logistique.git
    cd memoire-master-rl-logistique
    ```
 
