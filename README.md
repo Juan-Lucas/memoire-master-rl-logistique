@@ -9,7 +9,7 @@
 
 **Mémoire de Master 2 — Apprentissage par Renforcement appliqué à la Logistique Minière**
 
-Présenté par : **Jean-Luc MUPASA KALAUNGA**  
+Présenté par : **Jean-Luc MUPASA KALUNGA**  
 Supervisé par : **Dr. Olfa FERCHICHI**  
 
 Université : **Université Don Bosco de Lubumbashi (UDBL)** — Année académique 2025-2026
