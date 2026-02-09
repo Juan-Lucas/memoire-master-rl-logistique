@@ -1,4 +1,4 @@
-# Au-delà des Heuristiques Statiques : Conception et Mise en Œuvre d'un Agent d'Apprentissage par Renforcement pour l'Optimisation Holistique et Dynamique de la Logistique Minière
+# Au-delà des heuristiques statiques : Conception et mise en oeuvre d'un agent d'apprentissage par renforcement pour l'optimisation holistique et dynamique de la logistique minière
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11.11](https://img.shields.io/badge/python-3.11.11-blue.svg)](https://www.python.org/downloads/)
