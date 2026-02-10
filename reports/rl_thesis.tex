@@ -1,0 +1,498 @@
+% ============================================================================
+% MÉMOIRE DE MASTER 2 — RECHERCHE
+% Au-delà des heuristiques statiques : Conception et mise en œuvre d'un agent
+% d'apprentissage par renforcement pour l'optimisation holistique et dynamique
+% de la logistique minière
+%
+% Auteur  : Jean-Luc MUPASA KALUNGA
+% Directrice : Dr. Olfa FERCHICHI
+% Université : Université Don Bosco de Lubumbashi (UDBL)
+% Année académique : 2025-2026
+%
+% Compilation : pdflatex rl_thesis.tex (2 passes pour la table des matières)
+% ============================================================================
+
+\documentclass[a4paper, 12pt, oneside]{report}
+
+% --- Encodage et langue ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% --- Mise en page ---
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\headheight}{14.5pt}
+
+% --- Polices ---
+\usepackage{lmodern}
+
+% --- En-têtes et pieds de page ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Mathématiques et symboles ---
+\usepackage{amsmath, amssymb, amsfonts}
+
+% --- Tableaux et figures ---
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{float}
+
+% --- Couleurs et liens ---
+\usepackage[dvipsnames]{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+% --- Bibliographie ---
+\usepackage[numbers, sort&compress]{natbib}
+
+% --- Code source ---
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{OliveGreen},
+    stringstyle=\color{red},
+}
+
+% --- Algorithmes ---
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% --- Divers ---
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{appendix}
+
+% --- Logo ---
+\graphicspath{{figures/}}
+
+% ============================================================================
+\begin{document}
+
+% ============================================================================
+%                         PAGES PRÉLIMINAIRES
+% ============================================================================
+\pagenumbering{roman}
+
+% --- Page de garde ---
+\begin{titlepage}
+
+    \centering
+    {\Large \textbf{UNIVERSIT\'E DON BOSCO DE LUBUMBASHI}}\\[0.3cm]
+    {\large \textsc{Facult\'e des Sciences Informatiques}}\\[0.2cm]
+    {\normalsize Lubumbashi}\\[0.2cm]
+    {\small \url{www.udbl.ac.cd}}\\[0.5cm]
+    
+\rule{\textwidth}{0.5pt}
+
+\vspace{1.0cm}
+
+\includegraphics[width=8cm]{logo-udbl.png}\\[0.3cm]
+
+\rule{\textwidth}{0.5pt}
+
+    \vspace{1cm}
+
+    {\LARGE \textbf{Au-delà des heuristiques statiques :}}\\[0.5cm]
+    {\Large \textbf{Conception et mise en \oe uvre d'un agent d'apprentissage par renforcement pour l'optimisation holistique et dynamique de la logistique minière}}
+
+    \rule{\textwidth}{0.5pt}
+    
+    {\large Présenté par : \textbf{Jean-Luc MUPASA KALUNGA}}\\[0.3cm]
+    {\large Dirigé par : \textbf{Dr. Olfa FERCHICHI}}
+    {\large Master 2 Data Science — Spécialité Logistique}\\[0.3cm]
+    {\large Année académique 2025--2026}
+
+    \vfill
+    {\large Février, 2026}
+\end{titlepage}
+
+% --- Dédicace ---
+\chapter*{Dédicace}
+\thispagestyle{empty}
+\vspace*{5cm}
+\begin{flushright}
+    \textit{À compléter...}
+\end{flushright}
+\newpage
+
+% --- Remerciements ---
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+
+À compléter...
+
+\newpage
+
+% --- Résumé ---
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+À compléter...
+
+\vspace{1cm}
+\noindent\textbf{Mots-clés :} Apprentissage par renforcement, logistique minière, dispatching, fleet management system, optimisation dynamique, mine à ciel ouvert.
+
+\newpage
+
+% --- Abstract ---
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+À compléter...
+
+\vspace{1cm}
+\noindent\textbf{Keywords:} Reinforcement learning, mining logistics, dispatching, fleet management system, dynamic optimization, open-pit mining.
+
+\newpage
+
+% --- Table des matières ---
+\tableofcontents
+\newpage
+
+% --- Liste des figures ---
+\listoffigures
+\addcontentsline{toc}{chapter}{Liste des figures}
+\newpage
+
+% --- Liste des tableaux ---
+\listoftables
+\addcontentsline{toc}{chapter}{Liste des tableaux}
+\newpage
+
+% ============================================================================
+%                         CORPS DU MÉMOIRE
+% ============================================================================
+\pagenumbering{arabic}
+
+% ============================================================================
+%                      INTRODUCTION GÉNÉRALE
+% ============================================================================
+\chapter*{Introduction générale}
+\addcontentsline{toc}{chapter}{Introduction générale}
+
+% Contexte général de la logistique minière
+
+% Problématique de l'optimisation des flottes minières
+
+% Limites des systèmes de gestion de flotte existants
+
+% Intérêt de l'apprentissage par renforcement
+
+% Hypothèse de recherche
+
+% Objectifs du travail
+
+% Méthodologie générale adoptée
+
+% Organisation du mémoire
+
+\newpage
+
+% ============================================================================
+%          CHAPITRE 1 : CONTEXTE GÉNÉRAL ET PROBLÉMATIQUE
+% ============================================================================
+\chapter{Contexte général et problématique}
+\label{chap:contexte}
+
+\section{Logistique minière et transport en mine à ciel ouvert}
+\label{sec:logistique-miniere}
+
+À compléter...
+
+\section{Systèmes de gestion de flotte minière (FMS)}
+\label{sec:fms}
+
+À compléter...
+
+\section{Approches heuristiques classiques de dispatching}
+\label{sec:heuristiques-classiques}
+
+À compléter...
+
+\section{Limites des approches existantes}
+\label{sec:limites}
+
+À compléter...
+
+\section{Problématique scientifique et motivation du travail}
+\label{sec:problematique}
+
+À compléter...
+
+% ============================================================================
+%                  CHAPITRE 2 : ÉTAT DE L'ART
+% ============================================================================
+\chapter{État de l'art}
+\label{chap:etat-art}
+
+\section{Systèmes de gestion de flotte minière industriels}
+\label{sec:fms-industriels}
+
+\subsection{Caterpillar MineStar}
+\label{subsec:minestar}
+
+À compléter...
+
+\subsection{Komatsu Jigsaw}
+\label{subsec:jigsaw}
+
+À compléter...
+
+\section{Optimisation du transport et du dispatching minier}
+\label{sec:optim-transport}
+
+\subsection{Problèmes de routage de véhicules (VRP)}
+\label{subsec:vrp}
+
+À compléter...
+
+\subsection{Approches heuristiques et méta-heuristiques}
+\label{subsec:metaheuristiques}
+
+À compléter...
+
+\section{Apprentissage par renforcement}
+\label{sec:rl}
+
+\subsection{Fondements de l'apprentissage par renforcement}
+\label{subsec:fondements-rl}
+
+À compléter...
+
+\subsection{Apprentissage par renforcement profond}
+\label{subsec:deep-rl}
+
+À compléter...
+
+\section{Apprentissage par renforcement appliqué à la logistique}
+\label{sec:rl-logistique}
+
+\subsection{RL pour le routage et le transport}
+\label{subsec:rl-routage}
+
+À compléter...
+
+\subsection{RL en environnements dynamiques et stochastiques}
+\label{subsec:rl-dynamique}
+
+À compléter...
+
+\section{Synthèse critique et positionnement du travail}
+\label{sec:synthese-etat-art}
+
+À compléter...
+
+% ============================================================================
+%              CHAPITRE 3 : MODÉLISATION DU PROBLÈME
+% ============================================================================
+\chapter{Modélisation du problème}
+\label{chap:modelisation}
+
+\section{Description du système de transport minier}
+\label{sec:description-systeme}
+
+À compléter...
+
+\section{Hypothèses et contraintes de modélisation}
+\label{sec:hypotheses}
+
+À compléter...
+
+\section{Modélisation du réseau routier minier}
+\label{sec:reseau-routier}
+
+À compléter...
+
+\section{Formulation du problème en tant que processus de décision markovien (MDP)}
+\label{sec:mdp}
+
+\subsection{Espace d'états}
+\label{subsec:espace-etats}
+
+À compléter...
+
+\subsection{Espace d'actions}
+\label{subsec:espace-actions}
+
+À compléter...
+
+\subsection{Fonction de transition}
+\label{subsec:transition}
+
+À compléter...
+
+\subsection{Fonction de récompense}
+\label{subsec:recompense}
+
+À compléter...
+
+% ============================================================================
+%      CHAPITRE 4 : MÉTHODOLOGIE ET CONCEPTION DE LA SOLUTION
+% ============================================================================
+\chapter{Méthodologie et conception de la solution}
+\label{chap:methodologie}
+
+\section{Méthodologie adoptée (CRISP-DM adaptée au RL)}
+\label{sec:crisp-dm}
+
+À compléter...
+
+\section{Conception de l'environnement de simulation}
+\label{sec:env-simulation}
+
+À compléter...
+
+\section{Conception de l'agent d'apprentissage par renforcement}
+\label{sec:agent-rl}
+
+À compléter...
+
+\section{Choix des algorithmes d'apprentissage}
+\label{sec:choix-algorithmes}
+
+À compléter...
+
+\section{Conception des modèles de référence (baselines)}
+\label{sec:baselines}
+
+À compléter...
+
+% ============================================================================
+%        CHAPITRE 5 : IMPLÉMENTATION ET EXPÉRIMENTATION
+% ============================================================================
+\chapter{Implémentation et expérimentation}
+\label{chap:implementation}
+
+\section{Architecture globale du système proposé}
+\label{sec:architecture}
+
+À compléter...
+
+\section{Détails d'implémentation de l'environnement}
+\label{sec:implementation-env}
+
+À compléter...
+
+\section{Paramètres et protocoles d'entraînement}
+\label{sec:entrainement}
+
+À compléter...
+
+\section{Scénarios expérimentaux}
+\label{sec:scenarios}
+
+À compléter...
+
+\section{Métriques d'évaluation}
+\label{sec:metriques}
+
+À compléter...
+
+% ============================================================================
+%              CHAPITRE 6 : RÉSULTATS ET ANALYSE
+% ============================================================================
+\chapter{Résultats et analyse}
+\label{chap:resultats}
+
+\section{Résultats expérimentaux}
+\label{sec:resultats-exp}
+
+À compléter...
+
+\section{Comparaison avec les approches de référence}
+\label{sec:comparaison}
+
+À compléter...
+
+\section{Analyse critique des résultats}
+\label{sec:analyse-critique}
+
+À compléter...
+
+\section{Discussion}
+\label{sec:discussion}
+
+À compléter...
+
+% ============================================================================
+%              CONCLUSION GÉNÉRALE ET PERSPECTIVES
+% ============================================================================
+\chapter*{Conclusion générale et perspectives}
+\addcontentsline{toc}{chapter}{Conclusion générale et perspectives}
+
+% Synthèse des contributions
+
+% Validation de l'hypothèse de recherche
+
+% Limites du travail
+
+% Perspectives de recherche et industrielles
+
+\newpage
+
+% ============================================================================
+%                         BIBLIOGRAPHIE
+% ============================================================================
+\addcontentsline{toc}{chapter}{Bibliographie}
+\bibliographystyle{plainnat}
+% \bibliography{references}  % Décommenter quand le fichier references.bib sera créé
+
+% En attendant le .bib, références manuelles :
+\begin{thebibliography}{99}
+
+\bibitem{afrapoli2017} Afrapoli, A. M., \& Askari-Nasab, H. (2017). Mining fleet management systems: a review of models and algorithms. \textit{International Journal of Mining, Reclamation and Environment}, 33(1), 42--60.
+
+\bibitem{alarie2002} Alarie, S., \& Gamache, M. (2002). Overview of Solution Strategies Used in Truck Dispatching Systems for Open Pit Mines. \textit{International Journal of Surface Mining, Reclamation and Environment}, 16(1), 59--76.
+
+\bibitem{nazari2018} Nazari, M., Oroojlooy, A., Snyder, L., \& Tak\'{a}\v{c}, M. (2018). Reinforcement Learning for Solving the Vehicle Routing Problem. \textit{Advances in Neural Information Processing Systems (NeurIPS)}.
+
+\bibitem{sutton2018} Sutton, R. S., \& Barto, A. G. (2018). \textit{Reinforcement Learning: An Introduction} (2nd ed.). MIT Press.
+
+\end{thebibliography}
+
+% ============================================================================
+%                           ANNEXES
+% ============================================================================
+\appendix
+\addcontentsline{toc}{chapter}{Annexes}
+
+\chapter{Détails d'implémentation}
+\label{ann:implementation}
+
+À compléter...
+
+\chapter{Hyperparamètres des modèles}
+\label{ann:hyperparametres}
+
+À compléter...
+
+\chapter{Scénarios de simulation}
+\label{ann:scenarios}
+
+À compléter...
+
+\chapter{Architecture logicielle et structure du projet}
+\label{ann:architecture}
+
+À compléter...
+
+\chapter{Interfaces et démonstrations}
+\label{ann:interfaces}
+
+À compléter...
+
+% ============================================================================
+\end{document}
