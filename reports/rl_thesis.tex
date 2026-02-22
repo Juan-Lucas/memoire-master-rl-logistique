@@ -111,7 +111,7 @@
     \rule{\textwidth}{0.5pt}
     
     {\large Présenté par : \textbf{Jean-Luc MUPASA KALUNGA}}\\[0.3cm]
-    {\large Dirigé par : \textbf{Dr. Olfa FERCHICHI}}
+    {\large Dirigé par : \textbf{Dr. Olfa FERCHICHI}}\\[0.3cm]
     {\large Master 2 Data Science — Spécialité Logistique}\\[0.3cm]
     {\large Année académique 2025--2026}
 
@@ -210,27 +210,27 @@
 \section{Logistique minière et transport en mine à ciel ouvert}
 \label{sec:logistique-miniere}
 
-À compléter...
+La logistique minière constitue un enjeu majeur pour l’industrie extractive, notamment dans les mines à ciel ouvert où le transport des matériaux représente une part significative des coûts opérationnels et de l’empreinte environnementale. Les opérations de chargement, transport et déchargement sont organisées autour de systèmes complexes impliquant des flottes de camions et de pelles, des réseaux routiers dynamiques, des zones tampons et des contraintes de production et de qualité. L’optimisation de ces flux vise à maximiser la productivité, réduire les temps d’attente et minimiser la consommation de carburant, tout en s’adaptant aux conditions changeantes du terrain, du trafic et de la météo.
 
 \section{Systèmes de gestion de flotte minière (FMS)}
 \label{sec:fms}
 
-À compléter...
+Les systèmes de gestion de flotte minière (Fleet Management Systems - FMS) sont devenus incontournables pour la coordination des opérations de transport en mine à ciel ouvert. Des solutions industrielles telles que Caterpillar MineStar Dispatch ou Komatsu Jigsaw permettent de suivre en temps réel la localisation des véhicules, d’optimiser les affectations camion-pelle et de gérer les files d’attente. Ces systèmes reposent principalement sur des règles prédéfinies, des heuristiques statiques et des zones tampons pour réguler les flux, assurant une certaine efficacité dans des conditions stables.
 
 \section{Approches heuristiques classiques de dispatching}
 \label{sec:heuristiques-classiques}
 
-À compléter...
+Les approches classiques de dispatching minier s’appuient sur des heuristiques statiques, des règles de priorité et des modèles déterministes pour affecter les camions aux pelles et gérer les files d’attente. Ces méthodes, bien qu’efficaces dans des environnements peu perturbés, peinent à anticiper les variations stochastiques du trafic, la dégradation des routes ou les pannes imprévues. Elles optimisent localement les affectations sans prendre en compte l’ensemble du système de flotte.
 
 \section{Limites des approches existantes}
 \label{sec:limites}
 
-À compléter...
+Les limites des approches existantes résident dans leur incapacité à optimiser globalement la flotte en temps réel et à s’adapter dynamiquement aux micro-conditions évolutives. Un camion suivant une règle statique peut arriver trop tôt dans une zone tampon, gaspillant carburant et temps, ou attendre inutilement à la pelle. Les systèmes actuels ne permettent pas d’anticiper les perturbations, ni d’ajuster le rythme de déplacement pour arriver "juste à temps". De plus, la sous-utilisation des équipements, les congestions et la variabilité des conditions routières restent mal gérées.
 
 \section{Problématique scientifique et motivation du travail}
 \label{sec:problematique}
 
-À compléter...
+Face à ces limites, ce mémoire propose de dépasser les performances des systèmes heuristiques actuels en développant un agent autonome basé sur l’Apprentissage par Renforcement (RL). L’objectif est d’apprendre une politique de navigation adaptative qui minimise la consommation de carburant, réduit le temps d’attente improductif et s’adapte en temps réel aux conditions changeantes de l’environnement minier. Cette hypothèse sera validée par une comparaison rigoureuse entre l’agent RL et des baselines représentatives des approches classiques, afin de démontrer quantitativement la supériorité de l’approche RL dans des scénarios de perturbation et d’optimisation holistique.
 
 % ============================================================================
 %                  CHAPITRE 2 : ÉTAT DE L'ART
@@ -244,12 +244,12 @@
 \subsection{Caterpillar MineStar}
 \label{subsec:minestar}
 
-À compléter...
+Le système Caterpillar MineStar Dispatch est l’une des solutions industrielles les plus répandues pour la gestion de flotte minière. Il permet le suivi en temps réel des véhicules, l’optimisation des affectations camion-pelle, la gestion des files d’attente et la collecte de données opérationnelles. L’intégration de technologies telles que le GPS et les moniteurs embarqués améliore la prise de décision et la réactivité du système face aux perturbations \cite{afrapoli2017mining, alarie2002overview}.
 
 \subsection{Komatsu Jigsaw}
 \label{subsec:jigsaw}
 
-À compléter...
+Komatsu Jigsaw propose une plateforme similaire, axée sur la coordination dynamique des flottes, la planification des itinéraires et la gestion des ressources. Ces systèmes industriels reposent principalement sur des heuristiques statiques et des règles prédéfinies, assurant une efficacité dans des conditions stables mais montrant leurs limites en environnement dynamique \cite{afrapoli2017mining}.
 
 \section{Optimisation du transport et du dispatching minier}
 \label{sec:optim-transport}
@@ -257,12 +257,12 @@
 \subsection{Problèmes de routage de véhicules (VRP)}
 \label{subsec:vrp}
 
-À compléter...
+Le problème de routage de véhicules (VRP) est central dans la logistique minière. Il s’agit de déterminer les itinéraires optimaux pour une flotte de camions afin de minimiser les coûts de transport, les temps d’attente et d’assurer le respect des contraintes de production et de qualité. Les approches classiques incluent la programmation linéaire, la programmation par contraintes et les méthodes de recherche opérationnelle \cite{newman2010review}.
 
 \subsection{Approches heuristiques et méta-heuristiques}
 \label{subsec:metaheuristiques}
 
-À compléter...
+Les heuristiques (règles de priorité, dispatching statique) et méta-heuristiques (algorithmes génétiques, recuit simulé, colonies de fourmis) sont largement utilisées pour résoudre les problèmes de dispatching minier. Elles permettent de trouver rapidement des solutions satisfaisantes dans des environnements complexes, mais peinent à garantir l’optimalité globale et à s’adapter aux perturbations en temps réel \cite{alarie2002overview, newman2010review}.
 
 \section{Apprentissage par renforcement}
 \label{sec:rl}
@@ -270,12 +270,12 @@
 \subsection{Fondements de l'apprentissage par renforcement}
 \label{subsec:fondements-rl}
 
-À compléter...
+L’apprentissage par renforcement (RL) est un paradigme d’intelligence artificielle où un agent apprend à prendre des décisions séquentielles en interagissant avec un environnement, dans le but de maximiser une récompense cumulative. Les concepts clés incluent les processus de décision markoviens (MDP), les politiques, la fonction de valeur et la fonction de récompense \cite{sutton2018reinforcement}.
 
 \subsection{Apprentissage par renforcement profond}
 \label{subsec:deep-rl}
 
-À compléter...
+L’avènement du deep learning a permis de combiner RL et réseaux de neurones profonds (Deep RL), rendant possible l’apprentissage de politiques complexes dans des environnements à grande dimensionnalité. Les algorithmes tels que DQN, PPO, SAC ou A3C sont aujourd’hui utilisés pour des tâches de contrôle avancées, y compris en logistique et transport \cite{mnih2015human, lillicrap2015continuous}.
 
 \section{Apprentissage par renforcement appliqué à la logistique}
 \label{sec:rl-logistique}
@@ -283,17 +283,17 @@
 \subsection{RL pour le routage et le transport}
 \label{subsec:rl-routage}
 
-À compléter...
+Des travaux récents montrent que le RL peut surpasser les heuristiques classiques pour le routage de véhicules, l’optimisation des itinéraires et la gestion dynamique des flottes. L’agent RL apprend à anticiper les congestions, à adapter le rythme de déplacement et à optimiser l’utilisation des ressources, même en présence d’incertitude \cite{nazari2018reinforcement, khalil2017learning}.
 
 \subsection{RL en environnements dynamiques et stochastiques}
 \label{subsec:rl-dynamique}
 
-À compléter...
+L’un des atouts majeurs du RL est sa capacité à s’adapter à des environnements dynamiques et stochastiques, caractéristiques des mines à ciel ouvert. Les agents RL peuvent apprendre des politiques robustes face aux variations du trafic, à la dégradation des routes ou aux pannes, là où les approches classiques échouent \cite{afrapoli2017mining, abolghasemian2020two}.
 
 \section{Synthèse critique et positionnement du travail}
 \label{sec:synthese-etat-art}
 
-À compléter...
+La littérature montre que, malgré les avancées des FMS industriels et des heuristiques, l’optimisation globale et dynamique de la flotte minière reste un défi. Les approches RL offrent un potentiel inédit pour dépasser ces limites, en permettant une adaptation en temps réel, une optimisation holistique et une meilleure gestion de l’incertitude. Ce mémoire s’inscrit dans cette dynamique, en proposant une architecture RL adaptée à la logistique minière moderne.
 
 % ============================================================================
 %              CHAPITRE 3 : MODÉLISATION DU PROBLÈME
