@@ -190,7 +190,7 @@ In the mining sector, optimizing operational costs and reducing environmental im
 
 
 % Contexte
-Représentant jusqu’à 60\% des coûts opérationnels d’une mine à ciel ouvert, la logistique de transport constitue l’enjeu financier et environnemental majeur de l’industrie minière moderne \cite{Afrapoli2017}. Chaque pourcentage d’efficacité gagné se traduit par des millions de dollars d’économies et une réduction significative de l’empreinte écologique. Pourtant, malgré l’adoption généralisée des systèmes de gestion de flotte (FMS), les exploitations minières se heurtent à la complexité croissante et à la variabilité des environnements réels \cite{AlexandraMNewman2010, Afrapoli2017}. Ce mémoire s’inscrit dans une démarche d’innovation, en explorant l’apport de l’apprentissage par renforcement pour l’optimisation dynamique de la logistique minière. L’objectif est de concevoir un agent autonome capable d’adapter ses décisions en temps réel, afin de réduire les coûts, améliorer l’efficacité et minimiser l’impact environnemental. La méthodologie adoptée combine une analyse approfondie de l’état de l’art, une modélisation réaliste du problème et une validation expérimentale des solutions proposées. Ce travail vise ainsi à dépasser les approches classiques et à ouvrir de nouvelles perspectives pour la gestion intelligente des flottes minières.
+Représentant jusqu’à 60\% des coûts opérationnels d’une mine à ciel ouvert, la logistique de transport est l’enjeu financier et environnemental majeur de l’industrie minière moderne \cite{Afrapoli2017}. Chaque pourcentage d’efficacité gagné se traduit par des millions de dollars d’économies. C’est dans ce contexte que ce mémoire explore l’apport de l’apprentissage par renforcement pour l’optimisation dynamique de la logistique minière. Malgré l’adoption généralisée des systèmes de gestion de flotte (FMS), les exploitations minières se heurtent à la complexité croissante et à la variabilité des environnements réels \cite{AlexandraMNewman2010, Afrapoli2017}. L’objectif est de concevoir un agent autonome capable d’adapter ses décisions en temps réel, afin de réduire les coûts, améliorer l’efficacité et minimiser l’impact environnemental. La méthodologie adoptée combine une analyse approfondie de l’état de l’art, une modélisation réaliste du problème et une validation expérimentale des solutions proposées. Ce travail vise ainsi à dépasser les approches classiques et à ouvrir de nouvelles perspectives pour la gestion intelligente des flottes minières.
 
 % Problématique
 La logistique minière englobe l’ensemble des opérations visant à assurer le transport efficace des matériaux, du site d’extraction jusqu’aux zones de traitement ou de stockage. Dans les mines à ciel ouvert, le transport représente une part prépondérante des coûts opérationnels et de l’empreinte environnementale \cite{AlexandraMNewman2010}. La gestion optimale des flux de camions, la coordination avec les équipements de chargement et le respect des contraintes de production sont des enjeux majeurs pour garantir la rentabilité et la durabilité des exploitations minières \cite{Afrapoli2017}. L’optimisation des flottes minières consiste à affecter dynamiquement les camions aux différentes tâches (chargement, transport, déchargement) tout en minimisant les temps d’attente, la consommation de carburant et l’usure des équipements \cite{Alarie2002}. Cette problématique est rendue complexe par la variabilité des conditions réelles (trafic, météo, état des routes), la multiplicité des contraintes opérationnelles et la nécessité d’adapter les décisions en temps réel pour maximiser la productivité globale \cite{MarceloMorettiFioroni2008}. Les systèmes de gestion de flotte industriels reposent principalement sur des heuristiques statiques et des règles prédéfinies \cite{Alarie2002}. Bien qu’efficaces dans des environnements stables, ils montrent leurs limites face à la variabilité et à l’incertitude du terrain \cite{ShivPrakashUpadhyay2017}. Ils peinent à anticiper les congestions, à s’adapter aux perturbations imprévues et à optimiser globalement la flotte en temps réel, ce qui conduit à des pertes d’efficacité et à une sous-utilisation des ressources \cite{MiladAbolghasemian2020, BurakOzdemir2019}.
@@ -288,15 +288,22 @@ Ce premier chapitre a permis de poser les bases du mémoire en détaillant le co
 \chapter{État de l'art} 
 \label{chap:etat-art} 
 
-% Le point de départ : les heuristiques simples
-\section{Des heuristiques simples aux systèmes industriels} 
+
+% 2.1 Le point de départ : les heuristiques "myopes"
+\section{Des heuristiques simples aux systèmes industriels}
 \label{sec:heuristiques-industrielles}
 
-Les premières stratégies de dispatching minier reposaient sur des heuristiques simples, telles que l’assignation du camion le plus proche ou la règle du premier arrivé, premier servi \cite{MohanMunirathinam1994, Alarie2002}. Si ces méthodes sont faciles à mettre en œuvre, elles restent « myopes » : elles optimisent localement sans anticiper les conséquences globales sur la flotte. Cette limitation a conduit à l’émergence de systèmes industriels comme DISPATCH, Caterpillar MineStar ou Komatsu Jigsaw, qui intègrent des modules de planification et de suivi en temps réel \cite{Afrapoli2017, MehrnazMohtasham2023}. Ces systèmes ont permis d’augmenter la productivité et de réduire les temps d’attente, mais restent largement déterministes et rigides, peinant à s’adapter aux perturbations et à la dynamique réelle du terrain.
+L’histoire de l’optimisation de la logistique minière débute avec des heuristiques simples, telles que l’assignation du camion le plus proche ou la règle du premier arrivé, premier servi \cite{MohanMunirathinam1994, Alarie2002}. Si ces méthodes sont faciles à mettre en œuvre, elles restent « myopes » : elles optimisent localement sans anticiper les conséquences globales sur la flotte. Cette limitation a conduit à l’émergence de systèmes industriels comme DISPATCH, Caterpillar MineStar ou Komatsu Jigsaw, qui intègrent des modules de planification et de suivi en temps réel \cite{Afrapoli2017, MehrnazMohtasham2023}. Ces systèmes ont permis d’augmenter la productivité et de réduire les temps d’attente, mais restent largement déterministes et rigides, peinant à s’adapter aux perturbations et à la dynamique réelle du terrain.
 
 % Les tentatives d'amélioration académiques
 \section{L'évolution académique : méta-heuristiques et optimisation avancée}
 \label{sec:metaheuristiques}
+
+% 2.2 Première évolution : les systèmes industriels
+
+L’apparition des systèmes industriels comme DISPATCH marque une première rupture, en intégrant la planification et le suivi en temps réel. Cependant, ces solutions restent déterministes et peu flexibles face à la variabilité du terrain.
+
+% 2.3 Les tentatives d’amélioration par la recherche académique classique
 
 Pour dépasser les limites des systèmes industriels, la recherche académique a proposé des approches plus sophistiquées : méta-heuristiques (algorithmes génétiques, colonies de fourmis, recuit simulé) \cite{MJFSouza2010, Subtil2011}, modèles MILP ou programmation par contraintes \cite{Ahangaran2012, AmandaSmith2020, ChungHTa2013, ZhongxinWang2022}. Ces méthodes offrent de meilleures performances sur des cas complexes, mais leur capacité d’adaptation en temps réel reste limitée, notamment face à l’incertitude et à la variabilité opérationnelle \cite{BurakOzdemir2019, ShivPrakashUpadhyay2017, MarceloMorettiFioroni2008}.
 
@@ -304,7 +311,9 @@ Pour dépasser les limites des systèmes industriels, la recherche académique a
 \section{L'arrivée du paradigme RL}
 \label{sec:paradigme-rl}
 
-Face à ces limites, un nouveau paradigme issu de l’intelligence artificielle s’est imposé : l’apprentissage par renforcement (RL). Le RL permet à un agent d’apprendre une politique de décision séquentielle en interagissant avec un environnement simulé ou réel, optimisant ainsi la flotte de manière holistique et adaptative \cite{MohammadrezaNazari2018, CongZhang2020, SatyamChoudhury2022}. Les travaux récents montrent que le RL peut surpasser les heuristiques classiques pour le routage de véhicules, la gestion dynamique des files d’attente et l’optimisation des ressources, même en présence d’incertitude \cite{WZeng2022, MiladAbolghasemian2020}.
+% 2.4 L’arrivée du RL : un nouveau paradigme
+
+Face aux limites persistantes de ces approches, un nouveau paradigme issu de l’intelligence artificielle s’est imposé : l’apprentissage par renforcement (RL). Le RL permet à un agent d’apprendre une politique de décision séquentielle en interagissant avec un environnement simulé ou réel, optimisant ainsi la flotte de manière holistique et adaptative \cite{MohammadrezaNazari2018, CongZhang2020, SatyamChoudhury2022}. Les travaux récents montrent que le RL peut surpasser les heuristiques classiques pour le routage de véhicules, la gestion dynamique des files d’attente et l’optimisation des ressources, même en présence d’incertitude \cite{WZeng2022, MiladAbolghasemian2020}.
 
 % Synthèse critique et positionnement
 \section{Synthèse critique et positionnement du travail}
@@ -320,13 +329,13 @@ La littérature montre que, malgré les avancées des FMS industriels et des heu
 \hline
 \textbf{Référence} & \textbf{Approche} & \textbf{Limites principales / Opportunité pour le RL} \\
 \hline
-Alarie \& Gamache (2002) & Heuristiques statiques & Approche myope, peu adaptative, ne gère pas l’incertitude. Opportunité : RL peut apprendre une politique globale et adaptative. \\
+Alarie \& Gamache (2002) & Heuristiques statiques & Approche myope, peu adaptative, ne gère pas l’incertitude. Opportunité : Le RL peut apprendre une politique globale et adaptative. \\
 \hline
-DISPATCH, MineStar, Jigsaw & Systèmes industriels & Déterministes, rigides, peu réactifs aux perturbations. Opportunité : RL permet l’adaptation dynamique. \\
+DISPATCH, MineStar, Jigsaw & Systèmes industriels & Déterministes, rigides, peu réactifs aux perturbations. Opportunité : Le RL permet l’adaptation dynamique. \\
 \hline
-Souza et al. (2010), Subtil et al. (2011) & Méta-heuristiques & Performantes mais peu robustes en temps réel, optimisation hors-ligne. Opportunité : RL gère l’incertitude et l’adaptation continue. \\
+Souza et al. (2010), Subtil et al. (2011) & Méta-heuristiques & Performantes mais peu robustes en temps réel, optimisation hors-ligne. Opportunité : Le RL gère l’incertitude et l’adaptation continue. \\
 \hline
-Ahangaran et al. (2012), Amanda Smith (2020) & MILP, optimisation avancée & Complexité computationnelle, difficilement scalable, peu flexible. Opportunité : RL offre une solution scalable et flexible. \\
+Ahangaran et al. (2012), Amanda Smith (2020) & MILP, optimisation avancée & Complexité computationnelle, difficilement scalable, peu flexible. Opportunité : Le RL offre une solution scalable et flexible. \\
 \hline
 Nazari et al. (2018), Zhang et al. (2020) & RL pour VRP/JSSP & Complexité de la modélisation, besoin de simulateur. Inspiration : Fournit un cadre état/action/récompense pour le RL minier. \\
 \hline
