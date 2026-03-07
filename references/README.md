@@ -155,18 +155,18 @@ Move-Item "Use of Machine Learning Algorithm Models to Optimize the Fleet Manage
 ## ✅ Checklist de Lecture
 
 ### Phase 1 (Priorité Absolue - 1 semaine)
-- [ ] Afrapoli & Askari-Nasab (2017) - Annoté, fiché
-- [ ] Alarie & Gamache (2002) - Annoté, fiché
-- [ ] Nazari et al. (2018) - **Décortiqué en profondeur** (MDP, architecture, reward)
+- [x] Afrapoli & Askari-Nasab (2017) - Annoté, fiché
+- [x] Alarie & Gamache (2002) - Annoté, fiché
+- [x] Nazari et al. (2018) - **Décortiqué en profondeur** (MDP, architecture, reward)
 
 ### Phase 2 (Important - 1 semaine)
-- [ ] Munirathinam & Yingling (1994) - Heuristiques notées
-- [ ] Liu & Chai (2019) - Formules de consommation extraites
-- [ ] Newman et al. (2010) - Contexte global noté
+- [x] Munirathinam & Yingling (1994) - Heuristiques notées
+- [x] Liu & Chai (2019) - Formules de consommation extraites
+- [x] Newman et al. (2010) - Contexte global noté
 
 ### Phase 3 (Compléments - Au fur et à mesure)
-- [ ] Autres articles lus rapidement (focus résultats + limites)
-- [ ] Tableau comparatif créé (approches, métriques, résultats)
+- [x] Autres articles lus rapidement (focus résultats + limites)
+- [x] Tableau comparatif créé (approches, métriques, résultats)
 
 ---
 
