@@ -393,40 +393,96 @@ Ce chapitre a retracé l’évolution des approches d’optimisation de la logis
 \section{Description du système de transport minier}
 \label{sec:description-systeme}
 
-À compléter...
+Le système étudié correspond à une exploitation minière à ciel ouvert dans laquelle une flotte de camions assure le transport du matériau entre les zones de chargement et les zones de déchargement. Dans ce cadre, les principales entités du système sont les pelles ou chargeuses, les camions, les routes minières, les zones tampons, ainsi que les points de déchargement tels que le concasseur ou les haldes \cite{AlexandraMNewman2010, Afrapoli2017}. Le fonctionnement global repose sur une succession de cycles camion-pelle composés de quatre étapes principales : l'affectation à une zone de chargement, le chargement, le transport vers un point de déchargement, puis le retour vers une nouvelle mission \cite{Alarie2002, Necmettinetin2004}.
+
+Dans la réalité opérationnelle, ce système est soumis à des interactions complexes entre ressources. Une pelle peut devenir inactive faute de camions disponibles, tandis qu'un excès de camions sur une même zone crée des files d'attente et augmente les temps improductifs. De la même manière, l'état des routes, les pentes, la congestion locale et les événements perturbateurs influencent directement les temps de trajet, la consommation de carburant et la productivité globale \cite{BurakOzdemir2019, ShivPrakashUpadhyay2017}. Le problème ne peut donc pas être réduit à une simple minimisation de distance ; il s'agit d'un système dynamique multi-ressources où chaque décision locale a un impact sur l'ensemble de la flotte.
+
+Dans ce mémoire, le système de transport est modélisé comme un environnement décisionnel centré sur les camions. Chaque camion est vu comme une ressource mobile dont l'état évolue au cours du temps selon sa mission courante, son niveau de charge, sa position dans le réseau et l'état global du système. L'objectif n'est pas uniquement de trouver le chemin le plus court, mais de décider, à chaque instant critique, quelle affectation et quelle stratégie de déplacement permettent de mieux synchroniser la flotte avec les équipements fixes, tout en limitant les coûts énergétiques et les temps d'attente. Cette formulation est cohérente avec les travaux sur le dispatching minier dynamique et avec les approches récentes d'apprentissage par renforcement appliquées à la logistique \cite{MohammadrezaNazari2018, WZeng2022, SatyamChoudhury2022}.
 
 \section{Hypothèses et contraintes de modélisation}
 \label{sec:hypotheses}
 
-À compléter...
+Afin de construire un environnement de simulation crédible tout en gardant une complexité compatible avec l'expérimentation, plusieurs hypothèses de modélisation sont retenues. Premièrement, la flotte est supposée finie et connue à l'avance : le nombre de camions, le nombre de pelles et les capacités nominales des équipements sont fixés pour un scénario donné. Cette hypothèse est classique dans la littérature sur la simulation et l'optimisation des systèmes camion-pelle \cite{Subtil2011, ChungHTa2013}. Deuxièmement, les décisions sont prises à des instants discrets correspondant à des événements opérationnels significatifs, par exemple lorsqu'un camion termine un déchargement, arrive dans une zone tampon ou devient disponible pour une nouvelle affectation.
+
+Troisièmement, plusieurs composantes du système sont modélisées de façon stochastique. Les temps de trajet, les temps de chargement et certains événements perturbateurs ne sont pas considérés comme parfaitement déterministes, mais comme des variables aléatoires dont les distributions sont choisies à partir de la littérature ou d'hypothèses de travail justifiées. Cette hypothèse permet de reproduire la variabilité réelle du terrain et de mieux différencier une politique adaptative d'une heuristique statique \cite{ShivPrakashUpadhyay2017, WZeng2022}. Quatrièmement, la consommation de carburant est représentée par un modèle simplifié dépendant principalement de la distance parcourue, de la pente, de l'état de la route et de la charge du camion, dans l'esprit des travaux de Liu et Chai sur la minimisation de la consommation énergétique de transport \cite{GuangweiLiu2019}.
+
+Certaines simplifications sont également assumées. Dans une première version du modèle, la géométrie du réseau minier est représentée sous forme de graphe orienté, sans modélisation microscopique complète du trafic. Les dépassements, comportements individuels détaillés des conducteurs et phénomènes mécaniques fins ne sont pas explicitement simulés. De même, les contraintes de qualité du minerai et de mélange sont considérées au niveau agrégé, à travers des objectifs de production et de respect de missions, plutôt qu'à travers un modèle géométallurgique détaillé. Enfin, les pannes et dégradations de routes sont représentées de manière probabiliste, afin d'introduire de l'incertitude sans alourdir excessivement le simulateur. Ces choix visent un compromis entre réalisme, traçabilité scientifique et faisabilité expérimentale dans le cadre d'un mémoire de Master.
 
 \section{Modélisation du réseau routier minier}
 \label{sec:reseau-routier}
 
-À compléter...
+Le réseau routier minier est modélisé par un graphe orienté pondéré $G=(V,E)$, où l'ensemble des nœuds $V$ représente les points décisionnels du système, et l'ensemble des arcs $E$ représente les segments routiers praticables entre ces points. Les nœuds correspondent à plusieurs types d'entités : zones de chargement, zones de déchargement, intersections, points d'attente et zones tampons. Les arcs relient ces nœuds lorsqu'un déplacement direct est possible pour un camion \cite{Afrapoli2017, GuangweiLiu2019}. Cette représentation est adaptée aux problèmes de transport minier car elle permet d'intégrer simultanément la topologie du site, les contraintes de circulation et les coûts associés aux déplacements.
+
+Chaque arc $e_{ij} \in E$ est caractérisé par un ensemble d'attributs dynamiques ou statiques, parmi lesquels la distance $d_{ij}$, la pente moyenne $s_{ij}$, un coefficient d'état de route $\rho_{ij}(t)$, une vitesse admissible $v_{ij}$ et un coût de transport associé. Le temps de parcours sur un arc peut ainsi être représenté de façon simplifiée par une fonction
+
+$$
+\tau_{ij}(t)=\frac{d_{ij}}{v_{ij}(t)},
+$$
+
+où $v_{ij}(t)$ dépend elle-même du type de camion, de sa charge, de la pente et de l'état de la route. De manière analogue, le coût énergétique du déplacement peut être exprimé par une fonction croissante de la distance, de la charge utile et de la résistance au roulement, conformément aux modèles de consommation utilisés dans la littérature \cite{GuangweiLiu2019}. Cette structure permet d'associer à chaque trajet non seulement une durée, mais aussi un coût économique et énergétique exploitable dans la fonction de récompense de l'agent.
+
+Ce choix de modélisation offre plusieurs avantages. D'une part, il est suffisamment riche pour intégrer des événements comme la dégradation d'un segment, une congestion localisée ou une indisponibilité temporaire d'une route. D'autre part, il reste compatible avec des algorithmes de plus court chemin, des heuristiques de dispatching et des approches RL basées sur un état agrégé du réseau. Il constitue donc un socle commun pour comparer des méthodes de référence et une politique apprise, dans un cadre homogène et reproductible.
 
 \section{Formulation du problème en tant que processus de décision markovien (MDP)}
 \label{sec:mdp}
 
+Dans le cadre de ce mémoire, le problème de décision est formulé comme un processus de décision markovien, ou une approximation événementielle de type MDP, inspirée des travaux de Nazari et al. sur le VRP et de Zhang et al. sur l'apprentissage de règles de dispatching \cite{MohammadrezaNazari2018, CongZhang2020}. L'environnement évolue au rythme des événements opérationnels, et l'agent observe un état synthétique du système avant de choisir une action. Une fois l'action exécutée, l'environnement transite vers un nouvel état et fournit une récompense traduisant la qualité de la décision prise.
+
+Cette formulation est particulièrement adaptée à la logistique minière car elle permet d'intégrer des décisions séquentielles, des ressources couplées, des contraintes dynamiques et des perturbations aléatoires dans un cadre unique. Le problème ne se limite pas à un calcul statique d'affectation ; il s'agit d'une suite d'arbitrages entre production, consommation, congestion et robustesse. Le MDP fournit ainsi une formalisation rigoureuse des éléments nécessaires à l'apprentissage par renforcement : état, action, transition et récompense.
+
 \subsection{Espace d'états}
 \label{subsec:espace-etats}
 
-À compléter...
+L'état doit fournir une représentation suffisamment informative pour permettre à l'agent de prendre une décision pertinente, tout en restant de dimension raisonnable pour l'entraînement. Dans ce travail, l'état observé à l'instant $t$, noté $s_t$, est construit à partir de quatre groupes de variables.
+
+Le premier groupe regroupe les caractéristiques locales du camion demandeur : sa position actuelle dans le réseau, son statut (vide, en chargement, chargé, en attente, en déchargement), sa charge utile, ainsi qu'une estimation de son coût marginal de déplacement. Le deuxième groupe décrit l'état des ressources fixes : disponibilité des pelles, longueurs de files d'attente, taux d'occupation des zones de déchargement, et occupation éventuelle des zones tampons. Le troisième groupe capture l'état du réseau : temps de trajet estimés sur les principaux arcs, niveau de congestion, état de dégradation des routes, et éventuels incidents ou perturbations actifs. Enfin, le quatrième groupe synthétise l'état global de la mission : production réalisée, avancement vis-à-vis des objectifs, nombre de camions actifs et indicateurs d'équilibre du système comme le match factor \cite{BurakOzdemir2019, WZeng2022}.
+
+On peut ainsi écrire de manière schématique :
+
+$$
+s_t = \bigl(x_t^{truck}, x_t^{resources}, x_t^{network}, x_t^{mission}\bigr).
+$$
+
+Cette construction répond à deux exigences. D'une part, elle permet de capturer les causes principales des inefficacités observées dans les approches classiques, notamment les files d'attente et les décisions myopes. D'autre part, elle reste compatible avec une implémentation progressive : une première version pourra utiliser un vecteur tabulaire ou un tenseur agrégé, tandis qu'une version plus avancée pourra enrichir la représentation avec une structure de graphe du réseau minier.
 
 \subsection{Espace d'actions}
 \label{subsec:espace-actions}
 
-À compléter...
+L'espace d'actions, noté $\mathcal{A}$, correspond aux décisions que l'agent peut prendre lorsqu'un camion atteint un point de décision. Dans la formulation retenue, une action consiste principalement à affecter le camion à une prochaine destination admissible. Cette destination peut être une zone de chargement, une zone tampon, un point de déchargement ou, dans certains cas, un itinéraire particulier vers une destination. Selon le niveau de détail du modèle, l'action peut également inclure un choix de régime de vitesse ou de priorité de déplacement.
+
+Dans une première formulation, afin de garder un problème maîtrisable, l'action est discrète. Pour un camion vide, l'action consiste à choisir la prochaine zone de chargement admissible. Pour un camion chargé, l'action consiste à choisir le point de déchargement ou le chemin associé. Ce choix discret est cohérent avec les politiques de dispatching minières et avec les approches RL utilisées dans les problèmes de routage \cite{MohammadrezaNazari2018}. Si l'on note $A_t(s_t)$ l'ensemble des actions valides dans l'état $s_t$, alors l'agent choisit :
+
+$$
+a_t \in A_t(s_t).
+$$
+
+Les actions invalides sont exclues du choix, par exemple lorsqu'une destination est temporairement indisponible, qu'une capacité maximale est atteinte ou qu'une contrainte opérationnelle empêche l'affectation. Ce mécanisme de masquage des actions invalides est particulièrement important pour éviter un apprentissage sur des décisions irréalistes et pour maintenir une cohérence avec les contraintes du système réel.
 
 \subsection{Fonction de transition}
 \label{subsec:transition}
 
-À compléter...
+La fonction de transition décrit la manière dont l'environnement passe d'un état $s_t$ à un nouvel état $s_{t+1}$ après l'exécution d'une action $a_t$. Dans un système logistique minier, cette transition n'est pas purement déterministe. Même si l'action choisie fixe une prochaine mission, la réalisation effective de cette mission dépend de variables aléatoires : durée réelle du trajet, état de la file d'attente à l'arrivée, disponibilité de la pelle, occurrence d'une panne ou évolution de l'état des routes \cite{ShivPrakashUpadhyay2017, WZeng2022}. La dynamique du système peut donc être notée :
+
+$$
+s_{t+1} \sim P(\cdot \mid s_t, a_t),
+$$
+
+où $P$ désigne une transition probabiliste dépendant à la fois de l'état courant et de l'action sélectionnée.
+
+Dans l'implémentation visée, cette transition sera gérée par un simulateur à événements discrets. Chaque action déclenchera une séquence d'événements : déplacement du camion, mise à jour de sa position, possible entrée en file d'attente, chargement ou déchargement, puis génération d'un nouvel état de décision lorsqu'un événement critique surviendra. Ce choix permet de rester fidèle à la dynamique opérationnelle réelle tout en conservant une interface compatible avec les bibliothèques d'apprentissage par renforcement.
 
 \subsection{Fonction de récompense}
 \label{subsec:recompense}
 
-À compléter...
+La fonction de récompense est l'élément central qui relie la formalisation MDP aux objectifs industriels du problème. Elle doit encourager les décisions qui augmentent la production utile tout en pénalisant les coûts et comportements indésirables. Dans ce mémoire, la récompense instantanée est définie comme une combinaison pondérée de plusieurs composantes, inspirée à la fois des coûts opérationnels miniers et des indicateurs de performance retenus dans la littérature \cite{GuangweiLiu2019, BurakOzdemir2019, SatyamChoudhury2022}. Une formulation générique peut s'écrire :
+
+$$
+r_t = \alpha P_t - \beta F_t - \gamma W_t - \delta C_t - \epsilon U_t,
+$$
+
+où $P_t$ représente le gain productif associé à la décision, $F_t$ la consommation de carburant ou d'énergie, $W_t$ le temps d'attente induit, $C_t$ un terme lié à la congestion, et $U_t$ un terme pénalisant les déséquilibres ou violations de contraintes. Les coefficients $\alpha$, $\beta$, $\gamma$, $\delta$ et $\epsilon$ permettent d'ajuster l'importance relative de chaque objectif.
+
+Concrètement, une décision est récompensée lorsqu'elle contribue à réduire les temps improductifs, fluidifier les flux et soutenir la production, et pénalisée lorsqu'elle provoque des files d'attente inutiles, accroît la consommation spécifique ou dégrade l'équilibre global de la flotte. Ce choix permet d'aller au-delà d'un simple objectif de plus court chemin en intégrant une vision holistique des performances du système. La récompense pourra être ajustée expérimentalement au chapitre suivant, afin de vérifier qu'elle favorise bien les comportements recherchés et qu'elle reste stable lors de l'entraînement.
 
 % ============================================================================
 %      CHAPITRE 4 : MÉTHODOLOGIE ET CONCEPTION DE LA SOLUTION

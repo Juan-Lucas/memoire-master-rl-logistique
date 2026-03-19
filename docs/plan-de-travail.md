@@ -18,8 +18,7 @@
 
 * Contexte général de la logistique minière
 * Problématique de l'optimisation des flottes minières
-* Limites des systèmes de gestion de flotte existants
-* Intérêt de l'apprentissage par renforcement
+* Questions de recherche
 * Hypothèse de recherche
 * Objectifs du travail
 * Méthodologie générale adoptée
@@ -43,27 +42,13 @@
 
 ## **Chapitre 2 : État de l'art**
 
-### 2.1 Systèmes de gestion de flotte minière industriels
+### 2.1 Des heuristiques simples aux systèmes industriels
 
-    2.1.1 Caterpillar MineStar
-    2.1.2 Komatsu Jigsaw
+### 2.2 L'évolution académique : méta-heuristiques et optimisation avancée
 
-### 2.2 Optimisation du transport et du dispatching minier
+### 2.3 L'arrivée du paradigme RL
 
-    2.2.1 Problèmes de routage de véhicules (VRP)
-    2.2.2 Approches heuristiques et méta-heuristiques
-
-### 2.3 Apprentissage par renforcement
-
-    2.3.1 Fondements de l'apprentissage par renforcement
-    2.3.2 Apprentissage par renforcement profond
-
-### 2.4 Apprentissage par renforcement appliqué à la logistique
-
-    2.4.1 RL pour le routage et le transport
-    2.4.2 RL en environnements dynamiques et stochastiques
-
-### 2.5 Synthèse critique et positionnement du travail
+### 2.4 Synthèse critique et positionnement du travail
 
 ---
 

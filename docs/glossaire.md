@@ -386,3 +386,87 @@ Ce glossaire sera enrichi au fil de la rédaction. Chaque entrée comprend :
 **Définition :** Événement dont l’occurrence est aléatoire, modélisé par une probabilité.
 **Explication :** Permet de simuler l’incertitude dans l’environnement minier.
 **Exemple :** Une route peut se dégrader de façon imprévisible pendant la simulation.
+
+---
+
+## Concasseur
+**Définition :** Installation industrielle où le minerai est concassé après transport depuis la zone d’extraction.
+**Explication :** Dans la logistique minière, c’est un point de déchargement majeur qui influence fortement les files d’attente et les cycles camions.
+**Exemple :** Après chargement à la pelle, un camion transporte le minerai vers le concasseur avant de repartir vide.
+
+---
+
+## Halde
+**Définition :** Zone de dépôt des matériaux (stériles ou minerai selon l’organisation du site) en dehors du front de taille.
+**Explication :** C’est un point de destination logistique qui peut être intégré comme nœud de déchargement dans le réseau minier.
+**Exemple :** Un camion chargé en stérile est dirigé vers une halde pour déchargement.
+
+---
+
+## Graphe orienté pondéré
+**Définition :** Représentation d’un réseau par des nœuds reliés par des arcs orientés, chaque arc ayant un poids (coût, distance, temps, etc.).
+**Explication :** Ce modèle est utilisé pour représenter les routes minières avec leurs contraintes de circulation et leurs coûts de transport.
+**Exemple :** Un arc de la pelle A vers le concasseur B porte un poids de 12 minutes de trajet.
+
+---
+
+## Nœud (réseau minier)
+**Définition :** Point du réseau représentant une entité logistique (pelle, concasseur, intersection, zone tampon).
+**Explication :** Les nœuds servent à modéliser où les camions peuvent charger, décharger, attendre ou prendre une décision.
+**Exemple :** Une intersection critique du site est modélisée comme un nœud de décision.
+
+---
+
+## Arc (réseau minier)
+**Définition :** Segment orienté reliant deux nœuds dans un réseau routier modélisé.
+**Explication :** Un arc correspond à une route praticable avec des attributs comme distance, pente et état de surface.
+**Exemple :** L’arc `Pelle_1 -> Concasseur_1` a une distance de 3,2 km et une pente moyenne de 6%.
+
+---
+
+## Coefficient d’état de route
+**Définition :** Paramètre qui traduit la qualité ou la dégradation d’un segment routier à un instant donné.
+**Explication :** Plus ce coefficient se dégrade, plus les temps de trajet et la consommation peuvent augmenter.
+**Exemple :** Après forte circulation, le coefficient d’état d’un arc augmente et pénalise la vitesse moyenne.
+
+---
+
+## Résistance au roulement
+**Définition :** Force qui s’oppose au mouvement d’un véhicule due au contact roues-sol.
+**Explication :** En mine, elle dépend de l’état de route, de la charge et des conditions de surface, et affecte directement l’énergie consommée.
+**Exemple :** Sur une route dégradée, la résistance au roulement augmente et le camion consomme plus de carburant.
+
+---
+
+## Coût marginal de déplacement
+**Définition :** Coût additionnel estimé pour effectuer un déplacement supplémentaire dans un état donné.
+**Explication :** Il permet de comparer des affectations possibles en intégrant temps, carburant et congestion.
+**Exemple :** Envoyer un camion vers une pelle éloignée a un coût marginal plus élevé qu’une pelle proche non congestionnée.
+
+---
+
+## État agrégé
+**Définition :** Représentation compacte de l’environnement qui résume les informations essentielles sans tout le détail microscopique.
+**Explication :** Utilisé pour rendre l’apprentissage RL tractable quand le système réel est très complexe.
+**Exemple :** Au lieu de modéliser chaque interaction véhicule-véhicule, on utilise la longueur de file moyenne par zone.
+
+---
+
+## Décision séquentielle
+**Définition :** Processus où les décisions sont prises successivement, chaque décision influençant les suivantes.
+**Explication :** C’est le cœur des problèmes RL en logistique: une bonne décision immédiate peut être mauvaise à long terme, et inversement.
+**Exemple :** Choisir une destination qui réduit l’attente actuelle peut créer une congestion au prochain cycle.
+
+---
+
+## Masquage des actions invalides
+**Définition :** Mécanisme qui retire de l’espace d’action les choix non admissibles dans l’état courant.
+**Explication :** Il empêche l’agent de proposer des décisions irréalistes et accélère l’apprentissage.
+**Exemple :** Si une zone est saturée, l’action « envoyer camion vers cette zone » est masquée.
+
+---
+
+## Disponibilité des ressources
+**Définition :** État indiquant si un équipement (pelle, concasseur, camion) est opérationnel et prêt à être utilisé.
+**Explication :** La disponibilité influence directement l’affectation des camions et les temps d’attente.
+**Exemple :** Une pelle en maintenance est temporairement indisponible, ce qui force une réaffectation de la flotte.
