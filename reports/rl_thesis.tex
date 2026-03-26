@@ -443,8 +443,8 @@ Subtil, Souza & Méta-heuristiques & Algorithmes génétiques, recuit simulé, o
 \end{tabular}
 \end{table}
 
-\section{Conclusion}
-\label{sec:conclusion-etat-art}
+\section*{IV. Conclusion}
+\addcontentsline{toc}{section}{IV. Conclusion}
 
 Ce chapitre a retracé l’évolution des approches d’optimisation de la logistique minière, depuis les heuristiques simples jusqu’aux systèmes industriels, en passant par les méta-heuristiques et l’optimisation avancée. Il a mis en évidence les limites des méthodes traditionnelles face à la complexité, la variabilité et l’incertitude des environnements miniers. L’apprentissage par renforcement (RL) apparaît comme un paradigme innovant, capable d’apporter une adaptation dynamique, une optimisation holistique et une robustesse accrue. Ce positionnement ouvre la voie à une nouvelle génération de solutions pour la logistique minière. Le chapitre suivant présentera la modélisation du problème et les choix méthodologiques pour concevoir un agent RL adapté à la logistique minière.
 
@@ -550,6 +550,11 @@ $$
 où $P_t$ représente le gain productif associé à la décision, $F_t$ la consommation de carburant ou d'énergie, $W_t$ le temps d'attente induit, $C_t$ un terme lié à la congestion, et $U_t$ un terme pénalisant les déséquilibres ou violations de contraintes. Les coefficients $\alpha$, $\beta$, $\gamma$, $\delta$ et $\epsilon$ permettent d'ajuster l'importance relative de chaque objectif.
 
 Concrètement, une décision est récompensée lorsqu'elle contribue à réduire les temps improductifs, fluidifier les flux et soutenir la production, et pénalisée lorsqu'elle provoque des files d'attente inutiles, accroît la consommation spécifique ou dégrade l'équilibre global de la flotte. Ce choix permet d'aller au-delà d'un simple objectif de plus court chemin en intégrant une vision holistique des performances du système. La récompense pourra être ajustée expérimentalement au chapitre suivant, afin de vérifier qu'elle favorise bien les comportements recherchés et qu'elle reste stable lors de l'entraînement.
+
+\section*{IV. Conclusion}
+\addcontentsline{toc}{section}{IV. Conclusion}
+
+Ce chapitre a formalisé le problème d'optimisation de la logistique minière dans le cadre rigoureux d'un processus de décision markovien. La définition détaillée de l'espace d'états, l'espace d'actions, les fonctions de transition et de récompense offre une fondation solide pour l'apprentissage par renforcement. La modélisation proposée capture les complexités du système réel tout en restant compatible avec les algorithmes d'IA standards. Le chapitre suivant présentera l'implémentation concrète de cette solution et les résultats expérimentaux.
 
 % ============================================================================
 %        CHAPITRE 6 : ÉTUDE DE CAS ET EXPÉRIMENTATION
