@@ -30,19 +30,19 @@ Un camion suivant une règle statique peut sprinter vers sa destination pour fin
 
 L'utilisation d'un agent autonome basé sur l'Apprentissage par Renforcement permettra de dépasser les performances des systèmes heuristiques actuels en apprenant une politique de navigation adaptative qui minimise la consommation de carburant, réduit le temps d'attente improductif et s'adapte en temps réel aux conditions changeantes de l'environnement minier.
 
-Cette hypothèse sera validée par une comparaison rigoureuse entre l'agent RL et des baselines représentatives des approches actuelles (heuristiques statiques et logique "Dispatch" simplifiée).
+Cette hypothèse sera validée par une comparaison rigoureuse entre l'agent d'apprentissage par renforcement et des baselines représentatives des approches actuelles (heuristiques statiques et logique "Dispatch" simplifiée).
 
 ---
 
 ## Questions de recherche
 
-1. Comment modéliser l'environnement minier complexe (réseau routier, zones tampons, événements stochastiques) dans un cadre RL compatible avec les standards industriels ?
+1. Comment modéliser l'environnement minier complexe (réseau routier, zones tampons, événements stochastiques) dans un cadre d'apprentissage par renforcement compatible avec les standards industriels ?
 
-2. Quelle architecture d'agent RL est la plus adaptée pour apprendre une politique de navigation holistique intégrant à la fois le choix d'itinéraire et le contrôle de vitesse ?
+2. Quelle architecture d'agent d'apprentissage par renforcement est la plus adaptée pour apprendre une politique de navigation holistique intégrant à la fois le choix d'itinéraire et le contrôle de vitesse ?
 
 3. Comment concevoir une fonction de récompense qui capture fidèlement les coûts réels (carburant, usure, temps) tout en pénalisant les comportements non souhaitables ?
 
-4. Quelles métriques et protocoles d'évaluation permettront de démontrer quantitativement la supériorité de l'approche RL par rapport aux approches classiques, notamment dans des scénarios de perturbation ?
+4. Quelles métriques et protocoles d'évaluation permettront de démontrer quantitativement la supériorité de l'approche d'apprentissage par renforcement par rapport aux approches classiques, notamment dans des scénarios de perturbation ?
 
-5. Comment intégrer un tel système RL comme couche d'intelligence additionnelle dans l'écosystème des FMS existants, sans nécessiter un remplacement complet de l'infrastructure ?
+5. Comment intégrer un tel système d'apprentissage par renforcement comme couche d'intelligence additionnelle dans l'écosystème des FMS existants, sans nécessiter un remplacement complet de l'infrastructure ?
 
