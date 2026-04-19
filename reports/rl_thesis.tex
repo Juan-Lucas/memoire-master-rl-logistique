@@ -121,7 +121,7 @@
     {\large Année académique 2025--2026}
 
     \vfill
-    {\large Février, 2026}
+    {\large AVRIL, 2026}
 \end{titlepage}
 
 % --- Dédicace ---
@@ -145,10 +145,10 @@
 \chapter*{Résumé}
 \addcontentsline{toc}{chapter}{Résumé}
 
-Dans le secteur minier, l’optimisation des coûts opérationnels et la réduction de l’empreinte environnementale sont des enjeux majeurs. Les systèmes de gestion de flotte (FMS) industriels, bien qu’efficaces dans des conditions stables, montrent leurs limites face à la variabilité des conditions réelles (trafic, météo, état des routes). Ce mémoire propose de dépasser ces limites en développant un agent autonome basé sur l’apprentissage par renforcement, capable d’apprendre une politique de navigation adaptative pour optimiser simultanément l’itinéraire et le rythme de déplacement des véhicules. L’approche est validée par une comparaison rigoureuse avec des heuristiques classiques, en s’appuyant sur une modélisation réaliste de l’environnement minier et des métriques quantitatives pertinentes. Les résultats attendus sont une réduction de la consommation de carburant, des temps d’attente et une meilleure adaptation aux perturbations dynamiques.
+Dans le secteur minier, l’optimisation des coûts opérationnels et la réduction de l’empreinte environnementale sont des enjeux majeurs. Les systèmes de gestion de flotte industriels, bien qu’efficaces dans des conditions stables, montrent leurs limites face à la variabilité des conditions réelles (trafic, météo, état des routes). Ce mémoire propose de dépasser ces limites en développant un agent autonome basé sur l’apprentissage par renforcement, capable d’apprendre une politique de navigation adaptative pour optimiser simultanément l’itinéraire et le rythme de déplacement des véhicules. L’approche est validée par une comparaison rigoureuse avec des heuristiques classiques, en s’appuyant sur une modélisation réaliste de l’environnement minier et des métriques quantitatives pertinentes. Les résultats attendus sont une réduction de la consommation de carburant, des temps d’attente et une meilleure adaptation aux perturbations dynamiques.
 
 \vspace{1cm}
-\noindent\textbf{Mots-clés :} apprentissage par renforcement, logistique minière, optimisation dynamique, fleet management system, dispatching, mine à ciel ouvert.
+\noindent\textbf{Mots-clés :} Apprentissage par renforcement, logistique minière, optimisation dynamique, fleet management system, dispatching, mine à ciel ouvert.
 
 \newpage
 
@@ -156,7 +156,7 @@ Dans le secteur minier, l’optimisation des coûts opérationnels et la réduct
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-In the mining sector, optimizing operational costs and reducing environmental impact are major challenges. Industrial Fleet Management Systems (FMS), while effective under stable conditions, show limitations when facing real-world variability (traffic, weather, road conditions). This thesis proposes to overcome these limits by developing an autonomous agent based on Reinforcement Learning, able to learn an adaptive navigation policy to simultaneously optimize vehicle routing and speed. The approach is validated through rigorous comparison with classical heuristics, relying on realistic mining environment modeling and relevant quantitative metrics. Expected results include reduced fuel consumption, waiting times, and improved adaptation to dynamic disturbances.
+In the mining sector, optimizing operational costs and reducing environmental impact are major challenges. Industrial Fleet Management Systems, while effective under stable conditions, show limitations when facing real-world variability (traffic, weather, road conditions). This thesis proposes to overcome these limits by developing an autonomous agent based on Reinforcement Learning, able to learn an adaptive navigation policy to simultaneously optimize vehicle routing and speed. The approach is validated through rigorous comparison with classical heuristics, relying on realistic mining environment modeling and relevant quantitative metrics. Expected results include reduced fuel consumption, waiting times, and improved adaptation to dynamic disturbances.
 
 \vspace{1cm}
 \noindent\textbf{Keywords :} Reinforcement learning, mining logistics, dynamic optimization, fleet management system, dispatching, open-pit mining.
@@ -189,35 +189,39 @@ In the mining sector, optimizing operational costs and reducing environmental im
 \addcontentsline{toc}{chapter}{Introduction générale}
 
 
-La logistique de transport constitue l'un des piliers financiers et environnementaux les plus critiques de l'industrie minière moderne. Bien que son optimisation puisse générer des économies se chiffrant en millions de dollars, elle représente souvent une part prépondérante, pouvant atteindre 60\%, des coûts opérationnels totaux d'une mine à ciel ouvert \cite{Afrapoli2017}. C’est dans ce cadre que ce mémoire analyse l’apport de l’apprentissage par renforcement pour l’optimisation dynamique de la logistique minière. Malgré l’adoption généralisée des systèmes de gestion de flotte (FMS), les exploitations minières se heurtent à la complexité croissante et à la variabilité des environnements réels \cite{AlexandraMNewman2010, Afrapoli2017}. La logistique minière englobe l’ensemble des opérations visant à assurer le transport efficace des matériaux, du site d’extraction jusqu’aux zones de traitement ou de stockage. Dans ce contexte, la gestion des flux de camions, la coordination avec les équipements de chargement et le respect des contraintes de production sont déterminants pour la rentabilité et la durabilité \cite{Afrapoli2017}. L’optimisation des flottes consiste à affecter dynamiquement les camions aux tâches de chargement, transport et déchargement tout en minimisant les temps d’attente, la consommation de carburant et l’usure des équipements \cite{Alarie2002}. Cette problématique est difficile en raison de la variabilité des conditions réelles (trafic, météo, état des routes), de la multiplicité des contraintes opérationnelles et de la nécessité d’adapter les décisions en temps réel pour maintenir la productivité globale \cite{MarceloMorettiFioroni2008}. Les approches industrielles dominantes reposent encore largement sur des heuristiques statiques et des règles prédéfinies \cite{Alarie2002} qui, bien qu’efficaces dans des contextes stables, montrent des limites marquées face à l’incertitude du terrain \cite{ShivPrakashUpadhyay2017}. Elles peinent à anticiper les congestions, à réagir aux perturbations et à optimiser la flotte de manière holistique, ce qui entraîne des pertes d’efficacité et une sous-utilisation des ressources \cite{MiladAbolghasemian2020, BurakOzdemir2019}. Face à ces limites, l’objectif de ce mémoire est de concevoir un agent autonome capable d’adapter ses décisions en temps réel afin de réduire les coûts, améliorer l’efficacité opérationnelle et limiter l’impact environnemental.
+La logistique de transport constitue l'un des piliers financiers et environnementaux les plus critiques de l'industrie minière moderne. Bien que son optimisation puisse générer des économies se chiffrant en millions de dollars, elle représente souvent une part prépondérante, pouvant atteindre 60\%, des coûts opérationnels totaux d'une mine à ciel ouvert \cite{Afrapoli2017}. C’est dans ce cadre que ce mémoire analyse l’apport de l’apprentissage par renforcement pour l’optimisation dynamique de la logistique minière. Malgré l’adoption généralisée des systèmes de gestion de flotte, les exploitations minières se heurtent à la complexité croissante et à la variabilité des environnements réels \cite{AlexandraMNewman2010, Afrapoli2017}. La logistique minière englobe l’ensemble des opérations visant à assurer le transport efficace des matériaux, du site d’extraction jusqu’aux zones de traitement ou de stockage. Dans ce contexte, la gestion des flux de camions, la coordination avec les équipements de chargement et le respect des contraintes de production sont déterminants pour la rentabilité et la durabilité \cite{Afrapoli2017}. L’optimisation des flottes consiste à affecter dynamiquement les camions aux tâches de chargement, transport et déchargement tout en minimisant les temps d’attente, la consommation de carburant et l’usure des équipements \cite{Alarie2002}. Cette problématique est difficile en raison de la variabilité des conditions réelles (trafic, météo, état des routes), de la multiplicité des contraintes opérationnelles et de la nécessité d’adapter les décisions en temps réel pour maintenir la productivité globale \cite{MarceloMorettiFioroni2008}. Les approches industrielles dominantes reposent encore largement sur des heuristiques statiques et des règles prédéfinies \cite{Alarie2002} qui, bien qu’efficaces dans des contextes stables, montrent des limites marquées face à l’incertitude du terrain \cite{ShivPrakashUpadhyay2017}. Elles peinent à anticiper les congestions, à réagir aux perturbations et à optimiser la flotte de manière holistique, ce qui entraîne des pertes d’efficacité et une sous-utilisation des ressources \cite{MiladAbolghasemian2020, BurakOzdemir2019}. Face à ces limites, l’objectif de ce mémoire est de concevoir un agent autonome capable d’adapter ses décisions en temps réel afin de réduire les coûts, améliorer l’efficacité opérationnelle et limiter l’impact environnemental.
 
 L’étude s’articule autour des questions suivantes :
-\begin{enumerate}
-    \item Comment modéliser l'environnement minier complexe (réseau routier, zones tampons, événements stochastiques) dans un cadre d'apprentissage par renforcement compatible avec les standards industriels ? (Chapitre 3)
-    \item Quelle architecture d'agent d'apprentissage par renforcement est la plus adaptée pour apprendre une politique de navigation holistique intégrant à la fois le choix d'itinéraire et le contrôle de vitesse ? (Chapitre 4)
-    \item Comment concevoir une fonction de récompense qui capture fidèlement les coûts réels (carburant, usure, temps) tout en pénalisant les comportements non souhaitables ? (Chapitre 4)
-    \item Quelles métriques et quels protocoles d'évaluation permettront de démontrer quantitativement la supériorité de l'approche d'apprentissage par renforcement par rapport aux approches classiques, notamment dans des scénarios de perturbation ? (Chapitre 5 et Chapitre 6)
-    \item Comment intégrer un tel système d'apprentissage par renforcement comme couche d'intelligence additionnelle dans l'écosystème des FMS existants, sans nécessiter un remplacement complet de l'infrastructure ? (Chapitre 6)
-\end{enumerate}
+
+    Q1 : Comment modéliser l'environnement minier complexe (réseau routier, zones tampons, événements stochastiques) dans un cadre d'apprentissage par renforcement compatible avec les standards industriels ?
+
+    Q2 : Quelle architecture d'agent d'apprentissage par renforcement est la plus adaptée pour apprendre une politique de navigation holistique intégrant à la fois le choix d'itinéraire et le contrôle de vitesse ?
+
+    Q3 : Comment concevoir une fonction de récompense qui capture fidèlement les coûts réels (carburant, usure, temps) tout en pénalisant les comportements non souhaitables ?
+
+    Q4 : Quelles métriques et quels protocoles d'évaluation permettront de démontrer quantitativement la supériorité de l'approche d'apprentissage par renforcement par rapport aux approches classiques, notamment dans des scénarios de perturbation ?
+
+    Q5 : Comment intégrer un tel système d'apprentissage par renforcement comme couche d'intelligence additionnelle dans l'écosystème des systèmes de gestion de flotte existants, sans nécessiter un remplacement complet de l'infrastructure ?
+
+Les réponses détaillées à ces problématiques seront développées tout au long des chapitres suivants, à travers la modélisation, l'expérimentation et l'analyse des résultats obtenus.
 
 L’hypothèse centrale est qu’un agent autonome basé sur l’apprentissage par renforcement peut surpasser les approches heuristiques classiques pour l’optimisation dynamique de la logistique minière, en réduisant la consommation de carburant, les temps d’attente et en améliorant l’adaptabilité aux perturbations \cite{SatyamChoudhury2022, WZeng2022, MohammadrezaNazari2018}. Les objectifs principaux de ce travail sont les suivants :
 \begin{itemize}
-    \item Concevoir un environnement de simulation réaliste pour la logistique minière à ciel ouvert \cite{AlexandraMNewman2010, Afrapoli2017} ;
-    \item Développer un agent d’apprentissage par renforcement capable d’optimiser les décisions de dispatching et de routage \cite{MohammadrezaNazari2018, SatyamChoudhury2022} ;
-    \item Comparer les performances de l’agent d'apprentissage par renforcement avec celles des heuristiques classiques sur des scénarios variés \cite{Alarie2002, BurakOzdemir2019} ;
-    \item Analyser l’impact de l’approche d'apprentissage par renforcement sur les indicateurs clés (coût, temps, consommation, robustesse) \cite{WZeng2022, ShivPrakashUpadhyay2017}.
+    \item Concevoir un environnement de simulation réaliste pour la logistique minière à ciel ouvert ;
+    \item Développer un agent d’apprentissage par renforcement capable d’optimiser les décisions de dispatching et de routage ;
+    \item Comparer les performances de l’agent d'apprentissage par renforcement avec celles des heuristiques classiques sur des scénarios variés ;
+    \item Analyser l’impact de l’approche d'apprentissage par renforcement sur les indicateurs clés (coût, temps, consommation, robustesse).
 \end{itemize}
 
-La méthodologie suivie s’appuie sur une adaptation du cadre CRISP-DM au contexte de l'apprentissage par renforcement : compréhension du problème et des données \cite{AlexandraMNewman2010}, modélisation de l’environnement, conception et entraînement de l’agent, expérimentation et analyse comparative \cite{MohammadrezaNazari2018, SatyamChoudhury2022}. Chaque étape est guidée par une validation rigoureuse des hypothèses et une évaluation quantitative des résultats. Le mémoire est structuré comme suit :
+La méthodologie suivie s’appuie sur une adaptation du cadre CRISP-DM au contexte de l'apprentissage par renforcement : compréhension du problème et des données \cite{AlexandraMNewman2010}, modélisation de l’environnement, conception et entraînement de l’agent, expérimentation et analyse comparative \cite{MohammadrezaNazari2018, SatyamChoudhury2022}. Chaque étape est guidée par une validation rigoureuse des hypothèses et une évaluation quantitative des résultats. Ce mémoire est organisé en sept chapitres :
 \begin{itemize}
-    \item L’introduction générale présente le contexte, la problématique et les objectifs du travail ;
-    \item Le chapitre 1 détaille le contexte général et la problématique de la logistique minière ;
-    \item Le chapitre 2 propose un état de l’art des approches existantes et de l'apprentissage par renforcement appliqué à la logistique ;
-    \item Le chapitre 3 décrit la modélisation du problème et les hypothèses retenues ;
-    \item Le chapitre 4 expose la méthodologie et la conception de la solution d'apprentissage par renforcement ;
-    \item Le chapitre 5 présente l’implémentation, les protocoles expérimentaux et les résultats obtenus ;
-    \item Le chapitre 6 analyse et discute les résultats ;
-    \item Enfin, la conclusion générale synthétise les apports et ouvre sur des perspectives futures.
+    \item Le premier chapitre présente le contexte général de la logistique minière et ses concepts fondamentaux, afin de poser le cadre métier et les notions clés mobilisées dans ce mémoire.
+    \item Le deuxième chapitre propose un état de l’art des approches d’optimisation existantes, des heuristiques classiques aux méthodes avancées, et met en évidence le positionnement des approches basées sur l'apprentissage par renforcement.
+    \item Le troisième chapitre détaille la modélisation du problème de transport minier, les hypothèses retenues et la formulation du système dans un cadre de décision séquentielle.
+    \item Le quatrième chapitre décrit la méthodologie adoptée et la conception de la solution proposée, en précisant les choix de modélisation, d’architecture et d’apprentissage.
+    \item Le cinquième chapitre présente l’implémentation, le protocole expérimental et les résultats obtenus sur les scénarios étudiés.
+    \item Le sixième chapitre analyse et discute les résultats, en évaluant les performances, les limites et la robustesse de l’approche.
+    \item Ce mémoire est clôturé par un dernier chapitre de conclusion générale, qui synthétise les principaux apports et ouvre sur des perspectives de recherche et d’application.
 \end{itemize}
 
 \newpage
@@ -228,7 +232,9 @@ La méthodologie suivie s’appuie sur une adaptation du cadre CRISP-DM au conte
 \chapter{Concepts fondamentaux de la logistique minière}
 \label{chap:contexte}
 
-Ce chapitre présente le vocabulaire et les notions structurantes mobilisés dans tout le mémoire. L'objectif est d'établir une base conceptuelle homogène avant l'analyse de la littérature et la modélisation.
+\section*{Introduction}
+
+La compréhension rigoureuse de la logistique minière nécessite un cadre conceptuel clair, capable d'articuler les dimensions opérationnelles, décisionnelles et méthodologiques du problème étudié. Dans le contexte du transport en mine à ciel ouvert, la précision des notions utilisées conditionne la qualité de la modélisation, l'interprétation des résultats et la pertinence des choix d'optimisation.
 
 \section{Logistique minière et transport en mine à ciel ouvert}
 \label{sec:logistique-miniere}
@@ -237,25 +243,25 @@ La logistique minière regroupe l'ensemble des activités de planification, d'or
 
 Les concepts fondamentaux de ce système sont les suivants :
 \begin{itemize}
-    \item \textbf{Mine à ciel ouvert :} exploitation dans laquelle le minerai est extrait par gradins successifs depuis la surface.
-    \item \textbf{Système camion-pelle :} organisation de production où les pelles/chargeuses alimentent des camions qui assurent le transport du matériau.
-    \item \textbf{Cycle camion-pelle :} séquence \textit{affectation \textrightarrow chargement \textrightarrow transport \textrightarrow déchargement \textrightarrow retour}.
-    \item \textbf{Point de chargement :} zone de prélèvement du matériau (pelle, chargeuse, front de taille).
-    \item \textbf{Point de déchargement :} destination de livraison (concasseur, halde, stock intermédiaire).
-    \item \textbf{Zone tampon :} espace de régulation des flux où les camions attendent avant affectation ou service.
+    \item \textbf{Mine à ciel ouvert :} Exploitation dans laquelle le minerai est extrait par gradins successifs depuis la surface.
+    \item \textbf{Système camion-pelle :} Organisation de production où les pelles/chargeuses alimentent des camions qui assurent le transport du matériau.
+    \item \textbf{Cycle camion-pelle :} Séquence \textit{affectation \textrightarrow chargement \textrightarrow transport \textrightarrow déchargement \textrightarrow retour}.
+    \item \textbf{Point de chargement :} Zone de prélèvement du matériau (pelle, chargeuse, front de taille).
+    \item \textbf{Point de déchargement :} Destination de livraison (concasseur, halde, stock intermédiaire).
+    \item \textbf{Zone tampon :} Espace de régulation des flux où les camions attendent avant affectation ou service.
 \end{itemize}
 
-\section{Systèmes de gestion de flotte minière (FMS)}
+\section{Systèmes de gestion de flotte minière}
 \label{sec:fms}
 
-Les Systèmes de Gestion de Flotte (FMS) sont des plateformes de supervision et d'aide à la décision qui orchestrent les opérations de transport en temps réel. Leur rôle est d'assurer la coordination entre ressources mobiles (camions) et ressources fixes (pelles, points de déchargement), tout en respectant les contraintes de production et de sécurité \cite{Afrapoli2017, Alarie2002}.
+Les systèmes de gestion de flotte sont des plateformes de supervision et d'aide à la décision qui orchestrent les opérations de transport en temps réel. Leur rôle est d'assurer la coordination entre ressources mobiles (camions) et ressources fixes (pelles, points de déchargement), tout en respectant les contraintes de production et de sécurité \cite{Afrapoli2017, Alarie2002}.
 
 Dans ce cadre, les notions de base sont :
 \begin{itemize}
-    \item \textbf{Disponibilité des ressources :} capacité effective d'un équipement à réaliser une tâche à un instant donné.
-    \item \textbf{Affectation :} décision d'envoyer un camion vers une destination donnée selon les priorités opérationnelles.
-    \item \textbf{File d'attente :} ensemble des camions en attente de service à une ressource contrainte.
-    \item \textbf{Synchronisation camion-pelle :} ajustement des arrivées de camions au rythme de chargement pour réduire l'attente improductive.
+    \item \textbf{Disponibilité des ressources :} Capacité effective d'un équipement à réaliser une tâche à un instant donné.
+    \item \textbf{Affectation :} Décision d'envoyer un camion vers une destination donnée selon les priorités opérationnelles.
+    \item \textbf{File d'attente :} Ensemble des camions en attente de service à une ressource contrainte.
+    \item \textbf{Synchronisation camion-pelle :} Ajustement des arrivées de camions au rythme de chargement pour réduire l'attente improductive.
 \end{itemize}
 
 \section{Concepts de dispatching et de routage minier}
@@ -265,12 +271,12 @@ Le dispatching et le routage constituent les deux leviers décisionnels centraux
 
 Leur formalisation conceptuelle s'appuie sur les éléments suivants :
 \begin{itemize}
-    \item \textbf{Dispatching :} règle d'affectation dynamique des camions aux points de chargement ou déchargement.
-    \item \textbf{Routage :} choix du chemin entre deux nœuds en fonction de critères de coût, de temps et de risque.
-    \item \textbf{Réseau routier minier :} structure de transport du site, modélisable sous forme de graphe orienté pondéré.
-    \item \textbf{Nœud :} entité du réseau (pelle, concasseur, halte, intersection, zone tampon).
-    \item \textbf{Arc :} segment orienté reliant deux nœuds et porteur d'attributs (distance, pente, état de route).
-    \item \textbf{Congestion :} saturation locale des capacités de service provoquant une hausse des temps d'attente.
+    \item \textbf{Dispatching :} Règle d'affectation dynamique des camions aux points de chargement ou déchargement.
+    \item \textbf{Routage :} Choix du chemin entre deux nœuds en fonction de critères de coût, de temps et de risque.
+    \item \textbf{Réseau routier minier :} Structure de transport du site, modélisable sous forme de graphe orienté pondéré.
+    \item \textbf{Nœud :} Entité du réseau (pelle, concasseur, halte, intersection, zone tampon).
+    \item \textbf{Arc :} Segment orienté reliant deux nœuds et porteur d'attributs (distance, pente, état de route).
+    \item \textbf{Congestion :} Saturation locale des capacités de service provoquant une hausse des temps d'attente.
 \end{itemize}
 
 \section{Principes opérationnels et contraintes du transport minier}
@@ -280,33 +286,37 @@ Le transport minier est gouverné par des contraintes opérationnelles, énergé
 
 Les concepts fondamentaux associés sont :
 \begin{itemize}
-    \item \textbf{Temps de cycle :} durée totale d'un cycle camion-pelle.
-    \item \textbf{Temps d'attente :} temps improductif passé en file ou en attente de ressource.
-    \item \textbf{Taux d'utilisation :} part du temps pendant lequel un équipement est effectivement productif.
-    \item \textbf{Match Factor :} indicateur d'équilibre entre capacité de transport et capacité de chargement.
-    \item \textbf{Consommation spécifique :} litres de carburant consommés par tonne transportée.
-    \item \textbf{Coût opérationnel par tonne :} coût total de transport rapporté au tonnage utile.
+    \item \textbf{Temps de cycle :} Durée totale d'un cycle camion-pelle.
+    \item \textbf{Temps d'attente :} Temps improductif passé en file ou en attente de ressource.
+    \item \textbf{Taux d'utilisation :} Part du temps pendant lequel un équipement est effectivement productif.
+    \item \textbf{Match Factor :} Indicateur d'équilibre entre capacité de transport et capacité de chargement.
+    \item \textbf{Consommation spécifique :} Litres de carburant consommés par tonne transportée.
+    \item \textbf{Coût opérationnel par tonne :} Coût total de transport rapporté au tonnage utile.
 \end{itemize}
 
-Enfin, la base conceptuelle du sujet inclut aussi le cadre décisionnel séquentiel de l'Apprentissage par Renforcement :
+Enfin, la base conceptuelle du sujet inclut aussi le cadre décisionnel séquentiel de l'apprentissage par renforcement :
 \begin{itemize}
-    \item \textbf{Processus de décision markovien (MDP) :} formalisation d'un problème séquentiel par un quadruplet \((S, A, P, R)\).
-    \item \textbf{État :} représentation synthétique de la situation opérationnelle observée.
-    \item \textbf{Action :} décision admissible appliquée à l'état courant.
-    \item \textbf{Récompense :} signal scalaire traduisant la qualité immédiate d'une décision au regard des objectifs métier.
-    \item \textbf{Politique :} règle de décision associant des actions aux états.
+    \item \textbf{Processus de décision markovien (MDP) :} Formalisation d'un problème séquentiel par un quadruplet \((S, A, P, R)\).
+    \item \textbf{État :} Représentation synthétique de la situation opérationnelle observée.
+    \item \textbf{Action :} Décision admissible appliquée à l'état courant.
+    \item \textbf{Récompense :} Signal scalaire traduisant la qualité immédiate d'une décision au regard des objectifs métier.
+    \item \textbf{Politique :} Règle de décision associant des actions aux états.
 \end{itemize}
 
-\section{Conclusion partielle et transition}
+\section{Conclusion}
 \label{sec:conclusion-contexte}
 
-Ce chapitre a posé un socle conceptuel complet pour le sujet traité, en clarifiant les notions métier de la logistique minière, les mécanismes opérationnels du système camion-pelle, les principes de dispatching et de routage, les contraintes et indicateurs clés de performance, ainsi que le cadre décisionnel séquentiel mobilisé par l'Apprentissage par Renforcement. Cette base terminologique et conceptuelle sert de référence pour la revue de littérature du chapitre suivant.
+Ce chapitre a posé un socle conceptuel complet pour le sujet traité, en clarifiant les notions métier de la logistique minière, les mécanismes opérationnels du système camion-pelle, les principes de dispatching et de routage, les contraintes et indicateurs clés de performance, ainsi que le cadre décisionnel séquentiel mobilisé par l'apprentissage par renforcement. Cette base terminologique et conceptuelle sert de référence pour la revue de littérature du chapitre suivant.
 
 % ============================================================================ 
 %        CHAPITRE 2 : ÉTAT DE L'ART DES MÉTHODES D'OPTIMISATION 
 % ============================================================================ 
 \chapter{État de l'art des méthodes d'optimisation} 
 \label{chap:etat-art} 
+
+\section*{Introduction}
+
+L'optimisation de la logistique minière a connu une évolution progressive, portée par des approches de plus en plus élaborées pour répondre à la complexité des environnements d'exploitation. L'examen critique des travaux existants est indispensable pour identifier les acquis de la littérature, mais aussi les limites qui freinent encore une optimisation robuste et dynamique en conditions réelles.
 
 
 % 2.1 Heuristiques classiques
@@ -340,7 +350,9 @@ Face aux limites persistantes de ces approches, un nouveau paradigme issu de l�
 
 \label{sec:synthese-etat-art}
 
-La littérature montre que, malgré les avancées des Systèmes de Gestion de Flotte (FMS) industriels et des heuristiques, l’optimisation globale et dynamique de la flotte minière reste un défi \cite{MarceloMorettiFioroni2008, BurakOzdemir2019}. Les approches d'apprentissage par renforcement offrent un potentiel inédit pour dépasser ces limites, en permettant une adaptation en temps réel, une optimisation holistique et une meilleure gestion de l’incertitude \cite{MohammadrezaNazari2018, SatyamChoudhury2022, WZeng2022}. Ce mémoire s’inscrit dans cette dynamique, en proposant une solution d'apprentissage par renforcement adaptée aux contraintes et aux spécificités de la logistique minière moderne.
+La littérature montre que, malgré les avancées des systèmes de gestion de flotte industriels et des heuristiques, l’optimisation globale et dynamique de la flotte minière reste un défi \cite{MarceloMorettiFioroni2008, BurakOzdemir2019}. Les approches d'apprentissage par renforcement offrent un potentiel inédit pour dépasser ces limites, en permettant une adaptation en temps réel, une optimisation holistique et une meilleure gestion de l’incertitude \cite{MohammadrezaNazari2018, SatyamChoudhury2022, WZeng2022}. Ce mémoire s’inscrit dans cette dynamique, en proposant une solution d'apprentissage par renforcement adaptée aux contraintes et aux spécificités de la logistique minière moderne.
+
+L'analyse de la littérature permet de classifier les travaux existants en trois catégories majeures. Premièrement, les heuristiques classiques, basées sur des règles métier simples, offrent une solution rapide mais manquent de flexibilité. Deuxièmement, les méta-heuristiques (algorithmes génétiques, colonies de fourmis) permettent de traiter des problèmes plus complexes, au prix d'une puissance de calcul plus élevée. Enfin, les approches par apprentissage par renforcement émergent comme une solution prometteuse pour une optimisation dynamique et robuste face aux aléas. Le tableau 2.1 synthétise les opportunités offertes par cette dernière famille d'approches par rapport aux méthodes conventionnelles.
 
 \begin{table}[H]
 \centering
@@ -365,6 +377,8 @@ La littérature montre que, malgré les avancées des Systèmes de Gestion de Fl
 \end{table}
 
 
+Afin de positionner précisément notre contribution, il convient d'examiner les apports et les limites des articles scientifiques les plus significatifs du domaine. Ces travaux couvrent aussi bien l'optimisation des flux industriels que l'application d'algorithmes d'apprentissage sur des problèmes de routage. Cette revue critique, synthétisée dans le tableau 2.2, met en évidence le besoin d'une approche holistique intégrant la variabilité stochastique du terrain.
+
 % Tableau de synthèse des articles considérés (format harmonisé)
 \begin{table}[H]
 \centering
@@ -374,9 +388,9 @@ La littérature montre que, malgré les avancées des Systèmes de Gestion de Fl
 \hline
 \textbf{Référence} & \textbf{Domaine / Approche} & \textbf{Principales contributions / Limites} \\
 \hline
-\cite{AlexandraMNewman2010} & FMS, optimisation minière & Modélisation des flux, contraintes industrielles, limites des heuristiques \\
+\cite{AlexandraMNewman2010} & systèmes de gestion de flotte, optimisation minière & Modélisation des flux, contraintes industrielles, limites des heuristiques \\
 \hline
-\cite{Afrapoli2017} & FMS industriels & Suivi en temps réel, gestion des files, limites en environnement dynamique \\
+\cite{Afrapoli2017} & systèmes de gestion de flotte industriels & Suivi en temps réel, gestion des files, limites en environnement dynamique \\
 \hline
 \cite{Alarie2002} & Heuristiques classiques & Règles de dispatching, efficacité en conditions stables, manque d’adaptabilité \\
 \hline
@@ -399,42 +413,250 @@ La littérature montre que, malgré les avancées des Systèmes de Gestion de Fl
 \end{tabular}
 \end{table}
 
-\section{Conclusion partielle}
+\section{Conclusion}
 \label{sec:conclusion-etat-art}
 
-Ce chapitre a retracé l’évolution des approches d’optimisation de la logistique minière, depuis les heuristiques simples jusqu’aux systèmes industriels, en passant par les méta-heuristiques et l’optimisation avancée. Il a mis en évidence les limites des méthodes traditionnelles face à la complexité, la variabilité et l’incertitude des environnements miniers. L'apprentissage par renforcement apparaît comme un paradigme innovant, capable d’apporter une adaptation dynamique, une optimisation holistique et une robustesse accrue. Ce positionnement ouvre la voie à une nouvelle génération de solutions pour la logistique minière. Le chapitre suivant présentera la modélisation du problème et les choix méthodologiques pour concevoir un agent d'apprentissage par renforcement adapté à la logistique minière.
+Ce chapitre a retracé l’évolution des approches d’optimisation de la logistique minière, depuis les heuristiques simples jusqu’aux systèmes industriels, en passant par les méta-heuristiques et l’optimisation avancée. Il a mis en évidence les limites des méthodes traditionnelles face à la complexité, la variabilité et l’incertitude des environnements miniers. L'apprentissage par renforcement apparaît comme un paradigme innovant, capable d’apporter une adaptation dynamique, une optimisation holistique et une robustesse accrue. Ce positionnement ouvre la voie à une nouvelle génération de solutions pour la logistique minière. Le chapitre suivant présentera la modélisation du problème de transport minier et les choix méthodologiques pour concevoir un agent d'apprentissage par renforcement adapté à la logistique minière.
 
 % ============================================================================
 %              CHAPITRE 3 : MODÉLISATION DU PROBLÈME
 % ============================================================================
-\chapter{Modélisation du problème}
+\chapter{Modélisation du problème de transport minier}
 \label{chap:modelisation}
+
+\section*{Introduction}
+
+La modélisation du problème de transport minier constitue une étape centrale pour transformer une problématique industrielle complexe en un cadre formel exploitable par des méthodes d'optimisation et d'apprentissage. Dans le cas du transport minier, cette formalisation doit intégrer à la fois la structure du réseau, les contraintes opérationnelles et la variabilité des conditions de terrain, conformément aux analyses critiques récentes sur l'évolution des systèmes de gestion de flotte \cite{Afrapoli2017, HazrathosseiniAfrapoli2024}.
 
 \section{Description du système de transport minier}
 \label{sec:description-systeme}
 
-À compléter...
+Le système de transport minier considéré dans ce mémoire repose sur le modèle classique camion-pelle, largement déployé dans les mines à ciel ouvert \cite{MohanMunirathinam1994, Alarie2002, AlexandraMNewman2010}. Ce système comprend les éléments suivants :
+
+\begin{itemize}
+    \item \textbf{Ressources d'extraction} : Des pelles (excavatrices) positionnées à des points de chargement fixes ou dynamiques, responsables du chargement du matériel brut extrait.
+    \item \textbf{Flotte de transport} : Un ensemble de camions hétérogènes circulant entre les points de chargement et les points de décharge (concasseurs, stockage, etc.).
+    \item \textbf{Réseau routier} : Une infrastructure de transport composée de routes principales et secondaires, avec des points de chargement, de décharge et des jonctions.
+    \item \textbf{Opérateurs humains} : Conducteurs de camion et opérateurs de pelle qui exécutent les décisions du système de dispatching.
+    \item \textbf{Variabilité environnementale} : Conditions météorologiques, état des routes, dégradation du matériel et autres aléas affectant les temps de cycle.
+\end{itemize}
+
+Le fonctionnement du système repose sur un cycle répétitif : (1) assignation d'un camion à une pelle par le système de dispatching ; (2) transport du camion vers la pelle ; (3) attente à la queue de chargement ; (4) chargement du matériau ; (5) transport vers un point de décharge ; (6) décharge ; (7) retour au point de chargement. L'objectif opérationnel est de maximiser le tonnage transporté par unité de temps (rendement) tout en respectant les contraintes de sécurité, de maintenance et de disponibilité des ressources, y compris dans des contextes intégrant des flottes partiellement ou totalement autonomes \cite{MehrnazMohtasham2023, PeiYangGong2026}.
+
+Le défi de modélisation réside dans la capture simultanée de la dynamique des flux, des interactions camion-pelle, des variations stochastiques des temps de cycle et des décisions de dispatching qui influencent globalement le rendement du système.
 
 \section{Hypothèses et contraintes de modélisation}
 \label{sec:hypotheses}
 
-À compléter...
+La modélisation du problème complexe de la logistique minière nécessite un ensemble d'hypothèses simplificatrices pour rendre le système traitable par des algorithmes d'apprentissage par renforcement. Ces hypothèses sont justifiées par les besoins d'efficacité computationnelle et de convergence algorithmique, tout en préservant les éléments essentiels du problème réel, dans une logique cohérente avec les approches actor-critic appliquées aux complexes miniers et les cadres de simulation-optimisation opérationnelle \cite{Subtil2011, deCarvalhoDimitrakopoulos2023}.
+
+\subsubsection*{Hypothèses de modélisation}
+
+\begin{itemize}
+    \item \textbf{Horizon temporel} : Le système est modélisé en temps discret avec des pas de décision réguliers (p.ex., une décision tous les 5 à 10 secondes en temps réel, ou à chaque événement dans un simulateur événementiel).
+    
+    \item \textbf{Stationnarité à court terme} : On suppose que la distribution des temps de cycle reste stable sur des horizons court (quelques heures), permettant l'apprentissage avec des données récentes.
+    
+    \item \textbf{Observation incomplète} : L'agent ne connaît pas parfaitement l'état complet du système (files d'attente, états des routes), mais dispose d'observations bruitées reflétant les informations disponibles en condition réelle.
+    
+    \item \textbf{Camions homogènes} : Bien que les flottes réelles soient hétérogènes, on regroupe les camions par classe de capacité pour réduire la dimensionnalité de l'espace d'état, une simplification couramment mobilisée face aux contraintes de dispatching de flottes multi-capacités \cite{Ahangaran2012}.
+    
+    \item \textbf{Points de chargement et décharge fixes} : Les emplacements de pelle et les destinations de décharge sont fixes pendant une session d'apprentissage.
+    
+    \item \textbf{Pas de défaillance majeure} : Le système opère sans défaillance critique des pelles ou des routes principales pendant la durée de l'épisode d'apprentissage.
+\end{itemize}
+
+\subsubsection*{Contraintes opérationnelles}
+
+Le modèle intègre un ensemble de contraintes reflétant les réalités opérationnelles :
+
+\begin{itemize}
+    \item \textbf{Capacité des pelles} : Chaque pelle peut accueillir un nombre limité de camions en file d'attente avant que la congestion ne cause une pénalité, ce qui rejoint les modèles intégrant explicitement l'effet des files et de l'inactivité des pelles \cite{ChungHTa2013}.
+    
+    \item \textbf{Disponibilité} : Les pelles ont des périodes de maintenance, les routes peuvent être fermées temporairement, réduisant les options de dispatching.
+    
+    \item \textbf{Distance et temps de trajet} : Les trajets ne sont jamais instantanés ; on utilise des matrices de temps calculées à partir du réseau routier.
+    
+    \item \textbf{Charge utile} : Les camions ont une capacité maximale et doivent être alimentés avec des matériaux compatibles (un camion ne peut pas être assigné à une pelle produisant un type de minerai que sa destination ne peut pas traiter).
+    
+    \item \textbf{Préemption limitée} : Les décisions de dispatching ne peuvent pas être annulées une fois qu'un camion est en route (pas de retournement à mi-parcours).
+\end{itemize}
+
+Ces hypothèses et contraintes délimitent l'espace d'exploration de l'algorithme d'apprentissage par renforcement, assurant que les politiques apprises restent réalistes et applicables en production.
 
 \section{Modélisation du réseau routier minier}
 \label{sec:reseau-routier}
 
-À compléter...
+Le réseau routier minier constitue l'infrastructure d'interaction entre les différentes ressources du système. Sa modélisation est cruciale pour que les décisions de dispatching reflètent les réalités géographiques et logistiques du site.
 
-\section{Formulation du problème en tant que processus de décision markovien (MDP)}
+\subsubsection*{Représentation graphique du réseau}
+
+Le réseau routier est modélisé comme un graphe pondéré $G = (V, E)$ où :
+\begin{itemize}
+    \item $V$ est l'ensemble des nœuds représentant les points d'intérêt : points de chargement (pelles), points de décharge (concasseurs, stockage), jonctions et intersections.
+    \item $E$ est l'ensemble des arêtes représentant les connexions routières entre nœuds.
+    \item Chaque arête $(u, v)$ est pondérée par la distance euclidienne, le temps de trajet ou un coût composé.
+\end{itemize}
+
+Ce graphe peut être orienté (sens uniques, routes à sens limité) ou non-orienté (routes bidirectionnelles) selon la configuration du site.
+
+\subsubsection*{Matrices de temps et matrices de coût}
+
+À partir du graphe, on calcule deux matrices fondamentales :
+
+\begin{itemize}
+    \item \textbf{Matrice de temps $T$} : $T_{ij}$ est le temps de trajet moyen (en minutes) du nœud $i$ au nœud $j$, calculé via l'algorithme de plus court chemin (Dijkstra ou Floyd-Warshall).
+    
+    \item \textbf{Matrice de coût $C$} : $C_{ij}$ agrège plusieurs dimensions : distance, temps de trajet, consommation de carburant, usure du véhicule. On peut utiliser une combinaison linéaire pondérée :
+    \begin{equation}
+        C_{ij} = \alpha \cdot T_{ij} + \beta \cdot D_{ij} + \gamma \cdot E_{ij}
+    \end{equation}
+    où $D_{ij}$ est la distance, $E_{ij}$ est une estimation de l'usure ou du coût énergétique, et $\alpha, \beta, \gamma$ sont des poids de pondération.
+\end{itemize}
+
+\subsubsection*{Intégration de la variabilité stochastique}
+
+Le réseau réel n'est pas déterministe : les temps de trajet varient en fonction de l'état de la route, des conditions météorologiques, et de la charge du camion. On modélise cette variabilité par :
+
+\begin{equation}
+    T_{ij}(t) = \bar{T}_{ij} + \epsilon_{ij}(t)
+\end{equation}
+
+où $\bar{T}_{ij}$ est le temps moyen et $\epsilon_{ij}(t) \sim \mathcal{N}(0, \sigma_{ij}^2)$ est un bruit gaussien reflétant la variabilité observée.
+
+Cette modélisation stochastique est essentielle pour évaluer la robustesse des politiques apprises, car elle oblige l'agent à anticiper les variations plutôt que de se fier à des temps de trajet figés. Cette exigence de robustesse est également mise en avant dans les travaux récents de RL multi-agent appliqués au dispatching minier \cite{Zhao2025HierarchicalMARL}.
+
+\section{Formulation du problème en tant que processus de décision markovien}
 \label{sec:mdp}
 
-À compléter...
+La formalisation du problème de dispatching minier en tant que processus de décision markovien est l'étape décisive qui transforme le système opérationnel en un problème d'apprentissage par renforcement. Ce cadrage rejoint les études récentes de dispatching minier fondées sur des formulations explicites de type MDP, ainsi que les travaux fondateurs en RL séquentiel appliqué à des problèmes de routage et d'ordonnancement \cite{MohammadrezaNazari2018, CongZhang2020, MarticorenaDAngelo2025}. Un MDP est défini par le 4-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R})$ où :
+
+\begin{itemize}
+    \item $\mathcal{S}$ est l'ensemble des états possibles du système.
+    \item $\mathcal{A}$ est l'ensemble des actions (décisions de dispatching) disponibles.
+    \item $\mathcal{P}(s' | s, a)$ est la probabilité de transition vers l'état $s'$ en exécutant l'action $a$ depuis l'état $s$.
+    \item $\mathcal{R}(s, a, s')$ est la récompense reçue lors d'une transition.
+\end{itemize}
+
+\subsubsection*{Espace d'état $\mathcal{S}$}
+
+L'état du système à chaque instant $t$ est représenté par un vecteur contenant les informations essentielles pour la prise de décision :
+
+\begin{equation}
+    s_t = \{
+    \text{queue}(p) \; \forall p \in \text{Pelles},
+    \text{localisation}(c) \; \forall c \in \text{Camions},
+    \text{disponibilité}(r) \; \forall r \in \text{Ressources},
+    t_{\text{courant}}
+    \}
+\end{equation}
+
+De manière plus détaillée :
+
+\begin{itemize}
+    \item \textbf{Queue aux pelles} : Pour chaque pelle $p$, on enregistre le nombre de camions en attente et leur temps d'arrivée estimé.
+    \item \textbf{Localisation des camions} : Pour chaque camion $c$, on enregistre son dernier nœud de présence et son statut (libre, en route, en charge, en décharge).
+    \item \textbf{Disponibilité des ressources} : Pour chaque pelle ou section de route, on enregistre si elle est disponible, en maintenance ou indisponible.
+    \item \textbf{Temps courant} : L'heure de la journée ou l'étape de simulation, qui peut influencer la dynamique (sauf au sein d'un épisode stationnaire).
+\end{itemize}
+
+\subsubsection*{Espace d'action $\mathcal{A}$}
+
+À chaque étape de décision, l'agent doit décider d'assigner certains camions libres à des pelles disponibles. L'espace d'action dépend de l'état courant et est construit comme suit :
+
+\begin{equation}
+    a_t = \text{Assignment}(c_1 \rightarrow p_j, c_2 \rightarrow p_k, \ldots) \quad \text{ou} \quad a_t = \text{ATTENDRE}
+\end{equation}
+
+Une action valide est un ensemble d'appairements camion-pelle qui respectent les contraintes :
+\begin{itemize}
+    \item Le camion doit être libre (non actuellement en transit, en charge ou en décharge).
+    \item La pelle doit être disponible et produire un type de minerai compatible avec la capacité du camion.
+    \item L'action peut aussi être d'attendre (pas de changement) si attendre est plus profitable à long terme.
+\end{itemize}
+
+L'ensemble $\mathcal{A}(s)$ des actions possibles dans l'état $s$ peut être très large (combinatoire exponentiel). Pour rendre le problème traitable, on peut limiter l'espace à un nombre réduit d'actions : p.ex., assigner au maximum $k$ camions par étape, ou sélectionner les $n$ meilleures paires candidate selon une heuristique.
+
+\subsubsection*{Modèle de transition $\mathcal{P}(s' | s, a)$}
+
+Le modèle de transition décrit comment le système évolue suite à une action. Étant donné un état $s$ et une action $a$, le nouvel état $s'$ est déterminé par :
+
+\begin{equation}
+    s'_t = \text{Simuler}(s_t, a_t, \Delta t)
+\end{equation}
+
+où $\Delta t$ est l'intervalle de temps entre deux décisions. La simulation inclut :
+
+\begin{itemize}
+    \item \textbf{Avancement des camions en transit} : Les camions se déplacent selon les matrices de temps du réseau, avec perturbations stochastiques.
+    \item \textbf{Mise à jour des queues de chargement} : Les camions arrivent aux pelles, se joignent à la queue ou commencent le chargement.
+    \item \textbf{Événements de décharge} : Les camions qui atteignent les points de décharge sont marqués comme déchargés et reviennent en état libre.
+    \item \textbf{Dynamique des pelles} : Chaque pelle continue de servir les camions selon un ordre FIFO ou de priorité.
+\end{itemize}
+
+Formellement, le modèle de transition est une fonction déterministe augmentée de sources de stochasticité (variation des temps de trajet). Cette représentation est alignée avec les environnements de benchmark configurables récemment proposés pour le dispatching minier et avec les travaux de simulation dédiés à l'évaluation de règles de dispatching sous incertitude \cite{WZeng2022, BanerjeeNguyenFookes2025} :
+
+\begin{equation}
+    s'_t = f(s_t, a_t) + \eta_t, \quad \eta_t \sim \mathcal{N}(0, \Sigma)
+\end{equation}
+
+\subsubsection*{Fonction de récompense $\mathcal{R}(s, a, s')$}
+
+La récompense reflète les objectifs opérationnels. Le rendement global du système (tonnage par unité de temps) peut être décomposé en plusieurs objectifs :
+
+\begin{equation}
+    R_t = w_1 \cdot R_{\text{rendement}}(s_t, s'_t) + w_2 \cdot R_{\text{équité}}(s_t) + w_3 \cdot R_{\text{coût}}(a_t)
+\end{equation}
+
+où :
+
+\begin{itemize}
+    \item $R_{\text{rendement}}$ : Récompense proportionnelle au tonnage livré à la destination au cours du pas de temps $\Delta t$. C'est l'objectif principal.
+    \begin{equation}
+        R_{\text{rendement}}(s_t, s'_t) = \sum_{c \in \text{Camions}} \mathbb{1}_{\text{déchargé en } [t, t+\Delta t]} \cdot \text{capacité}(c)
+    \end{equation}
+    
+    \item $R_{\text{équité}}$ : Récompense encourageant une utilisation équilibrée des ressources (prévenir la surcharge d'une pelle au détriment d'autres).
+    \begin{equation}
+        R_{\text{équité}}(s_t) = -\lambda \cdot \text{Var}(\text{queues})
+    \end{equation}
+    où $\text{Var}(\text{queues})$ est la variance des longueurs de queue aux pelles.
+    
+    \item $R_{\text{coût}}$ : Pénalité liée aux décisions (p.ex., pour décourager les affectations inefficaces ou les trajets excessifs).
+    \begin{equation}
+        R_{\text{coût}}(a_t) = -\sum_{(c \rightarrow p) \in a_t} C(\text{pos}(c), \text{pos}(p))
+    \end{equation}
+\end{itemize}
+
+Les poids $w_1, w_2, w_3$ permettent de moduler l'importance relative de chaque objectif selon les priorités métier.
+
+\subsubsection*{Propriété markovienne et implications}
+
+L'hypothèse clé est que l'état $s_t$ contient toute l'information nécessaire pour prédire l'évolution future du système indépendamment du passé (propriété markovienne). Cette hypothèse est raisonnable si :
+
+\begin{itemize}
+    \item Les décisions passées ont déjà eu leur effet sur l'état courant (les camions sont soit en transit, soit en queue, soit libres).
+    \item Les seules sources d'incertitude future sont les variations stochastiques des temps de trajet et les arrivées de nouveaux travaux (qui suivent une distribution connue).
+\end{itemize}
+
+Cette propriété justifie l'application d'algorithmes d'apprentissage par renforcement standards qui supposent un MDP, plutôt que d'exiger une mémoire d'observations passées.
+
+\section{Conclusion}
+\label{sec:conclusion-modelisation}
+
+Ce chapitre a établi le cadre formel de la modélisation du problème de transport minier, depuis la description du système camion-pelle jusqu'à sa formulation en processus de décision markovien. Il a structuré les composantes essentielles du problème, notamment l'état, l'action, la dynamique de transition et la fonction de récompense, afin de représenter de manière cohérente la logique décisionnelle du dispatching en environnement minier.
+
+La modélisation proposée articule réalisme opérationnel et tractabilité algorithmique, en intégrant les contraintes du terrain (congestion, disponibilité des ressources, variabilité des temps de cycle) tout en restant exploitable par des méthodes d'apprentissage par renforcement. Ce socle conceptuel et mathématique sert de base directe au chapitre suivant, consacré à la méthodologie, à la conception de l'environnement de simulation, à l'agent d'apprentissage et au protocole d'évaluation.
 
 % ============================================================================
 %      CHAPITRE 4 : MÉTHODOLOGIE ET CONCEPTION DE LA SOLUTION
 % ============================================================================
 \chapter{Méthodologie et conception de la solution}
 \label{chap:methodologie}
+
+\section*{Introduction}
+
+La conception d'une solution d'apprentissage par renforcement appliquée à la logistique minière exige une méthodologie structurée, assurant la cohérence entre objectifs métier, modélisation du problème et choix techniques. Cette phase permet de traduire le cadre théorique en une architecture expérimentale reproductible et évaluable.
 
 \section{Méthodologie adoptée (CRISP-DM adaptée à l'apprentissage par renforcement)}
 \label{sec:crisp-dm}
@@ -461,11 +683,20 @@ Ce chapitre a retracé l’évolution des approches d’optimisation de la logis
 
 À compléter...
 
+\section{Conclusion partielle et transition}
+\label{sec:conclusion-methodologie}
+
+Ce chapitre a défini la méthodologie de construction de la solution et les choix de conception associés. Le chapitre suivant détaillera l'implémentation concrète, le protocole expérimental et les métriques d'évaluation retenues.
+
 % ============================================================================
 %        CHAPITRE 5 : IMPLÉMENTATION ET EXPÉRIMENTATION
 % ============================================================================
 \chapter{Implémentation et expérimentation}
 \label{chap:implementation}
+
+\section*{Introduction}
+
+L'implémentation et l'expérimentation constituent l'étape de validation opérationnelle de la méthodologie proposée. Elles permettent de vérifier, dans un cadre contrôlé, la faisabilité technique de la solution et sa capacité à produire des résultats mesurables sur des scénarios représentatifs de la logistique minière.
 
 \section{Architecture globale du système proposé}
 \label{sec:architecture}
@@ -492,11 +723,20 @@ Ce chapitre a retracé l’évolution des approches d’optimisation de la logis
 
 À compléter...
 
+\section{Conclusion partielle et transition}
+\label{sec:conclusion-implementation}
+
+Ce chapitre a présenté le cadre d'implémentation et le dispositif expérimental mobilisé pour l'étude. Les résultats obtenus et leur interprétation seront analysés dans le chapitre suivant.
+
 % ============================================================================
 %              CHAPITRE 6 : RÉSULTATS ET ANALYSE
 % ============================================================================
 \chapter{Résultats et analyse}
 \label{chap:resultats}
+
+\section*{Introduction}
+
+L'analyse des résultats est essentielle pour apprécier la validité de la solution proposée et mesurer sa capacité à répondre aux objectifs du mémoire. Au-delà de la performance brute, cette étape vise à évaluer la robustesse de l'approche, sa sensibilité aux perturbations et ses limites dans des contextes opérationnels variés.
 
 \section{Résultats expérimentaux}
 \label{sec:resultats-exp}
@@ -517,6 +757,11 @@ Ce chapitre a retracé l’évolution des approches d’optimisation de la logis
 \label{sec:discussion}
 
 À compléter...
+
+\section{Conclusion partielle et transition}
+\label{sec:conclusion-resultats}
+
+Ce chapitre a synthétisé les principaux résultats et leur portée pour le problème étudié. La conclusion générale suivante reviendra sur les contributions du mémoire, ses limites et les perspectives de prolongement.
 
 % ============================================================================
 %              CONCLUSION GÉNÉRALE ET PERSPECTIVES
