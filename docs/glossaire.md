@@ -212,7 +212,6 @@ Ce glossaire sera enrichi au fil de la rédaction. Chaque entrée comprend :
 **Explication :** L’état contient toutes les informations nécessaires pour prendre une décision.
 **Exemple :** Positions des camions, files d’attente, état des routes.
 
----
 
 ## Action (en RL)
 **Définition :** Décision prise par l’agent à chaque étape.

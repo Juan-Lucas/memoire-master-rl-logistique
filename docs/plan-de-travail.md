@@ -71,7 +71,7 @@
 
 ## **Chapitre 4 : Méthodologie et conception de la solution**
 
-### 4.1 Méthodologie adoptée (CRISP-DM adaptée au RL)
+### 4.1 Méthodologie adoptée (CRISP-RL adaptée au RL)
 
 ### 4.2 Conception de l'environnement de simulation
 

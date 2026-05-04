@@ -213,15 +213,15 @@ L’hypothèse centrale est qu’un agent autonome basé sur l’apprentissage p
     \item Analyser l’impact de l’approche d'apprentissage par renforcement sur les indicateurs clés (coût, temps, consommation, robustesse).
 \end{itemize}
 
-La méthodologie suivie s’appuie sur une adaptation du cadre CRISP-DM au contexte de l'apprentissage par renforcement : compréhension du problème et des données \cite{AlexandraMNewman2010}, modélisation de l’environnement, conception et entraînement de l’agent, expérimentation et analyse comparative \cite{MohammadrezaNazari2018, SatyamChoudhury2022}. Chaque étape est guidée par une validation rigoureuse des hypothèses et une évaluation quantitative des résultats. Ce mémoire est organisé en sept chapitres :
+La méthodologie suivie s'appuie sur le cadre CRISP-RL au contexte de l'apprentissage par renforcement : compréhension du problème et des données \cite{AlexandraMNewman2010}, modélisation de l'environnement, conception et entraînement de l'agent, expérimentation et analyse comparative \cite{MohammadrezaNazari2018, SatyamChoudhury2022, Szatmari2025CRISP-RL}. Chaque étape est guidée par une validation rigoureuse des hypothèses et une évaluation quantitative des résultats. Ce mémoire est organisé en six chapitres et une conclusion générale :
 \begin{itemize}
     \item Le premier chapitre présente le contexte général de la logistique minière et ses concepts fondamentaux, afin de poser le cadre métier et les notions clés mobilisées dans ce mémoire.
-    \item Le deuxième chapitre propose un état de l’art des approches d’optimisation existantes, des heuristiques classiques aux méthodes avancées, et met en évidence le positionnement des approches basées sur l'apprentissage par renforcement.
+    \item Le deuxième chapitre propose un état de l’art des approches d’optimisation existantes, des heuristiques classiques aux méthodes avancées, et met en évidence le positionnement des approches basées sur l'\mbox{apprentissage par renforcement}.
     \item Le troisième chapitre détaille la modélisation du problème de transport minier, les hypothèses retenues et la formulation du système dans un cadre de décision séquentielle.
     \item Le quatrième chapitre décrit la méthodologie adoptée et la conception de la solution proposée, en précisant les choix de modélisation, d’architecture et d’apprentissage.
     \item Le cinquième chapitre présente l’implémentation, le protocole expérimental et les résultats obtenus sur les scénarios étudiés.
     \item Le sixième chapitre analyse et discute les résultats, en évaluant les performances, les limites et la robustesse de l’approche.
-    \item Ce mémoire est clôturé par un dernier chapitre de conclusion générale, qui synthétise les principaux apports et ouvre sur des perspectives de recherche et d’application.
+    \item Ce mémoire se conclut par un dernier chapitre de conclusion générale, qui synthétise les principaux apports et ouvre sur des perspectives de recherche et d’application.
 \end{itemize}
 
 \newpage
@@ -318,6 +318,8 @@ Ce chapitre a posé un socle conceptuel complet pour le sujet traité, en clarif
 
 L'optimisation de la logistique minière a connu une évolution progressive, portée par des approches de plus en plus élaborées pour répondre à la complexité des environnements d'exploitation. L'examen critique des travaux existants est indispensable pour identifier les acquis de la littérature, mais aussi les limites qui freinent encore une optimisation robuste et dynamique en conditions réelles.
 
+Dans ce mémoire, cette revue ne sert pas seulement à inventorier les méthodes existantes, mais à faire apparaître le besoin d'un cadre de décision centré sur le dispatching, explicite sur ses hypothèses et suffisamment souple pour rester exploitable dans un environnement stochastique.
+
 
 % 2.1 Heuristiques classiques
 \section{Les heuristiques classiques}
@@ -338,7 +340,7 @@ L’apparition des systèmes industriels comme DISPATCH marque une première rup
 Pour dépasser les limites des systèmes industriels, la recherche académique a proposé des approches plus sophistiquées : méta-heuristiques (algorithmes génétiques, colonies de fourmis, recuit simulé) \cite{MJFSouza2010, Subtil2011}, modèles MILP ou programmation par contraintes \cite{Ahangaran2012, AmandaSmith2020, ChungHTa2013, ZhongxinWang2022}. Ces méthodes offrent de meilleures performances sur des cas complexes, mais leur capacité d’adaptation en temps réel reste limitée, notamment face à l’incertitude et à la variabilité opérationnelle \cite{BurakOzdemir2019, ShivPrakashUpadhyay2017, MarceloMorettiFioroni2008}.
 
 % L'arrivée d'un nouveau paradigme : l'apprentissage par renforcement
-\section{Les approches basées sur l'apprentissage par renforcement}
+\section{Les approches basées sur l'\mbox{apprentissage par renforcement}}
 \label{sec:paradigme-rl}
 
 % 2.4 L’arrivée de l'apprentissage par renforcement : un nouveau paradigme
@@ -418,6 +420,8 @@ Afin de positionner précisément notre contribution, il convient d'examiner les
 
 Ce chapitre a retracé l’évolution des approches d’optimisation de la logistique minière, depuis les heuristiques simples jusqu’aux systèmes industriels, en passant par les méta-heuristiques et l’optimisation avancée. Il a mis en évidence les limites des méthodes traditionnelles face à la complexité, la variabilité et l’incertitude des environnements miniers. L'apprentissage par renforcement apparaît comme un paradigme innovant, capable d’apporter une adaptation dynamique, une optimisation holistique et une robustesse accrue. Ce positionnement ouvre la voie à une nouvelle génération de solutions pour la logistique minière. Le chapitre suivant présentera la modélisation du problème de transport minier et les choix méthodologiques pour concevoir un agent d'apprentissage par renforcement adapté à la logistique minière.
 
+Ce positionnement reste néanmoins conditionné par la qualité de la simulation et par la richesse des variables observées : le RL n'est pas une solution universelle, mais une approche pertinente lorsque le compromis entre réalisme, adaptabilité et coût de calcul est correctement maîtrisé.
+
 % ============================================================================
 %              CHAPITRE 3 : MODÉLISATION DU PROBLÈME
 % ============================================================================
@@ -435,13 +439,20 @@ Le système de transport minier considéré dans ce mémoire repose sur le modè
 
 \begin{itemize}
     \item \textbf{Ressources d'extraction} : Des pelles (excavatrices) positionnées à des points de chargement fixes ou dynamiques, responsables du chargement du matériel brut extrait.
-    \item \textbf{Flotte de transport} : Un ensemble de camions hétérogènes circulant entre les points de chargement et les points de décharge (concasseurs, stockage, etc.).
-    \item \textbf{Réseau routier} : Une infrastructure de transport composée de routes principales et secondaires, avec des points de chargement, de décharge et des jonctions.
+    \item \textbf{Flotte de transport} : Un ensemble de camions hétérogènes circulant entre les points de chargement et les points de déchargement (concasseurs, stockage, etc.).
+    \item \textbf{Réseau routier} : Une infrastructure de transport composée de routes principales et secondaires, avec des points de chargement, de déchargement et des jonctions.
     \item \textbf{Opérateurs humains} : Conducteurs de camion et opérateurs de pelle qui exécutent les décisions du système de dispatching.
     \item \textbf{Variabilité environnementale} : Conditions météorologiques, état des routes, dégradation du matériel et autres aléas affectant les temps de cycle.
 \end{itemize}
 
-Le fonctionnement du système repose sur un cycle répétitif : (1) assignation d'un camion à une pelle par le système de dispatching ; (2) transport du camion vers la pelle ; (3) attente à la queue de chargement ; (4) chargement du matériau ; (5) transport vers un point de décharge ; (6) décharge ; (7) retour au point de chargement. L'objectif opérationnel est de maximiser le tonnage transporté par unité de temps (rendement) tout en respectant les contraintes de sécurité, de maintenance et de disponibilité des ressources, y compris dans des contextes intégrant des flottes partiellement ou totalement autonomes \cite{MehrnazMohtasham2023, PeiYangGong2026}.
+Le fonctionnement du système repose sur un cycle répétitif : (1) Assignation d'un camion à une pelle par le système de dispatching ; (2) Transport du camion vers la pelle ; (3) Attente à la queue de chargement ; (4) Chargement du matériau ; (5) Transport vers un point de déchargement ; (6) Déchargement ; (7) Retour au point de chargement. L'objectif opérationnel est de maximiser le tonnage transporté par unité de temps (rendement) tout en respectant les contraintes de sécurité, de maintenance et de disponibilité des ressources, y compris dans des contextes intégrant des flottes partiellement ou totalement autonomes \cite{MehrnazMohtasham2023, PeiYangGong2026}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Description du système de transport minier.drawio.png}
+    \caption{Cycle opérationnel du système camion-pelle et point d'intervention de l'agent de dispatching.}
+    \label{fig:cycle-transport}
+\end{figure}
 
 Le défi de modélisation réside dans la capture simultanée de la dynamique des flux, des interactions camion-pelle, des variations stochastiques des temps de cycle et des décisions de dispatching qui influencent globalement le rendement du système.
 
@@ -450,10 +461,12 @@ Le défi de modélisation réside dans la capture simultanée de la dynamique de
 
 La modélisation du problème complexe de la logistique minière nécessite un ensemble d'hypothèses simplificatrices pour rendre le système traitable par des algorithmes d'apprentissage par renforcement. Ces hypothèses sont justifiées par les besoins d'efficacité computationnelle et de convergence algorithmique, tout en préservant les éléments essentiels du problème réel, dans une logique cohérente avec les approches actor-critic appliquées aux complexes miniers et les cadres de simulation-optimisation opérationnelle \cite{Subtil2011, deCarvalhoDimitrakopoulos2023}.
 
+Ces hypothèses doivent être lues comme des conditions de validité du modèle, et non comme une description exhaustive du terrain. Elles simplifient volontairement la réalité pour rendre l'apprentissage possible, au prix d'une perte de finesse qui devra être discutée lors de l'interprétation des résultats.
+
 \subsubsection*{Hypothèses de modélisation}
 
 \begin{itemize}
-    \item \textbf{Horizon temporel} : Le système est modélisé en temps discret avec des pas de décision réguliers (p.ex., une décision tous les 5 à 10 secondes en temps réel, ou à chaque événement dans un simulateur événementiel).
+    \item \textbf{Horizon temporel} : Le système est modélisé en temps discret avec des pas de décision réguliers (Ex : Une décision toutes les 5 à 10 secondes en temps réel, ou à chaque événement dans un simulateur événementiel).
     
     \item \textbf{Stationnarité à court terme} : On suppose que la distribution des temps de cycle reste stable sur des horizons court (quelques heures), permettant l'apprentissage avec des données récentes.
     
@@ -461,7 +474,7 @@ La modélisation du problème complexe de la logistique minière nécessite un e
     
     \item \textbf{Camions homogènes} : Bien que les flottes réelles soient hétérogènes, on regroupe les camions par classe de capacité pour réduire la dimensionnalité de l'espace d'état, une simplification couramment mobilisée face aux contraintes de dispatching de flottes multi-capacités \cite{Ahangaran2012}.
     
-    \item \textbf{Points de chargement et décharge fixes} : Les emplacements de pelle et les destinations de décharge sont fixes pendant une session d'apprentissage.
+    \item \textbf{Points de chargement et déchargement fixes} : Les emplacements de pelle et les destinations de déchargement sont fixes pendant une session d'apprentissage.
     
     \item \textbf{Pas de défaillance majeure} : Le système opère sans défaillance critique des pelles ou des routes principales pendant la durée de l'épisode d'apprentissage.
 \end{itemize}
@@ -484,6 +497,28 @@ Le modèle intègre un ensemble de contraintes reflétant les réalités opérat
 
 Ces hypothèses et contraintes délimitent l'espace d'exploration de l'algorithme d'apprentissage par renforcement, assurant que les politiques apprises restent réalistes et applicables en production.
 
+Autrement dit, le modèle conserve les facteurs qui gouvernent réellement la décision, tout en écartant certains détails locaux qui augmenteraient fortement la dimension du problème sans améliorer proportionnellement la qualité de la politique apprise.
+
+\subsubsection*{Synthèse des hypothèses de modélisation}
+
+\begin{table}[H]
+    \centering
+    \caption{Synthèse des hypothèses: justification et limites}
+    \label{tab:hypotheses-justification-limites}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.24\textwidth} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+        \toprule
+        \textbf{Hypothèse} & \textbf{Justification} & \textbf{Limite principale} \\
+        \midrule
+        Temps discret & Permet une prise de décision séquentielle compatible avec un agent RL et un simulateur événementiel. & Sensible au choix de $\Delta t$; un pas trop grand lisse la dynamique, un pas trop fin augmente le coût de calcul. \\
+        Stationnarité à court terme & Stabilise l'apprentissage sur des fenêtres opérationnelles réalistes (quelques heures). & Peut se dégrader lors de ruptures de régime (pluie, incidents, changements de plan). \\
+        Observation incomplète & Reflète la disponibilité réelle de capteurs et d'informations bruitées en exploitation. & Introduit une part de non-markovianité apparente si l'état observé est trop pauvre. \\
+        Regroupement des camions par classes & Réduit la dimensionnalité de l'état et de l'action pour accélérer la convergence. & Perte de granularité sur les différences intra-classe (usure, performance individuelle). \\
+        Points de chargement/déchargement fixes sur un épisode & Simplifie le cadre expérimental et la comparaison avec les baselines. & Généralisation limitée aux contextes de repositionnement dynamique des pelles ou destinations. \\
+        Absence de défaillance majeure pendant un épisode & Permet d'évaluer d'abord la politique nominale dans un cadre contrôlé. & Sous-estime le risque opérationnel réel si les pannes ne sont pas ensuite injectées en tests de robustesse. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
 \section{Modélisation du réseau routier minier}
 \label{sec:reseau-routier}
 
@@ -493,12 +528,19 @@ Le réseau routier minier constitue l'infrastructure d'interaction entre les dif
 
 Le réseau routier est modélisé comme un graphe pondéré $G = (V, E)$ où :
 \begin{itemize}
-    \item $V$ est l'ensemble des nœuds représentant les points d'intérêt : points de chargement (pelles), points de décharge (concasseurs, stockage), jonctions et intersections.
+    \item $V$ est l'ensemble des nœuds représentant les points d'intérêt : points de chargement (pelles), points de déchargement (concasseurs, stockage), jonctions et intersections.
     \item $E$ est l'ensemble des arêtes représentant les connexions routières entre nœuds.
     \item Chaque arête $(u, v)$ est pondérée par la distance euclidienne, le temps de trajet ou un coût composé.
 \end{itemize}
 
 Ce graphe peut être orienté (sens uniques, routes à sens limité) ou non-orienté (routes bidirectionnelles) selon la configuration du site.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{figures/Modélisation du réseau routier minier.drawio.png}
+    \caption{Représentation du réseau routier sous forme de graphe stochastique.}
+    \label{fig:graphe-routier}
+\end{figure}
 
 \subsubsection*{Matrices de temps et matrices de coût}
 
@@ -519,17 +561,19 @@ Ce graphe peut être orienté (sens uniques, routes à sens limité) ou non-orie
 Le réseau réel n'est pas déterministe : les temps de trajet varient en fonction de l'état de la route, des conditions météorologiques, et de la charge du camion. On modélise cette variabilité par :
 
 \begin{equation}
-    T_{ij}(t) = \bar{T}_{ij} + \epsilon_{ij}(t)
+    T_{ij}(t) = \bar{T}_{ij} + \eta_{ij}(t)
 \end{equation}
 
-où $\bar{T}_{ij}$ est le temps moyen et $\epsilon_{ij}(t) \sim \mathcal{N}(0, \sigma_{ij}^2)$ est un bruit gaussien reflétant la variabilité observée.
+où $\bar{T}_{ij}$ est le temps moyen et $\eta_{ij}(t) \sim \mathcal{N}(0, \sigma_{ij}^2)$ est un bruit gaussien reflétant la variabilité observée.
 
 Cette modélisation stochastique est essentielle pour évaluer la robustesse des politiques apprises, car elle oblige l'agent à anticiper les variations plutôt que de se fier à des temps de trajet figés. Cette exigence de robustesse est également mise en avant dans les travaux récents de RL multi-agent appliqués au dispatching minier \cite{Zhao2025HierarchicalMARL}.
 
-\section{Formulation du problème en tant que processus de décision markovien}
+\section{Formulation du problème en tant que \mbox{processus de décision markovien}}
 \label{sec:mdp}
 
-La formalisation du problème de dispatching minier en tant que processus de décision markovien est l'étape décisive qui transforme le système opérationnel en un problème d'apprentissage par renforcement. Ce cadrage rejoint les études récentes de dispatching minier fondées sur des formulations explicites de type MDP, ainsi que les travaux fondateurs en RL séquentiel appliqué à des problèmes de routage et d'ordonnancement \cite{MohammadrezaNazari2018, CongZhang2020, MarticorenaDAngelo2025}. Un MDP est défini par le 4-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R})$ où :
+La formalisation du problème de dispatching minier en tant que processus de décision markovien est l'étape décisive qui transforme le système opérationnel en un problème d'apprentissage par renforcement. Ce cadrage rejoint les études récentes de dispatching minier fondées sur des formulations explicites de type MDP, ainsi que les travaux fondateurs en apprentissage par renforcement séquentiel appliqué à des problèmes de routage et d'ordonnancement \cite{MohammadrezaNazari2018, CongZhang2020, MarticorenaDAngelo2025}. Un processus de décision markovien est défini par le 4-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R})$ où :
+
+Le choix de cette formulation n'est pas uniquement formel. Il permet de condenser l'information utile à la décision tout en évitant une explosion de la dimension d'état, ce qui serait pénalisant pour l'apprentissage et pour la stabilité des politiques estimées.
 
 \begin{itemize}
     \item $\mathcal{S}$ est l'ensemble des états possibles du système.
@@ -540,21 +584,17 @@ La formalisation du problème de dispatching minier en tant que processus de dé
 
 \subsubsection*{Espace d'état $\mathcal{S}$}
 
-L'état du système à chaque instant $t$ est représenté par un vecteur contenant les informations essentielles pour la prise de décision :
-
+L'état du système à chaque instant $t$ est représenté par un vecteur de variables d'état contenant les informations essentielles pour la prise de décision :
 \begin{equation}
-    s_t = \{
-    \text{queue}(p) \; \forall p \in \text{Pelles},
-    \text{localisation}(c) \; \forall c \in \text{Camions},
-    \text{disponibilité}(r) \; \forall r \in \text{Ressources},
-    t_{\text{courant}}
-    \}
+    s_t = \Big( \{q_p\}_{p \in \text{Pelles}},\ \{x_c\}_{c \in \text{Camions}},\ \{z_r\}_{r \in \text{Ressources}},\ t_{\text{courant}} \Big)
 \end{equation}
+
+où $q_p$ désigne la longueur de la file d'attente à la pelle $p$, $x_c$ la localisation du camion $c$, et $z_r$ l'état de disponibilité de la ressource $r$.
 
 De manière plus détaillée :
 
 \begin{itemize}
-    \item \textbf{Queue aux pelles} : Pour chaque pelle $p$, on enregistre le nombre de camions en attente et leur temps d'arrivée estimé.
+    \item \textbf{Files d'attente aux pelles} : Pour chaque pelle $p$, on enregistre le nombre de camions en attente et leur temps d'arrivée estimé.
     \item \textbf{Localisation des camions} : Pour chaque camion $c$, on enregistre son dernier nœud de présence et son statut (libre, en route, en charge, en décharge).
     \item \textbf{Disponibilité des ressources} : Pour chaque pelle ou section de route, on enregistre si elle est disponible, en maintenance ou indisponible.
     \item \textbf{Temps courant} : L'heure de la journée ou l'étape de simulation, qui peut influencer la dynamique (sauf au sein d'un épisode stationnaire).
@@ -575,7 +615,9 @@ Une action valide est un ensemble d'appairements camion-pelle qui respectent les
     \item L'action peut aussi être d'attendre (pas de changement) si attendre est plus profitable à long terme.
 \end{itemize}
 
-L'ensemble $\mathcal{A}(s)$ des actions possibles dans l'état $s$ peut être très large (combinatoire exponentiel). Pour rendre le problème traitable, on peut limiter l'espace à un nombre réduit d'actions : p.ex., assigner au maximum $k$ camions par étape, ou sélectionner les $n$ meilleures paires candidate selon une heuristique.
+L'ensemble $\mathcal{A}(s)$ des actions possibles dans l'état $s$ peut être très large (combinatoire exponentiel). Pour rendre le problème traitable, on peut limiter l'espace à un nombre réduit d'actions par exemple assigner au maximum $k$ camions par étape, ou sélectionner les $n$ meilleures paires candidate selon une heuristique.
+
+Cette restriction constitue un compromis assumé : une action décrite comme une affectation complète de la flotte serait plus expressive, mais elle rendrait l'espace de recherche nettement moins maniable. Le modèle retient donc une granularité suffisante pour capturer l'essentiel du dispatching sans faire basculer le problème dans une complexité disproportionnée.
 
 \subsubsection*{Modèle de transition $\mathcal{P}(s' | s, a)$}
 
@@ -585,12 +627,21 @@ Le modèle de transition décrit comment le système évolue suite à une action
     s'_t = \text{Simuler}(s_t, a_t, \Delta t)
 \end{equation}
 
-où $\Delta t$ est l'intervalle de temps entre deux décisions. La simulation inclut :
+où $\Delta t$ est l'intervalle de temps entre deux décisions.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Formulation du problème en tant que MDP.drawio.png}
+    \caption{Schéma d'interaction entre l'agent RL (politique) et l'environnement (simulateur minier).}
+    \label{fig:mdp-boucle}
+\end{figure}
+
+La simulation inclut :
 
 \begin{itemize}
     \item \textbf{Avancement des camions en transit} : Les camions se déplacent selon les matrices de temps du réseau, avec perturbations stochastiques.
-    \item \textbf{Mise à jour des queues de chargement} : Les camions arrivent aux pelles, se joignent à la queue ou commencent le chargement.
-    \item \textbf{Événements de décharge} : Les camions qui atteignent les points de décharge sont marqués comme déchargés et reviennent en état libre.
+    \item \textbf{Mise à jour des files d'attente de chargement} : Les camions arrivent aux pelles, se joignent à la file ou commencent le chargement.
+    \item \textbf{Événements de déchargement} : Les camions qui atteignent les points de déchargement sont marqués comme déchargés et reviennent en état libre.
     \item \textbf{Dynamique des pelles} : Chaque pelle continue de servir les camions selon un ordre FIFO ou de priorité.
 \end{itemize}
 
@@ -599,6 +650,8 @@ Formellement, le modèle de transition est une fonction déterministe augmentée
 \begin{equation}
     s'_t = f(s_t, a_t) + \eta_t, \quad \eta_t \sim \mathcal{N}(0, \Sigma)
 \end{equation}
+
+où $f(s_t, a_t)$ est la transition déterministe et $\eta_t$ représente les perturbations stochastiques.
 
 \subsubsection*{Fonction de récompense $\mathcal{R}(s, a, s')$}
 
@@ -613,16 +666,27 @@ où :
 \begin{itemize}
     \item $R_{\text{rendement}}$ : Récompense proportionnelle au tonnage livré à la destination au cours du pas de temps $\Delta t$. C'est l'objectif principal.
     \begin{equation}
-        R_{\text{rendement}}(s_t, s'_t) = \sum_{c \in \text{Camions}} \mathbb{1}_{\text{déchargé en } [t, t+\Delta t]} \cdot \text{capacité}(c)
+        D_t = \{c \in \text{Camions} \mid c \text{ est déchargé dans } [t, t+\Delta t]\}
+    \end{equation}
+    \begin{equation}
+        R_{\text{rendement}}(s_t, s'_t) = \sum_{c \in D_t} \mathrm{capacité}(c)
     \end{equation}
     
     \item $R_{\text{équité}}$ : Récompense encourageant une utilisation équilibrée des ressources (prévenir la surcharge d'une pelle au détriment d'autres).
     \begin{equation}
-        R_{\text{équité}}(s_t) = -\lambda \cdot \text{Var}(\text{queues})
+        R_{\text{équité}}(s_t) = -\lambda \cdot \phi\left(\{q_p\}_{p \in \text{Pelles}}\right)
     \end{equation}
-    où $\text{Var}(\text{queues})$ est la variance des longueurs de queue aux pelles.
+    où
+    \begin{equation}
+        \phi\left(\{q_p\}_{p \in \text{Pelles}}\right) =
+        \begin{cases}
+            \mathrm{Var}\left(\{q_p\}_{p \in \text{Pelles}}\right), & \text{si } |\text{Pelles}| \ge 2, \\
+            0, & \text{si } |\text{Pelles}| = 1.
+        \end{cases}
+    \end{equation}
+    Cette définition garantit que le terme d'équité reste bien défini, même lorsqu'une seule pelle est présente.
     
-    \item $R_{\text{coût}}$ : Pénalité liée aux décisions (p.ex., pour décourager les affectations inefficaces ou les trajets excessifs).
+    \item $R_{\text{coût}}$ : Pénalité liée aux décisions (Pour décourager les affectations inefficaces ou les trajets excessifs).
     \begin{equation}
         R_{\text{coût}}(a_t) = -\sum_{(c \rightarrow p) \in a_t} C(\text{pos}(c), \text{pos}(p))
     \end{equation}
@@ -630,12 +694,19 @@ où :
 
 Les poids $w_1, w_2, w_3$ permettent de moduler l'importance relative de chaque objectif selon les priorités métier.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Fonction de récompense.drawio.png}
+    \caption{Structure multi-objectif de la fonction de récompense globale.}
+    \label{fig:reward-structure}
+\end{figure}
+
 \subsubsection*{Propriété markovienne et implications}
 
 L'hypothèse clé est que l'état $s_t$ contient toute l'information nécessaire pour prédire l'évolution future du système indépendamment du passé (propriété markovienne). Cette hypothèse est raisonnable si :
 
 \begin{itemize}
-    \item Les décisions passées ont déjà eu leur effet sur l'état courant (les camions sont soit en transit, soit en queue, soit libres).
+    \item Les décisions passées ont déjà eu leur effet sur l'état courant (les camions sont soit en transit, soit en file d'attente, soit libres).
     \item Les seules sources d'incertitude future sont les variations stochastiques des temps de trajet et les arrivées de nouveaux travaux (qui suivent une distribution connue).
 \end{itemize}
 
@@ -656,10 +727,10 @@ La modélisation proposée articule réalisme opérationnel et tractabilité alg
 
 \section*{Introduction}
 
-La conception d'une solution d'apprentissage par renforcement appliquée à la logistique minière exige une méthodologie structurée, assurant la cohérence entre objectifs métier, modélisation du problème et choix techniques. Cette phase permet de traduire le cadre théorique en une architecture expérimentale reproductible et évaluable.
+% La conception d'une solution d'apprentissage par renforcement appliquée à la logistique minière exige une méthodologie structurée, assurant la cohérence entre objectifs métier, modélisation du problème et choix techniques. Cette phase permet de traduire le cadre théorique en une architecture expérimentale reproductible et évaluable.
 
-\section{Méthodologie adoptée (CRISP-DM adaptée à l'apprentissage par renforcement)}
-\label{sec:crisp-dm}
+\section{Méthodologie adoptée (CRISP-RL adaptée à l'apprentissage par renforcement)}
+\label{sec:crisp-rl}
 
 À compléter...
 
@@ -668,7 +739,7 @@ La conception d'une solution d'apprentissage par renforcement appliquée à la l
 
 À compléter...
 
-\section{Conception de l'agent d'apprentissage par renforcement}
+\section{Conception de l'agent d'\mbox{apprentissage par renforcement}}
 \label{sec:agent-rl}
 
 À compléter...
@@ -683,10 +754,10 @@ La conception d'une solution d'apprentissage par renforcement appliquée à la l
 
 À compléter...
 
-\section{Conclusion partielle et transition}
+\section{Conclusion}
 \label{sec:conclusion-methodologie}
 
-Ce chapitre a défini la méthodologie de construction de la solution et les choix de conception associés. Le chapitre suivant détaillera l'implémentation concrète, le protocole expérimental et les métriques d'évaluation retenues.
+% Ce chapitre a défini la méthodologie de construction de la solution et les choix de conception associés. Le chapitre suivant détaillera l'implémentation concrète, le protocole expérimental et les métriques d'évaluation retenues.
 
 % ============================================================================
 %        CHAPITRE 5 : IMPLÉMENTATION ET EXPÉRIMENTATION
@@ -696,7 +767,7 @@ Ce chapitre a défini la méthodologie de construction de la solution et les cho
 
 \section*{Introduction}
 
-L'implémentation et l'expérimentation constituent l'étape de validation opérationnelle de la méthodologie proposée. Elles permettent de vérifier, dans un cadre contrôlé, la faisabilité technique de la solution et sa capacité à produire des résultats mesurables sur des scénarios représentatifs de la logistique minière.
+% L'implémentation et l'expérimentation constituent l'étape de validation opérationnelle de la méthodologie proposée. Elles permettent de vérifier, dans un cadrecontrôlé, la faisabilité technique de la solution et sa capacité à produire des résultats mesurables sur des scénarios représentatifs de la logistique minière.
 
 \section{Architecture globale du système proposé}
 \label{sec:architecture}
@@ -723,10 +794,10 @@ L'implémentation et l'expérimentation constituent l'étape de validation opér
 
 À compléter...
 
-\section{Conclusion partielle et transition}
+\section{Conclusion}
 \label{sec:conclusion-implementation}
 
-Ce chapitre a présenté le cadre d'implémentation et le dispositif expérimental mobilisé pour l'étude. Les résultats obtenus et leur interprétation seront analysés dans le chapitre suivant.
+% Ce chapitre a présenté le cadre d'implémentation et le dispositif expérimental mobilisé pour l'étude. Les résultats obtenus et leur interprétation seront analysés dans le chapitre suivant.
 
 % ============================================================================
 %              CHAPITRE 6 : RÉSULTATS ET ANALYSE
@@ -736,7 +807,7 @@ Ce chapitre a présenté le cadre d'implémentation et le dispositif expériment
 
 \section*{Introduction}
 
-L'analyse des résultats est essentielle pour apprécier la validité de la solution proposée et mesurer sa capacité à répondre aux objectifs du mémoire. Au-delà de la performance brute, cette étape vise à évaluer la robustesse de l'approche, sa sensibilité aux perturbations et ses limites dans des contextes opérationnels variés.
+% L'analyse des résultats est essentielle pour apprécier la validité de la solution proposée et mesurer sa capacité à répondre aux objectifs du mémoire. Au-delà de la performance brute, cette étape vise à évaluer la robustesse de l'approche, sa sensibilité aux perturbations et ses limites dans des contextes opérationnels variés.
 
 \section{Résultats expérimentaux}
 \label{sec:resultats-exp}
@@ -758,10 +829,10 @@ L'analyse des résultats est essentielle pour apprécier la validité de la solu
 
 À compléter...
 
-\section{Conclusion partielle et transition}
+\section{Conclusion}
 \label{sec:conclusion-resultats}
 
-Ce chapitre a synthétisé les principaux résultats et leur portée pour le problème étudié. La conclusion générale suivante reviendra sur les contributions du mémoire, ses limites et les perspectives de prolongement.
+% Ce chapitre a synthétisé les principaux résultats et leur portée pour le problème étudié. La conclusion générale suivante reviendra sur les contributions du mémoire, ses limites et les perspectives de prolongement.
 
 % ============================================================================
 %              CONCLUSION GÉNÉRALE ET PERSPECTIVES
@@ -776,6 +847,23 @@ Ce chapitre a synthétisé les principaux résultats et leur portée pour le pro
 % Limites du travail
 
 % Perspectives de recherche et industrielles
+
+\newpage
+
+
+% ============================================================================
+%                               GLOSSAIRE
+% ============================================================================
+\chapter*{Glossaire}
+\addcontentsline{toc}{chapter}{Glossaire}
+
+\begin{description}
+    \item[RL] Reinforcement Learning (apprentissage par renforcement).
+    \item[MDP] Markov Decision Process (processus de décision markovien).
+    \item[FMS] Fleet Management System (système de gestion de flotte).
+    \item[CRISP-RL] CRoss-Industry Standard Process for Reinforcement Learning applications.
+    \item[FIFO] First In, First Out (premier entré, premier sorti).
+\end{description}
 
 \newpage
 
