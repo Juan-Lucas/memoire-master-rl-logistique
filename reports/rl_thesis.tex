@@ -60,17 +60,20 @@
 
 % --- Code source ---
 \usepackage{listings}
+\usepackage{xcolor}
+
 \lstset{
+    language=Python,
     basicstyle=\ttfamily\small,
-    breaklines=true,
-    frame=single,
+    keywordstyle=\color{blue},
+    stringstyle=\color{green!50!black},
+    commentstyle=\color{gray},
     numbers=left,
     numberstyle=\tiny\color{gray},
-    keywordstyle=\color{blue},
-    commentstyle=\color{OliveGreen},
-    stringstyle=\color{red},
+    breaklines=true,
+    frame=single,
+    showstringspaces=false
 }
-
 % --- Algorithmes ---
 \usepackage{algorithm}
 \usepackage{algorithmic}
@@ -110,7 +113,7 @@
 
     \vspace{1cm}
 
-    {\LARGE \textbf{Au-delà des heuristiques statiques :}}\\[0.5cm]
+    {\LARGE \textbf{Au-delà des heuristiques statiques :}}\\[0.250cm]
     {\Large \textbf{Conception et mise en \oe uvre d'un agent d'apprentissage par renforcement pour l'optimisation holistique et dynamique de la logistique minière}}
 
     \rule{\textwidth}{0.5pt}
@@ -189,7 +192,7 @@ In the mining sector, optimizing operational costs and reducing environmental im
 \addcontentsline{toc}{chapter}{Introduction générale}
 
 
-La logistique de transport constitue l'un des piliers financiers et environnementaux les plus critiques de l'industrie minière moderne. Bien que son optimisation puisse générer des économies se chiffrant en millions de dollars, elle représente souvent une part prépondérante, pouvant atteindre 60\%, des coûts opérationnels totaux d'une mine à ciel ouvert \cite{Afrapoli2017}. C’est dans ce cadre que ce mémoire analyse l’apport de l’apprentissage par renforcement pour l’optimisation dynamique de la logistique minière. Malgré l’adoption généralisée des systèmes de gestion de flotte, les exploitations minières se heurtent à la complexité croissante et à la variabilité des environnements réels \cite{AlexandraMNewman2010, Afrapoli2017}. La logistique minière englobe l’ensemble des opérations visant à assurer le transport efficace des matériaux, du site d’extraction jusqu’aux zones de traitement ou de stockage. Dans ce contexte, la gestion des flux de camions, la coordination avec les équipements de chargement et le respect des contraintes de production sont déterminants pour la rentabilité et la durabilité \cite{Afrapoli2017}. L’optimisation des flottes consiste à affecter dynamiquement les camions aux tâches de chargement, transport et déchargement tout en minimisant les temps d’attente, la consommation de carburant et l’usure des équipements \cite{Alarie2002}. Cette problématique est difficile en raison de la variabilité des conditions réelles (trafic, météo, état des routes), de la multiplicité des contraintes opérationnelles et de la nécessité d’adapter les décisions en temps réel pour maintenir la productivité globale \cite{MarceloMorettiFioroni2008}. Les approches industrielles dominantes reposent encore largement sur des heuristiques statiques et des règles prédéfinies \cite{Alarie2002} qui, bien qu’efficaces dans des contextes stables, montrent des limites marquées face à l’incertitude du terrain \cite{ShivPrakashUpadhyay2017}. Elles peinent à anticiper les congestions, à réagir aux perturbations et à optimiser la flotte de manière holistique, ce qui entraîne des pertes d’efficacité et une sous-utilisation des ressources \cite{MiladAbolghasemian2020, BurakOzdemir2019}. Face à ces limites, l’objectif de ce mémoire est de concevoir un agent autonome capable d’adapter ses décisions en temps réel afin de réduire les coûts, améliorer l’efficacité opérationnelle et limiter l’impact environnemental.
+La logistique du transport constitue l'un des piliers financiers et environnementaux les plus critiques de l'industrie minière moderne. Bien que son optimisation puisse générer des économies se chiffrant en millions de dollars, elle représente souvent une part prépondérante, pouvant atteindre 60\%, des coûts opérationnels totaux d'une mine à ciel ouvert \cite{Afrapoli2017}. C’est dans ce cadre que ce mémoire analyse l’apport de l’apprentissage par renforcement pour l’optimisation dynamique de la logistique minière. Malgré l’adoption généralisée des systèmes de gestion de flotte, les exploitations minières se heurtent à la complexité croissante et à la variabilité des environnements réels \cite{AlexandraMNewman2010, Afrapoli2017}. La logistique minière englobe l’ensemble des opérations visant à assurer le transport efficace des matériaux, du site d’extraction jusqu’aux zones de traitement ou de stockage. Dans ce contexte, la gestion des flux de camions, la coordination avec les équipements de chargement et le respect des contraintes de production sont déterminants pour la rentabilité et la durabilité \cite{Afrapoli2017}. L’optimisation des flottes consiste à affecter dynamiquement les camions aux tâches de chargement, transport et déchargement tout en minimisant les temps d’attente, la consommation de carburant et l’usure des équipements \cite{Alarie2002}. Cette problématique est difficile en raison de la variabilité des conditions réelles (trafic, météo, état des routes), de la multiplicité des contraintes opérationnelles et de la nécessité d’adapter les décisions en temps réel pour maintenir la productivité globale \cite{MarceloMorettiFioroni2008}. Les approches industrielles dominantes reposent encore largement sur des heuristiques statiques et des règles prédéfinies \cite{Alarie2002} qui, bien qu’efficaces dans des contextes stables, montrent des limites marquées face à l’incertitude du terrain \cite{ShivPrakashUpadhyay2017}. Elles peinent à anticiper les congestions, à réagir aux perturbations et à optimiser la flotte de manière holistique, ce qui entraîne des pertes d’efficacité et une sous-utilisation des ressources \cite{MiladAbolghasemian2020, BurakOzdemir2019}. Face à ces limites, l’objectif de ce mémoire est de concevoir un agent autonome capable d’adapter ses décisions en temps réel afin de réduire les coûts, améliorer l’efficacité opérationnelle et limiter l’impact environnemental.
 
 L’étude s’articule autour des questions suivantes :
 
@@ -205,7 +208,7 @@ L’étude s’articule autour des questions suivantes :
 
 Les réponses détaillées à ces problématiques seront développées tout au long des chapitres suivants, à travers la modélisation, l'expérimentation et l'analyse des résultats obtenus.
 
-L’hypothèse centrale est qu’un agent autonome basé sur l’apprentissage par renforcement peut surpasser les approches heuristiques classiques pour l’optimisation dynamique de la logistique minière, en réduisant la consommation de carburant, les temps d’attente et en améliorant l’adaptabilité aux perturbations \cite{SatyamChoudhury2022, WZeng2022, MohammadrezaNazari2018}. Les objectifs principaux de ce travail sont les suivants :
+L’hypothèse centrale est qu’un agent autonome basé sur l’apprentissage par renforcement peut surpasser les approches heuristiques classiques pour l’optimisation dynamique de la logistique minière, en réduisant la consommation de carburant, les temps d’attente et en améliorant l’adaptabilité aux perturbations \cite{Szatmári2025, WZeng2022, MohammadrezaNazari2018}. Les objectifs principaux de ce travail sont les suivants :
 \begin{itemize}
     \item Concevoir un environnement de simulation réaliste pour la logistique minière à ciel ouvert ;
     \item Développer un agent d’apprentissage par renforcement capable d’optimiser les décisions de dispatching et de routage ;
@@ -213,7 +216,7 @@ L’hypothèse centrale est qu’un agent autonome basé sur l’apprentissage p
     \item Analyser l’impact de l’approche d'apprentissage par renforcement sur les indicateurs clés (coût, temps, consommation, robustesse).
 \end{itemize}
 
-La méthodologie suivie s'appuie sur le cadre CRISP-RL au contexte de l'apprentissage par renforcement : compréhension du problème et des données \cite{AlexandraMNewman2010}, modélisation de l'environnement, conception et entraînement de l'agent, expérimentation et analyse comparative \cite{MohammadrezaNazari2018, SatyamChoudhury2022, Szatmari2025CRISP-RL}. Chaque étape est guidée par une validation rigoureuse des hypothèses et une évaluation quantitative des résultats. Ce mémoire est organisé en six chapitres et une conclusion générale :
+La méthodologie suivie s'appuie sur le cadre CRISP-RL au contexte de l'apprentissage par renforcement : compréhension du problème et des données \cite{AlexandraMNewman2010}, modélisation de l'environnement, conception et entraînement de l'agent, expérimentation et analyse comparative \cite{MohammadrezaNazari2018, Szatmári2025}. Chaque étape est guidée par une validation rigoureuse des hypothèses et une évaluation quantitative des résultats. Ce mémoire est organisé en six chapitres et une conclusion générale :
 \begin{itemize}
     \item Le premier chapitre présente le contexte général de la logistique minière et ses concepts fondamentaux, afin de poser le cadre métier et les notions clés mobilisées dans ce mémoire.
     \item Le deuxième chapitre propose un état de l’art des approches d’optimisation existantes, des heuristiques classiques aux méthodes avancées, et met en évidence le positionnement des approches basées sur l'\mbox{apprentissage par renforcement}.
@@ -267,7 +270,7 @@ Dans ce cadre, les notions de base sont :
 \section{Concepts de dispatching et de routage minier}
 \label{sec:heuristiques-classiques}
 
-Le dispatching et le routage constituent les deux leviers décisionnels centraux du transport minier. Le dispatching détermine \textit{la destination} d'un camion, alors que le routage détermine \textit{l'itinéraire} suivi pour y parvenir. Leur couplage conditionne la performance globale du système \cite{Alarie2002, MarceloMorettiFioroni2008}.
+Le dispatching et le routage constituent les deux leviers décisionnels centraux du transport minier. Le dispatching détermine \textit{la destination} d'un camion, alors que le routage détermine \textit{l'itinéraire} suivi pour y parvenir. Leur couplage conditionne la performance globale du système \cite{Alarie2002, MarceloMorettiFioroni2008, FSoumis1989}.
 
 Leur formalisation conceptuelle s'appuie sur les éléments suivants :
 \begin{itemize}
@@ -345,14 +348,14 @@ Pour dépasser les limites des systèmes industriels, la recherche académique a
 
 % 2.4 L’arrivée de l'apprentissage par renforcement : un nouveau paradigme
 
-Face aux limites persistantes de ces approches, un nouveau paradigme issu de l’intelligence artificielle s’est imposé : l’apprentissage par renforcement. L'apprentissage par renforcement permet à un agent d’apprendre une politique de décision séquentielle en interagissant avec un environnement simulé ou réel, optimisant ainsi la flotte de manière holistique et adaptative \cite{MohammadrezaNazari2018, CongZhang2020, SatyamChoudhury2022}. Les travaux récents montrent que l'apprentissage par renforcement peut surpasser les heuristiques classiques pour le routage de véhicules, la gestion dynamique des files d’attente et l’optimisation des ressources, même en présence d’incertitude \cite{WZeng2022, MiladAbolghasemian2020}.
+Face aux limites persistantes de ces approches, un nouveau paradigme issu de l’intelligence artificielle s’est imposé : l’apprentissage par renforcement. L'apprentissage par renforcement permet à un agent d’apprendre une politique de décision séquentielle en interagissant avec un environnement simulé ou réel, optimisant ainsi la flotte de manière holistique et adaptative \cite{MohammadrezaNazari2018, CongZhang2020}. Les travaux récents montrent que l'apprentissage par renforcement peut surpasser les heuristiques classiques pour le routage de véhicules, la gestion dynamique des files d’attente et l’optimisation des ressources, même en présence d’incertitude \cite{WZeng2022, MiladAbolghasemian2020}.
 
 % Synthèse critique et positionnement
 \section{Synthèse critique et positionnement du travail}
 
 \label{sec:synthese-etat-art}
 
-La littérature montre que, malgré les avancées des systèmes de gestion de flotte industriels et des heuristiques, l’optimisation globale et dynamique de la flotte minière reste un défi \cite{MarceloMorettiFioroni2008, BurakOzdemir2019}. Les approches d'apprentissage par renforcement offrent un potentiel inédit pour dépasser ces limites, en permettant une adaptation en temps réel, une optimisation holistique et une meilleure gestion de l’incertitude \cite{MohammadrezaNazari2018, SatyamChoudhury2022, WZeng2022}. Ce mémoire s’inscrit dans cette dynamique, en proposant une solution d'apprentissage par renforcement adaptée aux contraintes et aux spécificités de la logistique minière moderne.
+La littérature montre que, malgré les avancées des systèmes de gestion de flotte industriels et des heuristiques, l’optimisation globale et dynamique de la flotte minière reste un défi \cite{MarceloMorettiFioroni2008, BurakOzdemir2019}. Les approches d'apprentissage par renforcement offrent un potentiel inédit pour dépasser ces limites, en permettant une adaptation en temps réel, une optimisation holistique et une meilleure gestion de l’incertitude \cite{MohammadrezaNazari2018, WZeng2022}. Ce mémoire s’inscrit dans cette dynamique, en proposant une solution d'apprentissage par renforcement adaptée aux contraintes et aux spécificités de la logistique minière moderne.
 
 L'analyse de la littérature permet de classifier les travaux existants en trois catégories majeures. Premièrement, les heuristiques classiques, basées sur des règles métier simples, offrent une solution rapide mais manquent de flexibilité. Deuxièmement, les méta-heuristiques (algorithmes génétiques, colonies de fourmis) permettent de traiter des problèmes plus complexes, au prix d'une puissance de calcul plus élevée. Enfin, les approches par apprentissage par renforcement émergent comme une solution prometteuse pour une optimisation dynamique et robuste face aux aléas. Le tableau 2.1 synthétise les opportunités offertes par cette dernière famille d'approches par rapport aux méthodes conventionnelles.
 
@@ -401,8 +404,7 @@ Afin de positionner précisément notre contribution, il convient d'examiner les
 \cite{BurakOzdemir2019} & Méta-heuristiques & Colonies de fourmis, optimisation partielle, adaptation limitée \\
 \hline
 \cite{MohammadrezaNazari2018} & apprentissage par renforcement pour VRP & apprentissage par renforcement pour routage, surpasse heuristiques, besoin de données, temps d’entraînement \\
-\hline
-\cite{SatyamChoudhury2022} & apprentissage par renforcement appliqué à la logistique & apprentissage par renforcement pour dispatching, robustesse, adaptation aux perturbations \\
+\hline & apprentissage par renforcement appliqué à la logistique & apprentissage par renforcement pour dispatching, robustesse, adaptation aux perturbations \\
 \hline
 \cite{WZeng2022} & apprentissage par renforcement en environnement stochastique & Politiques robustes, gestion de l’incertitude, limites pratiques \\
 \hline
@@ -503,18 +505,18 @@ Autrement dit, le modèle conserve les facteurs qui gouvernent réellement la d�
 
 \begin{table}[H]
     \centering
-    \caption{Synthèse des hypothèses: justification et limites}
+    \caption{Synthèse des hypothèses}
     \label{tab:hypotheses-justification-limites}
-    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.24\textwidth} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.20\textwidth} >{\raggedright\arraybackslash}p{0.20\textwidth} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
         \toprule
-        \textbf{Hypothèse} & \textbf{Justification} & \textbf{Limite principale} \\
+        \textbf{Catégorie} & \textbf{Méthodes} & \textbf{Objectif} & \textbf{Inconvénients} \\
         \midrule
-        Temps discret & Permet une prise de décision séquentielle compatible avec un agent RL et un simulateur événementiel. & Sensible au choix de $\Delta t$; un pas trop grand lisse la dynamique, un pas trop fin augmente le coût de calcul. \\
-        Stationnarité à court terme & Stabilise l'apprentissage sur des fenêtres opérationnelles réalistes (quelques heures). & Peut se dégrader lors de ruptures de régime (pluie, incidents, changements de plan). \\
-        Observation incomplète & Reflète la disponibilité réelle de capteurs et d'informations bruitées en exploitation. & Introduit une part de non-markovianité apparente si l'état observé est trop pauvre. \\
-        Regroupement des camions par classes & Réduit la dimensionnalité de l'état et de l'action pour accélérer la convergence. & Perte de granularité sur les différences intra-classe (usure, performance individuelle). \\
-        Points de chargement/déchargement fixes sur un épisode & Simplifie le cadre expérimental et la comparaison avec les baselines. & Généralisation limitée aux contextes de repositionnement dynamique des pelles ou destinations. \\
-        Absence de défaillance majeure pendant un épisode & Permet d'évaluer d'abord la politique nominale dans un cadre contrôlé. & Sous-estime le risque opérationnel réel si les pannes ne sont pas ensuite injectées en tests de robustesse. \\
+        Temps discret & Simulation événementielle & Permet une prise de décision séquentielle compatible avec un agent RL et un simulateur événementiel. & Sensible au choix de $\Delta t$; un pas trop grand lisse la dynamique, un pas trop fin augmente le coût de calcul. \\
+        Stationnarité à court terme & Découpage temporel & Stabilise l'apprentissage sur des fenêtres opérationnelles réalistes (quelques heures). & Peut se dégrader lors de ruptures de régime (pluie, incidents, changements de plan). \\
+        Observation incomplète & Capteurs bruités & Reflète la disponibilité réelle de capteurs et d'informations bruitées en exploitation. & Introduit une part de non-markovianité apparente si l'état observé est trop pauvre. \\
+        Regroupement des camions par classes & Classification par capacité & Réduit la dimensionnalité de l'état et de l'action pour accélérer la convergence. & Perte de granularité sur les différences intra-classe (usure, performance individuelle). \\
+        Points de chargement/déchargement fixes sur un épisode & Configuration statique & Simplifie le cadre expérimental et la comparaison avec les baselines. & Généralisation limitée aux contextes de repositionnement dynamique des pelles ou destinations. \\
+        Absence de défaillance majeure pendant un épisode & Mode nominal & Permet d'évaluer d'abord la politique nominale dans un cadre contrôlé. & Sous-estime le risque opérationnel réel si les pannes ne sont pas ensuite injectées en tests de robustesse. \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -549,7 +551,7 @@ Ce graphe peut être orienté (sens uniques, routes à sens limité) ou non-orie
 \begin{itemize}
     \item \textbf{Matrice de temps $T$} : $T_{ij}$ est le temps de trajet moyen (en minutes) du nœud $i$ au nœud $j$, calculé via l'algorithme de plus court chemin (Dijkstra ou Floyd-Warshall).
     
-    \item \textbf{Matrice de coût $C$} : $C_{ij}$ agrège plusieurs dimensions : distance, temps de trajet, consommation de carburant, usure du véhicule. On peut utiliser une combinaison linéaire pondérée :
+    \item \textbf{Matrice de coût $C$} : $C_{ij}$ agrège plusieurs dimensions : distance, temps de trajet, consommation de carburant~\cite{GuangweiLiu2019}, usure du véhicule. On peut utiliser une combinaison linéaire pondérée :
     \begin{equation}
         C_{ij} = \alpha \cdot T_{ij} + \beta \cdot D_{ij} + \gamma \cdot E_{ij}
     \end{equation}
@@ -568,7 +570,7 @@ où $\bar{T}_{ij}$ est le temps moyen et $\eta_{ij}(t) \sim \mathcal{N}(0, \sigm
 
 Cette modélisation stochastique est essentielle pour évaluer la robustesse des politiques apprises, car elle oblige l'agent à anticiper les variations plutôt que de se fier à des temps de trajet figés. Cette exigence de robustesse est également mise en avant dans les travaux récents de RL multi-agent appliqués au dispatching minier \cite{Zhao2025HierarchicalMARL}.
 
-\section{Formulation du problème en tant que \mbox{processus de décision markovien}}
+\section{Formulation du problème en tant que processus de \\décision markovien}
 \label{sec:mdp}
 
 La formalisation du problème de dispatching minier en tant que processus de décision markovien est l'étape décisive qui transforme le système opérationnel en un problème d'apprentissage par renforcement. Ce cadrage rejoint les études récentes de dispatching minier fondées sur des formulations explicites de type MDP, ainsi que les travaux fondateurs en apprentissage par renforcement séquentiel appliqué à des problèmes de routage et d'ordonnancement \cite{MohammadrezaNazari2018, CongZhang2020, MarticorenaDAngelo2025}. Un processus de décision markovien est défini par le 4-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R})$ où :
@@ -726,38 +728,250 @@ La modélisation proposée articule réalisme opérationnel et tractabilité alg
 \label{chap:methodologie}
 
 \section*{Introduction}
+Ce chapitre détaille la démarche de conception et d'implémentation de l'agent de dispatching intelligent. Après avoir établi le cadre mathématique du Processus de Décision Markovien (MDP) au chapitre précédent, il s'agit ici de traduire ces concepts en une architecture logicielle et algorithmique fonctionnelle. Nous présentons d'abord le paradigme méthodologique CRISP-RL qui a structuré l'ensemble du projet. Ensuite, nous détaillons la conception du simulateur de mine basé sur le standard Gymnasium, l'architecture du réseau de neurones de l'agent de Deep Reinforcement Learning (DRL), ainsi que la stratégie d'évaluation rigoureuse permettant de valider la performance de notre solution face aux méthodes industrielles classiques.
 
-% La conception d'une solution d'apprentissage par renforcement appliquée à la logistique minière exige une méthodologie structurée, assurant la cohérence entre objectifs métier, modélisation du problème et choix techniques. Cette phase permet de traduire le cadre théorique en une architecture expérimentale reproductible et évaluable.
-
-\section{Méthodologie adoptée (CRISP-RL adaptée à l'apprentissage par renforcement)}
+\section{Paradigme méthodologique : Le cadre CRISP-RL}
 \label{sec:crisp-rl}
+Pour garantir la rigueur scientifique et la reproductibilité de nos travaux, nous adoptons le cadre méthodologique CRISP-RL (CRoss-Industry Standard Process for Reinforcement Learning Applications), tel que proposé par \cite{Szatmári2025}. Ce standard est une évolution du CRISP-DM traditionnel, spécifiquement repensée pour les systèmes apprenant par interaction dynamique.
 
-À compléter...
+\subsection{Justification du choix}
+\label{sec:justification-crisp-rl}
+Le choix du CRISP-RL s'appuie sur la nature interactive et incertaine de la logistique minière. Contrairement à une analyse de données statiques où l'on cherche à prédire une cible, le dispatching minier exige de piloter un système en temps réel. Le CRISP-RL est le seul cadre permettant de gérer efficacement la boucle de rétroaction entre l'agent (le système de dispatching) et son environnement (la mine). Il permet d'intégrer les phases de modélisation du simulateur comme une étape centrale du projet, assurant que l'agent n'apprend pas sur des données mortes, mais sur une dynamique de flux vivante et stochastique.
 
-\section{Conception de l'environnement de simulation}
+\subsection{Cycle de vie du projet d'apprentissage par renforcement}
+\label{sec:cycle-vie-rl}
+
+Conformément aux travaux de Szatmári \cite{Szatmári2025}, nous suivons un cycle de vie en six étapes itératives :
+
+\begin{itemize}
+    \item \textbf{Définition des buts RL} : Cette phase consiste à traduire les objectifs de production (tonnage) et de maintenance (usure) en une fonction de récompense scalaire.
+    \item \textbf{Compréhension et modélisation de l'environnement} : Identification des contraintes physiques et temporelles de la mine pour construire un simulateur fidèle.
+    \item \textbf{Formulation MDP} : Définition formelle des espaces d'états $S$ et d'actions $A$, ainsi que de la fonction de transition $P$ (développée au Chapitre 3).
+    \item \textbf{Développement de l'agent} : Choix de l'architecture de l'approximateur de fonction (réseau de neurones) et de l'algorithme d'apprentissage.
+    \item \textbf{Entraînement et test} : Phase d'apprentissage intensif où l'agent explore des milliers de scénarios de dispatching dans le simulateur.
+    \item \textbf{Évaluation de la robustesse} : Vérification de la capacité de l'agent à maintenir ses performances face à des événements non rencontrés durant l'entraînement (pannes, pics de congestion). 
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/cycle CRISP-RL.drawio.png}
+    \caption{Cycle de vie CRISP-RL adapté à la logistique minière.}
+    \label{fig:cycle-vie-rl}
+\end{figure}
+
+\section{Conception de l’environnement de simulation}
 \label{sec:env-simulation}
 
-À compléter...
+L'environnement est le monde dans lequel l'agent va évoluer. Sa fidélité par rapport à la réalité minière est indispensable pour la validité des résultats, l'usage de la simulation étant reconnu comme l'approche standard pour évaluer ces systèmes complexes \cite{Necmettinetin2004}.
 
-\section{Conception de l'agent d'\mbox{apprentissage par renforcement}}
-\label{sec:agent-rl}
+\subsection{Architecture du simulateur}
+\label{sec:architecture-simulateur}
 
-À compléter...
+Nous avons développé un simulateur adapté en langage Python, en utilisant l'interface standardisée Gymnasium\cite{Gymnasium}. Gymnasium fournit un cadre rigoureux représentant un processus de décision markovien (MDP) via une classe de haut niveau nommée \texttt{Env}. La structure de notre simulateur repose sur quatre fonctions et attributs clés :
 
-\section{Choix des algorithmes d'apprentissage}
-\label{sec:choix-algorithmes}
+\begin{itemize}
+    \item \textbf{observation\_space \& action\_space} : Ces attributs définissent le format des données. Nous utilisons l'espace \texttt{Box} pour les observations continues (positions, files) et \texttt{Discrete} pour les décisions de dispatching.
+    \item \textbf{reset(seed, options)} : Initialise la mine pour un nouvel épisode de travail. Cette méthode renvoie l'observation initiale $s_0$ accompagnée d'un dictionnaire \texttt{info} pour le débogage.
+    \item \textbf{step(action)} : C'est le cœur de la boucle Agent-Environnement. À partir d'une décision de dispatching, elle fait évoluer la mine de $\Delta t$ et renvoie cinq valeurs cruciales : l'observation suivante ($s_{t+1}$), la récompense ($r_t$), ainsi que les signaux \texttt{terminated} (but atteint/échec), \texttt{truncated} (limite de temps du poste atteinte) et \texttt{info}.
+    \item \textbf{render()} : Permet la visualisation de l'état de la flotte et des pelles pour le suivi humain.
+\end{itemize}
 
-À compléter...
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Architecture modulaire du simulateur Gymnasium.drawio.png}
+    \caption{Architecture modulaire du simulateur Gymnasium}
+    \label{fig:architecture-simulateur}
+\end{figure}
 
-\section{Conception des modèles de référence (baselines)}
-\label{sec:baselines}
+\subsection{Modélisation logicielle des entités}
+\label{sec:modelisation-logicielle}
 
-À compléter...
+Le simulateur repose sur une architecture orientée objet (POO) où chaque entité physique est reliée aux variables formelles du MDP défini au Chapitre~3. La correspondance entre les classes logicielles et les composantes de l'espace d'état $s_t$ (Eq.~3.3) est établie dans le Tableau~\ref{tab:mapping-classes-mdp}.
+
+\begin{table}[h!]
+\centering
+\caption{Correspondance entre les classes logicielles et les 
+variables du MDP}
+\label{tab:mapping-classes-mdp}
+\begin{tabular}{llll}
+\hline
+\textbf{Classe} & \textbf{Rôle dans le MDP} & 
+\textbf{Variable(s) encodée(s)} & \textbf{Eq. de référence} \\
+\hline
+\texttt{Truck}     & Entité mobile, collecte KPIs  
+                   & $x_c$ (localisation, statut)  & Eq.~3.3 \\
+\texttt{Shovel}    & Ressource de chargement       
+                   & $q_p$ (file d'attente), $z_r$ & Eq.~3.3 \\
+\texttt{DumpSite}  & Ressource de déchargement     
+                   & $z_r$ (disponibilité)         & Eq.~3.3 \\
+\texttt{Environment} & Orchestrateur, logique $f(s_t, a_t)$ 
+                   & Transition $s'_t$ (Eq.~3.6)  & Eq.~3.5--3.6 \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Classe Truck (Camion)~:}
+La classe \texttt{Truck} encode la composante $x_c$ de l'espace d'état $s_t$, qui représente la localisation et le statut courant de chaque camion $c \in \text{Camions}$. Elle suit en temps réel l'état de disponibilité, directement lié à la contrainte de préemption limitée formulée en Section~\ref{sec:hypotheses}. Les attributs de cette classe servent à calculer les KPIs de rendement ($\text{KPI}_1$) et de consommation spécifique ($\text{KPI}_3$) définis en Section~\ref{sec:kpis}.
+
+\paragraph{Classe Shovel (Pelle)~:}
+La classe \texttt{Shovel} encode la composante $q_p$ de l'espace d'état, soit la longueur de la file d'attente à chaque pelle $p \in \text{Pelles}$. Sa particularité logicielle réside dans les paramètres ($\bar{T}_{ij}$) et ($\sigma_{ij}$), qui permettent d'échantillonner le bruit stochastique $\eta_{ij}(t) \sim \mathcal{N}(0, \sigma^2_{ij})$ introduit en (Eq.~3.2). Cette modélisation assure la cohérence entre la théorie du Chapitre~3 et l'implémentation effective.
+
+\paragraph{Classe DumpSite (Point de déchargement)~:}
+Similaire à \texttt{Shovel}, cette classe encode la disponibilité $z_r$ des ressources de déchargement dans $s_t$. Les paramètres introduisent la même stochasticité gaussienne, simulant les goulots d'étranglement potentiels en fin de parcours — une source de variabilité identifiée dans les hypothèses de modélisation (Tableau~3.1).
+
+\paragraph{Classe Environment (Orchestrateur)~:}
+Cette classe implémente la fonction de transition déterministe $f(s_t, a_t)$ augmentée des perturbations stochastiques $\eta_t$ (Eq.~3.6). Elle contient l'horloge de simulation (le pas de temps discret $\Delta t$ défini en Section~\ref{sec:hypotheses}), orchestre les interactions entre entités et expose l'interface standardisée \texttt{reset()} / \texttt{step()} / \texttt{render()} de Gymnasium~\cite{Gymnasium}, assurant la compatibilité avec PPO via Stable-Baselines3~\cite{stable-baselines3}.
+
+\subsection{Implémentation de la stochasticité}
+\label{sec:stochasticite-simulateur}
+
+Conformément à l'équation 3.2, la réalité du terrain est injectée via une variabilité des temps de trajet. À chaque fois qu'un camion se déplace sur un arc $(u,v)$ du graphe routier, le simulateur ne se contente pas d'utiliser le temps moyen $\bar{T}_{ij}$. Il échantillonne un bruit $\eta$ tel que : 
+
+\begin{equation}
+T_{ij}(t) = \bar{T}_{ij} + \eta_{ij}(t)
+\label{eq:stochasticite}
+\end{equation}
+
+Cela force l'agent à ne pas apprendre un chemin fixe, mais à développer une politique de dispatching capable de compenser les retards imprévus d'un camion sur une route dégradée ou encombrée.
+
+\section{Architecture technique de l’agent d'apprentissage}
+\label{sec:architecture-agent}
+
+L'agent d'apprentissage par renforcement profond est conçu pour interagir dynamiquement avec l'environnement de simulation afin d'acquérir une politique de dispatching optimale. Sa structure technique repose sur l'articulation de plusieurs composants essentiels :
+
+\subsection{Passage au Deep Reinforcement Learning}
+\label{sec:deep-rl}
+Le RL classique par table (Q-Table) devient inefficace lorsque l'espace d'états est trop vaste. Dans notre cas, la combinaison des positions de $N$ camions et des files d'attente de $M$ pelles crée une explosion combinatoire. Nous utilisons donc le Deep Reinforcement Learning (DRL), où le signal de décision est généré par un réseau de neurones profond agissant comme approximateur de fonction universel~\cite{MoezKrichen2022}.
+
+\subsection{Structure du réseau de neurones}
+\label{sec:structure-reseau}
+
+L'agent repose sur une architecture de type Perceptron Multicouche (MLP) comprenant :
+
+\begin{itemize}
+    \item \textbf{Couche d'entrée} : Sa dimension correspond au nombre de variables dans l'état $s_t$ (positions, charges, temps, files).
+    \item \textbf{Couches cachées} : Deux couches denses de 128 neurones chacune, utilisant la fonction d'activation \textbf{ReLU} ($f$($x$) = max(0, $x$)) pour capturer les relations non linéaires complexes entre le trafic et la production.
+    \item \textbf{Couche de sortie} : Une couche de dimension $|\mathcal{A}|$ utilisant une fonction \textbf{Softmax} pour transformer les activations en probabilités d'action (choix de la pelle de destination).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Architecture du réseau de neurones (MLP) de l’agent PPO.drawio.png}
+    \caption{Architecture du réseau de neurones (MLP) de l’agent PPO.}
+    \label{fig:structure-reseau}
+\end{figure}
+
+\subsection{Prétraitement des observations}
+\label{sec:pretraitement-observations}
+
+Pour stabiliser l'apprentissage, les données brutes sont normalisées avant d'entrer dans le réseau. Les distances sont ramenées sur une échelle $[0, 1]$ par rapport à la diagonale maximale de la mine, et les longueurs de files d'attente sont divisées par la capacité maximale de rétention de la pelle. Cette étape est cruciale pour éviter l'explosion du gradient lors de la rétropropagation~\cite{MoezKrichen2022}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Pipeline du flux de données entre la mine et l’agent DRL.drawio.png}
+    \caption{Pipeline du flux de données entre la mine et l’agent DRL.}
+    \label{fig:pipeline-donnees}
+\end{figure}
+
+\section{Sélection et configuration de l’algorithme}
+\label{sec:selection-algorithme}
+
+Le succès d'un système d'apprentissage par renforcement profond (DRL) repose non seulement sur la qualité de l'environnement, mais aussi sur le choix d'un algorithme capable de naviguer efficacement dans des espaces d'états complexes et stochastiques. Dans le contexte de la logistique minière, l'algorithme doit être capable de gérer la haute dimensionnalité des données tout en garantissant une convergence stable vers une politique de dispatching performante.
+
+\subsection{Justification du choix de PPO et rejet des alternatives}
+\label{sec:choix-algorithme}
+Pour piloter notre agent de dispatching, nous avons procédé à un arbitrage technologique rigoureux. L'objectif est de sélectionner un algorithme capable de converger vers une politique robuste dans un environnement minier caractérisé par une haute dimensionnalité et une forte stochasticité. Nous comparons ici PPO aux trois autres piliers du Deep Reinforcement Learning : DQN, DDPG/TD3 et SAC.
+
+\paragraph{Rejet de DQN (Deep Q-Network) :}
+Bien que DQN soit l'algorithme fondateur du DRL, il est structurellement limité aux espaces d'actions discrets et de faible dimension. L'utilisation d'une Q-Table approximée par un réseau de neurones se heurte à une explosion combinatoire dès que le nombre de pelles et de camions augmente. Dans notre complexe minier, la gestion simultanée de plusieurs unités de chargement rendrait l'apprentissage via DQN extrêmement instable et sujet à une divergence algorithmique~\cite{MoezKrichen2022}.
+
+\paragraph{Rejet de la famille DDPG / TD3 :}
+Le DDPG (Deep Deterministic Policy Gradient) et son évolution le TD3 souffrent de défauts intrinsèques limitant leur applicabilité industrielle. Ces algorithmes présentent une instabilité chronique et une tendance critique à la surestimation des Q-valeurs. Dans un environnement stochastique où les temps de trajet subissent un bruit $\eta$ (Eq. 3.2), la politique déterministe de cette famille d'algorithmes produit des oscillations persistantes, se traduisant par des décisions de dispatching aléatoires et une sous-utilisation des ressources~\cite{nwachukwu2025sac}.
+
+\paragraph{Rejet de SAC (Soft Actor-Critic) :}
+SAC est reconnu pour sa performance grâce à l'optimisation de l'entropie, mais il impose un coût computationnel prohibitif. L'étude comparative de~\cite{nwachukwu2025sac} quantifie ce surcoût : SAC nécessite en moyenne 40 heures d'entraînement contre 31 heures pour des architectures plus sobres, soit un besoin en ressources supérieur de 30\%. Pour une exploitation minière réelle, où l'agent doit être ré-entraîné fréquemment suite à l'évolution géographique de la zone d’extraction, ce manque d'efficience constitue un obstacle économique majeur.
+
+\paragraph{Avantages déterminants de PPO :}
+L'algorithme Proximal Policy Optimization (PPO) s'impose comme la solution optimale pour ce mémoire selon trois critères validés par la littérature récente :
+
+\begin{itemize}
+    \item \textbf{Stabilité par objectif tronqué} : PPO utilise un mécanisme de Clipped Surrogate Objective. Cela limite l'amplitude des mises à jour de la politique à chaque itération, garantissant que l'agent ne diverge pas brutalement suite à un événement stochastique extrême (panne, congestion soudaine)~\cite{MoezKrichen2022}.
+
+    \item \textbf{Simplicité d'implémentation et on-policy} : Contrairement aux méthodes off-policy nécessitant un replay buffer massif et complexe à gérer en mémoire, PPO apprend directement de ses interactions actuelles. Cette caractéristique facilite la synchronisation avec le simulateur Gymnasium et réduit l'empreinte logicielle du système.
+
+    \item \textbf{Robustesse industrielle} : PPO est l'algorithme le plus adapté aux environnements de production pour sa moindre sensibilité au réglage fin des hyperparamètres, assurant une reproductibilité des résultats essentielle pour la logistique minière~\cite{MoezKrichen2022, Szatmári2025}. Le Tableau 4.2 synthétise cette analyse comparative.
+\end{itemize}
+
+\begin{table}[h!]
+\centering
+\caption{Comparaison multidimensionnelle des algorithmes DRL (adapté de \cite{nwachukwu2025sac, MoezKrichen2022})}
+\label{tab:comparaison-algos}
+\begin{tabularx}{\textwidth}{lXXXX}
+\hline
+\textbf{Critère} & \textbf{DQN} & \textbf{DDPG / TD3} & \textbf{SAC} & \textbf{PPO} \\
+\hline
+Espace d'action & Discret uniquement & Continu & Continu & \textbf{Hybride} \\
+Stabilité & Moyenne & Faible & Élevée & \textbf{Optimale} \\
+Coût de calcul & Très Faible & Moyen (31h) & Élevé (40h) & \textbf{Faible} \\
+Oscillations ($\eta$) & Fortes & Élevées & Faibles & \textbf{Négligeables} \\
+Réglage (Tuning) & Simple & Complexe & Moyen & \textbf{Simple} \\
+\hline
+\textbf{Verdict} & Limité & Instable & Trop lourd & \textbf{Retenu} \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Paramètres d'apprentissage}
+\label{sec:parametres-apprentissage}
+Les hyperparamètres retenus correspondent aux valeurs par défaut de la bibliothèque Stable-Baselines3 (version 2.x), telles que définies dans la documentation officielle~\cite{stable-baselines3}. Ces valeurs ont été choisies comme base de référence car elles ont été optimisées par les auteurs de la bibliothèque pour offrir une convergence stable sur une large gamme d'environnements de type Gymnasium.
+
+\begin{table}[ht!]
+\centering
+\caption{Hyperparamètres de l'agent PPO}
+\label{tab:hyperparametres-ppo}
+\begin{tabular}{llp{7.5cm}}
+\toprule
+\textbf{Hyperparamètre} & \textbf{Valeur} & \textbf{Justification} \\
+\midrule
+Learning Rate & 0.0003 & Vitesse d'apprentissage par défaut recommandée pour la plupart des problèmes. \\
+Gamma ($\gamma$) & 0.99 & Valeur standard dans le RL pour équilibrer les récompenses immédiates et futures. \\
+Batch Size & 64 & Taille du lot d'échantillons utilisée pour chaque mise à jour du réseau de neurones. \\
+GAE Lambda ($\lambda$) & 0.95 & Paramètre pour le Generalized Advantage Estimation, utilisé pour réduire la variance. \\
+Clip Range & 0.2 & Cœur de l'algorithme PPO (le Clipped Objective) qui empêche l'agent de changer trop radicalement de politique d'un coup. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Stratégie d’évaluation et modèles de référence (Baselines)}
+\label{sec:strategie-evaluation}
+
+\subsection{Heuristiques de comparaison}
+\label{sec:heuristiques-comparaison}
+Pour démontrer la plus-value de l'agent DRL, nous le comparons à deux baselines industrielles :
+
+\begin{itemize}
+
+    \item \textbf{Fixed Assignment (Règle statique)} : Chaque camion est dédié à une seule pelle. C'est le niveau zéro de l'optimisation.
+    \item \textbf{Nearest Shovel (Greedy)} : Le camion choisit systématiquement la pelle la plus proche géographiquement. C'est l'approche la plus courante en l'absence de système intelligent.
+
+\end{itemize}
+
+\subsection{Indicateurs de performance (KPIs)}
+\label{sec:kpis}
+L'évaluation repose sur la formalisation mathématique de trois indicateurs clés :
+
+\begin{itemize}
+    \item \textbf{Productivité Horaire $(P_h)$} : 
+    \begin{equation}
+        P_h = \frac{\sum_{c \in \text{Poste}} \text{Tonnage}(c)}{T_{\text{total}}}
+    \end{equation}
+    \item \textbf{Temps d'attente moyen $(E_t)$} : Temps d'attente moyen en file d'attente par cycle.
+    \item \textbf{Consommation spécifique $(E_e)$} : Métrique de l'efficience énergétique~\cite{GuangweiLiu2019}.
+\end{itemize}
 
 \section{Conclusion}
 \label{sec:conclusion-methodologie}
-
-% Ce chapitre a défini la méthodologie de construction de la solution et les choix de conception associés. Le chapitre suivant détaillera l'implémentation concrète, le protocole expérimental et les métriques d'évaluation retenues.
+Ce chapitre a détaillé la transformation de notre modèle MDP en une architecture logicielle concrète structurée par le cadre CRISP-RL. Nous avons justifié le passage au Deep Reinforcement Learning (PPO) pour gérer la complexité du système minier et défini un protocole d'évaluation rigoureux basé sur des indicateurs de performance industriels. Le chapitre suivant présentera l'implémentation de ce système dans notre environnement de simulation et analysera les résultats obtenus face aux heuristiques de référence.
 
 % ============================================================================
 %        CHAPITRE 5 : IMPLÉMENTATION ET EXPÉRIMENTATION
@@ -861,7 +1075,7 @@ La modélisation proposée articule réalisme opérationnel et tractabilité alg
     \item[RL] Reinforcement Learning (apprentissage par renforcement).
     \item[MDP] Markov Decision Process (processus de décision markovien).
     \item[FMS] Fleet Management System (système de gestion de flotte).
-    \item[CRISP-RL] CRoss-Industry Standard Process for Reinforcement Learning applications.
+    \item[CRISP-RL] CRoss-Industry Standard Process for Reinforcement Learning applications \cite{Szatmári2025}.
     \item[FIFO] First In, First Out (premier entré, premier sorti).
 \end{description}
 
@@ -872,7 +1086,7 @@ La modélisation proposée articule réalisme opérationnel et tractabilité alg
 %                         BIBLIOGRAPHIE
 % ============================================================================
 \addcontentsline{toc}{chapter}{Bibliographie}
-%\nocite{*}
+\nocite{*}
 \bibliographystyle{IEEEtran} % Style IEEE
 \bibliography{export}
 
