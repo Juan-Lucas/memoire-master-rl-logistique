@@ -15,13 +15,12 @@ Architecture conforme au Tableau 4.1 du mémoire :
 
 from __future__ import annotations
 
-from copy import deepcopy
 from random import Random
 from typing import Any
 
 import gymnasium as gym
-import numpy as np
 from gymnasium import spaces
+import numpy as np
 
 from memoire_master_rl_logistique.simulation.entities import DumpSite, Shovel, Truck
 from memoire_master_rl_logistique.simulation.fuel_model import (
