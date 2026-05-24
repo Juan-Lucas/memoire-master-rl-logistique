@@ -43,13 +43,7 @@ Chaque camion doit afficher entre 14 et 16 cycles complétés.
 ## 2. Validation de l'environnement Gymnasium
 
 ```bash
-python -c "
-from gymnasium.utils.env_checker import check_env
-from memoire_master_rl_logistique.env.mine_env import MineEnv
-env = MineEnv(truck_count=12, shovel_count=3, dump_count=2)
-check_env(env, skip_render_check=True)
-print('check_env OK')
-"
+python -c "from gymnasium.utils.env_checker import check_env; from memoire_master_rl_logistique.env.mine_env import MineEnv; check_env(MineEnv(truck_count=12, shovel_count=3, dump_count=2), skip_render_check=True); print('check_env OK')"
 ```
 
 **Résultat attendu** : `check_env OK` (aucune erreur)
