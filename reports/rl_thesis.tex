@@ -942,6 +942,59 @@ Clip Range & 0.2 & Cœur de l'algorithme PPO (le Clipped Objective) qui empêche
 \end{tabular}
 \end{table}
 
+\subsection{Pseudocode de l'algorithme proposé}
+\label{sec:pseudocode}
+
+L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entraînement de l'agent PPO appliquée à notre problème de dispatching minier. Ce pseudocode intègre les éléments définis dans les sections précédentes : l'état $s_t$ (Eq.~3.1), l'espace d'action $\mathcal{A}$ (Section~3.4), la récompense pondérée $R_t$ (Eq.~3.8), le réseau MLP~128$\times$128 (Section~4.3.2) et les hyperparamètres du Tableau~\ref{tab:hyperparametres-ppo}.
+
+\begin{algorithm}[H]
+\caption{PPO pour le dispatching minier camion-pelle-dump}
+\label{alg:ppo-dispatching}
+\begin{algorithmic}[1]
+
+\REQUIRE Environnement minier $\mathcal{E}$ (graphe $G$, camions $\mathcal{C}$, pelles $\mathcal{P}$, dumps $\mathcal{D}$)
+\REQUIRE Réseau acteur $\pi_\theta$ et critique $V_\phi$ (MLP 128$\times$128, ReLU)
+\REQUIRE Hyperparamètres : $\alpha = 0{,}0003$, $\gamma = 0{,}99$, $\lambda_{\text{GAE}} = 0{,}95$, $\epsilon_{\text{clip}} = 0{,}2$, $T_{\max}$ steps
+
+\STATE Initialiser $\theta$ et $\phi$ aléatoirement
+\FOR{$k = 1, 2, \ldots, T_{\max} / N$}
+    \STATE Collecter $N$ transitions en suivant $\pi_{\theta_k}$ :
+    \FOR{$t = 1, \ldots, N$}
+        \STATE Observer l'état $s_t = \big(\{q_p\},\ \{x_c\},\ \{z_r\},\ t_{\text{courant}}\big)$
+        \STATE Normaliser $s_t$ dans $[0, 1]$ (Section~4.3.3)
+        \STATE Échantillonner l'action $a_t \sim \pi_\theta(\cdot \mid s_t)$
+        \STATE Décoder $a_t$ en paire (pelle $p_i$, dump $d_j$) :
+        \STATE \hspace{1em} $i \leftarrow \lfloor a_t / |\mathcal{D}| \rfloor$, \quad $j \leftarrow a_t \bmod |\mathcal{D}|$
+        \STATE \hspace{1em} Si $a_t = |\mathcal{P}| \times |\mathcal{D}|$ : ATTENDRE
+        \STATE Simuler le cycle complet du camion courant $c$ :
+        \STATE \hspace{1em} Trajet $c \to p_i$ (temps log-normal, Eq.~3.2)
+        \STATE \hspace{1em} Attente + chargement à $p_i$
+        \STATE \hspace{1em} Trajet chargé $p_i \to d_j$
+        \STATE \hspace{1em} Attente + déchargement à $d_j$
+        \STATE \hspace{1em} Retour à vide $d_j \to$ yard
+        \STATE Calculer la récompense (Eq.~3.8) :
+        \STATE \hspace{1em} $R_t = w_1 \cdot R_{\text{rendement}} + w_2 \cdot R_{\text{équité}} + w_3 \cdot R_{\text{coût}}$
+        \STATE Observer le nouvel état $s_{t+1}$
+        \STATE Stocker $(s_t, a_t, R_t, s_{t+1}, \log \pi_\theta(a_t \mid s_t))$
+    \ENDFOR
+    \STATE Calculer les avantages GAE : $\hat{A}_t = \sum_{l=0}^{T-t} (\gamma \lambda_{\text{GAE}})^l \delta_{t+l}$
+    \STATE \hspace{1em} où $\delta_t = R_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)$
+    \FOR{chaque époque d'optimisation (mini-batches de taille 64)}
+        \STATE Calculer le ratio : $r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_k}(a_t \mid s_t)}$
+        \STATE Mettre à jour l'acteur par l'objectif tronqué :
+        \STATE \hspace{1em} $L^{\text{CLIP}}(\theta) = \mathbb{E}\big[\min\big(r_t \hat{A}_t,\ \text{clip}(r_t, 1 - \epsilon_{\text{clip}}, 1 + \epsilon_{\text{clip}}) \hat{A}_t\big)\big]$
+        \STATE Mettre à jour le critique :
+        \STATE \hspace{1em} $L^{V}(\phi) = \mathbb{E}\big[(V_\phi(s_t) - R_t^{\text{cible}})^2\big]$
+        \STATE $\theta \leftarrow \theta + \alpha \nabla_\theta L^{\text{CLIP}}$, \quad $\phi \leftarrow \phi - \alpha \nabla_\phi L^{V}$
+    \ENDFOR
+\ENDFOR
+\RETURN Politique entraînée $\pi_\theta^*$
+
+\end{algorithmic}
+\end{algorithm}
+
+Cet algorithme illustre comment les composantes théoriques définies au Chapitre~3 (MDP, récompense pondérée, stochasticité) s'articulent avec les choix techniques du présent chapitre (PPO, architecture réseau, hyperparamètres) pour former une boucle d'apprentissage complète et cohérente. La ligne~9 montre en particulier l'encodage de l'espace d'action $\mathcal{A} = \text{Discrete}(|\mathcal{P}| \times |\mathcal{D}| + 1)$ qui permet à l'agent de choisir simultanément la pelle et le point de déchargement.
+
 \section{Stratégie d’évaluation et modèles de référence (Baselines)}
 \label{sec:strategie-evaluation}
 
