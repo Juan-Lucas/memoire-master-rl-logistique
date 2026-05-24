@@ -11,6 +11,7 @@ Usage :
   python -m memoire_master_rl_logistique.main --sim-only
   python -m memoire_master_rl_logistique.main --train-only
   python -m memoire_master_rl_logistique.main --benchmark-only
+  python -m memoire_master_rl_logistique.main --check-env
 """
 
 from __future__ import annotations
@@ -20,6 +21,33 @@ import argparse
 from memoire_master_rl_logistique.experiments.run_benchmark import run_all_benchmarks
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.simulation.events import build_simulation
+
+
+def run_check_env(
+    truck_count: int = 12,
+    shovel_count: int = 3,
+    dump_count: int = 2,
+) -> None:
+    """Valide l'environnement Gymnasium avec check_env."""
+    from gymnasium.utils.env_checker import check_env
+
+    from memoire_master_rl_logistique.env.mine_env import MineEnv
+
+    print("=" * 60)
+    print("Validation de l'environnement Gymnasium")
+    print("=" * 60)
+
+    env = MineEnv(
+        truck_count=truck_count,
+        shovel_count=shovel_count,
+        dump_count=dump_count,
+    )
+    check_env(env, skip_render_check=True)
+
+    print("\ncheck_env OK")
+    print(f"  Observation : {env.observation_space}")
+    print(f"  Action      : {env.action_space}")
+    print(f"  Camions={truck_count}, Pelles={shovel_count}, Dumps={dump_count}")
 
 
 def run_simulation_demo(
@@ -73,6 +101,10 @@ def main() -> None:
         help="Exécuter uniquement le benchmark comparatif",
     )
     parser.add_argument(
+        "--check-env", action="store_true",
+        help="Valider l'environnement Gymnasium (check_env)",
+    )
+    parser.add_argument(
         "--truck-count", type=int, default=12,
         help="Nombre de camions (défaut: 12)",
     )
@@ -90,6 +122,14 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    if args.check_env:
+        run_check_env(
+            truck_count=args.truck_count,
+            shovel_count=args.shovel_count,
+            dump_count=args.dump_count,
+        )
+        return
 
     if args.sim_only:
         run_simulation_demo(
