@@ -1,4 +1,4 @@
-"""Benchmark comparatif complet (Sprint E).
+"""Benchmark comparatif complet.
 
 Exécute toutes les méthodes (baselines + PPO) sur tous les scénarios
 avec plusieurs seeds pour produire les données du Chapitre 6.
@@ -68,7 +68,6 @@ def run_benchmark(
     """Exécute le benchmark pour un scénario donné."""
     results = []
 
-    # --- Définition des politiques ---
     def fixed_policy(obs, info, env):
         p = FixedAssignmentPolicy(num_shovels=env.shovel_count)
         return p.predict(obs, info)
@@ -94,7 +93,6 @@ def run_benchmark(
         "QueueAware": queue_aware_policy,
     }
 
-    # Entraîner et ajouter PPO si demandé
     ppo_model = None
     if train_ppo_flag:
         model_dir = output_dir / f"ppo_{scenario.name}"
@@ -104,12 +102,13 @@ def run_benchmark(
             print(f"  Chargement du modèle PPO existant: {model_path}")
             ppo_model = PPO.load(str(model_path))
         else:
-            print(f"  Entraînement PPO pour le scénario '{scenario.name}'...")
+            print(f"  Entraînement PPO pour '{scenario.name}'...")
             ppo_model = train_ppo(
                 total_timesteps=scenario.total_timesteps,
                 seed=scenario.seeds[0],
                 truck_count=scenario.truck_count,
                 shovel_count=scenario.shovel_count,
+                dump_count=scenario.dump_count,
                 episode_minutes=scenario.episode_minutes,
                 reward_weights=scenario.reward_weights,
                 output_dir=str(model_dir),
@@ -121,12 +120,12 @@ def run_benchmark(
 
         policies["PPO"] = ppo_policy
 
-    # --- Évaluation sur toutes les seeds ---
     for policy_name, policy_fn in policies.items():
         for seed in scenario.seeds:
             env = MineEnv(
                 truck_count=scenario.truck_count,
                 shovel_count=scenario.shovel_count,
+                dump_count=scenario.dump_count,
                 episode_minutes=scenario.episode_minutes,
                 breakdown_probability=scenario.breakdown_probability,
                 reward_weights=scenario.reward_weights,
@@ -173,7 +172,6 @@ def run_all_benchmarks(
         results = run_benchmark(scenario, out_path, train_ppo_flag)
         all_results.extend(results)
 
-    # Sauvegarder les résultats en CSV
     csv_path = out_path / "benchmark_results.csv"
     if all_results:
         fieldnames = list(all_results[0].keys())

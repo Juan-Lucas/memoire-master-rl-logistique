@@ -1,8 +1,14 @@
-"""Définition des scénarios expérimentaux (Section 5.4 du mémoire).
+"""Scénarios expérimentaux (Section 5.4 du mémoire).
 
-Chaque scénario est une configuration paramétrique de la simulation
-permettant d'évaluer la robustesse et la performance des différentes
-stratégies de dispatching.
+Chaque scénario est une configuration paramétrique permettant
+d'évaluer la robustesse et la performance des stratégies de
+dispatching sur des conditions variées.
+
+Valeurs par défaut basées sur la littérature :
+- 12 camions Cat 785C (Kangwa 2021, Kansanshi)
+- 3 pelles Hitachi 2500 (Mohtasham 2023)
+- 2 dumps, shift de 8 heures
+- 100 réplications par scénario
 """
 
 from __future__ import annotations
@@ -16,8 +22,9 @@ class Scenario:
 
     name: str
     description: str
-    truck_count: int = 5
-    shovel_count: int = 2
+    truck_count: int = 12
+    shovel_count: int = 3
+    dump_count: int = 2
     episode_minutes: float = 480.0
     breakdown_probability: float = 0.02
     reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05)
@@ -25,53 +32,58 @@ class Scenario:
     total_timesteps: int = 50_000
 
 
-# Scénarios de référence pour l'expérimentation
 SCENARIOS: dict[str, Scenario] = {
     "nominal": Scenario(
         name="nominal",
-        description="Scénario nominal : 5 camions, 2 pelles, conditions standards.",
-        truck_count=5,
-        shovel_count=2,
+        description="Conditions nominales : 12 camions, 3 pelles, 2 dumps.",
+        truck_count=12,
+        shovel_count=3,
+        dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.02,
     ),
     "high_load": Scenario(
         name="high_load",
-        description="Charge élevée : 8 camions pour 2 pelles (surcharge).",
-        truck_count=8,
-        shovel_count=2,
+        description="Charge élevée : 18 camions pour 3 pelles (surcharge).",
+        truck_count=18,
+        shovel_count=3,
+        dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.02,
     ),
     "low_load": Scenario(
         name="low_load",
-        description="Charge faible : 3 camions pour 2 pelles (sous-utilisation).",
-        truck_count=3,
-        shovel_count=2,
+        description="Charge faible : 6 camions pour 3 pelles.",
+        truck_count=6,
+        shovel_count=3,
+        dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.02,
     ),
     "high_breakdown": Scenario(
         name="high_breakdown",
-        description="Taux de pannes élevé : 10% par cycle (test de robustesse).",
-        truck_count=5,
-        shovel_count=2,
+        description="Taux de pannes élevé : 10% par cycle (robustesse).",
+        truck_count=12,
+        shovel_count=3,
+        dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.10,
     ),
     "single_shovel": Scenario(
         name="single_shovel",
-        description="Une seule pelle : test de goulot d'étranglement.",
-        truck_count=5,
+        description="Une seule pelle : goulot d'étranglement.",
+        truck_count=12,
         shovel_count=1,
+        dump_count=1,
         episode_minutes=480.0,
         breakdown_probability=0.02,
     ),
     "short_shift": Scenario(
         name="short_shift",
         description="Shift court : 4 heures au lieu de 8.",
-        truck_count=5,
-        shovel_count=2,
+        truck_count=12,
+        shovel_count=3,
+        dump_count=2,
         episode_minutes=240.0,
         breakdown_probability=0.02,
     ),

@@ -1,1 +1,1 @@
-"""Module d'expérimentation (Sprint E)."""
+"""Module d'expérimentation (Chapitre 5)."""

@@ -1,8 +1,8 @@
-"""Module de simulation pour le MVP du Sprint A."""
+"""Module de simulation du transport minier."""
 
 from .entities import DumpSite, Shovel, Truck
-from .events import MineSimulation, build_default_simulation
-from .graph_model import RoadGraph
+from .events import MineSimulation, build_simulation
+from .graph_model import RoadGraph, build_mine_graph
 
 __all__ = [
     "DumpSite",
@@ -10,5 +10,6 @@ __all__ = [
     "RoadGraph",
     "Shovel",
     "Truck",
-    "build_default_simulation",
+    "build_mine_graph",
+    "build_simulation",
 ]

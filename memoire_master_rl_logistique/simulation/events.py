@@ -1,7 +1,8 @@
 """Simulation à événements discrets (DES) du transport minier.
 
 Simule tous les camions en parallèle via un tas d'événements trié par
-temps, garantissant une concurrence réaliste aux pelles et aux dumps.
+temps, garantissant une concurrence réaliste aux pelles et aux dumps
+(Section 4.1 du mémoire — Architecture du simulateur).
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from random import Random
 
 from .entities import DumpSite, Shovel, Truck
 from .fuel_model import estimate_idle_fuel_l, estimate_travel_fuel_l
-from .graph_model import RoadGraph, build_default_graph
+from .graph_model import RoadGraph, build_mine_graph
 from .kpi import compute_kpis
 
 
@@ -29,8 +30,8 @@ class MineSimulation:
     """Simulation à événements discrets du transport minier.
 
     Tous les camions opèrent en parallèle : à chaque instant, le
-    camion dont l'événement est le plus proche dans le temps est traité
-    en premier (file de priorité / tas min).
+    camion dont l'événement est le plus proche dans le temps est
+    traité en premier (file de priorité / tas min).
     """
 
     def __init__(
@@ -48,10 +49,6 @@ class MineSimulation:
         self.dumps = dumps
         self.rng = Random(seed)
         self.breakdown_probability = breakdown_probability
-
-    # ------------------------------------------------------------------
-    # Utilitaires internes
-    # ------------------------------------------------------------------
 
     def _sample_duration(self, mean_min: float, std_min: float) -> float:
         """Échantillonne une durée log-normale (Eq. 3.2)."""
@@ -73,9 +70,9 @@ class MineSimulation:
             edge.road_state = max(0.6, edge.road_state - 0.02)
 
     def _travel(
-        self, src: str, dst: str, loaded: bool
+        self, src: str, dst: str, loaded: bool,
     ) -> tuple[float, float]:
-        """Trajet entre deux nœuds → (durée, carburant)."""
+        """Trajet entre deux nœuds → (durée_min, carburant_l)."""
         travel_min = self.graph.sample_travel_time_minutes(
             src=src, dst=dst, loaded=loaded, rng=self.rng,
         )
@@ -89,12 +86,40 @@ class MineSimulation:
         self._update_road_state(src, dst)
         return travel_min, travel_fuel_l
 
-    # ------------------------------------------------------------------
-    # Boucle principale — simulation parallèle par tas d'événements
-    # ------------------------------------------------------------------
+    def _find_route(self, src: str, dst: str) -> list[str]:
+        """Trouve un chemin dans le graphe via BFS."""
+        if (src, dst) in self.graph.edges:
+            return [src, dst]
+        visited: set[str] = {src}
+        queue: list[tuple[str, list[str]]] = [(src, [src])]
+        while queue:
+            current, path = queue.pop(0)
+            for (s, d) in self.graph.edges:
+                if s == current and d not in visited:
+                    new_path = [*path, d]
+                    if d == dst:
+                        return new_path
+                    visited.add(d)
+                    queue.append((d, new_path))
+        return []
+
+    def _travel_route(
+        self, src: str, dst: str, loaded: bool,
+    ) -> tuple[float, float]:
+        """Trajet multi-sauts via le graphe → (durée, carburant)."""
+        route = self._find_route(src, dst)
+        if len(route) < 2:
+            return 0.0, 0.0
+        total_time = 0.0
+        total_fuel = 0.0
+        for i in range(len(route) - 1):
+            t, f = self._travel(route[i], route[i + 1], loaded)
+            total_time += t
+            total_fuel += f
+        return total_time, total_fuel
 
     def run_episode(
-        self, episode_minutes: float = 8.0 * 60.0
+        self, episode_minutes: float = 8.0 * 60.0,
     ) -> EpisodeResult:
         """Simule un épisode complet en parallèle.
 
@@ -104,7 +129,6 @@ class MineSimulation:
         """
         dump = self.dumps[0]
 
-        # (time, truck_index, location) — tas min
         heap: list[tuple[float, int, str]] = []
         for i, truck in enumerate(self.trucks):
             heapq.heappush(heap, (truck.available_at_min, i, "yard"))
@@ -118,27 +142,25 @@ class MineSimulation:
             truck = self.trucks[truck_idx]
             shovel = self._select_shovel(time_min)
 
-            # --- Trajet vers la pelle ---
+            # Trajet vers la pelle
             if location != shovel.node_id:
-                src = location
-                if (src, shovel.node_id) in self.graph.edges:
-                    t, f = self._travel(src, shovel.node_id, False)
-                    time_min += t
-                    truck.total_active_min += t
-                    truck.total_fuel_l += f
+                t, f = self._travel_route(location, shovel.node_id, False)
+                time_min += t
+                truck.total_active_min += t
+                truck.total_fuel_l += f
                 location = shovel.node_id
 
             if time_min >= episode_minutes:
                 continue
 
-            # --- Attente pelle ---
+            # Attente pelle
             wait_load = max(0.0, shovel.available_at_min - time_min)
             if wait_load > 0:
                 time_min += wait_load
                 truck.total_wait_min += wait_load
                 truck.total_fuel_l += estimate_idle_fuel_l(wait_load)
 
-            # --- Chargement ---
+            # Chargement
             load_min = self._sample_duration(
                 shovel.load_time_mean_min, shovel.load_time_std_min,
             )
@@ -150,25 +172,24 @@ class MineSimulation:
             if time_min >= episode_minutes:
                 continue
 
-            # --- Trajet chargé vers le dump ---
-            if (shovel.node_id, dump.node_id) in self.graph.edges:
-                t, f = self._travel(shovel.node_id, dump.node_id, True)
-                time_min += t
-                truck.total_active_min += t
-                truck.total_fuel_l += f
+            # Trajet chargé vers le dump
+            t, f = self._travel_route(shovel.node_id, dump.node_id, True)
+            time_min += t
+            truck.total_active_min += t
+            truck.total_fuel_l += f
             location = dump.node_id
 
             if time_min >= episode_minutes:
                 continue
 
-            # --- Attente dump ---
+            # Attente dump
             wait_dump = max(0.0, dump.available_at_min - time_min)
             if wait_dump > 0:
                 time_min += wait_dump
                 truck.total_wait_min += wait_dump
                 truck.total_fuel_l += estimate_idle_fuel_l(wait_dump)
 
-            # --- Déchargement ---
+            # Déchargement
             unload_min = self._sample_duration(
                 dump.unload_time_mean_min, dump.unload_time_std_min,
             )
@@ -180,17 +201,14 @@ class MineSimulation:
             if time_min >= episode_minutes:
                 continue
 
-            # --- Retour à vide ---
-            if (dump.node_id, shovel.node_id) in self.graph.edges:
-                t, f = self._travel(
-                    dump.node_id, shovel.node_id, False,
-                )
-                time_min += t
-                truck.total_active_min += t
-                truck.total_fuel_l += f
+            # Retour à vide
+            t, f = self._travel_route(dump.node_id, shovel.node_id, False)
+            time_min += t
+            truck.total_active_min += t
+            truck.total_fuel_l += f
             location = shovel.node_id
 
-            # --- Panne éventuelle ---
+            # Panne éventuelle
             if self.rng.random() < self.breakdown_probability:
                 repair_min = self.rng.uniform(10.0, 30.0)
                 time_min += repair_min
@@ -208,11 +226,9 @@ class MineSimulation:
                 })
 
             truck.available_at_min = time_min
-
-            # Réinsérer le camion dans le tas pour le prochain cycle
             heapq.heappush(heap, (time_min, truck_idx, location))
 
-        # --- Agrégation des KPIs ---
+        # Agrégation des KPIs
         total_tonnage = sum(t.total_tonnage_t for t in self.trucks)
         total_wait = sum(t.total_wait_min for t in self.trucks)
         total_active = sum(t.total_active_min for t in self.trucks)
@@ -242,39 +258,56 @@ class MineSimulation:
         return EpisodeResult(kpis=kpis, per_truck=per_truck)
 
 
-def build_default_simulation(
+def build_simulation(
     seed: int = 42,
-    truck_count: int = 5,
-    shovel_count: int = 2,
+    truck_count: int = 12,
+    shovel_count: int = 3,
+    dump_count: int = 2,
+    capacity_tonnes: float = 140.0,
+    breakdown_probability: float = 0.02,
+    load_time_mean_min: float = 2.0,
+    load_time_std_min: float = 0.3,
+    unload_time_mean_min: float = 1.0,
+    unload_time_std_min: float = 0.2,
 ) -> MineSimulation:
-    """Configuration par défaut pour le MVP du Sprint A."""
-    graph = build_default_graph()
+    """Construit une simulation paramétrable.
 
-    shovel_nodes = ["shovel_1", "shovel_2"]
-    shovel_nodes = shovel_nodes[: max(1, min(shovel_count, len(shovel_nodes)))]
+    Valeurs par défaut basées sur la littérature :
+    - 12 camions Cat 785C (Kangwa 2021)
+    - 3 pelles Hitachi 2500 (Mohtasham 2023)
+    - 2 points de déchargement
+    - Chargement NORM(2, 0.3) min (Mohtasham 2023, Table 2)
+    - Déchargement NORM(1, 0.2) min
+    - Pannes 2% par shift
+    """
+    graph = build_mine_graph(
+        shovel_count=shovel_count,
+        dump_count=dump_count,
+    )
 
     shovels = [
         Shovel(
             shovel_id=f"S{i + 1}",
-            node_id=node_id,
-            load_time_mean_min=2.0,
-            load_time_std_min=0.3,
+            node_id=f"shovel_{i + 1}",
+            load_time_mean_min=load_time_mean_min,
+            load_time_std_min=load_time_std_min,
         )
-        for i, node_id in enumerate(shovel_nodes)
+        for i in range(shovel_count)
     ]
 
     dumps = [
         DumpSite(
-            dump_id="D1",
-            node_id="dump_1",
-            unload_time_mean_min=1.0,
-            unload_time_std_min=0.2,
+            dump_id=f"D{i + 1}",
+            node_id=f"dump_{i + 1}",
+            unload_time_mean_min=unload_time_mean_min,
+            unload_time_std_min=unload_time_std_min,
         )
+        for i in range(dump_count)
     ]
 
     trucks = [
-        Truck(truck_id=f"T{i + 1}", capacity_tonnes=140.0)
-        for i in range(max(1, truck_count))
+        Truck(truck_id=f"T{i + 1}", capacity_tonnes=capacity_tonnes)
+        for i in range(truck_count)
     ]
 
     return MineSimulation(
@@ -283,5 +316,5 @@ def build_default_simulation(
         shovels=shovels,
         dumps=dumps,
         seed=seed,
-        breakdown_probability=0.02,
+        breakdown_probability=breakdown_probability,
     )
