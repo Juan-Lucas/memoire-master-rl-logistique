@@ -1,8 +1,9 @@
 """Politique Queue-Aware (sensible aux files d'attente).
 
 Baseline avancée (Section 4.5 du mémoire) :
-choisit la pelle dont le temps d'attente estimé est minimal.
-Combine distance et disponibilité pour une décision plus informée.
+choisit la paire (pelle, dump) dont le temps d'attente total
+estimé est minimal. Combine distance et disponibilité pour
+une décision plus informée.
 """
 
 from __future__ import annotations
@@ -11,20 +12,22 @@ from typing import Any
 
 import numpy as np
 
-from memoire_master_rl_logistique.simulation.entities import Shovel
+from memoire_master_rl_logistique.simulation.entities import DumpSite, Shovel
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
 
 class QueueAwarePolicy:
-    """Choisit la pelle avec le temps d'attente estimé le plus court."""
+    """Choisit la paire (pelle, dump) avec le temps total minimal."""
 
     def __init__(
         self,
         graph: RoadGraph,
         shovels: list[Shovel],
+        dumps: list[DumpSite] | None = None,
     ) -> None:
         self.graph = graph
         self.shovels = shovels
+        self.dumps = dumps or []
 
     def _estimate_travel_time(self, src: str, dst: str) -> float:
         """Estime le temps de trajet entre deux nœuds."""
@@ -46,20 +49,38 @@ class QueueAwarePolicy:
         truck_location: str = "yard",
         current_time_min: float = 0.0,
     ) -> int:
-        """Retourne l'index de la pelle avec le temps total minimal."""
+        """Retourne l'action encodant la paire (pelle, dump) optimale."""
+        num_dumps = max(len(self.dumps), 1)
         best_action = 0
         best_total_time = float("inf")
 
+        dump_list = list(enumerate(self.dumps)) if self.dumps else [(0, None)]
+
         for i, shovel in enumerate(self.shovels):
-            travel_time = self._estimate_travel_time(
+            travel_to_shovel = self._estimate_travel_time(
                 truck_location, shovel.node_id,
             )
-            arrival_time = current_time_min + travel_time
-            wait_time = max(0.0, shovel.available_at_min - arrival_time)
-            total_time = travel_time + wait_time
+            arrival_shovel = current_time_min + travel_to_shovel
+            wait_shovel = max(0.0, shovel.available_at_min - arrival_shovel)
 
-            if total_time < best_total_time:
-                best_total_time = total_time
-                best_action = i
+            for j, dump in dump_list:
+                if dump is not None:
+                    travel_to_dump = self._estimate_travel_time(
+                        shovel.node_id, dump.node_id,
+                    )
+                    arrival_dump = (
+                        arrival_shovel + wait_shovel + 2.0 + travel_to_dump
+                    )
+                    wait_dump = max(0.0, dump.available_at_min - arrival_dump)
+                    total_time = (
+                        travel_to_shovel + wait_shovel
+                        + travel_to_dump + wait_dump
+                    )
+                else:
+                    total_time = travel_to_shovel + wait_shovel
+
+                if total_time < best_total_time:
+                    best_total_time = total_time
+                    best_action = i * num_dumps + j
 
         return best_action
