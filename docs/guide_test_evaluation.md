@@ -13,10 +13,10 @@ pip install -e .
 Vérifier l'installation :
 
 ```bash
-python -c 'import gymnasium, stable_baselines3, numpy, pandas, matplotlib; print("OK")'
+python -m memoire_master_rl_logistique.main --check-env
 ```
 
-**Résultat attendu** : `OK`
+Si cette commande affiche `check_env OK`, tout est installé correctement.
 
 ---
 
@@ -43,10 +43,16 @@ Chaque camion doit afficher entre 14 et 16 cycles complétés.
 ## 2. Validation de l'environnement Gymnasium
 
 ```bash
-python -c 'from gymnasium.utils.env_checker import check_env; from memoire_master_rl_logistique.env.mine_env import MineEnv; check_env(MineEnv(truck_count=12, shovel_count=3, dump_count=2), skip_render_check=True); print("check_env OK")'
+python -m memoire_master_rl_logistique.main --check-env
 ```
 
-**Résultat attendu** : `check_env OK` (aucune erreur)
+**Résultat attendu** :
+```
+check_env OK
+  Observation : Box(0.0, 1.0, (54,), float32)
+  Action      : Discrete(7)
+  Camions=12, Pelles=3, Dumps=2
+```
 
 ---
 
@@ -141,7 +147,8 @@ Exécute dans l'ordre : simulation → entraînement PPO → benchmark.
 ### Options disponibles
 
 ```bash
-python -m memoire_master_rl_logistique.main --sim-only              # Simulation seule
+python -m memoire_master_rl_logistique.main --check-env              # Valider l'environnement
+python -m memoire_master_rl_logistique.main --sim-only               # Simulation seule
 python -m memoire_master_rl_logistique.main --train-only             # Entraînement seul
 python -m memoire_master_rl_logistique.main --benchmark-only         # Benchmark seul
 python -m memoire_master_rl_logistique.main --truck-count 18         # 18 camions
@@ -167,7 +174,7 @@ Ouvrir `http://localhost:6006` dans le navigateur pour voir la courbe d'apprenti
 | Étape | Commande | Durée |
 |-------|----------|-------|
 | 1 | `python -m memoire_master_rl_logistique.main --sim-only` | ~1 sec |
-| 2 | `python -c 'from gymnasium.utils.env_checker import check_env; from memoire_master_rl_logistique.env.mine_env import MineEnv; check_env(MineEnv(), skip_render_check=True); print("OK")'` | ~1 sec |
+| 2 | `python -m memoire_master_rl_logistique.main --check-env` | ~1 sec |
 | 3 | `python -m memoire_master_rl_logistique.rl.evaluate_agent` | ~10 sec |
 | 4 | `python -m memoire_master_rl_logistique.rl.train_ppo` | ~2-5 min |
 | 5 | `python -m memoire_master_rl_logistique.rl.evaluate_agent` | ~10 sec |
