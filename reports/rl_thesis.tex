@@ -971,7 +971,7 @@ L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entra
         \STATE \hspace{1em} Attente + chargement à $p_i$
         \STATE \hspace{1em} Trajet chargé $p_i \to d_j$
         \STATE \hspace{1em} Attente + déchargement à $d_j$
-        \STATE \hspace{1em} Retour à vide $d_j \to$ yard
+        \STATE \hspace{1em} Retour à vide $d_j \to p_i$
         \STATE Calculer la récompense (Eq.~3.8) :
         \STATE \hspace{1em} $R_t = w_1 \cdot R_{\text{rendement}} + w_2 \cdot R_{\text{équité}} + w_3 \cdot R_{\text{coût}}$
         \STATE Observer le nouvel état $s_{t+1}$
