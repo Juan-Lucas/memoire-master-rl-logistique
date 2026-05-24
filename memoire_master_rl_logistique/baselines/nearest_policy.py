@@ -1,8 +1,8 @@
 """Politique Nearest Shovel (Greedy).
 
 Baseline classique (Section 4.5 du mémoire) :
-le camion choisit la pelle la plus proche géographiquement.
-C'est l'approche la plus courante en l'absence de système intelligent.
+le camion choisit la pelle la plus proche géographiquement,
+puis le dump le plus proche de cette pelle.
 """
 
 from __future__ import annotations
@@ -15,11 +15,17 @@ from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
 
 class NearestShovelPolicy:
-    """Choisit la pelle la plus proche du camion courant."""
+    """Choisit la paire (pelle, dump) la plus proche."""
 
-    def __init__(self, graph: RoadGraph, shovel_node_ids: list[str]) -> None:
+    def __init__(
+        self,
+        graph: RoadGraph,
+        shovel_node_ids: list[str],
+        dump_node_ids: list[str] | None = None,
+    ) -> None:
         self.graph = graph
         self.shovel_node_ids = shovel_node_ids
+        self.dump_node_ids = dump_node_ids or []
 
     def _estimate_distance(self, src: str, dst: str) -> float:
         """Estime la distance entre deux nœuds via les arêtes disponibles."""
@@ -39,14 +45,27 @@ class NearestShovelPolicy:
         info: dict[str, Any] | None = None,
         truck_location: str = "yard",
     ) -> int:
-        """Retourne l'index de la pelle la plus proche."""
-        best_action = 0
-        best_distance = float("inf")
+        """Retourne l'action encodant (pelle la plus proche, dump le plus proche)."""
+        num_dumps = max(len(self.dump_node_ids), 1)
 
-        for i, shovel_node in enumerate(self.shovel_node_ids):
-            dist = self._estimate_distance(truck_location, shovel_node)
-            if dist < best_distance:
-                best_distance = dist
-                best_action = i
+        # Pelle la plus proche du camion
+        best_shovel = 0
+        best_s_dist = float("inf")
+        for i, s_node in enumerate(self.shovel_node_ids):
+            dist = self._estimate_distance(truck_location, s_node)
+            if dist < best_s_dist:
+                best_s_dist = dist
+                best_shovel = i
 
-        return best_action
+        # Dump le plus proche de la pelle choisie
+        best_dump = 0
+        if self.dump_node_ids:
+            best_d_dist = float("inf")
+            shovel_node = self.shovel_node_ids[best_shovel]
+            for j, d_node in enumerate(self.dump_node_ids):
+                dist = self._estimate_distance(shovel_node, d_node)
+                if dist < best_d_dist:
+                    best_d_dist = dist
+                    best_dump = j
+
+        return best_shovel * num_dumps + best_dump

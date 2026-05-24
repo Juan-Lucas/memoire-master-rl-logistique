@@ -69,18 +69,23 @@ def run_benchmark(
     results = []
 
     def fixed_policy(obs, info, env):
-        p = FixedAssignmentPolicy(num_shovels=env.shovel_count)
+        p = FixedAssignmentPolicy(
+            num_shovels=env.shovel_count, num_dumps=env.dump_count,
+        )
         return p.predict(obs, info)
 
     def nearest_policy(obs, info, env):
         p = NearestShovelPolicy(
             graph=env.graph,
             shovel_node_ids=[s.node_id for s in env.shovels],
+            dump_node_ids=[d.node_id for d in env.dumps],
         )
         return p.predict(obs, info, env.truck_locations[env.current_truck_idx])
 
     def queue_aware_policy(obs, info, env):
-        p = QueueAwarePolicy(graph=env.graph, shovels=env.shovels)
+        p = QueueAwarePolicy(
+            graph=env.graph, shovels=env.shovels, dumps=env.dumps,
+        )
         return p.predict(
             obs, info,
             env.truck_locations[env.current_truck_idx],

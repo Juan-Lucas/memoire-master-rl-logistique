@@ -105,9 +105,11 @@ def evaluate_all_baselines(
         truck_count=truck_count, shovel_count=shovel_count,
         dump_count=dump_count, episode_minutes=episode_minutes,
     )
-    fixed = FixedAssignmentPolicy(num_shovels=shovel_count)
+    fixed = FixedAssignmentPolicy(
+        num_shovels=shovel_count, num_dumps=dump_count,
+    )
     results.append(evaluate_policy(
-        env, lambda obs, info: fixed.predict(obs, info), n_episodes, "Fixed"
+        env, lambda obs, info: fixed.predict(obs, info), n_episodes, "Fixed",
     ))
 
     env = MineEnv(
@@ -118,11 +120,12 @@ def evaluate_all_baselines(
     nearest = NearestShovelPolicy(
         graph=env.graph,
         shovel_node_ids=[s.node_id for s in env.shovels],
+        dump_node_ids=[d.node_id for d in env.dumps],
     )
     results.append(evaluate_policy(
         env,
         lambda obs, info: nearest.predict(
-            obs, info, env.truck_locations[env.current_truck_idx]
+            obs, info, env.truck_locations[env.current_truck_idx],
         ),
         n_episodes,
         "Nearest",
@@ -133,7 +136,9 @@ def evaluate_all_baselines(
         dump_count=dump_count, episode_minutes=episode_minutes,
     )
     obs, info = env.reset()
-    queue_aware = QueueAwarePolicy(graph=env.graph, shovels=env.shovels)
+    queue_aware = QueueAwarePolicy(
+        graph=env.graph, shovels=env.shovels, dumps=env.dumps,
+    )
     results.append(evaluate_policy(
         env,
         lambda obs, info: queue_aware.predict(

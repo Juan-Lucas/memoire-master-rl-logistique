@@ -46,9 +46,11 @@ STATUS_RETURNING = 5
 class MineEnv(gym.Env):
     """Environnement de simulation minière compatible Gymnasium.
 
-    action_space : Discrete(num_shovels + 1)
-        - 0..num_shovels-1 : assigner le camion courant à la pelle i
-        - num_shovels : ATTENDRE
+    action_space : Discrete(num_shovels * num_dumps + 1)
+        - 0..(S*D-1) : paire (pelle, dump), décodée par
+          shovel_idx = action // dump_count,
+          dump_idx   = action %  dump_count
+        - S*D : ATTENDRE
 
     observation_space : Box([0,1]) de dimension observation_size(...)
     """
@@ -79,7 +81,7 @@ class MineEnv(gym.Env):
         self.capacity_tonnes = capacity_tonnes
         self.render_mode = render_mode
 
-        self.num_actions = self.shovel_count + 1
+        self.num_actions = self.shovel_count * self.dump_count + 1
         self.action_space = spaces.Discrete(self.num_actions)
 
         obs_dim = observation_size(truck_count, self.shovel_count, dump_count)
@@ -156,22 +158,15 @@ class MineEnv(gym.Env):
     ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         """Exécute un cycle complet pour le camion courant.
 
-        L'action détermine vers quelle pelle envoyer le camion.
-        Un cycle complet est simulé : trajet → chargement →
-        transport → déchargement → retour.
+        L'action encode une paire (pelle, dump) :
+          shovel_idx = action // dump_count
+          dump_idx   = action %  dump_count
+        Si action == shovel_count * dump_count → ATTENDRE.
         """
         assert self.graph is not None and self.rng is not None
 
         truck = self.trucks[self.current_truck_idx]
-        dump = self.dumps[0]
-
-        if action >= self.shovel_count:
-            shovel = min(
-                self.shovels,
-                key=lambda s: max(s.available_at_min, self.current_time_min),
-            )
-        else:
-            shovel = self.shovels[action]
+        shovel, dump = self._decode_action(action)
 
         time_min = max(truck.available_at_min, self.current_time_min)
         location = self.truck_locations[self.current_truck_idx]
@@ -292,8 +287,10 @@ class MineEnv(gym.Env):
             r_equite = 0.0
 
         r_cout = 0.0
-        if action < self.shovel_count and self.graph is not None:
-            shovel = self.shovels[action]
+        n_pair = self.shovel_count * self.dump_count
+        if action < n_pair and self.graph is not None:
+            s_idx = action // self.dump_count
+            shovel = self.shovels[s_idx]
             truck_loc = self.truck_locations[self.current_truck_idx]
             route = self._find_route(truck_loc, shovel.node_id)
             for i in range(len(route) - 1):
@@ -309,6 +306,29 @@ class MineEnv(gym.Env):
             + self.w2 * r_equite_norm
             + self.w3 * r_cout_norm
         )
+
+    def _decode_action(self, action: int) -> tuple[Shovel, DumpSite]:
+        """Décode l'action en paire (pelle, dump).
+
+        Actions 0..(S*D-1) : shovel_idx = action // D, dump_idx = action % D
+        Action S*D          : ATTENDRE (pelle la plus tôt, dump le plus tôt)
+        """
+        n_pair = self.shovel_count * self.dump_count
+        if action >= n_pair:
+            shovel = min(
+                self.shovels,
+                key=lambda s: max(s.available_at_min, self.current_time_min),
+            )
+            dump = min(
+                self.dumps,
+                key=lambda d: max(d.available_at_min, self.current_time_min),
+            )
+        else:
+            s_idx = action // self.dump_count
+            d_idx = action % self.dump_count
+            shovel = self.shovels[s_idx]
+            dump = self.dumps[d_idx]
+        return shovel, dump
 
     def _find_route(self, src: str, dst: str) -> list[str]:
         """Chemin dans le graphe via BFS."""
