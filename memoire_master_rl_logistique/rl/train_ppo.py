@@ -19,8 +19,9 @@ from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
 
 
 def create_env(
-    truck_count: int = 5,
-    shovel_count: int = 2,
+    truck_count: int = 12,
+    shovel_count: int = 3,
+    dump_count: int = 2,
     episode_minutes: float = 480.0,
     seed: int = 42,
     reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05),
@@ -29,6 +30,7 @@ def create_env(
     return MineEnv(
         truck_count=truck_count,
         shovel_count=shovel_count,
+        dump_count=dump_count,
         episode_minutes=episode_minutes,
         seed=seed,
         reward_weights=reward_weights,
@@ -38,8 +40,9 @@ def create_env(
 def train_ppo(
     total_timesteps: int = 50_000,
     seed: int = 42,
-    truck_count: int = 5,
-    shovel_count: int = 2,
+    truck_count: int = 12,
+    shovel_count: int = 3,
+    dump_count: int = 2,
     episode_minutes: float = 480.0,
     reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05),
     output_dir: str = "models/ppo_mine",
@@ -62,6 +65,7 @@ def train_ppo(
         lambda: create_env(
             truck_count=truck_count,
             shovel_count=shovel_count,
+            dump_count=dump_count,
             episode_minutes=episode_minutes,
             seed=seed,
             reward_weights=reward_weights,
@@ -113,8 +117,9 @@ def main() -> None:
     train_ppo(
         total_timesteps=50_000,
         seed=42,
-        truck_count=5,
-        shovel_count=2,
+        truck_count=12,
+        shovel_count=3,
+        dump_count=2,
         episode_minutes=480.0,
     )
 

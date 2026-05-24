@@ -1,4 +1,4 @@
-"""Analyse statistique et génération de figures (Sprint E).
+"""Analyse statistique et génération de figures (Chapitre 6).
 
 Produit les tableaux comparatifs et les figures pour le Chapitre 6 :
 - Tableaux : moyenne ± écart-type par méthode et scénario

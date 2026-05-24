@@ -21,6 +21,18 @@ class NearestShovelPolicy:
         self.graph = graph
         self.shovel_node_ids = shovel_node_ids
 
+    def _estimate_distance(self, src: str, dst: str) -> float:
+        """Estime la distance entre deux nœuds via les arêtes disponibles."""
+        if (src, dst) in self.graph.edges:
+            return self.graph.get_edge(src, dst).distance_km
+        for mid in self.graph.nodes:
+            if (src, mid) in self.graph.edges and (mid, dst) in self.graph.edges:
+                return (
+                    self.graph.get_edge(src, mid).distance_km
+                    + self.graph.get_edge(mid, dst).distance_km
+                )
+        return float("inf")
+
     def predict(
         self,
         observation: np.ndarray,
@@ -32,13 +44,9 @@ class NearestShovelPolicy:
         best_distance = float("inf")
 
         for i, shovel_node in enumerate(self.shovel_node_ids):
-            src = truck_location
-            if src not in ["yard", "dump_1"]:
-                src = "yard"
-            if (src, shovel_node) in self.graph.edges:
-                edge = self.graph.get_edge(src, shovel_node)
-                if edge.distance_km < best_distance:
-                    best_distance = edge.distance_km
-                    best_action = i
+            dist = self._estimate_distance(truck_location, shovel_node)
+            if dist < best_distance:
+                best_distance = dist
+                best_action = i
 
         return best_action

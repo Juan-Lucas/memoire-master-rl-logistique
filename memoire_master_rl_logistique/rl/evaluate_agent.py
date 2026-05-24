@@ -70,14 +70,16 @@ def evaluate_policy(
 def evaluate_ppo(
     model_path: str,
     n_episodes: int = 10,
-    truck_count: int = 5,
-    shovel_count: int = 2,
+    truck_count: int = 12,
+    shovel_count: int = 3,
+    dump_count: int = 2,
     episode_minutes: float = 480.0,
 ) -> dict[str, float]:
     """Évalue l'agent PPO entraîné."""
     env = MineEnv(
         truck_count=truck_count,
         shovel_count=shovel_count,
+        dump_count=dump_count,
         episode_minutes=episode_minutes,
     )
     model = PPO.load(model_path)
@@ -91,27 +93,26 @@ def evaluate_ppo(
 
 def evaluate_all_baselines(
     n_episodes: int = 10,
-    truck_count: int = 5,
-    shovel_count: int = 2,
+    truck_count: int = 12,
+    shovel_count: int = 3,
+    dump_count: int = 2,
     episode_minutes: float = 480.0,
 ) -> list[dict[str, float]]:
     """Évalue toutes les baselines et retourne les résultats."""
     results = []
 
-    # Fixed Assignment
     env = MineEnv(
         truck_count=truck_count, shovel_count=shovel_count,
-        episode_minutes=episode_minutes,
+        dump_count=dump_count, episode_minutes=episode_minutes,
     )
     fixed = FixedAssignmentPolicy(num_shovels=shovel_count)
     results.append(evaluate_policy(
         env, lambda obs, info: fixed.predict(obs, info), n_episodes, "Fixed"
     ))
 
-    # Nearest Shovel
     env = MineEnv(
         truck_count=truck_count, shovel_count=shovel_count,
-        episode_minutes=episode_minutes,
+        dump_count=dump_count, episode_minutes=episode_minutes,
     )
     obs, info = env.reset()
     nearest = NearestShovelPolicy(
@@ -127,10 +128,9 @@ def evaluate_all_baselines(
         "Nearest",
     ))
 
-    # Queue-Aware
     env = MineEnv(
         truck_count=truck_count, shovel_count=shovel_count,
-        episode_minutes=episode_minutes,
+        dump_count=dump_count, episode_minutes=episode_minutes,
     )
     obs, info = env.reset()
     queue_aware = QueueAwarePolicy(graph=env.graph, shovels=env.shovels)
@@ -155,31 +155,52 @@ def main() -> None:
     for result in baseline_results:
         policy_name = result.get("policy_name", "Unknown")
         print(f"\n--- {policy_name} ---")
-        print(f"  Productivité: {result['productivity_tph_mean']:.1f} "
-              f"± {result['productivity_tph_std']:.1f} t/h")
-        print(f"  Attente moy/camion: {result['avg_wait_min_per_truck_mean']:.1f} "
-              f"± {result['avg_wait_min_per_truck_std']:.1f} min")
-        print(f"  Utilisation: {result['utilization_pct_mean']:.1f} "
-              f"± {result['utilization_pct_std']:.1f} %")
-        print(f"  Conso spécifique: {result['specific_fuel_l_per_ton_mean']:.3f} "
-              f"± {result['specific_fuel_l_per_ton_std']:.3f} L/t")
+        print(
+            f"  Productivité: {result['productivity_tph_mean']:.1f} "
+            f"± {result['productivity_tph_std']:.1f} t/h"
+        )
+        print(
+            f"  Attente moy/camion: "
+            f"{result['avg_wait_min_per_truck_mean']:.1f} "
+            f"± {result['avg_wait_min_per_truck_std']:.1f} min"
+        )
+        print(
+            f"  Utilisation: {result['utilization_pct_mean']:.1f} "
+            f"± {result['utilization_pct_std']:.1f} %"
+        )
+        print(
+            f"  Conso spécifique: "
+            f"{result['specific_fuel_l_per_ton_mean']:.3f} "
+            f"± {result['specific_fuel_l_per_ton_std']:.3f} L/t"
+        )
 
-    # Évaluation PPO si le modèle existe
     model_path = Path("models/ppo_mine/ppo_mine_agent.zip")
     if model_path.exists():
         print("\n=== Évaluation PPO ===")
         ppo_result = evaluate_ppo(str(model_path), n_episodes=10)
-        print(f"  Productivité: {ppo_result['productivity_tph_mean']:.1f} "
-              f"± {ppo_result['productivity_tph_std']:.1f} t/h")
-        print(f"  Attente moy/camion: {ppo_result['avg_wait_min_per_truck_mean']:.1f} "
-              f"± {ppo_result['avg_wait_min_per_truck_std']:.1f} min")
-        print(f"  Utilisation: {ppo_result['utilization_pct_mean']:.1f} "
-              f"± {ppo_result['utilization_pct_std']:.1f} %")
-        print(f"  Conso spécifique: {ppo_result['specific_fuel_l_per_ton_mean']:.3f} "
-              f"± {ppo_result['specific_fuel_l_per_ton_std']:.3f} L/t")
+        print(
+            f"  Productivité: {ppo_result['productivity_tph_mean']:.1f} "
+            f"± {ppo_result['productivity_tph_std']:.1f} t/h"
+        )
+        print(
+            f"  Attente moy/camion: "
+            f"{ppo_result['avg_wait_min_per_truck_mean']:.1f} "
+            f"± {ppo_result['avg_wait_min_per_truck_std']:.1f} min"
+        )
+        print(
+            f"  Utilisation: {ppo_result['utilization_pct_mean']:.1f} "
+            f"± {ppo_result['utilization_pct_std']:.1f} %"
+        )
+        print(
+            f"  Conso spécifique: "
+            f"{ppo_result['specific_fuel_l_per_ton_mean']:.3f} "
+            f"± {ppo_result['specific_fuel_l_per_ton_std']:.3f} L/t"
+        )
     else:
-        print(f"\nModèle PPO non trouvé ({model_path}). "
-              "Lancez d'abord l'entraînement.")
+        print(
+            f"\nModèle PPO non trouvé ({model_path}). "
+            "Lancez d'abord l'entraînement."
+        )
 
 
 if __name__ == "__main__":
