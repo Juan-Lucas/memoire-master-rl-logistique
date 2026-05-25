@@ -1,13 +1,19 @@
 """Benchmark comparatif complet.
 
-Exécute toutes les méthodes (baselines + PPO) sur tous les scénarios
-avec plusieurs seeds pour produire les données du Chapitre 6.
+Exécute toutes les méthodes (heuristiques + RL classiques + Deep RL)
+sur tous les scénarios avec plusieurs seeds pour produire les données
+du Chapitre 6.
 
 Protocole expérimental (Section 5.4 du mémoire) :
 - Mêmes scénarios pour toutes les méthodes
 - 10 réplications par scénario (seeds 42..51)
 - KPIs calculés de la même manière
 - Résultats sauvegardés en CSV reproductible
+
+Méthodes comparées (Section 4.7) :
+- Heuristiques : Fixed, Nearest, QueueAware
+- RL classiques : Q-Learning, SARSA
+- Deep RL : DQN, PPO
 """
 
 from __future__ import annotations
@@ -15,14 +21,17 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from stable_baselines3 import PPO
+from stable_baselines3 import DQN, PPO
 
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
 from memoire_master_rl_logistique.baselines.queue_aware_policy import QueueAwarePolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
+from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
+from memoire_master_rl_logistique.rl.train_q_learning import QLearningPolicy, train_q_learning
+from memoire_master_rl_logistique.rl.train_sarsa import SarsaPolicy, train_sarsa
 from memoire_master_rl_logistique.simulation.kpi import compute_kpis
 
 
@@ -47,6 +56,8 @@ def run_single_episode(
     total_active = sum(t.total_active_min for t in env.trucks)
     total_fuel = sum(t.total_fuel_l for t in env.trucks)
 
+    total_cycles = sum(t.cycles_completed for t in env.trucks)
+
     kpis = compute_kpis(
         episode_minutes=env.episode_minutes,
         truck_count=env.truck_count,
@@ -54,9 +65,9 @@ def run_single_episode(
         total_wait_min=total_wait,
         total_active_min=total_active,
         total_fuel_l=total_fuel,
+        total_cycles=total_cycles,
     )
     kpis["total_reward"] = total_reward
-    kpis["total_cycles"] = float(sum(t.cycles_completed for t in env.trucks))
     return kpis
 
 
@@ -98,6 +109,83 @@ def run_benchmark(
         "QueueAware": queue_aware_policy,
     }
 
+    # --- Q-Learning (Section 4.4.1) ---
+    ql_dir = output_dir / f"q_learning_{scenario.name}"
+    ql_path = ql_dir / "q_table.pkl"
+    if ql_path.exists():
+        print(f"  Chargement Q-Learning existant: {ql_path}")
+        ql_agent = QLearningPolicy.load(ql_path)
+    else:
+        print(f"  Entraînement Q-Learning pour '{scenario.name}'...")
+        train_q_learning(
+            n_episodes=10_000,
+            seed=scenario.seeds[0],
+            truck_count=scenario.truck_count,
+            shovel_count=scenario.shovel_count,
+            dump_count=scenario.dump_count,
+            episode_minutes=scenario.episode_minutes,
+            reward_weights=scenario.reward_weights,
+            output_dir=str(ql_dir),
+        )
+        ql_agent = QLearningPolicy.load(ql_path)
+
+    def q_learning_policy(obs, info, env, _agent=ql_agent):
+        return _agent.predict(obs)
+
+    policies["Q-Learning"] = q_learning_policy
+
+    # --- SARSA (Section 4.4.3) ---
+    sarsa_dir = output_dir / f"sarsa_{scenario.name}"
+    sarsa_path = sarsa_dir / "sarsa_table.pkl"
+    if sarsa_path.exists():
+        print(f"  Chargement SARSA existant: {sarsa_path}")
+        sarsa_agent = SarsaPolicy.load(sarsa_path)
+    else:
+        print(f"  Entraînement SARSA pour '{scenario.name}'...")
+        train_sarsa(
+            n_episodes=10_000,
+            seed=scenario.seeds[0],
+            truck_count=scenario.truck_count,
+            shovel_count=scenario.shovel_count,
+            dump_count=scenario.dump_count,
+            episode_minutes=scenario.episode_minutes,
+            reward_weights=scenario.reward_weights,
+            output_dir=str(sarsa_dir),
+        )
+        sarsa_agent = SarsaPolicy.load(sarsa_path)
+
+    def sarsa_policy_fn(obs, info, env, _agent=sarsa_agent):
+        return _agent.predict(obs)
+
+    policies["SARSA"] = sarsa_policy_fn
+
+    # --- DQN (Section 4.5.2) ---
+    if train_ppo_flag:
+        dqn_dir = output_dir / f"dqn_{scenario.name}"
+        dqn_path = dqn_dir / "dqn_mine_agent.zip"
+        if dqn_path.exists():
+            print(f"  Chargement DQN existant: {dqn_path}")
+            dqn_model = DQN.load(str(dqn_path))
+        else:
+            print(f"  Entraînement DQN pour '{scenario.name}'...")
+            dqn_model = train_dqn(
+                total_timesteps=scenario.total_timesteps,
+                seed=scenario.seeds[0],
+                truck_count=scenario.truck_count,
+                shovel_count=scenario.shovel_count,
+                dump_count=scenario.dump_count,
+                episode_minutes=scenario.episode_minutes,
+                reward_weights=scenario.reward_weights,
+                output_dir=str(dqn_dir),
+            )
+
+        def dqn_policy(obs, info, env, _model=dqn_model):
+            action, _ = _model.predict(obs, deterministic=True)
+            return int(action)
+
+        policies["DQN"] = dqn_policy
+
+    # --- PPO (Section 4.5.4) ---
     ppo_model = None
     if train_ppo_flag:
         model_dir = output_dir / f"ppo_{scenario.name}"
@@ -119,8 +207,8 @@ def run_benchmark(
                 output_dir=str(model_dir),
             )
 
-        def ppo_policy(obs, info, env):
-            action, _ = ppo_model.predict(obs, deterministic=True)
+        def ppo_policy(obs, info, env, _model=ppo_model):
+            action, _ = _model.predict(obs, deterministic=True)
             return int(action)
 
         policies["PPO"] = ppo_policy
