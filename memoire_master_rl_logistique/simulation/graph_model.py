@@ -1,9 +1,14 @@
-"""Modèle de graphe routier minier G = (V, E).
+"""Modèle de graphe routier minier G = (V, E) basé sur NetworkX.
 
 Le réseau routier est modélisé comme un graphe orienté pondéré
 (Section 3.2 du mémoire). Chaque arête porte la distance, la pente
 et l'état de surface, permettant de calculer les temps de trajet
 stochastiques (Eq. 3.2).
+
+Utilise NetworkX pour :
+- Algorithme de plus court chemin (Dijkstra) — Section 3.2
+- Calcul de distances pondérées
+- Visualisation du réseau (Section 3.2, figure du graphe)
 """
 
 from __future__ import annotations
@@ -12,13 +17,7 @@ from dataclasses import dataclass
 from math import log
 from random import Random
 
-
-@dataclass(slots=True)
-class RoadNode:
-    """Nœud du graphe routier (pelle, dump, intersection, yard)."""
-
-    node_id: str
-    node_type: str
+import networkx as nx
 
 
 @dataclass(slots=True)
@@ -33,18 +32,45 @@ class RoadEdge:
 
 
 class RoadGraph:
-    """Graphe orienté pondéré du réseau routier minier."""
+    """Graphe orienté pondéré du réseau routier minier (NetworkX).
+
+    Encapsule un ``nx.DiGraph`` tout en conservant l'API existante
+    pour les modules consommateurs (mine_env, events, baselines).
+    """
 
     def __init__(self) -> None:
-        self.nodes: dict[str, RoadNode] = {}
-        self.edges: dict[tuple[str, str], RoadEdge] = {}
+        self._g: nx.DiGraph = nx.DiGraph()
+        self._edge_cache: dict[tuple[str, str], RoadEdge] = {}
+
+    # ------------------------------------------------------------------
+    # Propriétés compatibles avec l'ancienne API
+    # ------------------------------------------------------------------
+
+    @property
+    def nodes(self) -> nx.classes.reportviews.NodeView:
+        """Vue sur les nœuds (itérable, ``node_id in graph.nodes``)."""
+        return self._g.nodes
+
+    @property
+    def edges(self) -> nx.classes.reportviews.OutEdgeView:
+        """Vue sur les arêtes (itérable, ``(src, dst) in graph.edges``)."""
+        return self._g.edges
+
+    @property
+    def nx_graph(self) -> nx.DiGraph:
+        """Accès direct au DiGraph NetworkX (pour visualisation)."""
+        return self._g
+
+    # ------------------------------------------------------------------
+    # Construction
+    # ------------------------------------------------------------------
 
     def add_node(self, node_id: str, node_type: str) -> None:
         """Ajoute un nœud (lève ValueError si doublon)."""
-        if node_id in self.nodes:
+        if node_id in self._g:
             msg = f"Node {node_id} already exists."
             raise ValueError(msg)
-        self.nodes[node_id] = RoadNode(node_id=node_id, node_type=node_type)
+        self._g.add_node(node_id, node_type=node_type)
 
     def add_edge(
         self,
@@ -55,26 +81,79 @@ class RoadGraph:
         road_state: float = 1.0,
     ) -> None:
         """Ajoute une arête orientée entre deux nœuds existants."""
-        if src not in self.nodes:
+        if src not in self._g:
             msg = f"Source node {src} does not exist."
             raise ValueError(msg)
-        if dst not in self.nodes:
+        if dst not in self._g:
             msg = f"Destination node {dst} does not exist."
             raise ValueError(msg)
-        self.edges[(src, dst)] = RoadEdge(
-            src=src,
-            dst=dst,
+        self._g.add_edge(
+            src, dst,
             distance_km=distance_km,
             slope_pct=slope_pct,
             road_state=road_state,
         )
+        edge = RoadEdge(
+            src=src, dst=dst,
+            distance_km=distance_km,
+            slope_pct=slope_pct,
+            road_state=road_state,
+        )
+        self._edge_cache[(src, dst)] = edge
+
+    # ------------------------------------------------------------------
+    # Accès aux arêtes
+    # ------------------------------------------------------------------
 
     def get_edge(self, src: str, dst: str) -> RoadEdge:
         """Récupère l'arête ou lève ValueError."""
-        if (src, dst) not in self.edges:
+        edge = self._edge_cache.get((src, dst))
+        if edge is None:
             msg = f"Edge from {src} to {dst} does not exist."
             raise ValueError(msg)
-        return self.edges[(src, dst)]
+        return edge
+
+    # ------------------------------------------------------------------
+    # Plus court chemin (Dijkstra) — Section 3.2
+    # ------------------------------------------------------------------
+
+    def shortest_path(
+        self, src: str, dst: str, weight: str = "distance_km",
+    ) -> list[str]:
+        """Plus court chemin via Dijkstra (Section 3.2 du mémoire).
+
+        Parameters
+        ----------
+        src : nœud source
+        dst : nœud destination
+        weight : attribut d'arête à minimiser (défaut : distance_km)
+
+        Returns
+        -------
+        Liste ordonnée des nœuds du chemin, ou liste vide si aucun chemin.
+        """
+        try:
+            return nx.shortest_path(self._g, src, dst, weight=weight)
+        except nx.NetworkXNoPath:
+            return []
+
+    def shortest_distance(
+        self, src: str, dst: str, weight: str = "distance_km",
+    ) -> float:
+        """Distance du plus court chemin via Dijkstra.
+
+        Returns
+        -------
+        Distance totale, ou ``float('inf')`` si aucun chemin.
+        """
+        try:
+            return nx.shortest_path_length(self._g, src, dst, weight=weight)
+        except nx.NetworkXNoPath:
+            return float("inf")
+
+    # ------------------------------------------------------------------
+    # Temps de trajet stochastique (Eq. 3.2)
+    # ------------------------------------------------------------------
 
     def sample_travel_time_minutes(
         self, src: str, dst: str, loaded: bool, rng: Random,
