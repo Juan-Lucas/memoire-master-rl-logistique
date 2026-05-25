@@ -972,7 +972,7 @@ L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entra
         \STATE \hspace{1em} Trajet chargé $p_i \to d_j$
         \STATE \hspace{1em} Attente + déchargement à $d_j$
         \STATE \hspace{1em} Retour à vide $d_j \to p_i$
-        \STATE Calculer la récompense (Eq.~3.8) :
+        \STATE Calculer la récompense (Eq.~3.7) :
         \STATE \hspace{1em} $R_t = w_1 \cdot R_{\text{rendement}} + w_2 \cdot R_{\text{équité}} + w_3 \cdot R_{\text{coût}}$
         \STATE Observer le nouvel état $s_{t+1}$
         \STATE Stocker $(s_t, a_t, R_t, s_{t+1}, \log \pi_\theta(a_t \mid s_t))$
@@ -993,7 +993,7 @@ L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entra
 \end{algorithmic}
 \end{algorithm}
 
-Cet algorithme illustre comment les composantes théoriques définies au Chapitre~3 (MDP, récompense pondérée, stochasticité) s'articulent avec les choix techniques du présent chapitre (PPO, architecture réseau, hyperparamètres) pour former une boucle d'apprentissage complète et cohérente. La ligne~9 montre en particulier l'encodage de l'espace d'action $\mathcal{A} = \text{Discrete}(|\mathcal{P}| \times |\mathcal{D}| + 1)$ qui permet à l'agent de choisir simultanément la pelle et le point de déchargement.
+Cet algorithme illustre comment les composantes théoriques définies au Chapitre~3 (MDP, récompense pondérée, stochasticité) s'articulent avec les choix techniques du présent chapitre (PPO, architecture réseau, hyperparamètres) pour former une boucle d'apprentissage complète et cohérente. La ligne~9 montre en particulier l'encodage de l'espace d'action $\mathcal{A} = \text{Discrete}(|\mathcal{P}| \times |\mathcal{D}| + 1)$ qui permet à l'agent de choisir simultanément la pelle et le point de déchargement. Le terme +1 représente l'action neutre (ATTENDRE), permettant à l'agent de temporiser si aucune affectation n'est productive à l'instant $t$.
 
 \section{Stratégie d’évaluation et modèles de référence (Baselines)}
 \label{sec:strategie-evaluation}
@@ -1128,7 +1128,7 @@ Ce chapitre a détaillé la transformation de notre modèle MDP en une architect
     \item[RL] Reinforcement Learning (apprentissage par renforcement).
     \item[MDP] Markov Decision Process (processus de décision markovien).
     \item[FMS] Fleet Management System (système de gestion de flotte).
-    \item[CRISP-RL] CRoss-Industry Standard Process for Reinforcement Learning applications \cite{Szatmári2025}.
+    \item[CRISP-RL] CRoss-Industry Standard Process for Reinforcement Learning applications.
     \item[FIFO] First In, First Out (premier entré, premier sorti).
 \end{description}
 
