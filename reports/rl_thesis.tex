@@ -1294,7 +1294,7 @@ Baselines & Heuristiques industrielles + RL classiques \\
 \subsection{Pseudocode de l'algorithme proposé}
 \label{sec:pseudocode}
 
-L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entraînement de l'agent PPO appliquée à notre problème de dispatching minier. Ce pseudocode intègre les éléments définis dans les sections précédentes~: l'état $s_t$ (Eq.~3.1), l'espace d'action $\mathcal{A}$ (Section~\ref{sec:espace-action}), la récompense pondérée $R_t$ (Eq.~3.8), le réseau MLP~128$\times$128 (Section~\ref{sec:architecture-reseau}) et les hyperparamètres du Tableau~\ref{tab:hyperparametres-ppo}.
+L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entraînement de l'agent PPO appliquée à notre problème de dispatching minier. Ce pseudocode intègre les éléments définis dans les sections précédentes~: l'état $s_t$ (Eq.~3.1), l'espace d'action $\mathcal{A}$ (Section~\ref{sec:espace-action}), la récompense pondérée $R_t$ (Eq.~3.7), le réseau MLP~128$\times$128 (Section~\ref{sec:architecture-reseau}) et les hyperparamètres du Tableau~\ref{tab:hyperparametres-ppo}.
 
 \begin{algorithm}[H]
 \caption{PPO pour le dispatching minier camion-pelle-dump}
