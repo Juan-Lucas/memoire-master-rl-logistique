@@ -1,6 +1,6 @@
 """Politique d'assignation fixe (Fixed Assignment).
 
-Baseline de niveau zéro (Section 4.5 du mémoire) :
+Baseline de niveau zéro (Section 4.7.1 du mémoire) :
 chaque camion est dédié à une seule pelle de manière cyclique.
 Le dump est également assigné de manière cyclique.
 """

@@ -2,8 +2,8 @@
 
 Pipeline complet :
   1. Simulation DES pour validation du moteur
-  2. Entraînement de l'agent PPO (Section 4.4)
-  3. Évaluation comparative baselines vs PPO (Section 4.5)
+  2. Entraînement de l'agent PPO (Section 4.5)
+  3. Évaluation comparative baselines vs PPO (Section 4.7)
   4. Génération du rapport statistique (Chapitre 6)
 
 Usage :

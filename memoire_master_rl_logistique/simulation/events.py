@@ -2,7 +2,7 @@
 
 Simule tous les camions en parallèle via un tas d'événements trié par
 temps, garantissant une concurrence réaliste aux pelles et aux dumps
-(Section 4.1 du mémoire — Architecture du simulateur).
+(Section 4.3 du mémoire — Conception de l'environnement de simulation).
 """
 
 from __future__ import annotations

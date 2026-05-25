@@ -1,10 +1,10 @@
 """Entraînement de l'agent PPO pour le dispatching minier.
 
-Conforme au Chapitre 4, Section 4.4 du mémoire :
+Conforme au Chapitre 4, Section 4.5 du mémoire :
 - Algorithme : PPO (Proximal Policy Optimization)
 - Bibliothèque : Stable-Baselines3
-- Hyperparamètres : Tableau 4.3 du mémoire
-- Architecture réseau : MLP 128×128 avec ReLU (Section 4.3.2)
+- Hyperparamètres : Tableau 4.6 du mémoire (Section 4.6.3)
+- Architecture réseau : MLP 128×128 avec ReLU (Section 4.5.3)
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ def train_ppo(
 ) -> PPO:
     """Entraîne un agent PPO sur l'environnement minier.
 
-    Hyperparamètres conformes au Tableau 4.3 du mémoire :
+    Hyperparamètres conformes au Tableau 4.6 du mémoire (Section 4.6.3) :
     - Learning rate : 0.0003
     - Gamma : 0.99
     - Batch size : 64

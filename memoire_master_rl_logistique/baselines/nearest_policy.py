@@ -1,6 +1,6 @@
 """Politique Nearest Shovel (Greedy).
 
-Baseline classique (Section 4.5 du mémoire) :
+Baseline classique (Section 4.7.1 du mémoire) :
 le camion choisit la pelle la plus proche géographiquement,
 puis le dump le plus proche de cette pelle.
 """
