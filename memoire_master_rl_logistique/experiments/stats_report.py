@@ -33,6 +33,7 @@ def generate_summary_table(
         "avg_wait_min_per_truck",
         "utilization_pct",
         "specific_fuel_l_per_ton",
+        "cost_per_cycle",
         "total_reward",
     ]
 
@@ -77,9 +78,11 @@ def plot_kpi_comparison(
         "avg_wait_min_per_truck": ("Attente moy./camion (min)", "coral"),
         "utilization_pct": ("Utilisation (%)", "seagreen"),
         "specific_fuel_l_per_ton": ("Conso. spécifique (L/t)", "goldenrod"),
+        "cost_per_cycle": ("Coût moy./cycle (L)", "mediumpurple"),
+        "total_reward": ("Récompense cumulée", "indianred"),
     }
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
     fig.suptitle(
         f"Comparaison des KPIs — Scénario: {scenario_name}",
         fontsize=14,
