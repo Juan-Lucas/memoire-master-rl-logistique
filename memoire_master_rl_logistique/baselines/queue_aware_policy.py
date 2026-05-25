@@ -30,17 +30,12 @@ class QueueAwarePolicy:
         self.dumps = dumps or []
 
     def _estimate_travel_time(self, src: str, dst: str) -> float:
-        """Estime le temps de trajet entre deux nœuds."""
+        """Estime le temps de trajet via Dijkstra (Section 3.2)."""
         base_speed = 32.0
-        if (src, dst) in self.graph.edges:
-            edge = self.graph.get_edge(src, dst)
-            return (edge.distance_km / base_speed) * 60.0
-        for mid in self.graph.nodes:
-            if (src, mid) in self.graph.edges and (mid, dst) in self.graph.edges:
-                d1 = self.graph.get_edge(src, mid).distance_km
-                d2 = self.graph.get_edge(mid, dst).distance_km
-                return ((d1 + d2) / base_speed) * 60.0
-        return 30.0
+        dist = self.graph.shortest_distance(src, dst)
+        if dist == float("inf"):
+            return 30.0
+        return (dist / base_speed) * 60.0
 
     def predict(
         self,

@@ -28,16 +28,8 @@ class NearestShovelPolicy:
         self.dump_node_ids = dump_node_ids or []
 
     def _estimate_distance(self, src: str, dst: str) -> float:
-        """Estime la distance entre deux nœuds via les arêtes disponibles."""
-        if (src, dst) in self.graph.edges:
-            return self.graph.get_edge(src, dst).distance_km
-        for mid in self.graph.nodes:
-            if (src, mid) in self.graph.edges and (mid, dst) in self.graph.edges:
-                return (
-                    self.graph.get_edge(src, mid).distance_km
-                    + self.graph.get_edge(mid, dst).distance_km
-                )
-        return float("inf")
+        """Distance du plus court chemin via Dijkstra (Section 3.2)."""
+        return self.graph.shortest_distance(src, dst)
 
     def predict(
         self,

@@ -87,21 +87,8 @@ class MineSimulation:
         return travel_min, travel_fuel_l
 
     def _find_route(self, src: str, dst: str) -> list[str]:
-        """Trouve un chemin dans le graphe via BFS."""
-        if (src, dst) in self.graph.edges:
-            return [src, dst]
-        visited: set[str] = {src}
-        queue: list[tuple[str, list[str]]] = [(src, [src])]
-        while queue:
-            current, path = queue.pop(0)
-            for (s, d) in self.graph.edges:
-                if s == current and d not in visited:
-                    new_path = [*path, d]
-                    if d == dst:
-                        return new_path
-                    visited.add(d)
-                    queue.append((d, new_path))
-        return []
+        """Plus court chemin via Dijkstra (Section 3.2 du mémoire)."""
+        return self.graph.shortest_path(src, dst)
 
     def _travel_route(
         self, src: str, dst: str, loaded: bool,
