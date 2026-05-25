@@ -724,32 +724,38 @@ La modélisation proposée articule réalisme opérationnel et tractabilité alg
 % ============================================================================
 %      CHAPITRE 4 : MÉTHODOLOGIE ET CONCEPTION DE LA SOLUTION
 % ============================================================================
-\chapter{Méthodologie et conception de la solution}
+\chapter{Méthodologie, conception et choix algorithmique de la solution proposée}
 \label{chap:methodologie}
 
 \section*{Introduction}
-Ce chapitre détaille la démarche de conception et d'implémentation de l'agent de dispatching intelligent. Après avoir établi le cadre mathématique du Processus de Décision Markovien (MDP) au chapitre précédent, il s'agit ici de traduire ces concepts en une architecture logicielle et algorithmique fonctionnelle. Nous présentons d'abord le paradigme méthodologique CRISP-RL qui a structuré l'ensemble du projet. Ensuite, nous détaillons la conception du simulateur de mine basé sur le standard Gymnasium, l'architecture du réseau de neurones de l'agent de Deep Reinforcement Learning (DRL), ainsi que la stratégie d'évaluation rigoureuse permettant de valider la performance de notre solution face aux méthodes industrielles classiques.
+Ce chapitre constitue la passerelle entre la modélisation formelle du problème, présentée au Chapitre~3, et l'implémentation expérimentale qui sera détaillée au Chapitre~5. L'objectif est de rendre la progression scientifique lisible~: partir de la méthodologie CRISP-RL, construire l'environnement de simulation, introduire les algorithmes classiques d'apprentissage par renforcement, puis justifier le passage vers le Deep Reinforcement Learning.
 
-\section{Paradigme méthodologique : Le cadre CRISP-RL}
+Nous présentons d'abord le cadre méthodologique CRISP-RL qui a structuré l'ensemble du projet. Ensuite, nous détaillons la conception du simulateur de mine, l'architecture générale de l'approche proposée, puis nous introduisons les algorithmes classiques d'apprentissage par renforcement (Q-Learning, TD Learning, SARSA) comme bases théoriques et modèles comparatifs. Nous justifions ensuite le passage au Deep Reinforcement Learning via DQN, puis le choix de PPO comme approche finale. Enfin, nous définissons la stratégie d'évaluation comparative et les indicateurs de performance.
+
+% ====================================================================
+%  4.1  CRISP-RL
+% ====================================================================
+\section{Cadre méthodologique CRISP-RL appliqué à la logistique minière}
 \label{sec:crisp-rl}
-Pour garantir la rigueur scientifique et la reproductibilité de nos travaux, nous adoptons le cadre méthodologique CRISP-RL (CRoss-Industry Standard Process for Reinforcement Learning Applications), tel que proposé par \cite{Szatmári2025}. Ce standard est une évolution du CRISP-DM traditionnel, spécifiquement repensée pour les systèmes apprenant par interaction dynamique.
+Pour garantir la rigueur scientifique et la reproductibilité de nos travaux, nous adoptons le cadre méthodologique CRISP-RL (CRoss-Industry Standard Process for Reinforcement Learning Applications), tel que proposé par~\cite{Szatmári2025}. Ce standard est une évolution du CRISP-DM traditionnel, spécifiquement repensée pour les systèmes apprenant par interaction dynamique.
 
-\subsection{Justification du choix}
+\subsection{Justification du choix de CRISP-RL}
 \label{sec:justification-crisp-rl}
-Le choix du CRISP-RL s'appuie sur la nature interactive et incertaine de la logistique minière. Contrairement à une analyse de données statiques où l'on cherche à prédire une cible, le dispatching minier exige de piloter un système en temps réel. Le CRISP-RL est le seul cadre permettant de gérer efficacement la boucle de rétroaction entre l'agent (le système de dispatching) et son environnement (la mine). Il permet d'intégrer les phases de modélisation du simulateur comme une étape centrale du projet, assurant que l'agent n'apprend pas sur des données mortes, mais sur une dynamique de flux vivante et stochastique.
+Le choix du CRISP-RL s'appuie sur la nature interactive et incertaine de la logistique minière. Contrairement à une analyse de données statiques où l'on cherche à prédire une cible, le dispatching minier exige de piloter un système en temps réel. La logistique minière est un problème dynamique, séquentiel et incertain~: les décisions de dispatching sont prises de manière répétée, les résultats de chaque décision dépendent de l'état courant du système, et les perturbations stochastiques (pannes, congestion, dégradation des routes) modifient continuellement les conditions opérationnelles.
 
-\subsection{Cycle de vie du projet d'apprentissage par renforcement}
-\label{sec:cycle-vie-rl}
+Le CRISP-RL est le seul cadre permettant de gérer efficacement la boucle de rétroaction entre l'agent (le système de dispatching) et son environnement (la mine). Il intègre les phases de modélisation du simulateur comme une étape centrale du projet, assurant que l'agent n'apprend pas sur des données mortes, mais sur une dynamique de flux vivante et stochastique.
 
-Conformément aux travaux de Szatmári \cite{Szatmári2025}, nous suivons un cycle de vie en six étapes itératives :
+\subsection{Adaptation des étapes CRISP-RL au contexte minier}
+\label{sec:adaptation-crisp-rl}
+Conformément aux travaux de Szatmári~\cite{Szatmári2025}, nous suivons un cycle de vie en six étapes itératives, adaptées au contexte de la logistique minière~:
 
 \begin{itemize}
-    \item \textbf{Définition des buts RL} : Cette phase consiste à traduire les objectifs de production (tonnage) et de maintenance (usure) en une fonction de récompense scalaire.
-    \item \textbf{Compréhension et modélisation de l'environnement} : Identification des contraintes physiques et temporelles de la mine pour construire un simulateur fidèle.
-    \item \textbf{Formulation MDP} : Définition formelle des espaces d'états $S$ et d'actions $A$, ainsi que de la fonction de transition $P$ (développée au Chapitre 3).
-    \item \textbf{Développement de l'agent} : Choix de l'architecture de l'approximateur de fonction (réseau de neurones) et de l'algorithme d'apprentissage.
-    \item \textbf{Entraînement et test} : Phase d'apprentissage intensif où l'agent explore des milliers de scénarios de dispatching dans le simulateur.
-    \item \textbf{Évaluation de la robustesse} : Vérification de la capacité de l'agent à maintenir ses performances face à des événements non rencontrés durant l'entraînement (pannes, pics de congestion). 
+    \item \textbf{Compréhension du problème métier}~: Identification des enjeux de dispatching, routage, files d'attente, consommation de carburant et coûts opérationnels.
+    \item \textbf{Modélisation de l'environnement}~: Construction d'un simulateur fidèle représentant les camions, pelles, routes, points de chargement et de déchargement.
+    \item \textbf{Formulation MDP}~: Définition formelle des espaces d'états $\mathcal{S}$ et d'actions $\mathcal{A}$, ainsi que de la fonction de transition $\mathcal{P}$ et de la récompense $\mathcal{R}$ (développées au Chapitre~3).
+    \item \textbf{Développement des agents RL}~: Implémentation progressive des algorithmes~: Q-Learning, TD Learning, SARSA, DQN, puis PPO.
+    \item \textbf{Entraînement et test}~: Phase d'apprentissage intensif où l'agent explore des milliers de scénarios de dispatching dans le simulateur.
+    \item \textbf{Évaluation comparative}~: Vérification de la performance de l'agent par rapport aux heuristiques industrielles et aux méthodes RL classiques, selon des indicateurs opérationnels quantitatifs.
 \end{itemize}
 
 \begin{figure}[H]
@@ -759,185 +765,467 @@ Conformément aux travaux de Szatmári \cite{Szatmári2025}, nous suivons un cyc
     \label{fig:cycle-vie-rl}
 \end{figure}
 
-\section{Conception de l’environnement de simulation}
+\subsection{Positionnement de l'approche proposée dans le cycle CRISP-RL}
+\label{sec:positionnement-crisp-rl}
+L'approche proposée ne relève pas seulement d'un choix algorithmique. Elle s'inscrit dans un cycle complet~: compréhension métier, simulation, formalisation MDP, apprentissage, expérimentation et validation par indicateurs opérationnels. Chaque étape du cycle CRISP-RL alimente la suivante et permet un retour itératif~: si les résultats de l'évaluation révèlent des insuffisances, le cycle permet de revenir à la modélisation de l'environnement ou à la formulation MDP pour affiner le système.
+
+% ====================================================================
+%  4.2  PRÉSENTATION GÉNÉRALE DE L'APPROCHE
+% ====================================================================
+\section{Présentation générale de l'approche proposée}
+\label{sec:approche-proposee}
+
+\subsection{Principe général de la solution}
+\label{sec:principe-general}
+La solution proposée consiste à concevoir un agent intelligent capable d'observer l'état courant du système minier (positions des camions, files d'attente aux pelles, disponibilité des dumps, état des routes), de choisir une décision de dispatching optimale (affectation camion-pelle-dump), puis d'améliorer progressivement sa politique de décision à partir des récompenses reçues. Cette approche se distingue des heuristiques statiques par sa capacité d'adaptation~: l'agent apprend à réagir aux perturbations dynamiques (pannes, congestion, dégradation des routes) sans nécessiter de reprogrammation manuelle.
+
+\subsection{Architecture fonctionnelle de l'approche}
+\label{sec:architecture-fonctionnelle}
+L'architecture fonctionnelle de la solution repose sur quatre blocs principaux, synthétisés dans le Tableau~\ref{tab:architecture-fonctionnelle}.
+
+\begin{table}[H]
+\centering
+\caption{Architecture fonctionnelle de l'approche proposée}
+\label{tab:architecture-fonctionnelle}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Bloc fonctionnel} & \textbf{Rôle} \\
+\midrule
+Environnement minier simulé & Représenter les camions, pelles, routes, files d'attente et perturbations stochastiques. \\
+Agent RL & Prendre les décisions de dispatching (affectation camion-pelle-dump). \\
+Fonction de récompense & Évaluer la qualité des décisions selon les objectifs métier (rendement, équité, coût). \\
+Module d'évaluation & Comparer les performances avec les baselines industrielles et les méthodes RL classiques. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Positionnement de l'agent dans le système de gestion de flotte}
+\label{sec:positionnement-agent}
+L'agent d'apprentissage par renforcement est conçu comme une couche intelligente d'aide à la décision. Il ne remplace pas entièrement le Fleet Management System (FMS), mais propose des décisions de dispatching optimisées à partir de l'état courant de la mine et des objectifs opérationnels. Le FMS reste responsable de la communication avec les équipements, de la sécurité et du suivi en temps réel, tandis que l'agent RL se concentre sur l'optimisation des affectations camion-pelle-dump.
+
+% ====================================================================
+%  4.3  CONCEPTION DE L'ENVIRONNEMENT DE SIMULATION
+% ====================================================================
+\section{Conception de l'environnement de simulation}
 \label{sec:env-simulation}
+L'environnement est le monde dans lequel l'agent va évoluer. Sa fidélité par rapport à la réalité minière est indispensable pour la validité des résultats, l'usage de la simulation étant reconnu comme l'approche standard pour évaluer ces systèmes complexes~\cite{Necmettinetin2004}.
 
-L'environnement est le monde dans lequel l'agent va évoluer. Sa fidélité par rapport à la réalité minière est indispensable pour la validité des résultats, l'usage de la simulation étant reconnu comme l'approche standard pour évaluer ces systèmes complexes \cite{Necmettinetin2004}.
-
-\subsection{Architecture du simulateur}
+\subsection{Architecture générale du simulateur}
 \label{sec:architecture-simulateur}
-
-Nous avons développé un simulateur adapté en langage Python, en utilisant l'interface standardisée Gymnasium\cite{Gymnasium}. Gymnasium fournit un cadre rigoureux représentant un processus de décision markovien (MDP) via une classe de haut niveau nommée \texttt{Env}. La structure de notre simulateur repose sur quatre fonctions et attributs clés :
+Nous avons développé un simulateur adapté en langage Python, en utilisant l'interface standardisée Gymnasium~\cite{Gymnasium}. Gymnasium fournit un cadre rigoureux représentant un processus de décision markovien (MDP) via une classe de haut niveau nommée \texttt{Env}. La structure de notre simulateur repose sur quatre fonctions et attributs clés~:
 
 \begin{itemize}
-    \item \textbf{observation\_space \& action\_space} : Ces attributs définissent le format des données. Nous utilisons l'espace \texttt{Box} pour les observations continues (positions, files) et \texttt{Discrete} pour les décisions de dispatching.
-    \item \textbf{reset(seed, options)} : Initialise la mine pour un nouvel épisode de travail. Cette méthode renvoie l'observation initiale $s_0$ accompagnée d'un dictionnaire \texttt{info} pour le débogage.
-    \item \textbf{step(action)} : C'est le cœur de la boucle Agent-Environnement. À partir d'une décision de dispatching, elle fait évoluer la mine de $\Delta t$ et renvoie cinq valeurs cruciales : l'observation suivante ($s_{t+1}$), la récompense ($r_t$), ainsi que les signaux \texttt{terminated} (but atteint/échec), \texttt{truncated} (limite de temps du poste atteinte) et \texttt{info}.
-    \item \textbf{render()} : Permet la visualisation de l'état de la flotte et des pelles pour le suivi humain.
+    \item \textbf{observation\_space \& action\_space}~: Ces attributs définissent le format des données. Nous utilisons l'espace \texttt{Box} pour les observations continues (positions, files) et \texttt{Discrete} pour les décisions de dispatching.
+    \item \textbf{reset(seed, options)}~: Initialise la mine pour un nouvel épisode de travail. Cette méthode renvoie l'observation initiale $s_0$ accompagnée d'un dictionnaire \texttt{info} pour le débogage.
+    \item \textbf{step(action)}~: C'est le c\oe ur de la boucle Agent-Environnement. À partir d'une décision de dispatching, elle fait évoluer la mine de $\Delta t$ et renvoie cinq valeurs cruciales~: l'observation suivante ($s_{t+1}$), la récompense ($r_t$), ainsi que les signaux \texttt{terminated} (but atteint/échec), \texttt{truncated} (limite de temps du poste atteinte) et \texttt{info}.
+    \item \textbf{render()}~: Permet la visualisation de l'état de la flotte et des pelles pour le suivi humain.
 \end{itemize}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/Architecture modulaire du simulateur Gymnasium.drawio.png}
-    \caption{Architecture modulaire du simulateur Gymnasium}
+    \caption{Architecture modulaire du simulateur Gymnasium.}
     \label{fig:architecture-simulateur}
 \end{figure}
 
-\subsection{Modélisation logicielle des entités}
-\label{sec:modelisation-logicielle}
-
+\subsection{Modélisation des entités minières}
+\label{sec:modelisation-entites}
 Le simulateur repose sur une architecture orientée objet (POO) où chaque entité physique est reliée aux variables formelles du MDP défini au Chapitre~3. La correspondance entre les classes logicielles et les composantes de l'espace d'état $s_t$ (Eq.~3.3) est établie dans le Tableau~\ref{tab:mapping-classes-mdp}.
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
-\caption{Correspondance entre les classes logicielles et les 
-variables du MDP}
+\caption{Correspondance entre les classes logicielles et les variables du MDP}
 \label{tab:mapping-classes-mdp}
 \begin{tabular}{llll}
-\hline
-\textbf{Classe} & \textbf{Rôle dans le MDP} & 
-\textbf{Variable(s) encodée(s)} & \textbf{Eq. de référence} \\
-\hline
-\texttt{Truck}     & Entité mobile, collecte KPIs  
-                   & $x_c$ (localisation, statut)  & Eq.~3.3 \\
-\texttt{Shovel}    & Ressource de chargement       
-                   & $q_p$ (file d'attente), $z_r$ & Eq.~3.3 \\
-\texttt{DumpSite}  & Ressource de déchargement     
-                   & $z_r$ (disponibilité)         & Eq.~3.3 \\
-\texttt{Environment} & Orchestrateur, logique $f(s_t, a_t)$ 
-                   & Transition $s'_t$ (Eq.~3.6)  & Eq.~3.5--3.6 \\
-\hline
+\toprule
+\textbf{Classe} & \textbf{Rôle dans le MDP} & \textbf{Variable(s) encodée(s)} & \textbf{Eq.} \\
+\midrule
+\texttt{Truck} & Entité mobile, collecte KPIs & $x_c$ (localisation, statut) & Eq.~3.3 \\
+\texttt{Shovel} & Ressource de chargement & $q_p$ (file d'attente), $z_r$ & Eq.~3.3 \\
+\texttt{DumpSite} & Ressource de déchargement & $z_r$ (disponibilité) & Eq.~3.3 \\
+\texttt{RoadGraph} & Réseau routier paramétrable & Arcs $(u, v)$, distances, pentes & Eq.~3.2 \\
+\texttt{Environment} & Orchestrateur, logique $f(s_t, a_t)$ & Transition $s'_t$ (Eq.~3.6) & Eq.~3.5--3.6 \\
+\bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Classe Truck (Camion)~:}
-La classe \texttt{Truck} encode la composante $x_c$ de l'espace d'état $s_t$, qui représente la localisation et le statut courant de chaque camion $c \in \text{Camions}$. Elle suit en temps réel l'état de disponibilité, directement lié à la contrainte de préemption limitée formulée en Section~\ref{sec:hypotheses}. Les attributs de cette classe servent à calculer les KPIs de rendement ($\text{KPI}_1$) et de consommation spécifique ($\text{KPI}_3$) définis en Section~\ref{sec:kpis}.
+\paragraph{Camions (Truck)~:}
+La classe \texttt{Truck} encode la composante $x_c$ de l'espace d'état $s_t$, représentant la localisation et le statut courant de chaque camion $c \in \text{Camions}$. Elle suit en temps réel l'état de disponibilité, les cycles complétés, le tonnage transporté, le carburant consommé et les temps d'attente cumulés.
 
-\paragraph{Classe Shovel (Pelle)~:}
-La classe \texttt{Shovel} encode la composante $q_p$ de l'espace d'état, soit la longueur de la file d'attente à chaque pelle $p \in \text{Pelles}$. Sa particularité logicielle réside dans les paramètres ($\bar{T}_{ij}$) et ($\sigma_{ij}$), qui permettent d'échantillonner le bruit stochastique $\eta_{ij}(t) \sim \mathcal{N}(0, \sigma^2_{ij})$ introduit en (Eq.~3.2). Cette modélisation assure la cohérence entre la théorie du Chapitre~3 et l'implémentation effective.
+\paragraph{Pelles (Shovel)~:}
+La classe \texttt{Shovel} encode la composante $q_p$ de l'espace d'état, soit la file d'attente à chaque pelle $p \in \text{Pelles}$. Les paramètres de chargement ($\bar{T}$, $\sigma$) permettent d'échantillonner des durées stochastiques (Eq.~3.2).
 
-\paragraph{Classe DumpSite (Point de déchargement)~:}
-Similaire à \texttt{Shovel}, cette classe encode la disponibilité $z_r$ des ressources de déchargement dans $s_t$. Les paramètres introduisent la même stochasticité gaussienne, simulant les goulots d'étranglement potentiels en fin de parcours — une source de variabilité identifiée dans les hypothèses de modélisation (Tableau~3.1).
+\paragraph{Points de déchargement (DumpSite)~:}
+La classe \texttt{DumpSite} encode la disponibilité $z_r$ des ressources de déchargement dans $s_t$. Les paramètres de déchargement introduisent la même stochasticité, simulant les goulots d'étranglement potentiels en fin de parcours.
 
-\paragraph{Classe Environment (Orchestrateur)~:}
-Cette classe implémente la fonction de transition déterministe $f(s_t, a_t)$ augmentée des perturbations stochastiques $\eta_t$ (Eq.~3.6). Elle contient l'horloge de simulation (le pas de temps discret $\Delta t$ défini en Section~\ref{sec:hypotheses}), orchestre les interactions entre entités et expose l'interface standardisée \texttt{reset()} / \texttt{step()} / \texttt{render()} de Gymnasium~\cite{Gymnasium}, assurant la compatibilité avec PPO via Stable-Baselines3~\cite{stable-baselines3}.
+\paragraph{Réseau routier (RoadGraph)~:}
+Le graphe routier $G = (V, E)$ est paramétrable~: le nombre de pelles, de dumps et d'intersections est configurable. Chaque arête encode la distance, la pente, l'état de la route et les temps de trajet stochastiques.
 
-\subsection{Implémentation de la stochasticité}
-\label{sec:stochasticite-simulateur}
+\paragraph{Environnement (MineEnv)~:}
+Cette classe implémente la fonction de transition $f(s_t, a_t)$ augmentée des perturbations stochastiques $\eta_t$ (Eq.~3.6). Elle orchestre les interactions entre entités et expose l'interface standardisée \texttt{reset()} / \texttt{step()} / \texttt{render()} de Gymnasium~\cite{Gymnasium}.
 
-Conformément à l'équation 3.2, la réalité du terrain est injectée via une variabilité des temps de trajet. À chaque fois qu'un camion se déplace sur un arc $(u,v)$ du graphe routier, le simulateur ne se contente pas d'utiliser le temps moyen $\bar{T}_{ij}$. Il échantillonne un bruit $\eta$ tel que : 
-
-\begin{equation}
-T_{ij}(t) = \bar{T}_{ij} + \eta_{ij}(t)
-\label{eq:stochasticite}
-\end{equation}
-
-Cela force l'agent à ne pas apprendre un chemin fixe, mais à développer une politique de dispatching capable de compenser les retards imprévus d'un camion sur une route dégradée ou encombrée.
-
-\section{Architecture technique de l’agent d'apprentissage}
-\label{sec:architecture-agent}
-
-L'agent d'apprentissage par renforcement profond est conçu pour interagir dynamiquement avec l'environnement de simulation afin d'acquérir une politique de dispatching optimale. Sa structure technique repose sur l'articulation de plusieurs composants essentiels :
-
-\subsection{Passage au Deep Reinforcement Learning}
-\label{sec:deep-rl}
-Le RL classique par table (Q-Table) devient inefficace lorsque l'espace d'états est trop vaste. Dans notre cas, la combinaison des positions de $N$ camions et des files d'attente de $M$ pelles crée une explosion combinatoire. Nous utilisons donc le Deep Reinforcement Learning (DRL), où le signal de décision est généré par un réseau de neurones profond agissant comme approximateur de fonction universel~\cite{MoezKrichen2022}.
-
-\subsection{Structure du réseau de neurones}
-\label{sec:structure-reseau}
-
-L'agent repose sur une architecture de type Perceptron Multicouche (MLP) comprenant :
-
+\subsection{Définition de l'espace d'observation}
+\label{sec:espace-observation}
+L'espace d'observation encode l'état complet du système minier dans un vecteur normalisé $s_t \in [0, 1]^n$. Il comprend~:
 \begin{itemize}
-    \item \textbf{Couche d'entrée} : Sa dimension correspond au nombre de variables dans l'état $s_t$ (positions, charges, temps, files).
-    \item \textbf{Couches cachées} : Deux couches denses de 128 neurones chacune, utilisant la fonction d'activation \textbf{ReLU} ($f$($x$) = max(0, $x$)) pour capturer les relations non linéaires complexes entre le trafic et la production.
-    \item \textbf{Couche de sortie} : Une couche de dimension $|\mathcal{A}|$ utilisant une fonction \textbf{Softmax} pour transformer les activations en probabilités d'action (choix de la pelle de destination).
+    \item \textbf{Position des camions}~: localisation dans le graphe routier.
+    \item \textbf{Statut des camions}~: libre, en route vers pelle, en chargement, en route vers dump, en déchargement, en retour.
+    \item \textbf{Disponibilité des pelles}~: temps estimé avant disponibilité (proxy de la longueur de file).
+    \item \textbf{Disponibilité des dumps}~: temps estimé avant disponibilité au point de déchargement.
+    \item \textbf{Temps courant}~: progression de l'épisode, normalisée par la durée totale du poste.
+\end{itemize}
+Cette normalisation dans $[0, 1]$ est cruciale pour stabiliser l'apprentissage et éviter l'explosion du gradient lors de la rétropropagation~\cite{MoezKrichen2022}.
+
+\subsection{Définition de l'espace d'action}
+\label{sec:espace-action}
+À chaque étape de décision, l'agent choisit une action $a_t$ dans un espace discret~:
+\begin{equation}
+    \mathcal{A} = \text{Discrete}\big(|\mathcal{P}| \times |\mathcal{D}| + 1\big)
+\end{equation}
+où $|\mathcal{P}|$ est le nombre de pelles et $|\mathcal{D}|$ le nombre de dumps. Chaque action encode une paire (pelle, dump) par division entière~:
+\begin{itemize}
+    \item $\text{shovel\_idx} = a_t \div |\mathcal{D}|$~: indice de la pelle choisie.
+    \item $\text{dump\_idx} = a_t \bmod |\mathcal{D}|$~: indice du dump choisi.
+    \item Si $a_t = |\mathcal{P}| \times |\mathcal{D}|$~: action ATTENDRE (la pelle et le dump les plus tôt disponibles sont sélectionnés automatiquement).
+\end{itemize}
+Ce codage permet à l'agent de choisir simultanément la pelle de chargement et le point de déchargement, offrant une flexibilité décisionnelle plus grande que les approches classiques qui ne choisissent que la pelle.
+
+\subsection{Fonction de récompense multi-objectif}
+\label{sec:fonction-recompense}
+La fonction de récompense traduit les objectifs métier en un signal scalaire guidant l'apprentissage de l'agent. Conformément à l'Eq.~3.8, elle combine trois composantes pondérées~:
+\begin{equation}
+    R_t = w_1 \cdot R_{\text{rendement}} + w_2 \cdot R_{\text{équité}} + w_3 \cdot R_{\text{coût}}
+\end{equation}
+\begin{itemize}
+    \item \textbf{Récompense de rendement} ($R_{\text{rendement}}$)~: tonnage transporté lors du cycle, normalisé par la capacité du camion. Récompense positive liée à la productivité.
+    \item \textbf{Récompense d'équité} ($R_{\text{équité}}$)~: pénalité proportionnelle à la variance des files d'attente aux pelles. Favorise une utilisation équilibrée des ressources de chargement.
+    \item \textbf{Récompense de coût} ($R_{\text{coût}}$)~: pénalité proportionnelle à la distance parcourue. Réduit les trajets inutiles et la consommation de carburant.
+\end{itemize}
+
+% ====================================================================
+%  4.4  ALGORITHMES CLASSIQUES RL
+% ====================================================================
+\section{Algorithmes classiques d'apprentissage par renforcement}
+\label{sec:algo-classiques-rl}
+Avant de présenter l'approche Deep RL retenue, il est essentiel de comprendre les algorithmes fondamentaux de l'apprentissage par renforcement tabulaire. Ces méthodes constituent la base théorique sur laquelle reposent les approches plus avancées et servent de modèles comparatifs dans notre évaluation.
+
+\subsection{Q-Learning pour le dispatching minier}
+\label{sec:q-learning}
+Le Q-Learning est une méthode d'apprentissage par renforcement tabulaire qui apprend une fonction $Q(s, a)$ estimant la qualité d'une action $a$ dans un état $s$ donné. L'agent met à jour cette fonction après chaque transition selon la règle~:
+\begin{equation}
+    Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Big[ r_t + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \Big]
+    \label{eq:q-learning}
+\end{equation}
+où $\alpha$ est le taux d'apprentissage, $\gamma$ le facteur d'actualisation et $r_t$ la récompense reçue.
+
+Dans le contexte du dispatching minier, la correspondance est la suivante~:
+
+\begin{table}[H]
+\centering
+\caption{Correspondance Q-Learning $\leftrightarrow$ dispatching minier}
+\label{tab:q-learning-mine}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Élément Q-Learning} & \textbf{Correspondance minière} \\
+\midrule
+État $s$ & Situation actuelle de la flotte (files, positions, disponibilités) \\
+Action $a$ & Affectation camion-pelle-dump ou choix d'attendre \\
+Récompense $r$ & Gain de tonnage, réduction du coût, équité des files \\
+Politique $\pi$ & Règle apprise de dispatching \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Le Q-Learning est une méthode \emph{off-policy}~: il estime la valeur de l'action optimale ($\max_{a'}$) indépendamment de la politique d'exploration effectivement suivie. Cette caractéristique le rend théoriquement convergent vers la politique optimale dans des environnements tabulaires~\cite{SuttonBarto2018}.
+
+\subsection{Temporal Difference Learning}
+\label{sec:td-learning}
+Le TD Learning (apprentissage par différence temporelle) est le principe général qui sous-tend Q-Learning, SARSA et d'autres méthodes RL. Il met à jour les estimations de valeur à partir de l'écart entre une estimation actuelle et une estimation future, sans attendre la fin complète de l'épisode~:
+\begin{equation}
+    V(s_t) \leftarrow V(s_t) + \alpha \Big[ r_t + \gamma V(s_{t+1}) - V(s_t) \Big]
+    \label{eq:td-learning}
+\end{equation}
+L'erreur $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ est appelée \emph{erreur de différence temporelle} (TD error). Ce mécanisme est particulièrement adapté aux environnements séquentiels comme la logistique minière, où les décisions sont prises de manière continue tout au long d'un poste de travail de 8 heures.
+
+Le TD Learning constitue la base théorique de plusieurs méthodes RL~: Q-Learning utilise le TD error pour mettre à jour $Q(s, a)$, et cette même notion sera reprise dans le calcul du GAE (Generalized Advantage Estimation) utilisé par PPO.
+
+\subsection{SARSA comme variante TD orientée politique}
+\label{sec:sarsa}
+SARSA (State-Action-Reward-State-Action) est une variante \emph{on-policy} du TD Learning. Contrairement au Q-Learning qui estime la valeur de l'action optimale, SARSA apprend la valeur des actions réellement suivies par l'agent~:
+\begin{equation}
+    Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Big[ r_t + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \Big]
+    \label{eq:sarsa}
+\end{equation}
+La différence clé avec le Q-Learning réside dans le terme $Q(s_{t+1}, a_{t+1})$ au lieu de $\max_{a'} Q(s_{t+1}, a')$~: SARSA utilise l'action effectivement prise ($a_{t+1}$) et non l'action optimale hypothétique. Cette distinction entre approches on-policy et off-policy est fondamentale en RL~\cite{SuttonBarto2018}.
+
+Dans le contexte du dispatching minier, SARSA tend à produire des politiques plus conservatrices, car il tient compte de l'exploration effectivement réalisée. Cette propriété peut être avantageuse dans un environnement où les décisions sous-optimales (par exemple, envoyer un camion vers une pelle congestionnée) ont des conséquences coûteuses.
+
+\subsection{Limites des méthodes tabulaires}
+\label{sec:limites-tabulaires}
+Les méthodes tabulaires (Q-Learning, SARSA) deviennent rapidement limitées lorsque l'espace d'état augmente. Dans le cas de la logistique minière, les combinaisons entre~:
+\begin{itemize}
+    \item les positions de $N_c$ camions (12 camions dans notre configuration),
+    \item les files d'attente de $N_p$ pelles (3 pelles),
+    \item les disponibilités de $N_d$ dumps (2 dumps),
+    \item les niveaux de congestion sur le réseau routier,
+    \item les événements stochastiques (pannes, dégradation des routes),
+\end{itemize}
+rendent impossible le stockage explicite de toutes les valeurs $Q(s, a)$ dans une table. L'espace d'état est continu et de haute dimension, ce qui provoque une explosion combinatoire incompatible avec l'approche tabulaire. Cette limitation fondamentale justifie le passage vers le Deep Reinforcement Learning, où un réseau de neurones approxime la fonction de valeur ou la politique.
+
+% ====================================================================
+%  4.5  PASSAGE AU DEEP RL
+% ====================================================================
+\section{Passage au Deep Reinforcement Learning}
+\label{sec:passage-deep-rl}
+
+\subsection{Justification du recours au Deep Learning}
+\label{sec:justification-deep-learning}
+Le recours au Deep Learning pour approximer les fonctions de valeur ou les politiques est justifié par plusieurs caractéristiques de notre problème~:
+\begin{itemize}
+    \item \textbf{Espaces d'état larges}~: le vecteur d'observation contient des dizaines de variables continues.
+    \item \textbf{Observations continues}~: les files d'attente, positions et temps ne sont pas discrétisables efficacement.
+    \item \textbf{Interactions complexes}~: les décisions pour un camion affectent les files d'attente de tous les autres.
+    \item \textbf{Perturbations dynamiques}~: pannes, dégradation des routes, variations de chargement/déchargement.
+    \item \textbf{Généralisation}~: un réseau de neurones peut généraliser à des états non rencontrés pendant l'entraînement, contrairement à une table Q qui ne couvre que les états visités.
+\end{itemize}
+
+\subsection{Deep Q-Network (DQN) comme extension du Q-Learning}
+\label{sec:dqn}
+Le Deep Q-Network (DQN)~\cite{MoezKrichen2022} remplace la table Q par un réseau de neurones $Q_\theta(s, a)$ chargé d'approximer la fonction de valeur-action. Il constitue donc une extension profonde du Q-Learning (Eq.~\ref{eq:q-learning}), adaptée aux environnements où la représentation tabulaire devient impossible.
+
+DQN introduit deux mécanismes clés pour stabiliser l'apprentissage~:
+\begin{itemize}
+    \item \textbf{Experience Replay}~: stockage des transitions $(s, a, r, s')$ dans un buffer mémoire, d'où sont tirés des mini-batches pour l'entraînement, brisant les corrélations temporelles.
+    \item \textbf{Target Network}~: un réseau cible $Q_{\theta^-}$ mis à jour périodiquement, évitant les oscillations de l'apprentissage.
+\end{itemize}
+
+Bien que DQN représente une avancée majeure par rapport au Q-Learning tabulaire, il présente des limitations dans notre contexte~: il est structurellement limité aux espaces d'actions discrets de faible dimension, et la gestion simultanée de plusieurs unités de chargement peut rendre l'apprentissage instable~\cite{MoezKrichen2022}. DQN joue néanmoins un rôle important dans notre travail comme modèle de transition vers les approches actor-critic.
+
+\subsection{Architecture du réseau de neurones}
+\label{sec:architecture-reseau}
+L'agent repose sur une architecture de type Perceptron Multicouche (MLP) comprenant~:
+\begin{itemize}
+    \item \textbf{Couche d'entrée}~: sa dimension correspond au nombre de variables dans l'état $s_t$ (positions, charges, temps, files).
+    \item \textbf{Couches cachées}~: deux couches denses de 128 neurones chacune, utilisant la fonction d'activation \textbf{ReLU} ($f(x) = \max(0, x)$) pour capturer les relations non linéaires complexes entre le trafic et la production.
+    \item \textbf{Couche de sortie}~: une couche de dimension $|\mathcal{A}|$ utilisant une fonction \textbf{Softmax} pour transformer les activations en probabilités d'action.
 \end{itemize}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{figures/Architecture du réseau de neurones (MLP) de l’agent PPO.drawio.png}
-    \caption{Architecture du réseau de neurones (MLP) de l’agent PPO.}
+    \includegraphics[width=0.85\textwidth]{figures/Architecture du réseau de neurones (MLP) de l'agent PPO.drawio.png}
+    \caption{Architecture du réseau de neurones (MLP) de l'agent PPO.}
     \label{fig:structure-reseau}
 \end{figure}
 
-\subsection{Prétraitement des observations}
-\label{sec:pretraitement-observations}
+\subsection{Choix de l'algorithme final~: PPO}
+\label{sec:choix-ppo}
+Le choix de l'algorithme final est le résultat d'une progression scientifique~: Q-Learning et TD Learning servent de bases théoriques, DQN assure la transition vers le Deep RL, et PPO (Proximal Policy Optimization)~\cite{MoezKrichen2022} est retenu comme approche finale en raison de sa stabilité et de sa robustesse dans les environnements dynamiques.
 
-Pour stabiliser l'apprentissage, les données brutes sont normalisées avant d'entrer dans le réseau. Les distances sont ramenées sur une échelle $[0, 1]$ par rapport à la diagonale maximale de la mine, et les longueurs de files d'attente sont divisées par la capacité maximale de rétention de la pelle. Cette étape est cruciale pour éviter l'explosion du gradient lors de la rétropropagation~\cite{MoezKrichen2022}.
+Pour piloter notre agent de dispatching, nous avons procédé à un arbitrage technologique rigoureux, comparant PPO aux alternatives DQN, DDPG/TD3 et SAC~:
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{figures/Pipeline du flux de données entre la mine et l’agent DRL.drawio.png}
-    \caption{Pipeline du flux de données entre la mine et l’agent DRL.}
-    \label{fig:pipeline-donnees}
-\end{figure}
+\paragraph{Rejet de DQN~:}
+Bien que DQN soit l'algorithme fondateur du DRL, il est limité aux espaces d'actions discrets de faible dimension et sujet à une divergence algorithmique dans notre contexte minier~\cite{MoezKrichen2022}.
 
-\section{Sélection et configuration de l’algorithme}
-\label{sec:selection-algorithme}
+\paragraph{Rejet de DDPG / TD3~:}
+Ces algorithmes présentent une instabilité chronique et une tendance à la surestimation des Q-valeurs. Dans un environnement stochastique où les temps de trajet subissent un bruit $\eta$ (Eq.~3.2), leur politique déterministe produit des oscillations persistantes~\cite{nwachukwu2025sac}.
 
-Le succès d'un système d'apprentissage par renforcement profond (DRL) repose non seulement sur la qualité de l'environnement, mais aussi sur le choix d'un algorithme capable de naviguer efficacement dans des espaces d'états complexes et stochastiques. Dans le contexte de la logistique minière, l'algorithme doit être capable de gérer la haute dimensionnalité des données tout en garantissant une convergence stable vers une politique de dispatching performante.
+\paragraph{Rejet de SAC~:}
+SAC impose un coût computationnel prohibitif~: en moyenne 40 heures d'entraînement contre 31 heures pour des architectures plus sobres, soit un surcoût de 30\%~\cite{nwachukwu2025sac}.
 
-\subsection{Justification du choix de PPO et rejet des alternatives}
-\label{sec:choix-algorithme}
-Pour piloter notre agent de dispatching, nous avons procédé à un arbitrage technologique rigoureux. L'objectif est de sélectionner un algorithme capable de converger vers une politique robuste dans un environnement minier caractérisé par une haute dimensionnalité et une forte stochasticité. Nous comparons ici PPO aux trois autres piliers du Deep Reinforcement Learning : DQN, DDPG/TD3 et SAC.
-
-\paragraph{Rejet de DQN (Deep Q-Network) :}
-Bien que DQN soit l'algorithme fondateur du DRL, il est structurellement limité aux espaces d'actions discrets et de faible dimension. L'utilisation d'une Q-Table approximée par un réseau de neurones se heurte à une explosion combinatoire dès que le nombre de pelles et de camions augmente. Dans notre complexe minier, la gestion simultanée de plusieurs unités de chargement rendrait l'apprentissage via DQN extrêmement instable et sujet à une divergence algorithmique~\cite{MoezKrichen2022}.
-
-\paragraph{Rejet de la famille DDPG / TD3 :}
-Le DDPG (Deep Deterministic Policy Gradient) et son évolution le TD3 souffrent de défauts intrinsèques limitant leur applicabilité industrielle. Ces algorithmes présentent une instabilité chronique et une tendance critique à la surestimation des Q-valeurs. Dans un environnement stochastique où les temps de trajet subissent un bruit $\eta$ (Eq. 3.2), la politique déterministe de cette famille d'algorithmes produit des oscillations persistantes, se traduisant par des décisions de dispatching aléatoires et une sous-utilisation des ressources~\cite{nwachukwu2025sac}.
-
-\paragraph{Rejet de SAC (Soft Actor-Critic) :}
-SAC est reconnu pour sa performance grâce à l'optimisation de l'entropie, mais il impose un coût computationnel prohibitif. L'étude comparative de~\cite{nwachukwu2025sac} quantifie ce surcoût : SAC nécessite en moyenne 40 heures d'entraînement contre 31 heures pour des architectures plus sobres, soit un besoin en ressources supérieur de 30\%. Pour une exploitation minière réelle, où l'agent doit être ré-entraîné fréquemment suite à l'évolution géographique de la zone d’extraction, ce manque d'efficience constitue un obstacle économique majeur.
-
-\paragraph{Avantages déterminants de PPO :}
-L'algorithme Proximal Policy Optimization (PPO) s'impose comme la solution optimale pour ce mémoire selon trois critères validés par la littérature récente :
-
+\paragraph{Avantages déterminants de PPO~:}
 \begin{itemize}
-    \item \textbf{Stabilité par objectif tronqué} : PPO utilise un mécanisme de Clipped Surrogate Objective. Cela limite l'amplitude des mises à jour de la politique à chaque itération, garantissant que l'agent ne diverge pas brutalement suite à un événement stochastique extrême (panne, congestion soudaine)~\cite{MoezKrichen2022}.
-
-    \item \textbf{Simplicité d'implémentation et on-policy} : Contrairement aux méthodes off-policy nécessitant un replay buffer massif et complexe à gérer en mémoire, PPO apprend directement de ses interactions actuelles. Cette caractéristique facilite la synchronisation avec le simulateur Gymnasium et réduit l'empreinte logicielle du système.
-
-    \item \textbf{Robustesse industrielle} : PPO est l'algorithme le plus adapté aux environnements de production pour sa moindre sensibilité au réglage fin des hyperparamètres, assurant une reproductibilité des résultats essentielle pour la logistique minière~\cite{MoezKrichen2022, Szatmári2025}. Le Tableau 4.2 synthétise cette analyse comparative.
+    \item \textbf{Stabilité par objectif tronqué}~: le mécanisme de Clipped Surrogate Objective limite l'amplitude des mises à jour, empêchant la divergence suite à un événement stochastique extrême~\cite{MoezKrichen2022}.
+    \item \textbf{Simplicité et méthode on-policy}~: PPO apprend directement de ses interactions actuelles, sans replay buffer massif.
+    \item \textbf{Robustesse industrielle}~: moindre sensibilité au réglage des hyperparamètres, assurant la reproductibilité~\cite{MoezKrichen2022, Szatmári2025}.
 \end{itemize}
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
-\caption{Comparaison multidimensionnelle des algorithmes DRL (adapté de \cite{nwachukwu2025sac, MoezKrichen2022})}
+\caption{Comparaison multidimensionnelle des algorithmes DRL (adapté de~\cite{nwachukwu2025sac, MoezKrichen2022})}
 \label{tab:comparaison-algos}
 \begin{tabularx}{\textwidth}{lXXXX}
-\hline
+\toprule
 \textbf{Critère} & \textbf{DQN} & \textbf{DDPG / TD3} & \textbf{SAC} & \textbf{PPO} \\
-\hline
+\midrule
 Espace d'action & Discret uniquement & Continu & Continu & \textbf{Hybride} \\
 Stabilité & Moyenne & Faible & Élevée & \textbf{Optimale} \\
 Coût de calcul & Très Faible & Moyen (31h) & Élevé (40h) & \textbf{Faible} \\
 Oscillations ($\eta$) & Fortes & Élevées & Faibles & \textbf{Négligeables} \\
 Réglage (Tuning) & Simple & Complexe & Moyen & \textbf{Simple} \\
-\hline
+\midrule
 \textbf{Verdict} & Limité & Instable & Trop lourd & \textbf{Retenu} \\
-\hline
+\bottomrule
 \end{tabularx}
 \end{table}
 
-\subsection{Paramètres d'apprentissage}
-\label{sec:parametres-apprentissage}
-Les hyperparamètres retenus correspondent aux valeurs par défaut de la bibliothèque Stable-Baselines3 (version 2.x), telles que définies dans la documentation officielle~\cite{stable-baselines3}. Ces valeurs ont été choisies comme base de référence car elles ont été optimisées par les auteurs de la bibliothèque pour offrir une convergence stable sur une large gamme d'environnements de type Gymnasium.
+\subsection{Justification du choix de PPO par rapport aux alternatives}
+\label{sec:justification-ppo}
+PPO est retenu comme approche finale pour notre système de dispatching minier selon trois critères validés par la littérature récente~:
+\begin{enumerate}
+    \item PPO est plus stable dans les environnements complexes que DQN et ses variantes, grâce à son objectif tronqué qui empêche les mises à jour trop radicales.
+    \item Il est adapté aux politiques stochastiques, ce qui convient aux environnements dynamiques et bruités comme la mine.
+    \item Il permet une stratégie de décision adaptative, compatible avec les contraintes opérationnelles de la logistique minière (pannes, congestion, dégradation des routes).
+\end{enumerate}
 
-\begin{table}[ht!]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Pipeline du flux de données entre la mine et l'agent DRL.drawio.png}
+    \caption{Pipeline du flux de données entre la mine et l'agent DRL.}
+    \label{fig:pipeline-donnees}
+\end{figure}
+
+% ====================================================================
+%  4.6  CONFIGURATION EXPÉRIMENTALE
+% ====================================================================
+\section{Configuration expérimentale des modèles d'apprentissage}
+\label{sec:config-experimentale}
+
+\subsection{Hyperparamètres du Q-Learning}
+\label{sec:hp-q-learning}
+Les hyperparamètres du Q-Learning tabulaire sont définis dans le Tableau~\ref{tab:hp-q-learning}.
+
+\begin{table}[H]
 \centering
-\caption{Hyperparamètres de l'agent PPO}
-\label{tab:hyperparametres-ppo}
-\begin{tabular}{llp{7.5cm}}
+\caption{Hyperparamètres du Q-Learning}
+\label{tab:hp-q-learning}
+\begin{tabular}{llp{7cm}}
 \toprule
 \textbf{Hyperparamètre} & \textbf{Valeur} & \textbf{Justification} \\
 \midrule
-Learning Rate & 0.0003 & Vitesse d'apprentissage par défaut recommandée pour la plupart des problèmes. \\
-Gamma ($\gamma$) & 0.99 & Valeur standard dans le RL pour équilibrer les récompenses immédiates et futures. \\
-Batch Size & 64 & Taille du lot d'échantillons utilisée pour chaque mise à jour du réseau de neurones. \\
-GAE Lambda ($\lambda$) & 0.95 & Paramètre pour le Generalized Advantage Estimation, utilisé pour réduire la variance. \\
-Clip Range & 0.2 & Cœur de l'algorithme PPO (le Clipped Objective) qui empêche l'agent de changer trop radicalement de politique d'un coup. \\
+Taux d'apprentissage ($\alpha$) & 0.1 & Vitesse de mise à jour de la Q-table. \\
+Facteur d'actualisation ($\gamma$) & 0.99 & Équilibre récompenses immédiates et futures. \\
+Taux d'exploration ($\epsilon$) & 1.0 $\to$ 0.01 & Décroissance linéaire (exploration $\to$ exploitation). \\
+Nombre d'épisodes & 10\,000 & Suffisant pour la convergence en environnement tabulaire. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Hyperparamètres du TD Learning / SARSA}
+\label{sec:hp-td-sarsa}
+Les hyperparamètres de SARSA suivent les mêmes conventions que le Q-Learning, la seule différence étant la règle de mise à jour on-policy (Eq.~\ref{eq:sarsa}).
+
+\begin{table}[H]
+\centering
+\caption{Hyperparamètres du TD Learning / SARSA}
+\label{tab:hp-sarsa}
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Hyperparamètre} & \textbf{Valeur} & \textbf{Justification} \\
+\midrule
+Taux d'apprentissage ($\alpha$) & 0.1 & Identique au Q-Learning pour comparabilité. \\
+Facteur d'actualisation ($\gamma$) & 0.99 & Cohérent avec les autres méthodes. \\
+Stratégie $\epsilon$-greedy & 1.0 $\to$ 0.01 & Décroissance identique au Q-Learning. \\
+Nombre d'épisodes & 10\,000 & Critère de convergence identique. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Hyperparamètres du modèle Deep RL (PPO)}
+\label{sec:hp-ppo}
+Les hyperparamètres retenus pour PPO correspondent aux valeurs par défaut de la bibliothèque Stable-Baselines3 (version 2.x)~\cite{stable-baselines3}. Ces valeurs ont été optimisées pour offrir une convergence stable sur une large gamme d'environnements Gymnasium.
+
+\begin{table}[H]
+\centering
+\caption{Hyperparamètres de l'agent PPO}
+\label{tab:hyperparametres-ppo}
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Hyperparamètre} & \textbf{Valeur} & \textbf{Justification} \\
+\midrule
+Learning Rate ($\alpha$) & 0.0003 & Vitesse d'apprentissage recommandée par défaut. \\
+Gamma ($\gamma$) & 0.99 & Équilibre récompenses immédiates et futures. \\
+Batch Size & 64 & Taille du lot pour chaque mise à jour du réseau. \\
+GAE Lambda ($\lambda$) & 0.95 & Generalized Advantage Estimation, réduit la variance. \\
+Clip Range ($\epsilon_{\text{clip}}$) & 0.2 & Objectif tronqué empêchant les mises à jour trop radicales. \\
+Architecture & MLP 128$\times$128 & Deux couches cachées de 128 neurones, activation ReLU. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Stratégie exploration / exploitation}
+\label{sec:exploration-exploitation}
+Les stratégies d'exploration diffèrent selon les algorithmes~:
+\begin{itemize}
+    \item \textbf{Q-Learning et SARSA}~: exploration $\epsilon$-greedy avec décroissance linéaire. L'agent choisit une action aléatoire avec probabilité $\epsilon$ et l'action gloutonne avec probabilité $1 - \epsilon$. $\epsilon$ décroît de 1.0 (exploration pure) à 0.01 (exploitation quasi-totale) au cours de l'entraînement.
+    \item \textbf{PPO}~: exploration stochastique intégrée dans la politique. L'acteur $\pi_\theta$ produit une distribution de probabilités sur les actions, et l'exploration est naturellement régulée par l'entropie de cette distribution. Un coefficient d'entropie encourage l'exploration en début d'entraînement.
+\end{itemize}
+L'exploration stochastique de PPO est plus nuancée que le $\epsilon$-greedy~: au lieu de choisir aléatoirement parmi toutes les actions avec probabilité $\epsilon$, PPO attribue des probabilités proportionnelles à la qualité estimée de chaque action, permettant une exploration dirigée et plus efficace.
+
+% ====================================================================
+%  4.7  STRATÉGIE D'ÉVALUATION COMPARATIVE
+% ====================================================================
+\section{Stratégie d'évaluation comparative}
+\label{sec:strategie-evaluation}
+
+\subsection{Heuristiques de référence}
+\label{sec:heuristiques-reference}
+Pour démontrer la plus-value de l'agent RL, nous le comparons aux heuristiques industrielles suivantes~:
+\begin{itemize}
+    \item \textbf{Fixed Assignment (Affectation fixe)}~: chaque camion est dédié à une seule pelle selon un schéma cyclique (round-robin). C'est le niveau zéro de l'optimisation.
+    \item \textbf{Nearest Shovel (Pelle la plus proche)}~: le camion choisit systématiquement la pelle la plus proche géographiquement. C'est l'approche la plus courante en l'absence de système intelligent.
+    \item \textbf{Queue-Aware (File la plus courte)}~: le camion choisit la pelle avec la file d'attente la plus courte. Cette heuristique tient compte de la charge de travail.
+\end{itemize}
+
+\subsection{Modèles RL classiques de comparaison}
+\label{sec:modeles-rl-comparaison}
+En complément des heuristiques, les algorithmes RL classiques présentés en Section~\ref{sec:algo-classiques-rl} servent de modèles comparatifs~:
+\begin{itemize}
+    \item \textbf{Q-Learning}~: baseline tabulaire off-policy.
+    \item \textbf{SARSA}~: baseline tabulaire on-policy.
+\end{itemize}
+Ces modèles permettent de quantifier le gain apporté par le passage au Deep RL par rapport aux approches tabulaires.
+
+\subsection{Modèle Deep RL proposé}
+\label{sec:modele-deep-rl}
+DQN peut être testé comme modèle profond intermédiaire, tandis que PPO constitue l'approche finale proposée. La comparaison DQN vs PPO permet d'évaluer l'avantage des méthodes actor-critic par rapport aux méthodes basées sur la valeur pure dans le contexte spécifique du dispatching minier.
+
+\subsection{Indicateurs de performance (KPIs)}
+\label{sec:kpis}
+L'évaluation repose sur un ensemble d'indicateurs de performance opérationnels et algorithmiques~:
+
+\begin{table}[H]
+\centering
+\caption{Indicateurs de performance pour l'évaluation comparative}
+\label{tab:kpis}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{KPI} & \textbf{Signification} \\
+\midrule
+Tonnage transporté ($P_h$) & Productivité globale : $P_h = \frac{\sum \text{Tonnage}(c)}{T_{\text{total}}}$ \\
+Temps d'attente moyen ($E_t$) & Fluidité du système, temps moyen en file par cycle \\
+Consommation spécifique ($E_e$) & Efficacité énergétique (litres par tonne transportée) \\
+Coût moyen par cycle & Performance économique \\
+Récompense cumulée & Performance RL globale de l'agent \\
+Temps de convergence & Efficacité d'apprentissage (nombre de steps) \\
+Robustesse aux perturbations & Adaptabilité de l'agent face aux pannes et congestion \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ====================================================================
+%  4.8  SYNTHÈSE + PSEUDOCODE
+% ====================================================================
+\section{Synthèse de la solution proposée}
+\label{sec:synthese-solution}
+
+Le Tableau~\ref{tab:synthese-solution} récapitule les choix méthodologiques et techniques retenus pour la solution proposée.
+
+\begin{table}[H]
+\centering
+\caption{Synthèse de la solution proposée}
+\label{tab:synthese-solution}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Élément} & \textbf{Choix retenu} \\
+\midrule
+Méthodologie & CRISP-RL \\
+Environnement & Simulateur minier compatible Gymnasium \\
+Formalisation & Processus de décision markovien (MDP) \\
+Méthodes classiques & Q-Learning, TD Learning, SARSA \\
+Transition Deep RL & DQN \\
+Approche finale & PPO (Proximal Policy Optimization) \\
+Baselines & Heuristiques industrielles + RL classiques \\
+Évaluation & KPIs opérationnels + récompense cumulée \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -945,7 +1233,7 @@ Clip Range & 0.2 & Cœur de l'algorithme PPO (le Clipped Objective) qui empêche
 \subsection{Pseudocode de l'algorithme proposé}
 \label{sec:pseudocode}
 
-L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entraînement de l'agent PPO appliquée à notre problème de dispatching minier. Ce pseudocode intègre les éléments définis dans les sections précédentes : l'état $s_t$ (Eq.~3.1), l'espace d'action $\mathcal{A}$ (Section~3.4), la récompense pondérée $R_t$ (Eq.~3.8), le réseau MLP~128$\times$128 (Section~4.3.2) et les hyperparamètres du Tableau~\ref{tab:hyperparametres-ppo}.
+L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entraînement de l'agent PPO appliquée à notre problème de dispatching minier. Ce pseudocode intègre les éléments définis dans les sections précédentes~: l'état $s_t$ (Eq.~3.1), l'espace d'action $\mathcal{A}$ (Section~\ref{sec:espace-action}), la récompense pondérée $R_t$ (Eq.~3.8), le réseau MLP~128$\times$128 (Section~\ref{sec:architecture-reseau}) et les hyperparamètres du Tableau~\ref{tab:hyperparametres-ppo}.
 
 \begin{algorithm}[H]
 \caption{PPO pour le dispatching minier camion-pelle-dump}
@@ -961,7 +1249,7 @@ L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entra
     \STATE Collecter $N$ transitions en suivant $\pi_{\theta_k}$ :
     \FOR{$t = 1, \ldots, N$}
         \STATE Observer l'état $s_t = \big(\{q_p\},\ \{x_c\},\ \{z_r\},\ t_{\text{courant}}\big)$
-        \STATE Normaliser $s_t$ dans $[0, 1]$ (Section~4.3.3)
+        \STATE Normaliser $s_t$ dans $[0, 1]$ (Section~\ref{sec:espace-observation})
         \STATE Échantillonner l'action $a_t \sim \pi_\theta(\cdot \mid s_t)$
         \STATE Décoder $a_t$ en paire (pelle $p_i$, dump $d_j$) :
         \STATE \hspace{1em} $i \leftarrow \lfloor a_t / |\mathcal{D}| \rfloor$, \quad $j \leftarrow a_t \bmod |\mathcal{D}|$
@@ -995,36 +1283,9 @@ L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entra
 
 Cet algorithme illustre comment les composantes théoriques définies au Chapitre~3 (MDP, récompense pondérée, stochasticité) s'articulent avec les choix techniques du présent chapitre (PPO, architecture réseau, hyperparamètres) pour former une boucle d'apprentissage complète et cohérente. La ligne~9 montre en particulier l'encodage de l'espace d'action $\mathcal{A} = \text{Discrete}(|\mathcal{P}| \times |\mathcal{D}| + 1)$ qui permet à l'agent de choisir simultanément la pelle et le point de déchargement. Le terme +1 représente l'action neutre (ATTENDRE), permettant à l'agent de temporiser si aucune affectation n'est productive à l'instant $t$.
 
-\section{Stratégie d’évaluation et modèles de référence (Baselines)}
-\label{sec:strategie-evaluation}
-
-\subsection{Heuristiques de comparaison}
-\label{sec:heuristiques-comparaison}
-Pour démontrer la plus-value de l'agent DRL, nous le comparons à deux baselines industrielles :
-
-\begin{itemize}
-
-    \item \textbf{Fixed Assignment (Règle statique)} : Chaque camion est dédié à une seule pelle. C'est le niveau zéro de l'optimisation.
-    \item \textbf{Nearest Shovel (Greedy)} : Le camion choisit systématiquement la pelle la plus proche géographiquement. C'est l'approche la plus courante en l'absence de système intelligent.
-
-\end{itemize}
-
-\subsection{Indicateurs de performance (KPIs)}
-\label{sec:kpis}
-L'évaluation repose sur la formalisation mathématique de trois indicateurs clés :
-
-\begin{itemize}
-    \item \textbf{Productivité Horaire $(P_h)$} : 
-    \begin{equation}
-        P_h = \frac{\sum_{c \in \text{Poste}} \text{Tonnage}(c)}{T_{\text{total}}}
-    \end{equation}
-    \item \textbf{Temps d'attente moyen $(E_t)$} : Temps d'attente moyen en file d'attente par cycle.
-    \item \textbf{Consommation spécifique $(E_e)$} : Métrique de l'efficience énergétique~\cite{GuangweiLiu2019}.
-\end{itemize}
-
 \section{Conclusion}
 \label{sec:conclusion-methodologie}
-Ce chapitre a détaillé la transformation de notre modèle MDP en une architecture logicielle concrète structurée par le cadre CRISP-RL. Nous avons justifié le passage au Deep Reinforcement Learning (PPO) pour gérer la complexité du système minier et défini un protocole d'évaluation rigoureux basé sur des indicateurs de performance industriels. Le chapitre suivant présentera l'implémentation de ce système dans notre environnement de simulation et analysera les résultats obtenus face aux heuristiques de référence.
+Ce chapitre a présenté la méthodologie complète de notre solution, depuis le cadre CRISP-RL jusqu'au choix algorithmique final. Le passage des méthodes classiques (Q-Learning, TD Learning, SARSA) vers le Deep Reinforcement Learning est méthodologiquement justifié par la complexité du problème minier~: espaces d'état continus de haute dimension, perturbations stochastiques et interactions complexes entre entités. Q-Learning et TD Learning sont introduits comme bases théoriques et modèles comparatifs~; DQN joue le rôle de transition vers les réseaux de neurones~; PPO est retenu comme approche finale proposée pour sa stabilité et son adéquation aux environnements dynamiques et stochastiques. Le chapitre suivant présentera l'implémentation technique de ce système, le protocole expérimental, les scénarios de simulation et l'analyse des résultats.
 
 % ============================================================================
 %        CHAPITRE 5 : IMPLÉMENTATION ET EXPÉRIMENTATION
