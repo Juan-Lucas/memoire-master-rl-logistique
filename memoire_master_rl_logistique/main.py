@@ -15,6 +15,7 @@ Usage :
   python -m memoire_master_rl_logistique.main --train-dqn
   python -m memoire_master_rl_logistique.main --benchmark-only
   python -m memoire_master_rl_logistique.main --check-env
+  python -m memoire_master_rl_logistique.main --visualize-graph
 """
 
 from __future__ import annotations
@@ -142,8 +143,23 @@ def main() -> None:
         "--timesteps", type=int, default=50_000,
         help="Nombre de steps d'entraînement PPO (défaut: 50000)",
     )
+    parser.add_argument(
+        "--visualize-graph", action="store_true",
+        help="Générer la figure du réseau routier minier (Section 3.2)",
+    )
 
     args = parser.parse_args()
+
+    if args.visualize_graph:
+        from memoire_master_rl_logistique.experiments.visualize_mine_graph import (
+            generate_mine_graph_figure,
+        )
+
+        generate_mine_graph_figure(
+            shovel_count=args.shovel_count,
+            dump_count=args.dump_count,
+        )
+        return
 
     if args.check_env:
         run_check_env(

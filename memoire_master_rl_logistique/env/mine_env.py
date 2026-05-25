@@ -332,22 +332,10 @@ class MineEnv(gym.Env):
         return shovel, dump
 
     def _find_route(self, src: str, dst: str) -> list[str]:
-        """Chemin dans le graphe via BFS."""
+        """Plus court chemin via Dijkstra (Section 3.2 du mémoire)."""
         assert self.graph is not None
-        if (src, dst) in self.graph.edges:
-            return [src, dst]
-        visited: set[str] = {src}
-        queue: list[tuple[str, list[str]]] = [(src, [src])]
-        while queue:
-            current, path = queue.pop(0)
-            for (s, d) in self.graph.edges:
-                if s == current and d not in visited:
-                    new_path = [*path, d]
-                    if d == dst:
-                        return new_path
-                    visited.add(d)
-                    queue.append((d, new_path))
-        return [src]
+        path = self.graph.shortest_path(src, dst)
+        return path if path else [src]
 
     def _travel_route(
         self, src: str, dst: str, loaded: bool,
