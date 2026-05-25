@@ -2,14 +2,17 @@
 
 Pipeline complet :
   1. Simulation DES pour validation du moteur
-  2. Entraînement de l'agent PPO (Section 4.5)
-  3. Évaluation comparative baselines vs PPO (Section 4.7)
+  2. Entraînement des agents RL (Section 4.4–4.5)
+  3. Évaluation comparative heuristiques + RL classiques + Deep RL (Section 4.7)
   4. Génération du rapport statistique (Chapitre 6)
 
 Usage :
   python -m memoire_master_rl_logistique.main
   python -m memoire_master_rl_logistique.main --sim-only
   python -m memoire_master_rl_logistique.main --train-only
+  python -m memoire_master_rl_logistique.main --train-q-learning
+  python -m memoire_master_rl_logistique.main --train-sarsa
+  python -m memoire_master_rl_logistique.main --train-dqn
   python -m memoire_master_rl_logistique.main --benchmark-only
   python -m memoire_master_rl_logistique.main --check-env
 """
@@ -19,7 +22,10 @@ from __future__ import annotations
 import argparse
 
 from memoire_master_rl_logistique.experiments.run_benchmark import run_all_benchmarks
+from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
+from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
+from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
 from memoire_master_rl_logistique.simulation.events import build_simulation
 
 
@@ -97,6 +103,22 @@ def main() -> None:
         help="Exécuter uniquement l'entraînement PPO",
     )
     parser.add_argument(
+        "--train-q-learning", action="store_true",
+        help="Entraîner l'agent Q-Learning tabulaire (Section 4.4.1)",
+    )
+    parser.add_argument(
+        "--train-sarsa", action="store_true",
+        help="Entraîner l'agent SARSA tabulaire (Section 4.4.3)",
+    )
+    parser.add_argument(
+        "--train-dqn", action="store_true",
+        help="Entraîner l'agent DQN (Section 4.5.2)",
+    )
+    parser.add_argument(
+        "--episodes", type=int, default=10_000,
+        help="Nombre d'épisodes pour Q-Learning/SARSA (défaut: 10000)",
+    )
+    parser.add_argument(
         "--benchmark-only", action="store_true",
         help="Exécuter uniquement le benchmark comparatif",
     )
@@ -133,6 +155,33 @@ def main() -> None:
 
     if args.sim_only:
         run_simulation_demo(
+            truck_count=args.truck_count,
+            shovel_count=args.shovel_count,
+            dump_count=args.dump_count,
+        )
+        return
+
+    if args.train_q_learning:
+        train_q_learning(
+            n_episodes=args.episodes,
+            truck_count=args.truck_count,
+            shovel_count=args.shovel_count,
+            dump_count=args.dump_count,
+        )
+        return
+
+    if args.train_sarsa:
+        train_sarsa(
+            n_episodes=args.episodes,
+            truck_count=args.truck_count,
+            shovel_count=args.shovel_count,
+            dump_count=args.dump_count,
+        )
+        return
+
+    if args.train_dqn:
+        train_dqn(
+            total_timesteps=args.timesteps,
             truck_count=args.truck_count,
             shovel_count=args.shovel_count,
             dump_count=args.dump_count,

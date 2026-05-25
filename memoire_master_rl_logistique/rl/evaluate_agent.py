@@ -46,6 +46,8 @@ def evaluate_policy(
         total_active = sum(t.total_active_min for t in env.trucks)
         total_fuel = sum(t.total_fuel_l for t in env.trucks)
 
+        total_cycles = sum(t.cycles_completed for t in env.trucks)
+
         kpis = compute_kpis(
             episode_minutes=env.episode_minutes,
             truck_count=env.truck_count,
@@ -53,6 +55,7 @@ def evaluate_policy(
             total_wait_min=total_wait,
             total_active_min=total_active,
             total_fuel_l=total_fuel,
+            total_cycles=total_cycles,
         )
         kpis["total_reward"] = total_reward
         all_kpis.append(kpis)

@@ -234,6 +234,8 @@ class MineSimulation:
         total_active = sum(t.total_active_min for t in self.trucks)
         total_fuel = sum(t.total_fuel_l for t in self.trucks)
 
+        total_cycles = sum(t.cycles_completed for t in self.trucks)
+
         kpis = compute_kpis(
             episode_minutes=episode_minutes,
             truck_count=len(self.trucks),
@@ -241,6 +243,7 @@ class MineSimulation:
             total_wait_min=total_wait,
             total_active_min=total_active,
             total_fuel_l=total_fuel,
+            total_cycles=total_cycles,
         )
 
         per_truck = [
