@@ -37,7 +37,7 @@ _NODE_LABELS = {
 def generate_mine_graph_figure(
     shovel_count: int = 3,
     dump_count: int = 2,
-    output_path: str = "figures/graphe_reseau_minier.png",
+    output_path: str = "reports/figures/graphe_reseau_minier.png",
     show: bool = False,
 ) -> Path:
     """Génère la figure du réseau routier minier.
