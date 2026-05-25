@@ -1,6 +1,6 @@
 """Évaluation de l'agent PPO entraîné et des baselines.
 
-Produit les métriques de performance (Section 4.5 du mémoire) :
+Produit les métriques de performance (Section 4.7 du mémoire) :
 - Productivité horaire (t/h)
 - Temps d'attente moyen par camion (min)
 - Consommation spécifique (L/t)

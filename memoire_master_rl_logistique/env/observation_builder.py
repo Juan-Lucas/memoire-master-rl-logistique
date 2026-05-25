@@ -4,7 +4,7 @@ L'observation encode l'état s_t du MDP (Eq. 3.3 du mémoire) :
   s_t = ({q_p}, {x_c}, {z_r}, t_courant)
 
 Les valeurs sont normalisées dans [0, 1] pour stabiliser l'apprentissage
-(cf. Section 4.3.3 du mémoire — prétraitement des observations).
+(cf. Section 4.3.3 du mémoire — définition de l'espace d'observation).
 """
 
 from __future__ import annotations

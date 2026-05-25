@@ -1,6 +1,6 @@
 """Entités du système de transport minier.
 
-Correspondance avec le MDP (Tableau 4.1 du mémoire) :
+Correspondance avec le MDP (Tableau 4.2 du mémoire) :
 - Truck  → x_c (localisation, statut) — Eq. 3.3
 - Shovel → q_p (file d'attente), z_r  — Eq. 3.3
 - DumpSite → z_r (disponibilité)      — Eq. 3.3

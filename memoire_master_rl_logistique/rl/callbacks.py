@@ -1,7 +1,7 @@
 """Callbacks personnalisés pour l'entraînement PPO.
 
 Enregistre les métriques clés (KPIs) à intervalles réguliers
-pour produire les learning curves (Section 4.4 du mémoire).
+pour produire les learning curves (Section 4.6 du mémoire).
 """
 
 from __future__ import annotations
