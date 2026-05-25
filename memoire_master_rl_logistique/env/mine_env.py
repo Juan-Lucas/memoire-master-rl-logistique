@@ -1,15 +1,16 @@
 """Environnement Gymnasium pour le dispatching minier.
 
 Implémente l'interface standardisée Gymnasium (reset / step / render)
-conformément au Chapitre 4 du mémoire (Section 4.2).
+conformément au Chapitre 4 du mémoire (Section 4.3).
 
 L'environnement orchestre la boucle Agent–Environnement :
   observation (s_t) → action (a_t) → récompense (r_t) → observation (s_{t+1})
 
-Architecture conforme au Tableau 4.1 du mémoire :
+Architecture conforme au Tableau 4.2 du mémoire :
   Truck   → x_c (localisation, statut)
   Shovel  → q_p (file d'attente), z_r
   DumpSite → z_r (disponibilité)
+  RoadGraph → arcs (u,v), distances, pentes
   Environment → f(s_t, a_t) transition (Eq. 3.5–3.6)
 """
 
@@ -105,7 +106,7 @@ class MineEnv(gym.Env):
         seed: int | None = None,
         options: dict[str, Any] | None = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
-        """Initialise la mine pour un nouvel épisode (Section 4.2)."""
+        """Initialise la mine pour un nouvel épisode (Section 4.3.1)."""
         super().reset(seed=seed)
         effective_seed = seed if seed is not None else self._seed
         self.rng = Random(effective_seed)

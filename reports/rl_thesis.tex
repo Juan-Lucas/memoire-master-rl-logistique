@@ -936,6 +936,36 @@ Politique $\pi$ & Règle apprise de dispatching \\
 \end{tabular}
 \end{table}
 
+L'Algorithme~\ref{alg:q-learning} formalise l'application du Q-Learning au dispatching minier.
+
+\begin{algorithm}[H]
+\caption{Q-Learning pour le dispatching minier}
+\label{alg:q-learning}
+\begin{algorithmic}[1]
+
+\REQUIRE Environnement minier $\mathcal{E}$, taux d'apprentissage $\alpha$, facteur d'actualisation $\gamma$
+\REQUIRE Taux d'exploration initial $\epsilon = 1{,}0$, décroissance $\epsilon_{\min} = 0{,}01$
+
+\STATE Initialiser $Q(s, a) \leftarrow 0$ pour tout $(s, a) \in \mathcal{S} \times \mathcal{A}$
+\FOR{épisode $= 1, 2, \ldots, N_{\text{épisodes}}$}
+    \STATE $s_0 \leftarrow$ \texttt{reset}($\mathcal{E}$) \COMMENT{Initialiser la mine}
+    \WHILE{épisode non terminé}
+        \STATE Choisir $a_t$ par $\epsilon$-greedy~:
+        \STATE \hspace{1em} Avec probabilité $\epsilon$~: $a_t \sim \text{Uniforme}(\mathcal{A})$ \COMMENT{Exploration}
+        \STATE \hspace{1em} Sinon~: $a_t \leftarrow \arg\max_a Q(s_t, a)$ \COMMENT{Exploitation}
+        \STATE Décoder $a_t$ en paire (pelle $p_i$, dump $d_j$)
+        \STATE Exécuter $a_t$ dans $\mathcal{E}$~: observer $r_t$, $s_{t+1}$
+        \STATE Mettre à jour~:
+        \STATE \hspace{1em} $Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \big[ r_t + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \big]$
+        \STATE $s_t \leftarrow s_{t+1}$
+    \ENDWHILE
+    \STATE $\epsilon \leftarrow \max(\epsilon_{\min},\ \epsilon - \Delta\epsilon)$ \COMMENT{Décroissance linéaire}
+\ENDFOR
+\RETURN Politique $\pi^*(s) = \arg\max_a Q(s, a)$
+
+\end{algorithmic}
+\end{algorithm}
+
 Le Q-Learning est une méthode \emph{off-policy}~: il estime la valeur de l'action optimale ($\max_{a'}$) indépendamment de la politique d'exploration effectivement suivie. Cette caractéristique le rend théoriquement convergent vers la politique optimale dans des environnements tabulaires~\cite{SuttonBarto2018}.
 
 \subsection{Temporal Difference Learning}
@@ -959,6 +989,37 @@ SARSA (State-Action-Reward-State-Action) est une variante \emph{on-policy} du TD
 La différence clé avec le Q-Learning réside dans le terme $Q(s_{t+1}, a_{t+1})$ au lieu de $\max_{a'} Q(s_{t+1}, a')$~: SARSA utilise l'action effectivement prise ($a_{t+1}$) et non l'action optimale hypothétique. Cette distinction entre approches on-policy et off-policy est fondamentale en RL~\cite{SuttonBarto2018}.
 
 Dans le contexte du dispatching minier, SARSA tend à produire des politiques plus conservatrices, car il tient compte de l'exploration effectivement réalisée. Cette propriété peut être avantageuse dans un environnement où les décisions sous-optimales (par exemple, envoyer un camion vers une pelle congestionnée) ont des conséquences coûteuses.
+
+L'Algorithme~\ref{alg:sarsa} formalise l'application de SARSA au dispatching minier.
+
+\begin{algorithm}[H]
+\caption{SARSA pour le dispatching minier}
+\label{alg:sarsa}
+\begin{algorithmic}[1]
+
+\REQUIRE Environnement minier $\mathcal{E}$, taux d'apprentissage $\alpha$, facteur d'actualisation $\gamma$
+\REQUIRE Taux d'exploration initial $\epsilon = 1{,}0$, décroissance $\epsilon_{\min} = 0{,}01$
+
+\STATE Initialiser $Q(s, a) \leftarrow 0$ pour tout $(s, a) \in \mathcal{S} \times \mathcal{A}$
+\FOR{épisode $= 1, 2, \ldots, N_{\text{épisodes}}$}
+    \STATE $s_0 \leftarrow$ \texttt{reset}($\mathcal{E}$) \COMMENT{Initialiser la mine}
+    \STATE Choisir $a_0$ par $\epsilon$-greedy à partir de $Q(s_0, \cdot)$
+    \WHILE{épisode non terminé}
+        \STATE Décoder $a_t$ en paire (pelle $p_i$, dump $d_j$)
+        \STATE Exécuter $a_t$ dans $\mathcal{E}$~: observer $r_t$, $s_{t+1}$
+        \STATE Choisir $a_{t+1}$ par $\epsilon$-greedy à partir de $Q(s_{t+1}, \cdot)$
+        \STATE Mettre à jour (on-policy)~:
+        \STATE \hspace{1em} $Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \big[ r_t + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \big]$
+        \STATE $s_t \leftarrow s_{t+1}$, \quad $a_t \leftarrow a_{t+1}$
+    \ENDWHILE
+    \STATE $\epsilon \leftarrow \max(\epsilon_{\min},\ \epsilon - \Delta\epsilon)$ \COMMENT{Décroissance linéaire}
+\ENDFOR
+\RETURN Politique $\pi^*(s) = \arg\max_a Q(s, a)$
+
+\end{algorithmic}
+\end{algorithm}
+
+La différence structurelle entre les Algorithmes~\ref{alg:q-learning} et~\ref{alg:sarsa} se situe à la ligne de mise à jour~: Q-Learning utilise $\max_{a'} Q(s_{t+1}, a')$ (off-policy) tandis que SARSA utilise $Q(s_{t+1}, a_{t+1})$ (on-policy), où $a_{t+1}$ est l'action effectivement choisie par la politique $\epsilon$-greedy.
 
 \subsection{Limites des méthodes tabulaires}
 \label{sec:limites-tabulaires}

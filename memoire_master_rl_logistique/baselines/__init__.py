@@ -1,4 +1,4 @@
-"""Baselines de comparaison pour le dispatching minier (Section 4.5)."""
+"""Baselines de comparaison pour le dispatching minier (Section 4.7)."""
 
 from .fixed_policy import FixedAssignmentPolicy
 from .nearest_policy import NearestShovelPolicy

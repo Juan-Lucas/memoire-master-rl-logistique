@@ -1,6 +1,6 @@
 """Politique Queue-Aware (sensible aux files d'attente).
 
-Baseline avancée (Section 4.5 du mémoire) :
+Baseline avancée (Section 4.7.1 du mémoire) :
 choisit la paire (pelle, dump) dont le temps d'attente total
 estimé est minimal. Combine distance et disponibilité pour
 une décision plus informée.
