@@ -1079,39 +1079,36 @@ L'agent repose sur une architecture de type Perceptron Multicouche (MLP) compren
 \label{sec:choix-ppo}
 Le choix de l'algorithme final est le résultat d'une progression scientifique~: Q-Learning et TD Learning servent de bases théoriques, DQN assure la transition vers le Deep RL, et PPO (Proximal Policy Optimization)~\cite{MoezKrichen2022} est retenu comme approche finale en raison de sa stabilité et de sa robustesse dans les environnements dynamiques.
 
-Pour piloter notre agent de dispatching, nous avons procédé à un arbitrage technologique rigoureux, comparant PPO aux alternatives DQN, DDPG/TD3 et SAC~:
+La comparaison naturelle s'établit entre DQN et PPO, ces deux algorithmes représentant respectivement l'approche basée sur la valeur et l'approche basée sur la politique dans le spectre du Deep Reinforcement Learning.
 
-\paragraph{Rejet de DQN~:}
-Bien que DQN soit l'algorithme fondateur du DRL, il est limité aux espaces d'actions discrets de faible dimension et sujet à une divergence algorithmique dans notre contexte minier~\cite{MoezKrichen2022}.
-
-\paragraph{Rejet de DDPG / TD3~:}
-Ces algorithmes présentent une instabilité chronique et une tendance à la surestimation des Q-valeurs. Dans un environnement stochastique où les temps de trajet subissent un bruit $\eta$ (Eq.~3.2), leur politique déterministe produit des oscillations persistantes~\cite{nwachukwu2025sac}.
-
-\paragraph{Rejet de SAC~:}
-SAC impose un coût computationnel prohibitif~: en moyenne 40 heures d'entraînement contre 31 heures pour des architectures plus sobres, soit un surcoût de 30\%~\cite{nwachukwu2025sac}.
+\paragraph{Limites de DQN dans notre contexte~:}
+DQN constitue l'extension profonde du Q-Learning~: il remplace la table Q par un réseau de neurones et introduit l'Experience Replay ainsi que le Target Network pour stabiliser l'apprentissage~\cite{MoezKrichen2022}. Cependant, dans le contexte du dispatching minier, DQN présente deux limitations structurelles. D'une part, il est conçu pour des espaces d'actions discrets et de faible dimension~; or notre espace d'action $\mathcal{A} = \text{Discrete}(|\mathcal{P}| \times |\mathcal{D}| + 1)$ croît combinatoirement avec le nombre de pelles et de dumps. D'autre part, DQN est une méthode off-policy qui peut diverger dans les environnements fortement stochastiques, précisément là où le bruit $\eta_t$ sur les temps de trajet (Eq.~3.2) perturbe l'estimation des Q-valeurs~\cite{MoezKrichen2022}.
 
 \paragraph{Avantages déterminants de PPO~:}
+PPO est une méthode actor-critic on-policy qui surmonte directement ces deux limitations~:
 \begin{itemize}
-    \item \textbf{Stabilité par objectif tronqué}~: le mécanisme de Clipped Surrogate Objective limite l'amplitude des mises à jour, empêchant la divergence suite à un événement stochastique extrême~\cite{MoezKrichen2022}.
-    \item \textbf{Simplicité et méthode on-policy}~: PPO apprend directement de ses interactions actuelles, sans replay buffer massif.
-    \item \textbf{Robustesse industrielle}~: moindre sensibilité au réglage des hyperparamètres, assurant la reproductibilité~\cite{MoezKrichen2022, Szatmári2025}.
+    \item \textbf{Stabilité par objectif tronqué}~: le mécanisme de Clipped Surrogate Objective limite l'amplitude des mises à jour de politique, empêchant les divergences causées par les perturbations stochastiques de l'environnement minier~\cite{MoezKrichen2022}.
+    \item \textbf{Apprentissage on-policy}~: PPO apprend directement à partir de ses interactions actuelles avec le simulateur, sans nécessiter de replay buffer, ce qui le rend plus adapté aux environnements dont la dynamique évolue en cours d'épisode.
+    \item \textbf{Robustesse au réglage}~: PPO est peu sensible aux hyperparamètres, ce qui garantit la reproductibilité des expériences~\cite{MoezKrichen2022, Szatmári2025}.
 \end{itemize}
 
 \begin{table}[H]
 \centering
-\caption{Comparaison multidimensionnelle des algorithmes DRL (adapté de~\cite{nwachukwu2025sac, MoezKrichen2022})}
+\caption{Comparaison DQN et PPO pour le dispatching minier 
+(adapté de~\cite{MoezKrichen2022})}
 \label{tab:comparaison-algos}
-\begin{tabularx}{\textwidth}{lXXXX}
+\begin{tabularx}{\textwidth}{lXX}
 \toprule
-\textbf{Critère} & \textbf{DQN} & \textbf{DDPG / TD3} & \textbf{SAC} & \textbf{PPO} \\
+\textbf{Critère} & \textbf{DQN} & \textbf{PPO} \\
 \midrule
-Espace d'action & Discret uniquement & Continu & Continu & \textbf{Hybride} \\
-Stabilité & Moyenne & Faible & Élevée & \textbf{Optimale} \\
-Coût de calcul & Très Faible & Moyen (31h) & Élevé (40h) & \textbf{Faible} \\
-Oscillations ($\eta$) & Fortes & Élevées & Faibles & \textbf{Négligeables} \\
-Réglage (Tuning) & Simple & Complexe & Moyen & \textbf{Simple} \\
+Type d'approche & Basée sur la valeur (off-policy) & \textbf{Basée sur la politique (on-policy)} \\
+Espace d'action & Discret de faible dimension & \textbf{Discret, scalable} \\
+Stabilité & Moyenne — risque de divergence & \textbf{Élevée — objectif tronqué} \\
+Robustesse au bruit $\eta$ & Faible & \textbf{Élevée} \\
+Replay buffer & Requis & \textbf{Non requis} \\
+Réglage des hyperparamètres & Simple & \textbf{Simple et robuste} \\
 \midrule
-\textbf{Verdict} & Limité & Instable & Trop lourd & \textbf{Retenu} \\
+\textbf{Verdict} & Intermédiaire de comparaison & \textbf{Approche finale retenue} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -1124,6 +1121,8 @@ PPO est retenu comme approche finale pour notre système de dispatching minier s
     \item Il est adapté aux politiques stochastiques, ce qui convient aux environnements dynamiques et bruités comme la mine.
     \item Il permet une stratégie de décision adaptative, compatible avec les contraintes opérationnelles de la logistique minière (pannes, congestion, dégradation des routes).
 \end{enumerate}
+
+La Figure~\ref{fig:pipeline-donnees} illustre concrètement comment ces propriétés se traduisent dans l'architecture retenue~: les observations brutes de la mine sont normalisées, transmises au réseau de neurones PPO, qui produit une décision d'affectation optimale renvoyée à l'environnement simulateur.
 
 \begin{figure}[H]
     \centering
@@ -1217,21 +1216,46 @@ L'exploration stochastique de PPO est plus nuancée que le $\epsilon$-greedy~: a
 
 \subsection{Heuristiques de référence}
 \label{sec:heuristiques-reference}
-Pour démontrer la plus-value de l'agent RL, nous le comparons aux heuristiques industrielles suivantes~:
+Pour démontrer la plus-value de l'agent RL, nous le comparons aux 
+quatre heuristiques industrielles de référence suivantes~:
+
 \begin{itemize}
-    \item \textbf{Fixed Assignment (Affectation fixe)}~: chaque camion est dédié à une seule pelle selon un schéma cyclique (round-robin). C'est le niveau zéro de l'optimisation.
-    \item \textbf{Nearest Shovel (Pelle la plus proche)}~: le camion choisit systématiquement la pelle la plus proche géographiquement. C'est l'approche la plus courante en l'absence de système intelligent.
-    \item \textbf{Queue-Aware (File la plus courte)}~: le camion choisit la pelle avec la file d'attente la plus courte. Cette heuristique tient compte de la charge de travail.
+    \item \textbf{FIFO (First In, First Out)}~: les camions sont affectés aux pelles dans l'ordre de leur arrivée en zone d'attente. Cette règle, simple et équitable, ne tient compte ni de la distance ni de la charge des pelles. Elle constitue la baseline la plus élémentaire du dispatching minier~\cite{Alarie2002}.
+
+    \item \textbf{Nearest Shovel (Pelle la plus proche)}~: le camion libre est affecté à la pelle géographiquement la plus proche, selon la matrice de temps $T$ (Section~\ref{sec:reseau-routier}). Cette heuristique minimise le temps de trajet à vide mais ignore l'état des files d'attente~\cite{Alarie2002}.
+
+    \item \textbf{Shortest Path (Chemin le plus court)}~: le camion emprunte systématiquement l'itinéraire minimisant le coût de trajet $C_{ij}$ (Eq.~3.1), indépendamment de l'état courant des autres camions ou des files d'attente. Cette règle optimise localement le routage sans considération globale du système~\cite{Alarie2002}.
+
+    \item \textbf{Fixed Assignment (Affectation fixe)}~: chaque camion est dédié à une pelle fixe selon un schéma cyclique prédéfini (round-robin). Aucune adaptation dynamique n'est possible. C'est le niveau zéro de l'optimisation et la pratique la plus répandue dans les mines sans système intelligent~\cite{MohanMunirathinam1994}.
 \end{itemize}
+
+Ces quatre heuristiques représentent le spectre des pratiques industrielles courantes~: de la règle la plus rigide (Fixed Assignment) à la règle la plus réactive localement (Nearest Shovel). Leur comparaison avec l'agent PPO permettra de quantifier précisément le gain apporté par l'apprentissage par renforcement sur chacun des KPIs définis en Section~\ref{sec:kpis}.
 
 \subsection{Modèles RL classiques de comparaison}
 \label{sec:modeles-rl-comparaison}
-En complément des heuristiques, les algorithmes RL classiques présentés en Section~\ref{sec:algo-classiques-rl} servent de modèles comparatifs~:
+En complément des heuristiques, les trois algorithmes RL classiques 
+présentés en Section~\ref{sec:algo-classiques-rl} servent de modèles 
+comparatifs~:
+
 \begin{itemize}
-    \item \textbf{Q-Learning}~: baseline tabulaire off-policy.
-    \item \textbf{SARSA}~: baseline tabulaire on-policy.
+    \item \textbf{Q-Learning}~: baseline tabulaire off-policy. L'agent 
+    apprend la fonction $Q(s, a)$ en estimant toujours l'action optimale 
+    (Eq.~\ref{eq:q-learning}), indépendamment de la politique 
+    d'exploration suivie.
+
+    \item \textbf{TD Learning}~: baseline tabulaire fondée sur 
+    l'apprentissage par différence temporelle (Eq.~\ref{eq:td-learning}). 
+    Il sert de référence théorique intermédiaire, illustrant le principe 
+    de mise à jour bootstrappée commun à Q-Learning, SARSA et PPO via 
+    le GAE.
+
+    \item \textbf{SARSA}~: baseline tabulaire on-policy. L'agent met à 
+    jour $Q(s, a)$ en tenant compte de l'action effectivement choisie 
+    (Eq.~\ref{eq:sarsa}), produisant des politiques plus conservatrices 
+    que Q-Learning dans les environnements stochastiques.
 \end{itemize}
-Ces modèles permettent de quantifier le gain apporté par le passage au Deep RL par rapport aux approches tabulaires.
+
+Ces trois modèles permettent de quantifier le gain apporté par le passage au Deep RL à deux niveaux~: d'abord entre méthodes tabulaires (Q-Learning vs SARSA), puis entre le meilleur tabulaire et l'approche profonde (PPO), conformément à la progression méthodologique du chapitre.
 
 \subsection{Modèle Deep RL proposé}
 \label{sec:modele-deep-rl}
@@ -1458,7 +1482,7 @@ Ce chapitre a présenté la méthodologie complète de notre solution, depuis le
 %                         BIBLIOGRAPHIE
 % ============================================================================
 \addcontentsline{toc}{chapter}{Bibliographie}
-\nocite{*}
+% \nocite{*}
 \bibliographystyle{IEEEtran} % Style IEEE
 \bibliography{export}
 
