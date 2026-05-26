@@ -1,6 +1,9 @@
 # Formalisation mathématique des KPIs
 
+Conforme au Tableau 4.8 du mémoire (Section 4.7.4).
+
 ## 1. Productivité et Performance
+
 - **Tonnage transporté par heure** :
 	$$\text{Productivité} = \frac{\sum_{i=1}^{N} T_i}{H}$$
 	où $T_i$ est le tonnage transporté par le camion $i$ sur la période $H$ (heures).
@@ -30,6 +33,8 @@
 	$$\text{Consommation spécifique} = \frac{\text{Litres consommés}}{\text{Tonnage transporté}}$$
 - **Coût opérationnel par tonne** :
 	$$\text{Coût} = \frac{\text{Coût total}}{\text{Tonnage transporté}}$$
+- **Coût moyen par cycle** :
+	$$\text{Coût par cycle} = \frac{\text{Total carburant}}{\text{Nombre de cycles}}$$
 
 ## 5. Qualité de service et contraintes
 - **Respect des contraintes** :

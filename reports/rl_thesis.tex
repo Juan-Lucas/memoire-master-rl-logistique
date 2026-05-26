@@ -556,6 +556,8 @@ Ce graphe peut être orienté (sens uniques, routes à sens limité) ou non-orie
         C_{ij} = \alpha \cdot T_{ij} + \beta \cdot D_{ij} + \gamma \cdot E_{ij}
     \end{equation}
     où $D_{ij}$ est la distance, $E_{ij}$ est une estimation de l'usure ou du coût énergétique, et $\alpha, \beta, \gamma$ sont des poids de pondération.
+    
+    \textit{Exemple numérique :} Si $\alpha = 0{,}5$, $\beta = 0{,}3$, $\gamma = 0{,}2$, $T_{ij} = 15$ minutes, $D_{ij} = 2{,}5$ km, $E_{ij} = 0{,}8$, alors $C_{ij} = 0{,}5 \times 15 + 0{,}3 \times 2{,}5 + 0{,}2 \times 0{,}8 = 7{,}5 + 0{,}75 + 0{,}16 = 8{,}41$.
 \end{itemize}
 
 \subsubsection*{Intégration de la variabilité stochastique}
@@ -567,6 +569,8 @@ Le réseau réel n'est pas déterministe : les temps de trajet varient en foncti
 \end{equation}
 
 où $\bar{T}_{ij}$ est le temps moyen et $\eta_{ij}(t) \sim \mathcal{N}(0, \sigma_{ij}^2)$ est un bruit gaussien reflétant la variabilité observée.
+
+\textit{Exemple numérique :} Si $\bar{T}_{ij} = 12$ minutes et $\eta_{ij}(t) = 2{,}3$ minutes (échantillon d'une distribution normale avec $\sigma = 2{,}5$), alors $T_{ij}(t) = 12 + 2{,}3 = 14{,}3$ minutes.
 
 Cette modélisation stochastique est essentielle pour évaluer la robustesse des politiques apprises, car elle oblige l'agent à anticiper les variations plutôt que de se fier à des temps de trajet figés. Cette exigence de robustesse est également mise en avant dans les travaux récents de RL multi-agent appliqués au dispatching minier \cite{Zhao2025HierarchicalMARL}.
 
@@ -592,6 +596,8 @@ L'état du système à chaque instant $t$ est représenté par un vecteur de var
 \end{equation}
 
 où $q_p$ désigne la longueur de la file d'attente à la pelle $p$, $x_c$ la localisation du camion $c$, et $z_r$ l'état de disponibilité de la ressource $r$.
+
+\textit{Exemple numérique :} Pour une mine avec 3 pelles, 12 camions et 2 dumps à $t_{\text{courant}} = 240$ minutes (4 heures) : $s_t = (\{2{,}3,1\},\ \{\text{yard},\text{shovel}_1,\text{dump}_1,\ldots\},\ \{0{,}5\},\ 240)$ où les files d'attente aux pelles sont $\{2,3,1\}$ camions respectivement, les camions sont répartis sur le réseau, et les dumps seront disponibles dans $\{0,5\}$ minutes.
 
 De manière plus détaillée :
 
@@ -663,6 +669,8 @@ La récompense reflète les objectifs opérationnels. Le rendement global du sys
     R_t = w_1 \cdot R_{\text{rendement}}(s_t, s'_t) + w_2 \cdot R_{\text{équité}}(s_t) + w_3 \cdot R_{\text{coût}}(a_t)
 \end{equation}
 
+\textit{Exemple numérique :} Si $w_1 = 1{,}0$, $w_2 = 0{,}1$, $w_3 = 0{,}05$, $R_{\text{rendement}} = 280$ tonnes, $R_{\text{équité}} = -5{,}2$ (pénalité due à files inégales), $R_{\text{coût}} = -120$ (pénalité de distance), alors $R_t = 1{,}0 \times 280 + 0{,}1 \times (-5{,}2) + 0{,}05 \times (-120) = 280 - 0{,}52 - 6 = 273{,}48$.
+
 où :
 
 \begin{itemize}
@@ -673,11 +681,15 @@ où :
     \begin{equation}
         R_{\text{rendement}}(s_t, s'_t) = \sum_{c \in D_t} \mathrm{capacité}(c)
     \end{equation}
-    
+
+    \textit{Exemple numérique :} Si 2 camions sont déchargés dans l'intervalle $[t, t+\Delta t]$ avec des capacités de $140$ tonnes chacun, alors $R_{\text{rendement}} = 140 + 140 = 280$ tonnes.
+
     \item $R_{\text{équité}}$ : Récompense encourageant une utilisation équilibrée des ressources (prévenir la surcharge d'une pelle au détriment d'autres).
     \begin{equation}
         R_{\text{équité}}(s_t) = -\lambda \cdot \phi\left(\{q_p\}_{p \in \text{Pelles}}\right)
     \end{equation}
+
+    \textit{Exemple numérique :} Si $\lambda = 0{,}5$ et les files d'attente sont $\{q_p\} = \{2, 5, 3\}$ camions, la variance est $\phi(\{2,5,3\}) = \text{Var}(\{2,5,3\}) = 2{,}33$, alors $R_{\text{équité}} = -0{,}5 \times 2{,}33 = -1{,}17$.
     où
     \begin{equation}
         \phi\left(\{q_p\}_{p \in \text{Pelles}}\right) =
@@ -692,6 +704,8 @@ où :
     \begin{equation}
         R_{\text{coût}}(a_t) = -\sum_{(c \rightarrow p) \in a_t} C(\text{pos}(c), \text{pos}(p))
     \end{equation}
+
+    \textit{Exemple numérique :} Si l'action $a_t$ assigne 2 camions avec des coûts de trajet $C = 8{,}41$ et $C = 6{,}25$, alors $R_{\text{coût}} = -(8{,}41 + 6{,}25) = -14{,}66$.
 \end{itemize}
 
 Les poids $w_1, w_2, w_3$ permettent de moduler l'importance relative de chaque objectif selon les priorités métier.
@@ -880,6 +894,8 @@ Cette normalisation dans $[0, 1]$ est cruciale pour stabiliser l'apprentissage e
     \mathcal{A} = \text{Discrete}\big(|\mathcal{P}| \times |\mathcal{D}| + 1\big)
 \end{equation}
 où $|\mathcal{P}|$ est le nombre de pelles et $|\mathcal{D}|$ le nombre de dumps. Chaque action encode une paire (pelle, dump) par division entière~:
+
+\textit{Exemple numérique :} Pour 3 pelles et 2 dumps, $|\mathcal{P}| \times |\mathcal{D}| + 1 = 3 \times 2 + 1 = 7$ actions possibles (indices 0 à 6). Si $a_t = 4$, alors $\text{shovel\_idx} = 4 \div 2 = 2$ (pelle 3) et $\text{dump\_idx} = 4 \bmod 2 = 0$ (dump 1). Si $a_t = 6$, c'est l'action ATTENDRE.
 \begin{itemize}
     \item $\text{shovel\_idx} = a_t \div |\mathcal{D}|$~: indice de la pelle choisie.
     \item $\text{dump\_idx} = a_t \bmod |\mathcal{D}|$~: indice du dump choisi.
@@ -914,6 +930,8 @@ Le Q-Learning est une méthode d'apprentissage par renforcement tabulaire qui ap
     \label{eq:q-learning}
 \end{equation}
 où $\alpha$ est le taux d'apprentissage, $\gamma$ le facteur d'actualisation et $r_t$ la récompense reçue.
+
+\textit{Exemple numérique :} Si $Q(s_t, a_t) = 50$, $r_t = 10$, $\gamma = 0{,}99$, $\max_{a'} Q(s_{t+1}, a') = 55$, $\alpha = 0{,}1$, alors $Q(s_t, a_t) \leftarrow 50 + 0{,}1 \times (10 + 0{,}99 \times 55 - 50) = 50 + 0{,}1 \times 14{,}45 = 51{,}45$.
 
 Dans le contexte du dispatching minier, la correspondance est la suivante~:
 
@@ -972,6 +990,9 @@ Le TD Learning (apprentissage par différence temporelle) est le principe géné
     V(s_t) \leftarrow V(s_t) + \alpha \Big[ r_t + \gamma V(s_{t+1}) - V(s_t) \Big]
     \label{eq:td-learning}
 \end{equation}
+
+\textit{Exemple numérique :} Si $V(s_t) = 40$, $r_t = 8$, $\gamma = 0{,}99$, $V(s_{t+1}) = 45$, $\alpha = 0{,}1$, alors $V(s_t) \leftarrow 40 + 0{,}1 \times (8 + 0{,}99 \times 45 - 40) = 40 + 0{,}1 \times 12{,}55 = 41{,}26$.
+
 L'erreur $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ est appelée \emph{erreur de différence temporelle} (TD error). Ce mécanisme est particulièrement adapté aux environnements séquentiels comme la logistique minière, où les décisions sont prises de manière continue tout au long d'un poste de travail de 8 heures.
 
 Le TD Learning constitue la base théorique de plusieurs méthodes RL~: Q-Learning utilise le TD error pour mettre à jour $Q(s, a)$, et cette même notion sera reprise dans le calcul du GAE (Generalized Advantage Estimation) utilisé par PPO.
@@ -983,6 +1004,9 @@ SARSA (State-Action-Reward-State-Action) est une variante \emph{on-policy} du TD
     Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Big[ r_t + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \Big]
     \label{eq:sarsa}
 \end{equation}
+
+\textit{Exemple numérique :} Si $Q(s_t, a_t) = 50$, $r_t = 10$, $\gamma = 0{,}99$, $Q(s_{t+1}, a_{t+1}) = 52$ (action effectivement prise), $\alpha = 0{,}1$, alors $Q(s_t, a_t) \leftarrow 50 + 0{,}1 \times (10 + 0{,}99 \times 52 - 50) = 50 + 0{,}1 \times 11{,}48 = 51{,}15$.
+
 La différence clé avec le Q-Learning réside dans le terme $Q(s_{t+1}, a_{t+1})$ au lieu de $\max_{a'} Q(s_{t+1}, a')$~: SARSA utilise l'action effectivement prise ($a_{t+1}$) et non l'action optimale hypothétique. Cette distinction entre approches on-policy et off-policy est fondamentale en RL~\cite{SuttonBarto2018}.
 
 Dans le contexte du dispatching minier, SARSA tend à produire des politiques plus conservatrices, car il tient compte de l'exploration effectivement réalisée. Cette propriété peut être avantageuse dans un environnement où les décisions sous-optimales (par exemple, envoyer un camion vers une pelle congestionnée) ont des conséquences coûteuses.

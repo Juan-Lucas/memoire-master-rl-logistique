@@ -30,13 +30,19 @@ def build_observation(
     truck_locations: list[str],
     truck_statuses: list[int],
 ) -> np.ndarray:
-    """Construit le vecteur d'observation normalisé.
+    """Construit le vecteur d'observation normalisé (Section 4.3.3 du mémoire).
 
-    Composantes (dans l'ordre) :
-    - Pour chaque pelle : disponibilité normalisée, file d'attente estimée
-    - Pour chaque camion : statut (one-hot simplifié), position encodée,
-      tonnage accumulé normalisé, carburant consommé normalisé
-    - Temps courant normalisé
+    Composantes conformes au mémoire :
+    - Disponibilité des pelles : temps estimé avant disponibilité (proxy de la file)
+    - Disponibilité des dumps : temps estimé avant disponibilité
+    - Statut des camions : libre, en route vers pelle, en chargement,
+      en route vers dump, en déchargement, en retour
+    - Disponibilité temporelle des camions : temps avant disponibilité
+    - Tonnage accumulé des camions : normalisé
+    - Carburant consommé des camions : normalisé
+    - Temps courant : progression de l'épisode normalisée
+
+    Toutes les valeurs sont normalisées dans [0, 1] pour stabiliser l'apprentissage.
     """
     obs_parts: list[float] = []
 

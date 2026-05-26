@@ -469,3 +469,73 @@ Ce glossaire sera enrichi au fil de la rédaction. Chaque entrée comprend :
 **Définition :** État indiquant si un équipement (pelle, concasseur, camion) est opérationnel et prêt à être utilisé.
 **Explication :** La disponibilité influence directement l’affectation des camions et les temps d’attente.
 **Exemple :** Une pelle en maintenance est temporairement indisponible, ce qui force une réaffectation de la flotte.
+
+---
+
+## FIFO (First In, First Out)
+**Définition :** Politique de baseline classique (Section 4.7.1 du mémoire) où les camions sont affectés aux pelles dans l'ordre de leur arrivée en zone d'attente.
+**Explication :** Cette règle est simple et équitable mais ne tient compte ni de la distance ni de la charge des pelles.
+**Exemple :** Le camion arrivé en premier à la zone d'attente est le premier à être affecté à une pelle disponible.
+
+---
+
+## Shortest Path (Chemin le plus court)
+**Définition :** Politique de baseline classique (Section 4.7.1 du mémoire) où le camion emprunte systématiquement l'itinéraire minimisant le coût de trajet C_ij (Eq. 3.1).
+**Explication :** Cette règle optimise localement le routage sans considération globale du système.
+**Exemple :** Le camion choisit la paire (pelle, dump) avec le coût de trajet minimal selon C_ij = α·T_ij + β·D_ij + γ·E_ij.
+
+---
+
+## Fixed Assignment (Affectation fixe)
+**Définition :** Politique de baseline zéro-niveau où chaque camion est assigné à une pelle-dump fixe de manière cyclique.
+**Explication :** C'est la baseline la plus simple, ne tenant compte ni de l'état du système ni de la congestion.
+**Exemple :** Le camion 1 est toujours assigné à la pelle 1, le camion 2 à la pelle 2, le camion 3 à la pelle 3, le camion 4 retourne à la pelle 1, etc.
+
+---
+
+## Nearest Shovel (Pelle la plus proche)
+**Définition :** Politique de baseline classique (Section 4.7.1 du mémoire) où le camion choisit la pelle géographiquement la plus proche, puis le dump le plus proche de cette pelle.
+**Explication :** C'est une approche gloutonne (greedy) qui minimise la distance mais ignore les files d'attente.
+**Exemple :** Un camion au yard choisit la pelle P1 à 2km plutôt que la pelle P2 à 5km, sans vérifier si P1 est congestionnée.
+
+---
+
+## Q-Learning
+**Définition :** Méthode d'apprentissage par renforcement tabulaire off-policy (Section 4.4.1 du mémoire) avec hyperparamètres α=0.1, γ=0.99, ε=1.0→0.01.
+**Explication :** L'agent met à jour Q selon Q(s_t,a_t) ← Q(s_t,a_t) + α[r_t + γ max_a' Q(s_{t+1},a') - Q(s_t,a_t)].
+**Exemple :** Dans le dispatching minier, Q(s,a) estime la récompense cumulative attendue si le camion va à une pelle donnée depuis son état actuel.
+
+---
+
+## SARSA
+**Définition :** Variante on-policy du TD Learning (Section 4.4.3 du mémoire) avec hyperparamètres α=0.1, γ=0.99, ε=1.0→0.01.
+**Explication :** Contrairement au Q-Learning qui utilise max_a' Q(s_{t+1},a'), SARSA utilise Q(s_{t+1},a_{t+1}) où a_{t+1} est l'action effectivement prise.
+**Exemple :** SARSA produit des politiques plus conservatrices dans le dispatching minier car il tient compte de l'exploration effectivement réalisée.
+
+---
+
+## TD Learning (Temporal Difference Learning)
+**Définition :** Principe général qui sous-tend Q-Learning, SARSA et d'autres méthodes RL (Section 4.4.2 du mémoire).
+**Explication :** L'erreur δ_t = r_t + γV(s_{t+1}) - V(s_t) est appelée erreur TD. Ce mécanisme est adapté aux environnements séquentiels.
+**Exemple :** Dans la logistique minière, TD Learning permet de mettre à jour les valeurs sans attendre la fin complète d'un shift de 8 heures.
+
+---
+
+## PPO (Proximal Policy Optimization)
+**Définition :** Algorithme d'apprentissage par renforcement moderne (Section 4.5.4 du mémoire) avec architecture MLP 128×128, ReLU, hyperparamètres α=0.0003, γ=0.99, batch=64, λ=0.95, ε_clip=0.2.
+**Explication :** PPO utilise un clipping ratio pour limiter les changements de politique entre les mises à jour, assurant la stabilité.
+**Exemple :** PPO est l'algorithme principal utilisé dans le mémoire pour le dispatching minier.
+
+---
+
+## DQN (Deep Q-Network)
+**Définition :** Extension du Q-Learning utilisant un réseau de neurones profond (Section 4.5.2 du mémoire) avec architecture MLP 128×128 et ReLU.
+**Explication :** DQN utilise l'expérience replay et un réseau cible pour stabiliser l'apprentissage dans des espaces d'état continus.
+**Exemple :** DQN est utilisé comme baseline Deep RL dans le mémoire.
+
+---
+
+## Espace d'action discret
+**Définition :** Ensemble fini d'actions possibles dans un environnement RL, souvent encodé comme des entiers (Eq. 4.1 du mémoire).
+**Explication :** Dans le mémoire, l'espace d'action est Discrete(|P| × |D| + 1) où chaque action encode une paire (pelle,dump) par division entière.
+**Exemple :** Pour 3 pelles et 2 dumps, l'espace d'action contient 7 actions (0-6). L'action 4 correspond à shovel_idx=2 (pelle 3) et dump_idx=0 (dump 1).

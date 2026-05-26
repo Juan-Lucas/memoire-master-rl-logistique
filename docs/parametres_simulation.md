@@ -26,7 +26,22 @@ Ce document synthétise tous les paramètres utiles à la construction d'une sim
 | Utilisation pelles               | 80%                          | Simulation, Ozdemir & Kumral (2019)                                                   |
 | Temps de cycle camion            | NORM(15, 3) min              | Synthèse simulation, Zeng et al. (2022)                                               |
 | Productivité                     | 8 000 t/shift                | Simulation, Abolghasemian et al. (2020)                                               |
-| ...                              | ...                          | ...                                                                                   |
+| ...                              | ...                          | ...         
+
+## 6. Hyperparamètres RL (Tableau 4.6 du mémoire)
+
+| Paramètre | Q-Learning | SARSA | DQN | PPO |
+|-----------|------------|-------|-----|-----|
+| Taux d'apprentissage (α) | 0.1 | 0.1 | 0.0001 | 0.0003 |
+| Facteur d'actualisation (γ) | 0.99 | 0.99 | 0.99 | 0.99 |
+| Taux d'exploration initial (ε) | 1.0 | 1.0 | - | - |
+| Taux d'exploration final | 0.01 | 0.01 | - | - |
+| Taille du batch | - | - | 64 | 64 |
+| Taille du replay buffer | - | - | 10000 | - |
+| Période d'entraînement (épisodes) | 1000 | 1000 | 100 | 100 |
+| Architecture réseau | - | - | MLP 128×128 ReLU | MLP 128×128 ReLU |
+| GAE λ | - | - | - | 0.95 |
+| PPO clipping (ε) | - | - | - | 0.2 |                                                                          |
 
 *Remplir et compléter ce tableau au fur et à mesure de la lecture des articles et rapports.*
 

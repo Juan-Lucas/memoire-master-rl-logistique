@@ -24,6 +24,22 @@ Ce document reprend les hypothèses formelles retenues pour la modélisation (ch
 6. Pas de défaillance majeure durant l'épisode
    - Implication : valider ensuite la robustesse en injectant pannes et exceptions.
 
+7. Normalisation de l'espace d'observation (Section 4.3.3)
+   - Implication : toutes les observations sont normalisées dans [0, 1] pour stabiliser l'apprentissage
+   - Test conseillé : comparer apprentissage avec et sans normalisation
+
+8. Masquage d'action dynamique (Section 3.4.2)
+   - Implication : toutes les paires (pelle, dump) sont considérées valides car l'agent peut attendre la disponibilité
+   - Test conseillé : évaluer l'impact du masquage sur la vitesse d'apprentissage
+
+9. Architecture MLP 128×128 avec ReLU (Section 4.5.3)
+   - Implication : compromis entre expressivité et complexité computationnelle
+   - Test conseillé : ablation study sur la taille des couches cachées
+
+10. Fonction de récompense multi-objectif (Eq. 3.7)
+    - Implication : équilibre entre rendement (w1), équité (w2) et coût (w3)
+    - Test conseillé : sensibilité aux poids w1, w2, w3
+
 ---
 
 Pour chaque hypothèse, il est recommandé de documenter le protocole expérimental de validation (scénarios, métriques, seuils d'alerte) afin d'évaluer la portée des conclusions obtenues.

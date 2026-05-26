@@ -15,8 +15,9 @@ import numpy as np
 from stable_baselines3 import PPO
 
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
+from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
-from memoire_master_rl_logistique.baselines.queue_aware_policy import QueueAwarePolicy
+from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.simulation.kpi import compute_kpis
 
@@ -101,9 +102,29 @@ def evaluate_all_baselines(
     dump_count: int = 2,
     episode_minutes: float = 480.0,
 ) -> list[dict[str, float]]:
-    """Évalue toutes les baselines et retourne les résultats."""
+    """Évalue toutes les baselines et retourne les résultats.
+    
+    Baselines conformes à la Section 4.7.1 du mémoire :
+    - FIFO (First In, First Out)
+    - Nearest Shovel (Pelle la plus proche)
+    - Shortest Path (Chemin le plus court)
+    - Fixed Assignment (Affectation fixe)
+    """
     results = []
 
+    # FIFO
+    env = MineEnv(
+        truck_count=truck_count, shovel_count=shovel_count,
+        dump_count=dump_count, episode_minutes=episode_minutes,
+    )
+    fifo = FIFOPolicy(
+        num_shovels=shovel_count, num_dumps=dump_count,
+    )
+    results.append(evaluate_policy(
+        env, lambda obs, info: fifo.predict(obs, info), n_episodes, "FIFO",
+    ))
+
+    # Fixed Assignment
     env = MineEnv(
         truck_count=truck_count, shovel_count=shovel_count,
         dump_count=dump_count, episode_minutes=episode_minutes,
@@ -115,6 +136,7 @@ def evaluate_all_baselines(
         env, lambda obs, info: fixed.predict(obs, info), n_episodes, "Fixed",
     ))
 
+    # Nearest Shovel
     env = MineEnv(
         truck_count=truck_count, shovel_count=shovel_count,
         dump_count=dump_count, episode_minutes=episode_minutes,
@@ -134,22 +156,24 @@ def evaluate_all_baselines(
         "Nearest",
     ))
 
+    # Shortest Path
     env = MineEnv(
         truck_count=truck_count, shovel_count=shovel_count,
         dump_count=dump_count, episode_minutes=episode_minutes,
     )
     obs, info = env.reset()
-    queue_aware = QueueAwarePolicy(
-        graph=env.graph, shovels=env.shovels, dumps=env.dumps,
+    shortest_path = ShortestPathPolicy(
+        graph=env.graph,
+        shovel_node_ids=[s.node_id for s in env.shovels],
+        dump_node_ids=[d.node_id for d in env.dumps],
     )
     results.append(evaluate_policy(
         env,
-        lambda obs, info: queue_aware.predict(
+        lambda obs, info: shortest_path.predict(
             obs, info, env.truck_locations[env.current_truck_idx],
-            env.current_time_min,
         ),
         n_episodes,
-        "QueueAware",
+        "ShortestPath",
     ))
 
     return results

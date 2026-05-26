@@ -27,7 +27,7 @@ from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
-from memoire_master_rl_logistique.simulation.events import build_simulation
+# from memoire_master_rl_logistique.simulation.events import build_simulation  # Removed - DES not in thesis
 
 
 def run_check_env(
@@ -63,31 +63,18 @@ def run_simulation_demo(
     shovel_count: int = 3,
     dump_count: int = 2,
 ) -> None:
-    """Lance une simulation DES pour valider le moteur."""
+    """Lance une simulation DES pour valider le moteur.
+    
+    NOTE : Cette fonction utilise la simulation DES (events.py) qui a été
+    supprimée car non décrite dans les Chapitres 3 et 4 du mémoire.
+    L'environnement Gymnasium (mine_env.py) doit être utilisé à la place.
+    """
     print("=" * 60)
-    print("Simulation DES — Validation du moteur")
+    print("Simulation DES — NON DISPONIBLE")
     print("=" * 60)
-
-    sim = build_simulation(
-        seed=seed,
-        truck_count=truck_count,
-        shovel_count=shovel_count,
-        dump_count=dump_count,
-    )
-
-    result = sim.run_episode(episode_minutes=480.0)
-
-    print("\nKPIs globaux :")
-    for key, val in result.kpis.items():
-        print(f"  {key}: {val:.2f}")
-
-    print("\nDétails par camion :")
-    for truck_info in result.per_truck:
-        tid = truck_info["truck_id"]
-        cycles = truck_info["cycles_completed"]
-        tonnage = truck_info["total_tonnage_t"]
-        wait = truck_info["total_wait_min"]
-        print(f"  {tid}: {int(cycles)} cycles, {tonnage:.0f}t, wait={wait:.1f}min")
+    print("La simulation DES a été supprimée car non conforme au mémoire.")
+    print("Utilisez l'environnement Gymnasium (mine_env.py) à la place.")
+    print("Exemple : python -m memoire_master_rl_logistique.main --check-env")
 
 
 def main() -> None:
@@ -95,10 +82,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Système de dispatching minier par RL",
     )
-    parser.add_argument(
-        "--sim-only", action="store_true",
-        help="Exécuter uniquement la simulation DES",
-    )
+    # parser.add_argument(
+    #     "--sim-only", action="store_true",
+    #     help="Exécuter uniquement la simulation DES",
+    # )  # Disabled - DES simulation removed (not in thesis)
     parser.add_argument(
         "--train-only", action="store_true",
         help="Exécuter uniquement l'entraînement PPO",
@@ -169,13 +156,13 @@ def main() -> None:
         )
         return
 
-    if args.sim_only:
-        run_simulation_demo(
-            truck_count=args.truck_count,
-            shovel_count=args.shovel_count,
-            dump_count=args.dump_count,
-        )
-        return
+    # if args.sim_only:
+    #     run_simulation_demo(
+    #         truck_count=args.truck_count,
+    #         shovel_count=args.shovel_count,
+    #         dump_count=args.dump_count,
+    #     )
+    #     return  # Disabled - DES simulation removed (not in thesis)
 
     if args.train_q_learning:
         train_q_learning(
@@ -226,8 +213,8 @@ def main() -> None:
     print("PIPELINE COMPLET — Dispatching minier par RL")
     print("=" * 60)
 
-    # Étape 1 : Simulation
-    run_simulation_demo(
+    # Étape 1 : Validation de l'environnement
+    run_check_env(
         truck_count=args.truck_count,
         shovel_count=args.shovel_count,
         dump_count=args.dump_count,

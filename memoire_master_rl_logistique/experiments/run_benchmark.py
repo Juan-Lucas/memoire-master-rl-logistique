@@ -10,8 +10,8 @@ Protocole expérimental (Section 5.4 du mémoire) :
 - KPIs calculés de la même manière
 - Résultats sauvegardés en CSV reproductible
 
-Méthodes comparées (Section 4.7) :
-- Heuristiques : Fixed, Nearest, QueueAware
+Méthodes comparées (Section 4.7.1 du mémoire) :
+- Heuristiques : FIFO, Fixed, Nearest, ShortestPath
 - RL classiques : Q-Learning, SARSA
 - Deep RL : DQN, PPO
 """
@@ -24,8 +24,9 @@ from pathlib import Path
 from stable_baselines3 import DQN, PPO
 
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
+from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
-from memoire_master_rl_logistique.baselines.queue_aware_policy import QueueAwarePolicy
+from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
 from memoire_master_rl_logistique.rl.train_dqn import train_dqn
@@ -93,20 +94,26 @@ def run_benchmark(
         )
         return p.predict(obs, info, env.truck_locations[env.current_truck_idx])
 
-    def queue_aware_policy(obs, info, env):
-        p = QueueAwarePolicy(
-            graph=env.graph, shovels=env.shovels, dumps=env.dumps,
+    def fifo_policy(obs, info, env):
+        p = FIFOPolicy(
+            num_shovels=env.shovel_count,
+            num_dumps=env.dump_count,
         )
-        return p.predict(
-            obs, info,
-            env.truck_locations[env.current_truck_idx],
-            env.current_time_min,
+        return p.predict(obs, info)
+
+    def shortest_path_policy(obs, info, env):
+        p = ShortestPathPolicy(
+            graph=env.graph,
+            shovel_node_ids=[s.node_id for s in env.shovels],
+            dump_node_ids=[d.node_id for d in env.dumps],
         )
+        return p.predict(obs, info, env.truck_locations[env.current_truck_idx])
 
     policies = {
+        "FIFO": fifo_policy,
         "Fixed": fixed_policy,
         "Nearest": nearest_policy,
-        "QueueAware": queue_aware_policy,
+        "ShortestPath": shortest_path_policy,
     }
 
     # --- Q-Learning (Section 4.4.1) ---

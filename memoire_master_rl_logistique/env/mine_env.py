@@ -266,7 +266,7 @@ class MineEnv(gym.Env):
         return obs, reward, terminated, truncated, info
 
     def _compute_reward(self, action: int) -> float:
-        """Récompense pondérée multi-objectif (Eq. 3.8).
+        """Récompense pondérée multi-objectif (Eq. 3.7).
 
         R_t = w1 * R_rendement + w2 * R_équité + w3 * R_coût
         """

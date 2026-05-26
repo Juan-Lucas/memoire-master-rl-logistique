@@ -56,7 +56,11 @@ def train_ppo(
     - Batch size : 64
     - GAE Lambda : 0.95
     - Clip range : 0.2
-    - Architecture : MLP [128, 128]
+    - Architecture : MLP [128, 128] avec ReLU (Section 4.5.3)
+
+    Note : Stable-Baselines3 utilise des logits pour les espaces d'actions
+    discrets, ce qui est équivalent à une politique Softmax (les logits
+    sont passés par une Softmax lors de l'échantillonnage).
     """
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
