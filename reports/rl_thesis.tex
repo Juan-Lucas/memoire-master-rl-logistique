@@ -904,7 +904,7 @@ La fonction de récompense traduit les objectifs métier en un signal scalaire g
 % ====================================================================
 \section{Algorithmes classiques d'apprentissage par renforcement}
 \label{sec:algo-classiques-rl}
-Avant de présenter l'approche Deep RL retenue, il est essentiel de comprendre les algorithmes fondamentaux de l'apprentissage par renforcement tabulaire. Ces méthodes constituent la base théorique sur laquelle reposent les approches plus avancées et servent de modèles comparatifs dans notre évaluation.
+Avant de présenter l'approche Deep Reinforcement Learning retenue, il est essentiel de comprendre les algorithmes fondamentaux de l'apprentissage par renforcement tabulaire. Ces méthodes constituent la base théorique sur laquelle reposent les approches plus avancées et servent de modèles comparatifs dans notre évaluation.
 
 \subsection{Q-Learning pour le dispatching minier}
 \label{sec:q-learning}
@@ -1031,7 +1031,7 @@ Les méthodes tabulaires (Q-Learning, SARSA) deviennent rapidement limitées lor
 rendent impossible le stockage explicite de toutes les valeurs $Q(s, a)$ dans une table. L'espace d'état est continu et de haute dimension, ce qui provoque une explosion combinatoire incompatible avec l'approche tabulaire. Cette limitation fondamentale justifie le passage vers le Deep Reinforcement Learning, où un réseau de neurones approxime la fonction de valeur ou la politique.
 
 % ====================================================================
-%  4.5  PASSAGE AU DEEP RL
+%  4.5  PASSAGE AU Deep Reinforcement Learning
 % ====================================================================
 \section{Passage au Deep Reinforcement Learning}
 \label{sec:passage-deep-rl}
@@ -1077,7 +1077,7 @@ L'agent repose sur une architecture de type Perceptron Multicouche (MLP) compren
 
 \subsection{Choix de l'algorithme final~: PPO}
 \label{sec:choix-ppo}
-Le choix de l'algorithme final est le résultat d'une progression scientifique~: Q-Learning et TD Learning servent de bases théoriques, DQN assure la transition vers le Deep RL, et PPO (Proximal Policy Optimization)~\cite{MoezKrichen2022} est retenu comme approche finale en raison de sa stabilité et de sa robustesse dans les environnements dynamiques.
+Le choix de l'algorithme final est le résultat d'une progression scientifique~: Q-Learning et TD Learning servent de bases théoriques, DQN assure la transition vers le Deep Reinforcement Learning, et PPO (Proximal Policy Optimization)~\cite{MoezKrichen2022} est retenu comme approche finale en raison de sa stabilité et de sa robustesse dans les environnements dynamiques.
 
 La comparaison naturelle s'établit entre DQN et PPO, ces deux algorithmes représentant respectivement l'approche basée sur la valeur et l'approche basée sur la politique dans le spectre du Deep Reinforcement Learning.
 
@@ -1177,7 +1177,7 @@ Nombre d'épisodes & 10\,000 & Critère de convergence identique. \\
 \end{tabular}
 \end{table}
 
-\subsection{Hyperparamètres du modèle Deep RL (PPO)}
+\subsection{Hyperparamètres du modèle Deep Reinforcement Learning}
 \label{sec:hp-ppo}
 Les hyperparamètres retenus pour PPO correspondent aux valeurs par défaut de la bibliothèque Stable-Baselines3 (version 2.x)~\cite{stable-baselines3}. Ces valeurs ont été optimisées pour offrir une convergence stable sur une large gamme d'environnements Gymnasium.
 
@@ -1255,9 +1255,9 @@ comparatifs~:
     que Q-Learning dans les environnements stochastiques.
 \end{itemize}
 
-Ces trois modèles permettent de quantifier le gain apporté par le passage au Deep RL à deux niveaux~: d'abord entre méthodes tabulaires (Q-Learning vs SARSA), puis entre le meilleur tabulaire et l'approche profonde (PPO), conformément à la progression méthodologique du chapitre.
+Ces trois modèles permettent de quantifier le gain apporté par le passage au Deep Reinforcement Learning à deux niveaux~: d'abord entre méthodes tabulaires (Q-Learning vs SARSA), puis entre le meilleur tabulaire et l'approche profonde (PPO), conformément à la progression méthodologique du chapitre.
 
-\subsection{Modèle Deep RL proposé}
+\subsection{Modèle Deep Reinforcement Learning proposé}
 \label{sec:modele-deep-rl}
 DQN peut être testé comme modèle profond intermédiaire, tandis que PPO constitue l'approche finale proposée. La comparaison DQN vs PPO permet d'évaluer l'avantage des méthodes actor-critic par rapport aux méthodes basées sur la valeur pure dans le contexte spécifique du dispatching minier.
 
@@ -1304,7 +1304,7 @@ Méthodologie & CRISP-RL \\
 Environnement & Simulateur minier compatible Gymnasium \\
 Formalisation & Processus de décision markovien (MDP) \\
 Méthodes classiques & Q-Learning, TD Learning, SARSA \\
-Transition Deep RL & DQN \\
+Transition Deep Reinforcement Learning & DQN \\
 Approche finale & PPO (Proximal Policy Optimization) \\
 Baselines & Heuristiques industrielles + RL classiques \\
 Évaluation & KPIs opérationnels + récompense cumulée \\
