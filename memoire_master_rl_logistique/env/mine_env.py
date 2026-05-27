@@ -180,6 +180,7 @@ class MineEnv(gym.Env):
             truck.total_active_min += t
             truck.total_fuel_l += f
             location = shovel.node_id
+            self.truck_locations[self.current_truck_idx] = location
 
         # Attente pelle
         self.truck_statuses[self.current_truck_idx] = STATUS_LOADING
@@ -205,6 +206,7 @@ class MineEnv(gym.Env):
         truck.total_active_min += t
         truck.total_fuel_l += f
         location = dump.node_id
+        self.truck_locations[self.current_truck_idx] = location
 
         # Attente dump
         self.truck_statuses[self.current_truck_idx] = STATUS_UNLOADING
@@ -230,6 +232,7 @@ class MineEnv(gym.Env):
         truck.total_active_min += t
         truck.total_fuel_l += f
         location = shovel.node_id
+        self.truck_locations[self.current_truck_idx] = location
 
         # Panne éventuelle
         if self.rng.random() < self.breakdown_probability:

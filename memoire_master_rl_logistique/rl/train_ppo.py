@@ -81,7 +81,7 @@ def train_ppo(
     model = PPO(
         policy="MlpPolicy",
         env=env,
-        learning_rate=3e-4,
+        learning_rate=1e-4,
         gamma=0.99,
         batch_size=64,
         gae_lambda=0.95,

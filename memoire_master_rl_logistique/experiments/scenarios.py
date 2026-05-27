@@ -29,7 +29,7 @@ class Scenario:
     breakdown_probability: float = 0.02
     reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05)
     seeds: list[int] = field(default_factory=lambda: list(range(42, 52)))
-    total_timesteps: int = 50_000
+    total_timesteps: int = 2_000_000
 
 
 SCENARIOS: dict[str, Scenario] = {
@@ -41,6 +41,7 @@ SCENARIOS: dict[str, Scenario] = {
         dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.02,
+        total_timesteps=2_000_000,  # Augmenté à 2M pour améliorer PPO/DQN
     ),
     "high_load": Scenario(
         name="high_load",

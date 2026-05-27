@@ -40,11 +40,15 @@ def build_observation(
     - Disponibilité temporelle des camions : temps avant disponibilité
     - Tonnage accumulé des camions : normalisé
     - Carburant consommé des camions : normalisé
+    - Position des camions : one-hot encoding par rapport aux nœuds du graphe
     - Temps courant : progression de l'épisode normalisée
 
     Toutes les valeurs sont normalisées dans [0, 1] pour stabiliser l'apprentissage.
     """
     obs_parts: list[float] = []
+
+    # Obtenir tous les nœuds du graphe pour l'encodage one-hot de la position
+    all_nodes = list(graph.nodes)
 
     # --- Files d'attente aux pelles (q_p) ---
     for shovel in shovels:
@@ -73,16 +77,29 @@ def build_observation(
         # Carburant consommé normalisé
         obs_parts.append(min(truck.total_fuel_l / 500.0, 1.0))
 
+        # Position du camion : one-hot encoding par rapport aux nœuds
+        loc = truck_locations[i]
+        for node in all_nodes:
+            obs_parts.append(1.0 if loc == node else 0.0)
+
     # --- Temps courant normalisé ---
     obs_parts.append(min(current_time_min / max(episode_minutes, 1.0), 1.0))
 
     return np.array(obs_parts, dtype=np.float32)
 
 
-def observation_size(num_trucks: int, num_shovels: int, num_dumps: int) -> int:
-    """Retourne la taille du vecteur d'observation."""
+def observation_size(num_trucks: int, num_shovels: int, num_dumps: int, num_nodes: int | None = None) -> int:
+    """Retourne la taille du vecteur d'observation.
+    
+    Si num_nodes n'est pas fourni, calcule le nombre de nœuds du graphe :
+    1 yard + 1 junction + num_shovels pelles + num_dumps dumps
+    """
+    if num_nodes is None:
+        num_nodes = 2 + num_shovels + num_dumps  # yard + junction + pelles + dumps
+    
     shovel_feats = num_shovels  # 1 feature par pelle
     dump_feats = num_dumps  # 1 feature par dump
     truck_feats = num_trucks * 4  # 4 features par camion
+    truck_location_feats = num_trucks * num_nodes  # one-hot position par camion
     time_feat = 1
-    return shovel_feats + dump_feats + truck_feats + time_feat
+    return shovel_feats + dump_feats + truck_feats + truck_location_feats + time_feat

@@ -26,6 +26,7 @@ from stable_baselines3 import DQN, PPO
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
+from memoire_master_rl_logistique.baselines.random_policy import RandomPolicy
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
@@ -40,17 +41,25 @@ def run_single_episode(
     env: MineEnv,
     policy_fn,
     seed: int,
+    policy_name: str = "",
+    debug_actions: bool = False,
 ) -> dict[str, float]:
     """Lance un épisode et retourne les KPIs."""
     obs, info = env.reset(seed=seed)
     total_reward = 0.0
+    actions_taken = []
 
     while True:
         action = policy_fn(obs, info, env)
+        if debug_actions and len(actions_taken) < 10:  # Log first 10 actions
+            actions_taken.append(action)
         obs, reward, terminated, truncated, info = env.step(action)
         total_reward += reward
         if terminated or truncated:
             break
+    
+    if debug_actions and actions_taken:
+        print(f"    [{policy_name}] First 10 actions: {actions_taken}")
 
     total_tonnage = sum(t.total_tonnage_t for t in env.trucks)
     total_wait = sum(t.total_wait_min for t in env.trucks)
@@ -80,39 +89,64 @@ def run_benchmark(
     """Exécute le benchmark pour un scénario donné."""
     results = []
 
+    # Créer un environnement temporaire pour initialiser les politiques
+    temp_env = MineEnv(
+        truck_count=scenario.truck_count,
+        shovel_count=scenario.shovel_count,
+        dump_count=scenario.dump_count,
+        episode_minutes=scenario.episode_minutes,
+        breakdown_probability=scenario.breakdown_probability,
+        reward_weights=scenario.reward_weights,
+    )
+
+    # Initialiser les politiques heuristiques (créées une seule fois)
+    fixed_policy_obj = FixedAssignmentPolicy(
+        num_shovels=scenario.shovel_count,
+        num_dumps=scenario.dump_count,
+    )
+
+    fifo_policy_obj = FIFOPolicy(
+        num_shovels=scenario.shovel_count,
+        num_dumps=scenario.dump_count,
+    )
+
+    nearest_policy_obj = NearestShovelPolicy(
+        graph=temp_env.graph,
+        shovel_node_ids=[s.node_id for s in temp_env.shovels],
+        dump_node_ids=[d.node_id for d in temp_env.dumps],
+    )
+
+    shortest_path_policy_obj = ShortestPathPolicy(
+        graph=temp_env.graph,
+        shovel_node_ids=[s.node_id for s in temp_env.shovels],
+        dump_node_ids=[d.node_id for d in temp_env.dumps],
+    )
+
+    random_policy_obj = RandomPolicy(
+        num_shovels=scenario.shovel_count,
+        num_dumps=scenario.dump_count,
+    )
+
     def fixed_policy(obs, info, env):
-        p = FixedAssignmentPolicy(
-            num_shovels=env.shovel_count, num_dumps=env.dump_count,
-        )
-        return p.predict(obs, info)
+        return fixed_policy_obj.predict(obs, info)
 
     def nearest_policy(obs, info, env):
-        p = NearestShovelPolicy(
-            graph=env.graph,
-            shovel_node_ids=[s.node_id for s in env.shovels],
-            dump_node_ids=[d.node_id for d in env.dumps],
-        )
-        return p.predict(obs, info, env.truck_locations[env.current_truck_idx])
+        return nearest_policy_obj.predict(obs, info, env.truck_locations[env.current_truck_idx])
 
     def fifo_policy(obs, info, env):
-        p = FIFOPolicy(
-            num_shovels=env.shovel_count,
-            num_dumps=env.dump_count,
-        )
-        return p.predict(obs, info)
+        return fifo_policy_obj.predict(obs, info)
 
     def shortest_path_policy(obs, info, env):
-        p = ShortestPathPolicy(
-            graph=env.graph,
-            shovel_node_ids=[s.node_id for s in env.shovels],
-            dump_node_ids=[d.node_id for d in env.dumps],
-        )
-        return p.predict(obs, info, env.truck_locations[env.current_truck_idx])
+        return shortest_path_policy_obj.predict(obs, info, env.truck_locations[env.current_truck_idx])
+
+    def random_policy(obs, info, env):
+        return random_policy_obj.predict(obs, info)
 
     policies = {
         "FIFO": fifo_policy,
         "Fixed": fixed_policy,
         "Nearest": nearest_policy,
+        "Random": random_policy,
         "ShortestPath": shortest_path_policy,
     }
 
@@ -168,22 +202,20 @@ def run_benchmark(
 
     # --- DQN (Section 4.5.2) ---
     if train_ppo_flag:
-        dqn_dir = output_dir / f"dqn_{scenario.name}"
-        dqn_path = dqn_dir / "dqn_mine_agent.zip"
-        if dqn_path.exists():
-            print(f"  Chargement DQN existant: {dqn_path}")
-            dqn_model = DQN.load(str(dqn_path))
+        # TOUJOURS utiliser le modèle nominal (robustesse)
+        dqn_path_manual = Path("models/dqn_mine/dqn_mine_agent.zip")
+        dqn_path_nominal = Path("data/results/dqn_nominal/dqn_mine_agent.zip")
+
+        if dqn_path_manual.exists():
+            print(f"  Chargement DQN (modèle nominal manuel): {dqn_path_manual}")
+            dqn_model = DQN.load(str(dqn_path_manual))
+        elif dqn_path_nominal.exists():
+            print(f"  Chargement DQN (modèle nominal benchmark): {dqn_path_nominal}")
+            dqn_model = DQN.load(str(dqn_path_nominal))
         else:
-            print(f"  Entraînement DQN pour '{scenario.name}'...")
-            dqn_model = train_dqn(
-                total_timesteps=scenario.total_timesteps,
-                seed=scenario.seeds[0],
-                truck_count=scenario.truck_count,
-                shovel_count=scenario.shovel_count,
-                dump_count=scenario.dump_count,
-                episode_minutes=scenario.episode_minutes,
-                reward_weights=scenario.reward_weights,
-                output_dir=str(dqn_dir),
+            raise FileNotFoundError(
+                "Modèle DQN nominal non trouvé. Entraînez d'abord avec: "
+                "python -m memoire_master_rl_logistique.main --train-dqn"
             )
 
         def dqn_policy(obs, info, env, _model=dqn_model):
@@ -195,23 +227,20 @@ def run_benchmark(
     # --- PPO (Section 4.5.4) ---
     ppo_model = None
     if train_ppo_flag:
-        model_dir = output_dir / f"ppo_{scenario.name}"
-        model_path = model_dir / "ppo_mine_agent.zip"
+        # TOUJOURS utiliser le modèle nominal (robustesse)
+        ppo_path_manual = Path("models/ppo_mine/ppo_mine_agent.zip")
+        ppo_path_nominal = Path("data/results/ppo_nominal/ppo_mine_agent.zip")
 
-        if model_path.exists():
-            print(f"  Chargement du modèle PPO existant: {model_path}")
-            ppo_model = PPO.load(str(model_path))
+        if ppo_path_manual.exists():
+            print(f"  Chargement PPO (modèle nominal manuel): {ppo_path_manual}")
+            ppo_model = PPO.load(str(ppo_path_manual))
+        elif ppo_path_nominal.exists():
+            print(f"  Chargement PPO (modèle nominal benchmark): {ppo_path_nominal}")
+            ppo_model = PPO.load(str(ppo_path_nominal))
         else:
-            print(f"  Entraînement PPO pour '{scenario.name}'...")
-            ppo_model = train_ppo(
-                total_timesteps=scenario.total_timesteps,
-                seed=scenario.seeds[0],
-                truck_count=scenario.truck_count,
-                shovel_count=scenario.shovel_count,
-                dump_count=scenario.dump_count,
-                episode_minutes=scenario.episode_minutes,
-                reward_weights=scenario.reward_weights,
-                output_dir=str(model_dir),
+            raise FileNotFoundError(
+                "Modèle PPO nominal non trouvé. Entraînez d'abord avec: "
+                "python -m memoire_master_rl_logistique.main --train-only"
             )
 
         def ppo_policy(obs, info, env, _model=ppo_model):
@@ -222,6 +251,10 @@ def run_benchmark(
 
     for policy_name, policy_fn in policies.items():
         for seed in scenario.seeds:
+            # Réinitialiser le compteur FIFO pour chaque seed
+            if policy_name == "FIFO":
+                fifo_policy_obj._counter = 0
+            
             env = MineEnv(
                 truck_count=scenario.truck_count,
                 shovel_count=scenario.shovel_count,
@@ -230,7 +263,9 @@ def run_benchmark(
                 breakdown_probability=scenario.breakdown_probability,
                 reward_weights=scenario.reward_weights,
             )
-            kpis = run_single_episode(env, policy_fn, seed)
+            # Debug actions pour DQN, Nearest, ShortestPath (première seed seulement)
+            debug = (policy_name in ["DQN", "Nearest", "ShortestPath"] and seed == scenario.seeds[0])
+            kpis = run_single_episode(env, policy_fn, seed, policy_name, debug)
             row = {
                 "scenario": scenario.name,
                 "policy": policy_name,

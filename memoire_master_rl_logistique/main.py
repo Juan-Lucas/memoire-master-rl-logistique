@@ -127,8 +127,8 @@ def main() -> None:
         help="Nombre de dumps (défaut: 2)",
     )
     parser.add_argument(
-        "--timesteps", type=int, default=50_000,
-        help="Nombre de steps d'entraînement PPO (défaut: 50000)",
+        "--timesteps", type=int, default=2_000_000,
+        help="Nombre de steps d'entraînement PPO/DQN (défaut: 2000000)",
     )
     parser.add_argument(
         "--visualize-graph", action="store_true",
@@ -204,7 +204,7 @@ def main() -> None:
         run_all_benchmarks(
             output_dir="data/results",
             train_ppo_flag=True,
-            scenario_names=["nominal"],
+            scenario_names=None #["nominal", "high_breakdown", "short_shift"],  # Même config flotte
         )
         return
 

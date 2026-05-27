@@ -810,6 +810,15 @@ Module d'évaluation & Comparer les performances avec les baselines industrielle
 \end{tabular}
 \end{table}
 
+Ces blocs interagissent de manière cyclique pour permettre l'apprentissage par renforcement. À chaque instant $t$, l'environnement minier simulé fournit à l'agent RL une observation de l'état du système (files d'attente, positions des camions, disponibilité des ressources). L'agent sélectionne alors une action de dispatching (affectation camion-pelle-dump), qui est exécutée par l'environnement. La fonction de récompense évalue immédiatement cette action selon les objectifs métier (maximisation du tonnage, minimisation des temps d'attente, réduction de la consommation de carburant). Cette récompense guide l'agent pour ajuster sa politique de décision. Enfin, le module d'évaluation permet de comparer les performances de l'agent RL avec des baselines industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et des méthodes RL classiques (Q-Learning, SARSA, DQN) afin de valider l'efficacité de l'approche proposée.  Ce flux d'interaction est schématisé dans l'architecture fonctionnelle présentée à la Figure 4.2 ci-dessous.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Architecture fonctionnelle.drawio.png}
+    \caption{Architecture fonctionnelle de la solution proposée.}
+    \label{fig:architecture-fonctionnelle}
+\end{figure}
+
 \subsection{Positionnement de l'agent dans le système de gestion de flotte}
 \label{sec:positionnement-agent}
 L'agent d'apprentissage par renforcement est conçu comme une couche intelligente d'aide à la décision. Il ne remplace pas entièrement le Fleet Management System (FMS), mais propose des décisions de dispatching optimisées à partir de l'état courant de la mine et des objectifs opérationnels. Le FMS reste responsable de la communication avec les équipements, de la sécurité et du suivi en temps réel, tandis que l'agent RL se concentre sur l'optimisation des affectations camion-pelle-dump.
