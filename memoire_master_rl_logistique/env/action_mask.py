@@ -27,12 +27,8 @@ def compute_action_mask(
 ) -> np.ndarray:
     """Calcule le masque d'actions valides (Section 3.4.2 du mémoire).
 
-    Actions : [pelle_0×dump_0, ..., pelle_n-1×dump_m-1, ATTENDRE]
-    Le masque vaut 1 si l'action est valide, 0 sinon.
-
     Conformément au mémoire, toutes les paires (pelle, dump) sont
-    considérées valides car l'agent peut choisir d'attendre la
-    disponibilité. ATTENDRE est toujours valide.
+    considérées valides. ATTENDRE est toujours valide.
     """
     n_pairs = len(shovels) * max(len(dumps), 1)
     n_actions = n_pairs + (1 if include_wait else 0)

@@ -25,7 +25,7 @@ def create_env(
     episode_minutes: float = 480.0,
     seed: int = 42,
     breakdown_probability: float = 0.02,
-    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 1.0),
+    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
 ) -> MineEnv:
     """Crée une instance de l'environnement minier."""
     return MineEnv(
@@ -40,14 +40,14 @@ def create_env(
 
 
 def train_ppo(
-    total_timesteps: int = 50_000,
+    total_timesteps: int = 2_000_000,
     seed: int = 42,
     truck_count: int = 12,
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
     breakdown_probability: float = 0.02,
-    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 1.0),
+    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
     output_dir: str = "models/ppo_mine",
     log_freq: int = 1000,
 ) -> PPO:
