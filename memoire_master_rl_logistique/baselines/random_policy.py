@@ -18,7 +18,7 @@ class RandomPolicy:
     def __init__(self, num_shovels: int, num_dumps: int = 1) -> None:
         self.num_shovels = num_shovels
         self.num_dumps = num_dumps
-        self.num_actions = num_shovels * num_dumps
+        self.num_actions = num_shovels * num_dumps + 1
 
     def predict(
         self,

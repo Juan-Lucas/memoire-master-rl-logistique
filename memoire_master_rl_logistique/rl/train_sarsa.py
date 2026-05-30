@@ -18,7 +18,7 @@ import pickle
 import numpy as np
 
 from memoire_master_rl_logistique.env.mine_env import MineEnv
-from memoire_master_rl_logistique.rl.train_q_learning import _discretize_obs
+from memoire_master_rl_logistique.rl.discretize import _discretize_obs
 
 
 def train_sarsa(
@@ -27,13 +27,14 @@ def train_sarsa(
     gamma: float = 0.99,
     epsilon_start: float = 1.0,
     epsilon_min: float = 0.01,
-    n_bins: int = 5,
+    n_bins: int = 8,
     seed: int = 42,
     truck_count: int = 12,
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
-    reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05),
+    breakdown_probability: float = 0.02,
+    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
     output_dir: str = "models/sarsa",
 ) -> dict[tuple[int, ...], np.ndarray]:
     """Entraîne un agent SARSA tabulaire sur l'environnement minier.
@@ -51,6 +52,7 @@ def train_sarsa(
         dump_count=dump_count,
         episode_minutes=episode_minutes,
         seed=seed,
+        breakdown_probability=breakdown_probability,
         reward_weights=reward_weights,
     )
 
@@ -74,13 +76,13 @@ def train_sarsa(
 
     for ep in range(n_episodes):
         obs, _info = env.reset(seed=seed + ep)
-        state = _discretize_obs(obs, n_bins)
+        state = _discretize_obs(obs, n_bins, shovel_count, dump_count)
         action = _select_action(state, epsilon)
         total_reward = 0.0
 
         while True:
             obs_next, reward, terminated, truncated, _info = env.step(action)
-            next_state = _discretize_obs(obs_next, n_bins)
+            next_state = _discretize_obs(obs_next, n_bins, shovel_count, dump_count)
             total_reward += reward
 
             # SARSA: choose next action BEFORE update (on-policy)
@@ -116,7 +118,12 @@ def train_sarsa(
     # Sauvegarder
     model_path = out_path / "sarsa_table.pkl"
     with model_path.open("wb") as f:
-        pickle.dump({"q_table": q_table, "n_bins": n_bins}, f)
+        pickle.dump({
+            "q_table": q_table,
+            "n_bins": n_bins,
+            "num_shovels": shovel_count,
+            "num_dumps": dump_count,
+        }, f)
     print(f"SARSA table sauvegardée : {model_path}")
 
     rewards_path = out_path / "training_rewards.csv"
@@ -132,20 +139,34 @@ def train_sarsa(
 class SarsaPolicy:
     """Politique gloutonne basée sur une table SARSA entraînée."""
 
-    def __init__(self, q_table: dict[tuple[int, ...], np.ndarray], n_bins: int = 5) -> None:
+    def __init__(
+        self,
+        q_table: dict[tuple[int, ...], np.ndarray],
+        n_bins: int = 8,
+        num_shovels: int = 3,
+        num_dumps: int = 2,
+    ) -> None:
         self.q_table = q_table
         self.n_bins = n_bins
+        self.num_shovels = num_shovels
+        self.num_dumps = num_dumps
 
     @classmethod
     def load(cls, model_path: str | Path) -> SarsaPolicy:
         """Charge une table SARSA depuis un fichier pickle."""
         with Path(model_path).open("rb") as f:
             data = pickle.load(f)  # noqa: S301
-        return cls(q_table=data["q_table"], n_bins=data["n_bins"])
+        return cls(
+            q_table=data["q_table"],
+            n_bins=data["n_bins"],
+            num_shovels=data.get("num_shovels", 3),
+            num_dumps=data.get("num_dumps", 2),
+        )
 
     def predict(self, observation: np.ndarray) -> int:
         """Retourne l'action gloutonne pour l'observation donnée."""
-        state = _discretize_obs(observation, self.n_bins)
+        from memoire_master_rl_logistique.rl.discretize import _discretize_obs
+        state = _discretize_obs(observation, self.n_bins, self.num_shovels, self.num_dumps)
         if state in self.q_table:
             return int(np.argmax(self.q_table[state]))
         return 0
@@ -154,8 +175,8 @@ class SarsaPolicy:
 def main() -> None:
     """Point d'entrée pour l'entraînement SARSA."""
     train_sarsa(
-        n_episodes=10_000,
-        alpha=0.1,
+        n_episodes=30_000,
+        alpha=0.2,
         gamma=0.99,
         seed=42,
     )

@@ -592,18 +592,17 @@ R_t = w1 * R_rendement_norm + w2 * R_équité_norm + w3 * R_coût_norm
 **Variables critiques** :
 - num_shovels : nombre de pelles
 - num_dumps : nombre de dumps
-- _counter : compteur pour round-robin
 
 **Méthode predict(observation, info=None)**
-- **Entrées** : observation (non utilisé), info (non utilisé)
+- **Entrées** : observation (utilisé pour estimer les temps d'attente), info (non utilisé)
 - **Sorties** : action encodée
-- **Logique** : round-robin cyclique sur pelles et dumps
-- **Action** : shovel_idx = counter % num_shovels, dump_idx = counter % num_dumps
-- **Hypothèse** : Ordre FIFO simple, sans considération d'état
+- **Logique** : choisit explicitement la paire (pelle, dump) la plus disponible
+- **Action** : action ∈ 0..(S×D-1)
+- **Hypothèse** : FIFO pur, assignation au prochain équipement libre
 
-**Ligne sensible** : Ligne 33-34 (round-robin)
-- **Pourquoi critique** : Définit la logique FIFO
-- **Effet si modifiée** : Change la distribution cyclique
+**Note** : Cette implémentation correspond fonctionnellement à la logique FIFO
+du pseudo-code industriel, mais elle le fait de manière explicite plutôt que via
+l'action ATTENDRE comme heuristique cachée.
 
 **Validation personnelle** :
 - [ ] Je peux expliquer la logique round-robin

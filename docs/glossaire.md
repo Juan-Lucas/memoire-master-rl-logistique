@@ -1,6 +1,6 @@
 # Glossaire logistique minière, optimisation et RL
 
-Ce glossaire sera enrichi au fil de la rédaction. Chaque entrée comprend :
+Ce glossaire est aligné sur les termes utilisés dans le projet et les chapitres 4 à 6 du mémoire. Chaque entrée comprend :
 - Définition claire
 - Explication simple
 - Exemple concret
@@ -9,533 +9,208 @@ Ce glossaire sera enrichi au fil de la rédaction. Chaque entrée comprend :
 
 ## Apprentissage par renforcement (RL)
 **Définition :** Méthode d’intelligence artificielle où un agent apprend à prendre des décisions en interagissant avec un environnement pour maximiser une récompense cumulative.
-**Explication :** L’agent essaie différentes actions, observe les résultats, et adapte sa stratégie pour obtenir la meilleure performance possible.
+**Explication :** L’agent essaie différentes actions, observe les résultats et ajuste sa politique pour améliorer progressivement sa performance.
 **Exemple :** Un agent RL apprend à dispatcher des camions dans une mine pour réduire les temps d’attente et augmenter la productivité.
 
 ---
 
+## Environnement Gymnasium
+**Définition :** Interface standardisée pour les environnements d’apprentissage par renforcement en Python.
+**Explication :** Gymnasium définit les méthodes `reset()`, `step()`, `render()` et les espaces d’observation/action.
+**Exemple :** L’environnement minier du projet est implémenté avec Gymnasium pour être compatible avec Stable-Baselines3.
+
+---
+
+## Stable-Baselines3
+**Définition :** Bibliothèque Python proposant des implémentations d’algorithmes d’apprentissage par renforcement profond.
+**Explication :** Elle fournit PPO, DQN, A2C et d’autres algorithmes, avec gestion des callbacks et du logging.
+**Exemple :** PPO et DQN sont entraînés avec Stable-Baselines3 dans le projet.
+
+---
+
+## Q-Learning
+**Définition :** Algorithme tabulaire d’apprentissage par renforcement off-policy qui apprend la qualité d’un état-action.
+**Explication :** Il met à jour une Q-table en utilisant la récompense et la valeur estimée du prochain état.
+**Exemple :** Q-Learning choisit la prochaine pelle d’un camion en se basant sur les Q-values apprises.
+
+---
+
+## SARSA
+**Définition :** Algorithme d’apprentissage par renforcement on-policy.
+**Explication :** La mise à jour utilise l’action effectivement choisie dans l’état suivant.
+**Exemple :** SARSA est plus conservateur lorsque l’environnement est stochastique.
+
+---
+
+## DQN (Deep Q-Network)
+**Définition :** Algorithme RL profond qui approxime la fonction Q par un réseau de neurones.
+**Explication :** DQN utilise un replay buffer et un réseau cible pour stabiliser l’apprentissage.
+**Exemple :** DQN apprend une politique sur les observations continues de l’environnement minier.
+
+---
+
+## PPO (Proximal Policy Optimization)
+**Définition :** Méthode de policy gradient profond qui limite les mises à jour trop importantes de la politique.
+**Explication :** PPO utilise un ratio de probabilités et un clipping pour stabiliser l’entraînement.
+**Exemple :** PPO est entraîné pendant 2 millions de timesteps dans le projet.
+
+---
+
+## Baseline
+**Définition :** Méthode de référence utilisée pour comparer les performances d’une nouvelle stratégie.
+**Explication :** Une baseline permet de vérifier qu’une nouvelle approche apporte un réel gain.
+**Exemple :** FIFO, Fixed Assignment, Nearest Shovel et Shortest Path servent de baselines.
+
+---
+
 ## Heuristique
-**Définition :** Règle ou méthode simple permettant de trouver rapidement une solution approximative à un problème complexe.
-**Explication :** Les heuristiques ne garantissent pas la solution optimale mais sont faciles à mettre en œuvre.
-**Exemple :** Attribuer chaque camion à la pelle la plus proche sans tenir compte de l’état global de la flotte.
-
----
-
-## KPI (Key Performance Indicator)
-**Définition :** Indicateur clé de performance utilisé pour mesurer l’efficacité d’un système ou d’un processus.
-**Explication :** Les KPIs permettent d’évaluer et de comparer différentes stratégies d’optimisation.
-**Exemple :** Tonnage transporté par heure, temps d’attente moyen, taux d’utilisation des camions.
-
----
-
-## Système de gestion de flotte (FMS)
-**Définition :** Logiciel ou ensemble d’outils permettant de planifier, suivre et optimiser les opérations d’une flotte de véhicules (camions, pelles, etc.) dans une mine.
-**Explication :** Le FMS collecte des données en temps réel et aide à prendre des décisions pour améliorer la productivité.
-**Exemple :** DISPATCH, MineStar, Jigsaw sont des FMS industriels utilisés dans les mines à ciel ouvert.
+**Définition :** Règle de décision simple et rapide pour produire une solution approximative.
+**Explication :** Les heuristiques sont faciles à implémenter mais ne garantissent pas l’optimalité.
+**Exemple :** Envoyer un camion à la pelle la plus proche sans analyser l’état global.
 
 ---
 
 ## Méta-heuristique
-**Définition :** Algorithme d’optimisation avancé, souvent inspiré de phénomènes naturels, utilisé pour résoudre des problèmes complexes.
-**Explication :** Les méta-heuristiques explorent intelligemment l’espace des solutions pour trouver de bonnes réponses sans tout tester.
-**Exemple :** Algorithme génétique, colonies de fourmis, recuit simulé appliqués à l’optimisation du dispatching minier.
-
----
-
-## MILP (Mixed Integer Linear Programming)
-**Définition :** Programmation linéaire en nombres entiers mixtes, méthode mathématique d’optimisation où certaines variables doivent être entières.
-**Explication :** Utilisée pour modéliser des problèmes de planification ou d’affectation avec contraintes.
-**Exemple :** Optimiser l’affectation des camions aux pelles en respectant des contraintes de capacité et de temps.
+**Définition :** Algorithme d’optimisation inspiré de phénomènes naturels ou d’intelligence collective.
+**Explication :** Il cherche des solutions de bonne qualité sans tester toutes les possibilités.
+**Exemple :** Algorithme génétique ou recuit simulé appliqué au dispatching minier.
 
 ---
 
 ## Politique (en RL)
-**Définition :** Règle ou fonction qui indique à l’agent RL quelle action choisir dans chaque situation.
-**Explication :** La politique évolue au fil de l’apprentissage pour maximiser la récompense.
+**Définition :** Fonction qui indique à l’agent quelle action choisir dans chaque état.
+**Explication :** La politique se met à jour avec l’entraînement et peut être déterministe ou stochastique.
 **Exemple :** « Si un camion est vide et une pelle est libre, aller vers la pelle la plus proche. »
 
 ---
 
 ## Fonction de récompense
-**Définition :** Fonction qui attribue un score à chaque action ou séquence d’actions de l’agent RL, guidant ainsi son apprentissage.
-**Explication :** Elle traduit les objectifs du problème (ex : minimiser le temps d’attente, maximiser la production).
-**Exemple :** Récompenser l’agent à chaque cycle où le temps d’attente total diminue.
-
----
-
-## Simulation
-**Définition :** Reproduction informatique du fonctionnement d’un système réel pour tester des stratégies ou analyser des performances.
-**Explication :** Permet d’évaluer des approches sans risque ni coût réel.
-**Exemple :** Simuler le dispatching de camions pour comparer heuristique, RL et optimisation mathématique.
-
----
-
-## Cycle camion-pelle
-**Définition :** Suite d’opérations effectuées par un camion : chargement, transport, déchargement, retour.
-**Explication :** Un cycle complet permet de mesurer la productivité et l’efficacité du système.
-**Exemple :** Un camion charge 100 tonnes, les transporte à l’usine, décharge, puis revient à la pelle.
-
----
-
-## Match Factor (MF)
-**Définition :** Rapport entre le nombre de camions et le nombre de pelles, indicateur d’équilibre du système.
-**Explication :** Un MF optimal maximise l’utilisation des équipements.
-**Exemple :** 10 camions pour 2 pelles → MF = 5.
-
----
-
-## Robustesse
-**Définition :** Capacité d’un système à maintenir ses performances malgré des perturbations ou des incertitudes.
-**Explication :** Un système robuste s’adapte aux pannes, retards ou variations de demande.
-**Exemple :** Un algorithme de dispatching qui continue de bien fonctionner même si un camion tombe en panne.
-
----
-
-## Adaptation
-**Définition :** Capacité d’un système à ajuster son comportement en fonction des changements de l’environnement.
-**Explication :** L’adaptation permet d’améliorer la performance face à l’imprévu.
-**Exemple :** Modifier la politique de dispatching si la demande de transport augmente soudainement.
-
----
-
-## Congestion
-**Définition :** Situation où plusieurs camions attendent en file, causant des retards et une baisse de productivité.
-**Explication :** La congestion est un indicateur de mauvaise synchronisation ou de sous-dimensionnement.
-**Exemple :** Trois camions attendent devant une pelle occupée, augmentant le temps d’attente moyen.
-
----
-
-*À compléter et enrichir au fil de la rédaction...*
-
----
-
-## Processus de Décision Markovien (MDP)
-**Définition :** Modèle mathématique pour la prise de décision séquentielle où l’état du système évolue selon des probabilités dépendant de l’action choisie.
-**Explication :** Un MDP est défini par un ensemble d’états, d’actions, une fonction de transition (probabilité de passer d’un état à un autre) et une fonction de récompense.
-**Exemple :** Dans le dispatching minier, l’état peut être la position des camions, l’action le choix de la prochaine destination, la récompense le temps ou le coût économisé.
-
----
-
-## DISPATCH (Système)
-**Définition :** Système industriel de dispatching minier basé sur une planification en deux étapes (planification globale puis affectation temps réel).
-**Explication :** Utilise un modèle de programmation linéaire pour planifier les flux, puis une heuristique pour affecter les camions en temps réel.
-**Exemple :** DISPATCH attribue les camions pour respecter les flux optimaux tout en minimisant les temps d’attente.
-
----
-
-## Vehicle Routing Problem (VRP)
-**Définition :** Problème d’optimisation consistant à déterminer les tournées optimales d’une flotte de véhicules pour desservir un ensemble de clients.
-**Explication :** Le VRP est un problème classique de la logistique, généralisé dans le dispatching minier.
-**Exemple :** Trouver l’ordre optimal pour qu’une flotte de camions livre du minerai à différents points de déchargement.
-
----
-
-## Policy Gradient (REINFORCE)
-**Définition :** Méthode d’apprentissage par renforcement qui ajuste directement les paramètres d’une politique pour maximiser la récompense attendue.
-**Explication :** L’algorithme REINFORCE met à jour la politique en fonction des retours obtenus lors des épisodes d’entraînement.
-**Exemple :** Utilisé pour entraîner un agent RL à résoudre le VRP sans heuristique humaine.
-
----
-
-## Pointer Network
-**Définition :** Architecture de réseau de neurones permettant de générer des séquences d’indices (pointeurs) sur des entrées de taille variable.
-**Explication :** Utilisé pour résoudre des problèmes de type VRP où la taille de l’entrée (nombre de clients) varie.
-**Exemple :** Un Pointer Network choisit l’ordre de visite des clients pour optimiser la tournée d’un véhicule.
-
----
-
-## Planification multi-étapes (Upper/Lower Stage)
-**Définition :** Approche où une première étape planifie globalement (upper stage) et une seconde affecte les ressources en temps réel (lower stage).
-**Explication :** Permet de combiner vision stratégique et réactivité opérationnelle.
-**Exemple :** DISPATCH utilise une planification linéaire pour fixer les flux, puis une heuristique pour l’affectation instantanée des camions.
-
----
-
-## Heuristique myope
-**Définition :** Heuristique qui prend des décisions optimales localement sans anticiper les conséquences globales.
-**Explication :** Peut conduire à des congestions ou à une sous-optimisation globale.
-**Exemple :** Envoyer un camion à la pelle la plus proche sans vérifier si elle sera disponible à son arrivée.
-
----
-
-## Affectation contrainte (Hauck)
-**Définition :** Méthode d’affectation des camions prenant en compte collectivement les contraintes de la flotte.
-**Explication :** Utilise la programmation dynamique et linéaire pour optimiser l’affectation globale.
-**Exemple :** Répartir les camions pour respecter à la fois la productivité et les contraintes de mélange de minerai.
-
----
-
-## Simulation à événements discrets
-**Définition :** Modélisation où l’état du système évolue à chaque événement (arrivée, départ, panne, etc.).
-**Explication :** Permet de simuler précisément les opérations minières et d’évaluer différentes stratégies.
-**Exemple :** Un événement « fin de chargement » déclenche l’affectation d’un nouveau camion à la pelle.
-
----
-
-## Taux d’utilisation
-**Définition :** Pourcentage de temps où un équipement (camion, pelle) est effectivement utilisé.
-**Explication :** Indique l’efficacité d’utilisation des ressources.
-**Exemple :** Si une pelle charge 45 minutes sur 60, son taux d’utilisation est de 75%.
-
----
-
-## Temps de cycle
-**Définition :** Durée totale pour qu’un camion effectue un cycle complet (chargement, transport, déchargement, retour).
-**Explication :** Mesure clé de la performance logistique.
-**Exemple :** Un cycle de 30 minutes inclut 5 min de chargement, 10 min de transport, 5 min de déchargement, 10 min de retour.
-
----
-
-## Ratio de décapage
-**Définition :** Rapport entre le volume de stérile extrait et le volume de minerai extrait.
-**Explication :** Indicateur de la qualité de l’exploitation minière.
-**Exemple :** Un ratio de 3:1 signifie qu’il faut extraire 3 tonnes de stérile pour 1 tonne de minerai.
-
----
-
-## Baseline
-**Définition :** Méthode de référence utilisée pour comparer les performances d’un nouvel algorithme.
-**Explication :** Sert de point de comparaison pour valider l’intérêt d’une nouvelle approche.
-**Exemple :** Comparer un agent RL à une heuristique classique ou à DISPATCH.
-
----
-
-## Hyperparamètre
-**Définition :** Paramètre fixé avant l’entraînement d’un modèle d’apprentissage automatique, non appris par le modèle.
-**Explication :** Influence la vitesse, la stabilité ou la performance de l’apprentissage.
-**Exemple :** Taux d’apprentissage, nombre d’épisodes, taille du batch.
-
----
-
-## État (en RL)
-**Définition :** Représentation de la situation actuelle de l’environnement observée par l’agent.
-**Explication :** L’état contient toutes les informations nécessaires pour prendre une décision.
-**Exemple :** Positions des camions, files d’attente, état des routes.
-
-
-## Action (en RL)
-**Définition :** Décision prise par l’agent à chaque étape.
-**Explication :** Peut être discrète (choix d’une destination) ou continue (vitesse, accélération).
-**Exemple :** Choisir d’envoyer un camion à une pelle ou à une zone tampon.
-
----
-
-## Fonction de transition
-**Définition :** Fonction qui décrit comment l’état du système évolue après chaque action.
-**Explication :** Peut être déterministe ou stochastique.
-**Exemple :** Après l’action « charger », l’état passe de « camion vide » à « camion plein ».
-
----
-
-## Fonction de valeur
-**Définition :** Fonction qui estime la récompense totale attendue à partir d’un état donné.
-**Explication :** Utilisée pour évaluer la qualité d’une politique.
-**Exemple :** La valeur d’un état où tous les camions sont en file d’attente est faible.
+**Définition :** Fonction qui attribue un score à chaque action ou séquence d’actions.
+**Explication :** Elle traduit les objectifs opérationnels comme réduire l’attente ou maximiser le rendement.
+**Exemple :** Ajouter une récompense positive pour chaque tonne transportée et une pénalité pour l’attente.
 
 ---
 
 ## Reward Shaping
-**Définition :** Technique consistant à modifier la fonction de récompense pour faciliter l’apprentissage de l’agent RL.
-**Explication :** Permet de guider l’agent vers des comportements souhaités plus rapidement.
-**Exemple :** Ajouter une petite pénalité à chaque étape pour encourager des cycles plus courts.
+**Définition :** Technique consistant à enrichir la fonction de récompense pour guider l’apprentissage.
+**Explication :** On ajoute des termes intermédiaires pour encourager des comportements souhaités.
+**Exemple :** Pénaliser l’attente et récompenser la ponctualité pour accélérer la formation de la politique.
+
+---
+
+## Exploration vs Exploitation
+**Définition :** Dilemme entre tester de nouvelles actions (exploration) et utiliser les meilleures actions connues (exploitation).
+**Explication :** Un bon équilibre est nécessaire pour apprendre sans rester bloqué dans une solution sous-optimale.
+**Exemple :** Choisir parfois une action aléatoire pour découvrir une meilleure affectation de camion.
+
+---
+
+## Replay buffer
+**Définition :** Mémoire circulaire qui stocke les transitions observées pour réutilisation lors de l’entraînement.
+**Explication :** Il améliore la stabilité de l’apprentissage en entraînant plusieurs fois sur les mêmes expériences.
+**Exemple :** DQN conserve les transitions `état, action, récompense, état suivant` dans un replay buffer.
+
+---
+
+## On-policy / Off-policy
+**Définition :** On-policy apprend à partir des actions générées par la politique actuelle ; off-policy peut apprendre à partir de données générées par une autre politique.
+**Explication :** PPO est on-policy, tandis que Q-Learning et DQN sont off-policy.
+**Exemple :** Un agent DQN peut apprendre d’anciennes données stockées dans un replay buffer.
+
+---
+
+## Temporal difference
+**Définition :** Méthode d’estimation de la valeur en utilisant la différence entre les prédictions successives.
+**Explication :** Elle combine l’apprentissage par simulation et le bootstrap pour mettre à jour les valeurs.
+**Exemple :** La mise à jour Q de Q-Learning repose sur un terme de différence temporelle.
+
+---
+
+## Discount factor (γ)
+**Définition :** Coefficient qui pondère l’importance des récompenses futures.
+**Explication :** Une valeur proche de 1 privilégie les performances à long terme, une valeur plus faible privilégie le court terme.
+**Exemple :** Dans un environnement minier, γ = 0,99 permet de planifier des cycles complets.
+
+---
+
+## Learning rate (α)
+**Définition :** Taux de mise à jour des paramètres ou des valeurs pendant l’entraînement.
+**Explication :** Un learning rate trop élevé peut déstabiliser l’apprentissage, trop faible le ralentit.
+**Exemple :** Un taux de 0,0003 est souvent utilisé pour PPO et DQN.
+
+---
+
+## Fonction d’approximation
+**Définition :** Modèle utilisé pour estimer les valeurs ou la politique dans les environnements de grande dimension.
+**Explication :** Il remplace les tables dans les problèmes à état élevé.
+**Exemple :** Un réseau de neurones approximant la Q-function de DQN.
+
+---
+
+## Acteur-critique
+**Définition :** Architecture composée d’un acteur qui choisit les actions et d’un critique qui évalue les états.
+**Explication :** Le critique guide l’acteur vers de meilleures décisions.
+**Exemple :** PPO utilise une architecture acteur-critique.
+
+---
+
+## Taux d’utilisation
+**Définition :** Pourcentage de temps où un équipement est actif.
+**Explication :** Indicateur de disponibilité et performance.
+**Exemple :** Si une pelle charge 45 minutes sur 60, son taux d’utilisation est de 75 %.
+
+---
+
+## Productivité
+**Définition :** Quantité de minerai transportée par unité de temps.
+**Explication :** Mesure la performance opérationnelle globale.
+**Exemple :** Tonnes transportées par heure.
+
+---
+
+## Temps d’attente
+**Définition :** Durée pendant laquelle un camion reste inactif en file ou en zone tampon.
+**Explication :** Indicateur principal de fluidité.
+**Exemple :** Temps moyen d’attente par camion.
+
+---
+
+## Consommation spécifique
+**Définition :** Quantité de carburant consommée par tonne transportée.
+**Explication :** Mesure l’efficacité énergétique.
+**Exemple :** Litres par tonne.
+
+---
+
+## Scénario
+**Définition :** Configuration expérimentale paramétrée par le nombre de camions, pelles, dumps et le taux de pannes.
+**Explication :** Permet de tester les méthodes dans des contextes différents.
+**Exemple :** nominal, high_load, high_breakdown.
+
+---
+
+## Robustesse
+**Définition :** Capacité d’une méthode à conserver ses performances malgré des perturbations.
+**Explication :** Mesurée sur des scénarios de surcharge ou de pannes.
+**Exemple :** PPO garde un bon temps d’attente en high_breakdown.
 
 ---
 
 ## Congestion
-**Définition :** Situation où plusieurs camions attendent en file, causant des retards et une baisse de productivité.
-**Explication :** La congestion est un indicateur de mauvaise synchronisation ou de sous-dimensionnement.
-**Exemple :** Trois camions attendent devant une pelle occupée, augmentant le temps d’attente moyen.
+**Définition :** Situation où plusieurs camions attendent en file, réduisant la productivité.
+**Explication :** Indique un déséquilibre entre flux et capacité.
+**Exemple :** Plusieurs camions bloqués devant une pelle occupée.
 
 ---
 
 ## Zone tampon
-**Définition :** Espace où les camions attendent avant d’être affectés à une pelle ou à un point de chargement.
-**Explication :** Permet de réguler le flux et d’éviter la congestion directe aux pelles.
-**Exemple :** Une zone tampon peut contenir 5 camions en attente avant d’accéder à la pelle.
+**Définition :** Espace d’attente entre les pelles et les dumps.
+**Explication :** Régule le flux des camions pour éviter la congestion aux pelles.
+**Exemple :** Camions en attente avant d’être affectés à une pelle.
 
 ---
 
 ## Stérile
 **Définition :** Matériau sans valeur économique extrait pour accéder au minerai.
-**Explication :** L’extraction du stérile est nécessaire mais augmente le ratio de décapage.
-**Exemple :** Déblayer la terre pour atteindre une veine de cuivre.
-
----
-
-## Pseudo-coût
-**Définition :** Coût artificiel utilisé dans la planification pour guider l’optimisation sans refléter un coût réel.
-**Explication :** Sert à équilibrer les flux ou à respecter des contraintes dans les modèles linéaires.
-**Exemple :** Attribuer un pseudo-coût élevé à une route pour éviter la congestion.
-
----
-
-## Policy (Politique)
-**Définition :** Règle ou fonction qui indique à l’agent RL quelle action choisir dans chaque situation.
-**Explication :** La politique évolue au fil de l’apprentissage pour maximiser la récompense.
-**Exemple :** « Si un camion est vide et une pelle est libre, aller vers la pelle la plus proche. »
-
----
-
-## Policy Network
-**Définition :** Réseau de neurones qui approxime la politique d’un agent RL.
-**Explication :** Prend l’état en entrée et prédit la probabilité de chaque action.
-**Exemple :** Un policy network décide si un camion doit aller à la pelle A ou B selon l’état du système.
-
----
-
-## Baseline (en RL)
-**Définition :** Valeur de référence utilisée pour réduire la variance lors de la mise à jour des paramètres d’un agent RL.
-**Explication :** Permet d’améliorer la stabilité de l’apprentissage.
-**Exemple :** Utiliser la moyenne des récompenses passées comme baseline dans REINFORCE.
-
----
-
-## Exploration vs Exploitation
-**Définition :** Dilemme fondamental en RL entre essayer de nouvelles actions (exploration) et utiliser les meilleures actions connues (exploitation).
-**Explication :** Un bon équilibre est nécessaire pour apprendre efficacement.
-**Exemple :** Essayer une nouvelle route pour un camion même si la route habituelle semble meilleure.
-
----
-
-## Épisode (en RL)
-**Définition :** Séquence complète d’actions et d’états, du début à la fin d’une simulation ou d’un problème.
-**Explication :** Permet de mesurer la performance globale d’une politique.
-**Exemple :** Un épisode correspond à une journée complète de dispatching simulée.
-
----
-
-## Généralisabilité
-**Définition :** Capacité d’un modèle ou d’un agent à bien fonctionner sur des situations non vues pendant l’entraînement.
-**Explication :** Un agent RL généralisable s’adapte à de nouveaux scénarios miniers.
-**Exemple :** Un agent entraîné sur une mine A qui réussit aussi sur une mine B.
-
----
-
-## Planification opérationnelle
-**Définition :** Élaboration de plans détaillés pour l’utilisation optimale des ressources à court terme.
-**Explication :** Vise à maximiser la productivité et à minimiser les coûts au quotidien.
-**Exemple :** Planifier l’affectation des camions pour la journée selon la demande et les contraintes.
-
----
-
-## Planification stratégique
-**Définition :** Définition des grandes orientations et objectifs à long terme pour l’exploitation minière.
-**Explication :** Prend en compte les investissements, la durée de vie de la mine, les réserves, etc.
-**Exemple :** Décider d’ouvrir une nouvelle fosse ou d’investir dans de nouveaux camions.
-
----
-
-## Simulation hybride
-**Définition :** Combinaison de simulation et d’optimisation mathématique pour évaluer des stratégies complexes.
-**Explication :** Permet d’intégrer incertitude, contraintes et dynamique réelle.
-**Exemple :** Simuler le dispatching avec optimisation mathématique pour chaque scénario.
-
----
-
-## Réseau encodeur-décodeur (LSTM, attention)
-**Définition :** Architecture de réseau de neurones pour traiter des séquences, utilisée pour modéliser des problèmes de décision séquentielle.
-**Explication :** L’encodeur résume l’état, le décodeur génère les actions.
-**Exemple :** Utilisé dans le RL pour le VRP avec des entrées de taille variable.
-
----
-
-## Masquage dynamique des actions
-**Définition :** Technique consistant à rendre certaines actions impossibles selon l’état courant.
-**Explication :** Permet d’éviter que l’agent RL ne choisisse des actions non valides.
-**Exemple :** Masquer l’action « aller à une pelle pleine » si aucune place n’est disponible.
-
----
-
-## Récompense négative
-**Définition :** Pénalité attribuée à l’agent RL pour encourager l’évitement de comportements indésirables.
-**Explication :** Utilisée pour guider l’agent vers des solutions plus efficaces.
-**Exemple :** Pénaliser chaque minute d’attente d’un camion.
-
----
-
-## Production supplémentaire
-**Définition :** Gain de production obtenu grâce à une optimisation ou une nouvelle stratégie.
-**Explication :** Permet de mesurer l’impact d’une innovation sur la performance.
-**Exemple :** Passer de 60 000 à 66 000 tonnes/shift grâce à un nouvel algorithme.
-
----
-
-## Capacité résiduelle
-**Définition :** Quantité de charge qu’un camion peut encore transporter avant d’atteindre sa capacité maximale.
-**Explication :** Sert à déterminer la prochaine affectation ou le retour au dépôt.
-**Exemple :** Un camion de 100 t ayant déjà chargé 60 t a une capacité résiduelle de 40 t.
-
----
-
-## Période de planification
-**Définition :** Intervalle de temps sur lequel les décisions de planification sont prises.
-**Explication :** Peut être une heure, un shift, une journée, etc.
-**Exemple :** Planifier les affectations de camions pour chaque shift de 8h.
-
----
-
-## Panne (en simulation)
-**Définition :** Événement où un équipement devient indisponible temporairement.
-**Explication :** Les pannes sont modélisées pour tester la robustesse des stratégies.
-**Exemple :** Un camion tombe en panne et doit être réparé avant de reprendre le service.
-
----
-
-## Événement stochastique
-**Définition :** Événement dont l’occurrence est aléatoire, modélisé par une probabilité.
-**Explication :** Permet de simuler l’incertitude dans l’environnement minier.
-**Exemple :** Une route peut se dégrader de façon imprévisible pendant la simulation.
-
----
-
-## Concasseur
-**Définition :** Installation industrielle où le minerai est concassé après transport depuis la zone d’extraction.
-**Explication :** Dans la logistique minière, c’est un point de déchargement majeur qui influence fortement les files d’attente et les cycles camions.
-**Exemple :** Après chargement à la pelle, un camion transporte le minerai vers le concasseur avant de repartir vide.
-
----
-
-## Halde
-**Définition :** Zone de dépôt des matériaux (stériles ou minerai selon l’organisation du site) en dehors du front de taille.
-**Explication :** C’est un point de destination logistique qui peut être intégré comme nœud de déchargement dans le réseau minier.
-**Exemple :** Un camion chargé en stérile est dirigé vers une halde pour déchargement.
-
----
-
-## Graphe orienté pondéré
-**Définition :** Représentation d’un réseau par des nœuds reliés par des arcs orientés, chaque arc ayant un poids (coût, distance, temps, etc.).
-**Explication :** Ce modèle est utilisé pour représenter les routes minières avec leurs contraintes de circulation et leurs coûts de transport.
-**Exemple :** Un arc de la pelle A vers le concasseur B porte un poids de 12 minutes de trajet.
-
----
-
-## Nœud (réseau minier)
-**Définition :** Point du réseau représentant une entité logistique (pelle, concasseur, intersection, zone tampon).
-**Explication :** Les nœuds servent à modéliser où les camions peuvent charger, décharger, attendre ou prendre une décision.
-**Exemple :** Une intersection critique du site est modélisée comme un nœud de décision.
-
----
-
-## Arc (réseau minier)
-**Définition :** Segment orienté reliant deux nœuds dans un réseau routier modélisé.
-**Explication :** Un arc correspond à une route praticable avec des attributs comme distance, pente et état de surface.
-**Exemple :** L’arc `Pelle_1 -> Concasseur_1` a une distance de 3,2 km et une pente moyenne de 6%.
-
----
-
-## Coefficient d’état de route
-**Définition :** Paramètre qui traduit la qualité ou la dégradation d’un segment routier à un instant donné.
-**Explication :** Plus ce coefficient se dégrade, plus les temps de trajet et la consommation peuvent augmenter.
-**Exemple :** Après forte circulation, le coefficient d’état d’un arc augmente et pénalise la vitesse moyenne.
-
----
-
-## Résistance au roulement
-**Définition :** Force qui s’oppose au mouvement d’un véhicule due au contact roues-sol.
-**Explication :** En mine, elle dépend de l’état de route, de la charge et des conditions de surface, et affecte directement l’énergie consommée.
-**Exemple :** Sur une route dégradée, la résistance au roulement augmente et le camion consomme plus de carburant.
-
----
-
-## Coût marginal de déplacement
-**Définition :** Coût additionnel estimé pour effectuer un déplacement supplémentaire dans un état donné.
-**Explication :** Il permet de comparer des affectations possibles en intégrant temps, carburant et congestion.
-**Exemple :** Envoyer un camion vers une pelle éloignée a un coût marginal plus élevé qu’une pelle proche non congestionnée.
-
----
-
-## État agrégé
-**Définition :** Représentation compacte de l’environnement qui résume les informations essentielles sans tout le détail microscopique.
-**Explication :** Utilisé pour rendre l’apprentissage RL tractable quand le système réel est très complexe.
-**Exemple :** Au lieu de modéliser chaque interaction véhicule-véhicule, on utilise la longueur de file moyenne par zone.
-
----
-
-## Décision séquentielle
-**Définition :** Processus où les décisions sont prises successivement, chaque décision influençant les suivantes.
-**Explication :** C’est le cœur des problèmes RL en logistique: une bonne décision immédiate peut être mauvaise à long terme, et inversement.
-**Exemple :** Choisir une destination qui réduit l’attente actuelle peut créer une congestion au prochain cycle.
-
----
-
-## Masquage des actions invalides
-**Définition :** Mécanisme qui retire de l’espace d’action les choix non admissibles dans l’état courant.
-**Explication :** Il empêche l’agent de proposer des décisions irréalistes et accélère l’apprentissage.
-**Exemple :** Si une zone est saturée, l’action « envoyer camion vers cette zone » est masquée.
-
----
-
-## Disponibilité des ressources
-**Définition :** État indiquant si un équipement (pelle, concasseur, camion) est opérationnel et prêt à être utilisé.
-**Explication :** La disponibilité influence directement l’affectation des camions et les temps d’attente.
-**Exemple :** Une pelle en maintenance est temporairement indisponible, ce qui force une réaffectation de la flotte.
-
----
-
-## FIFO (First In, First Out)
-**Définition :** Politique de baseline classique (Section 4.7.1 du mémoire) où les camions sont affectés aux pelles dans l'ordre de leur arrivée en zone d'attente.
-**Explication :** Cette règle est simple et équitable mais ne tient compte ni de la distance ni de la charge des pelles.
-**Exemple :** Le camion arrivé en premier à la zone d'attente est le premier à être affecté à une pelle disponible.
-
----
-
-## Shortest Path (Chemin le plus court)
-**Définition :** Politique de baseline classique (Section 4.7.1 du mémoire) où le camion emprunte systématiquement l'itinéraire minimisant le coût de trajet C_ij (Eq. 3.1).
-**Explication :** Cette règle optimise localement le routage sans considération globale du système.
-**Exemple :** Le camion choisit la paire (pelle, dump) avec le coût de trajet minimal selon C_ij = α·T_ij + β·D_ij + γ·E_ij.
-
----
-
-## Fixed Assignment (Affectation fixe)
-**Définition :** Politique de baseline zéro-niveau où chaque camion est assigné à une pelle-dump fixe de manière cyclique.
-**Explication :** C'est la baseline la plus simple, ne tenant compte ni de l'état du système ni de la congestion.
-**Exemple :** Le camion 1 est toujours assigné à la pelle 1, le camion 2 à la pelle 2, le camion 3 à la pelle 3, le camion 4 retourne à la pelle 1, etc.
-
----
-
-## Nearest Shovel (Pelle la plus proche)
-**Définition :** Politique de baseline classique (Section 4.7.1 du mémoire) où le camion choisit la pelle géographiquement la plus proche, puis le dump le plus proche de cette pelle.
-**Explication :** C'est une approche gloutonne (greedy) qui minimise la distance mais ignore les files d'attente.
-**Exemple :** Un camion au yard choisit la pelle P1 à 2km plutôt que la pelle P2 à 5km, sans vérifier si P1 est congestionnée.
-
----
-
-## Q-Learning
-**Définition :** Méthode d'apprentissage par renforcement tabulaire off-policy (Section 4.4.1 du mémoire) avec hyperparamètres α=0.1, γ=0.99, ε=1.0→0.01.
-**Explication :** L'agent met à jour Q selon Q(s_t,a_t) ← Q(s_t,a_t) + α[r_t + γ max_a' Q(s_{t+1},a') - Q(s_t,a_t)].
-**Exemple :** Dans le dispatching minier, Q(s,a) estime la récompense cumulative attendue si le camion va à une pelle donnée depuis son état actuel.
-
----
-
-## SARSA
-**Définition :** Variante on-policy du TD Learning (Section 4.4.3 du mémoire) avec hyperparamètres α=0.1, γ=0.99, ε=1.0→0.01.
-**Explication :** Contrairement au Q-Learning qui utilise max_a' Q(s_{t+1},a'), SARSA utilise Q(s_{t+1},a_{t+1}) où a_{t+1} est l'action effectivement prise.
-**Exemple :** SARSA produit des politiques plus conservatrices dans le dispatching minier car il tient compte de l'exploration effectivement réalisée.
-
----
-
-## TD Learning (Temporal Difference Learning)
-**Définition :** Principe général qui sous-tend Q-Learning, SARSA et d'autres méthodes RL (Section 4.4.2 du mémoire).
-**Explication :** L'erreur δ_t = r_t + γV(s_{t+1}) - V(s_t) est appelée erreur TD. Ce mécanisme est adapté aux environnements séquentiels.
-**Exemple :** Dans la logistique minière, TD Learning permet de mettre à jour les valeurs sans attendre la fin complète d'un shift de 8 heures.
-
----
-
-## PPO (Proximal Policy Optimization)
-**Définition :** Algorithme d'apprentissage par renforcement moderne (Section 4.5.4 du mémoire) avec architecture MLP 128×128, ReLU, hyperparamètres α=0.0003, γ=0.99, batch=64, λ=0.95, ε_clip=0.2.
-**Explication :** PPO utilise un clipping ratio pour limiter les changements de politique entre les mises à jour, assurant la stabilité.
-**Exemple :** PPO est l'algorithme principal utilisé dans le mémoire pour le dispatching minier.
-
----
-
-## DQN (Deep Q-Network)
-**Définition :** Extension du Q-Learning utilisant un réseau de neurones profond (Section 4.5.2 du mémoire) avec architecture MLP 128×128 et ReLU.
-**Explication :** DQN utilise l'expérience replay et un réseau cible pour stabiliser l'apprentissage dans des espaces d'état continus.
-**Exemple :** DQN est utilisé comme baseline Deep RL dans le mémoire.
-
----
-
-## Espace d'action discret
-**Définition :** Ensemble fini d'actions possibles dans un environnement RL, souvent encodé comme des entiers (Eq. 4.1 du mémoire).
-**Explication :** Dans le mémoire, l'espace d'action est Discrete(|P| × |D| + 1) où chaque action encode une paire (pelle,dump) par division entière.
-**Exemple :** Pour 3 pelles et 2 dumps, l'espace d'action contient 7 actions (0-6). L'action 4 correspond à shovel_idx=2 (pelle 3) et dump_idx=0 (dump 1).
+**Explication :** L’extraction du stérile est nécessaire mais augmente les coûts et le ratio de décapage.
+**Exemple :** Roche stérile extraite avant d’atteindre le minerai.

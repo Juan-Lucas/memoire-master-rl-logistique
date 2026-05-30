@@ -27,7 +27,7 @@ class Scenario:
     dump_count: int = 2
     episode_minutes: float = 480.0
     breakdown_probability: float = 0.02
-    reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05)
+    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3)
     seeds: list[int] = field(default_factory=lambda: list(range(42, 52)))
     total_timesteps: int = 2_000_000
 
@@ -43,6 +43,16 @@ SCENARIOS: dict[str, Scenario] = {
         breakdown_probability=0.02,
         total_timesteps=2_000_000,  # Augmenté à 2M pour améliorer PPO/DQN
     ),
+    "nominal_asymétrique": Scenario(
+        name="nominal_asymétrique",
+        description="Configuration asymétrique : 13 camions, 3 pelles, 2 dumps (MF=4.33, désavantage Fixed Assignment).",
+        truck_count=13,
+        shovel_count=3,
+        dump_count=2,
+        episode_minutes=480.0,
+        breakdown_probability=0.02,
+        total_timesteps=2_000_000,
+    ),
     "high_load": Scenario(
         name="high_load",
         description="Charge élevée : 18 camions pour 3 pelles (surcharge).",
@@ -51,6 +61,7 @@ SCENARIOS: dict[str, Scenario] = {
         dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.02,
+        total_timesteps=2_000_000,
     ),
     "low_load": Scenario(
         name="low_load",
@@ -60,6 +71,7 @@ SCENARIOS: dict[str, Scenario] = {
         dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.02,
+        total_timesteps=2_000_000,
     ),
     "high_breakdown": Scenario(
         name="high_breakdown",
@@ -69,6 +81,7 @@ SCENARIOS: dict[str, Scenario] = {
         dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.10,
+        total_timesteps=2_000_000,
     ),
     "single_shovel": Scenario(
         name="single_shovel",
@@ -78,6 +91,7 @@ SCENARIOS: dict[str, Scenario] = {
         dump_count=1,
         episode_minutes=480.0,
         breakdown_probability=0.02,
+        total_timesteps=2_000_000,
     ),
     "short_shift": Scenario(
         name="short_shift",
@@ -87,5 +101,6 @@ SCENARIOS: dict[str, Scenario] = {
         dump_count=2,
         episode_minutes=240.0,
         breakdown_probability=0.02,
+        total_timesteps=2_000_000,
     ),
 }

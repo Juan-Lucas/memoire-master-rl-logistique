@@ -1,360 +1,132 @@
 # Résultats clés - Chiffres à mémoriser
 
-Ce document compile les chiffres clés à mémoriser pour la soutenance. Organisez-vous pour les connaître par cœur.
+Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est aligné sur les chapitres 4, 5 et 6 du mémoire.
 
 ---
 
 ## Configuration de simulation
 
-### Mine typique
+### Mine nominale
 - **Nombre de camions** : 12
 - **Nombre de pelles** : 3
 - **Nombre de dumps** : 2
-- **Capacité camion** : 140 tonnes (Caterpillar 785C)
-- **Capacité godet pelle** : 15 tonnes (Hitachi 2500)
+- **Capacité camion** : 140 tonnes
+- **Durée épisode** : 8 heures (480 minutes)
+- **Observation** : 138 dimensions normalisées
+- **Action space** : 7 actions (3×2 + ATTENDRE)
 
-### Paramètres temporels
-- **Durée épisode** : 1 shift (8 heures = 480 minutes)
-- **Pas de décision Δt** : 5 minutes
-- **Nombre de pas par épisode** : 96 (480 / 5)
-- **Nombre d'épisodes entraînement** : 100 (PPO), 1000 (Q-Learning/SARSA)
+### Scénarios
+- **Nominal** : 12 camions, 3 pelles, 2 dumps, p_b = 2 %
+- **High Load** : 18 camions, 3 pelles, 2 dumps, p_b = 2 %
+- **High Breakdown** : 12 camions, 3 pelles, 2 dumps, p_b = 10 %
 
-### Distributions stochastiques
-- **Temps de trajet** : LOGN(12, 4) minutes (moyenne 12 min)
-- **Temps de chargement** : N(2, 0.3) minutes
-- **Temps de déchargement** : N(1, 0.2) minutes
-- **Probabilité de panne** : 2% par shift
-
----
-
-## Hyperparamètres RL
-
-### PPO (méthode principale)
-- **Learning rate (α)** : 0.0003
-- **Facteur d'actualisation (γ)** : 0.99
-- **Batch size** : 64
-- **GAE λ** : 0.95
-- **PPO clipping (ε)** : 0.2
-- **Architecture** : MLP 128×128 avec ReLU
-- **Nombre d'épisodes** : 100
-
-### Q-Learning / SARSA
-- **Learning rate (α)** : 0.1
-- **Facteur d'actualisation (γ)** : 0.99
-- **Taux d'exploration initial (ε)** : 1.0
-- **Taux d'exploration final (ε)** : 0.01
-- **Nombre d'épisodes** : 1000
-
-### DQN
-- **Learning rate (α)** : 0.0001
-- **Facteur d'actualisation (γ)** : 0.99
-- **Batch size** : 64
-- **Taille replay buffer** : 10000
-- **Architecture** : MLP 128×128 avec ReLU
-- **Nombre d'épisodes** : 100
+### Hyperparamètres RL
+- **PPO** : α = 3×10⁻⁴, γ = 0.99, batch size = 64, GAE λ = 0.95, ε clip = 0.2, MLP 128×128, 2M steps
+- **DQN** : α = 3×10⁻⁴, γ = 0.99, batch size = 64, replay buffer = 200 000, MLP 128×128, 2M steps
+- **Q-Learning / SARSA** : α = 0.2, γ = 0.99, ε = 1.0→0.01, 30 000 épisodes, 8 bins, 5 features discrétisées
 
 ---
 
 ## Fonction de récompense
-
-### Poids des composantes
-- **w1 (rendement)** : 1.0
-- **w2 (équité)** : 0.1
-- **w3 (coût)** : 0.05
-
-### Coût de trajet (Eq. 3.1)
-- **α (temps)** : 0.5
-- **β (distance)** : 0.3
-- **γ (énergie)** : 0.2
-
-### Exemple calcul récompense
-- **Rendement** : 280 tonnes (2 camions × 140 t)
-- **Équité** : -5.2 (pénalité files inégales)
-- **Coût** : -120 (pénalité distance)
-- **R_total** : 1.0 × 280 + 0.1 × (-5.2) + 0.05 × (-120) = 273.48
+- Poids : w1 = 1.0 (rendement), w2 = 0.1 (équité), w3 = 0.05 (coût), w4 = 1.0 (attente)
+- Signal : rendement, variance des files, coût de trajet, pénalité d’attente à la pelle
+- Sans w4, signal non discriminant ; avec w4 = 1.0, signal efficace.
 
 ---
 
-## Résultats - Scénario nominal
+## Résultats – Scénario nominal
 
 ### Productivité (t/h)
-- **PPO** : 8000 t/h
-- **FIFO** : 6950 t/h
-- **Shortest Path** : 7300 t/h
-- **Fixed Assignment** : 6500 t/h
-- **Nearest Shovel** : 7100 t/h
-- **Gain PPO vs FIFO** : +15%
-- **Gain PPO vs Fixed Assignment** : +23%
+- **Fixed Assignment** : 4 074 ± 36
+- **Nearest Shovel** : 3 830 ± 51
+- **Shortest Path** : 3 830 ± 51
+- **PPO** : 3 335 ± 38
+- **DQN** : 3 311 ± 72
+- **FIFO** : 3 318 ± 42
+- **Q-Learning** : 3 273 ± 89
+- **SARSA** : 3 222 ± 97
+- **Random** : 3 148 ± 45
 
-### Temps d'attente moyen (min)
-- **PPO** : 3.2 min
-- **FIFO** : 4.1 min
-- **Shortest Path** : 4.3 min
-- **Fixed Assignment** : 4.8 min
-- **Nearest Shovel** : 3.9 min
-- **Gain PPO vs Shortest Path** : -25%
-- **Gain PPO vs Fixed Assignment** : -33%
+### Temps d’attente moyen (min)
+- **Fixed Assignment** : 27.9 ± 3.8
+- **PPO** : 30.6 ± 5.1
+- **DQN** : 33.4 ± 10.4
+- **FIFO** : 32.8 ± 3.7
+- **Q-Learning** : 36.9 ± 19.4
+- **SARSA** : 52.5 ± 14.2
+- **Random** : 50.6 ± 3.9
+- **Nearest Shovel** : 74.6 ± 7.2
+- **Shortest Path** : 74.6 ± 7.2
 
 ### Consommation spécifique (L/t)
-- **PPO** : 0.85 L/t
-- **FIFO** : 0.91 L/t
-- **Shortest Path** : 0.88 L/t
-- **Fixed Assignment** : 0.94 L/t
-- **Nearest Shovel** : 0.89 L/t
-- **Gain PPO vs Fixed Assignment** : -10%
-- **Gain PPO vs FIFO** : -7%
+- **Nearest Shovel / Shortest Path** : 0.0443 ± 0.0004
+- **Fixed Assignment** : 0.0431 ± 0.0003
+- **PPO** : 0.0525 ± 0.0005
+- **DQN** : 0.0524 ± 0.0008
+- **FIFO** : 0.0528 ± 0.0003
+- **Q-Learning** : 0.0534 ± 0.0008
+- **SARSA** : 0.0537 ± 0.0006
+- **Random** : 0.0551 ± 0.0005
 
-### Taux d'utilisation camions (%)
-- **PPO** : 82%
-- **FIFO** : 75%
-- **Shortest Path** : 78%
-- **Fixed Assignment** : 70%
-- **Nearest Shovel** : 76%
-- **Gain PPO vs Fixed Assignment** : +12 points
-
-### Taux d'utilisation pelles (%)
-- **PPO** : 85%
-- **FIFO** : 78%
-- **Shortest Path** : 80%
-- **Fixed Assignment** : 72%
-- **Nearest Shovel** : 77%
-- **Gain PPO vs Fixed Assignment** : +13 points
+### Taux d’utilisation camions (%)
+- **PPO** : 97.1
+- **Fixed Assignment** : 96.8
+- **DQN** : 96.4
+- **FIFO** : 95.8
+- **Q-Learning** : 95.4
+- **SARSA** : 93.2
+- **Random** : 92.8
+- **Nearest Shovel / Shortest Path** : 87.8
 
 ---
 
-## Résultats - Robustesse scénarios perturbés
+## Résultats – Scénarios perturbés
 
-### Scénario High-load (15 camions au lieu de 12)
-- **PPO** : 92% de performance nominale
-- **FIFO** : 85% de performance nominale
-- **Shortest Path** : 88% de performance nominale
-- **Gain PPO** : +7 points vs FIFO
+### High Load (18 camions)
+- **Fixed Assignment** : 5 875 ± 54 t/h
+- **Q-Learning** : 4 772 ± 45 t/h
+- **DQN** : 4 772 ± 73 t/h
+- **FIFO** : 4 772 ± 72 t/h
+- **PPO** : 4 748 ± 59 t/h
+- **SARSA** : 4 636 ± 62 t/h
+- **Random** : 4 547 ± 46 t/h
+- **Nearest Shovel / Shortest Path** : 3 919 ± 51 t/h (201.1 ± 11.4 min d’attente)
 
-### Scénario Low-load (8 camions au lieu de 12)
-- **PPO** : 95% de performance nominale
-- **FIFO** : 90% de performance nominale
-- **Shortest Path** : 92% de performance nominale
-- **Gain PPO** : +5 points vs FIFO
-
-### Scénario High-breakdown (5% pannes au lieu de 2%)
-- **PPO** : 88% de performance nominale
-- **FIFO** : 78% de performance nominale
-- **Shortest Path** : 82% de performance nominale
-- **Gain PPO** : +10 points vs FIFO
-
-### Scénario Single-shovel (1 pelle au lieu de 3)
-- **PPO** : 85% de performance nominale
-- **FIFO** : 70% de performance nominale
-- **Shortest Path** : 75% de performance nominale
-- **Gain PPO** : +15 points vs FIFO
-
-### Scénario Short-shift (4 heures au lieu de 8)
-- **PPO** : 90% de performance nominale
-- **FIFO** : 82% de performance nominale
-- **Shortest Path** : 85% de performance nominale
-- **Gain PPO** : +8 points vs FIFO
+### High Breakdown (10% pannes)
+- **Fixed Assignment** : 3 865 ± 28 t/h
+- **Nearest Shovel / Shortest Path** : 3 687 ± 37 t/h
+- **PPO** : 3 166 ± 52 t/h (meilleur temps d’attente : 47.7 min)
+- **DQN** : 3 162 ± 35 t/h
+- **Q-Learning** : 3 146 ± 44 t/h
+- **FIFO** : 3 118 ± 60 t/h
+- **SARSA** : 3 083 ± 56 t/h
+- **Random** : 2 998 ± 38 t/h
 
 ---
 
-## Statistiques d'évaluation
+## Statistiques d’évaluation
 
-### Significativité statistique
-- **Nombre de réplications** : 10
-- **Seeds** : Fixées pour reproductibilité
-- **Test** : t-test de Student apparié
-- **Niveau de signification** : p < 0.05
+- **Réplications** : 10 par scénario
+- **Seeds** : 42 à 51
 - **Intervalle de confiance** : 95%
 
-### Effet de taille (Cohen's d)
-- **Productivité PPO vs FIFO** : d = 1.2 (effet large)
-- **Temps d'attente PPO vs Shortest Path** : d = 0.9 (effet large)
-- **Consommation PPO vs Fixed Assignment** : d = 0.8 (effet large)
+## Points à retenir
 
-### Variabilité (écart-type)
-- **Productivité PPO** : 8000 ± 250 t/h
-- **Productivité FIFO** : 6950 ± 300 t/h
-- **Temps d'attente PPO** : 3.2 ± 0.4 min
-- **Temps d'attente FIFO** : 4.1 ± 0.5 min
+- **Fixed Assignment domine en nominal** grâce au Match Factor 12/3 = 4.
+- **PPO est le meilleur agent en robustesse d’attente** sur le scénario `high_breakdown`.
+- **Nearest Shovel / Shortest Path s’effondrent en high_load** (≈ 3 919 t/h, 201 min d’attente).
+- **Q-Learning et SARSA** sont utiles pour l’analyse méthodologique ; PPO et DQN sont plus stables sur l’espace continu.
 
 ---
 
-## Coûts computationnels
+## Notes techniques
 
-### Entraînement
-- **PPO** : 1-2 heures sur GPU (RTX 3080)
-- **DQN** : 1.5-2.5 heures sur GPU
-- **Q-Learning** : 30-45 minutes sur CPU
-- **SARSA** : 30-45 minutes sur CPU
-
-### Inférence (temps réel)
-- **PPO** : < 1 ms par décision
-- **DQN** : < 1 ms par décision
-- **Q-Learning** : < 0.1 ms par décision (lookup table)
-- **SARSA** : < 0.1 ms par décision (lookup table)
-
-### Mémoire
-- **PPO** : ~500 MB (réseau + buffer)
-- **DQN** : ~1 GB (replay buffer)
-- **Q-Learning** : ~10 MB (table Q)
-- **SARSA** : ~10 MB (table Q)
+- Capacité camion : 140 t
+- Observation : 138 features normalisées
+- Action : 7 actions
+- Entraînement : 2M steps pour PPO/DQN, 30 000 épisodes pour Q-Learning/SARSA
 
 ---
 
-## Comparaison RL tabulaire vs profond
+*Ce document résume les chiffres clés et la cohérence des résultats présentés dans le mémoire.*
 
-### Espace d'état
-- **Dimension** : ~50 features (files, positions, disponibilités)
-- **Taille discrétisée** : 10^50 états possibles
-- **RL tabulaire** : impossible (explosion combinatoire)
-- **RL profond** : gérable via approximation
-
-### Performance
-- **Q-Learning** : 7200 t/h (limité par taille table)
-- **SARSA** : 7100 t/h (limité par taille table)
-- **DQN** : 7800 t/h (meilleur que tabulaire)
-- **PPO** : 8000 t/h (meilleur performance globale)
-
-### Temps d'entraînement
-- **Q-Learning** : 30-45 min (convergence lente)
-- **SARSA** : 30-45 min (convergence lente)
-- **DQN** : 1.5-2.5 h (plus stable)
-- **PPO** : 1-2 h (plus rapide convergence)
-
----
-
-## KPIs industriels clés
-
-### Match Factor (MF)
-- **Définition** : Nombre de camions / Nombre de pelles
-- **Configuration** : 12 / 3 = 4
-- **Optimal théorique** : 3-5
-- **Résultat PPO** : MF effectif = 3.8 (proche optimal)
-
-### Cycle Time
-- **Moyenne théorique** : 30 min
-- **Résultat PPO** : 28 min
-- **Résultat FIFO** : 33 min
-- **Gain** : -15% vs FIFO
-
-### Tonnage par shift
-- **Objectif** : 10 000 t/shift
-- **Résultat PPO** : 9 200 t/shift
-- **Résultat FIFO** : 8 000 t/shift
-- **Gain** : +15% vs FIFO
-
----
-
-## Impact économique estimé
-
-### Gains par jour
-- **Productivité** : +1 200 t/jour (15% de 8 000 t)
-- **Valeur** : 1 200 t × $50/t = $60 000/jour
-- **Carburant** : -10% → économie ~$5 000/jour
-- **Total gains** : ~$65 000/jour
-
-### Coûts annuels
-- **Développement** : ~$50 000 (temps ingénieur)
-- **Entraînement** : négligeable
-- **Maintenance** : ~$10 000/an
-- **Total coûts** : ~$60 000 (année 1)
-
-### ROI
-- **Gains annuels** : $65 000 × 250 jours = $16.25M
-- **Coûts année 1** : $60 000
-- **ROI année 1** : 27 000% (théorique)
-- **ROI réaliste** : > 100% (avec hypothèses conservatrices)
-
----
-
-## Exemples numériques à maîtriser
-
-### Exemple 1 : Coût de trajet (Eq. 3.1)
-- α = 0.5, β = 0.3, γ = 0.2
-- T_ij = 15 min, D_ij = 2.5 km, E_ij = 0.8
-- C_ij = 0.5 × 15 + 0.3 × 2.5 + 0.2 × 0.8 = 8.41
-
-### Exemple 2 : Temps stochastique (Eq. 3.2)
-- T̄_ij = 12 min, σ = 2.5
-- ε_ij(t) = 2.3 (échantillon N(0, 2.5))
-- T_ij(t) = 12 + 2.3 = 14.3 min
-
-### Exemple 3 : Q-Learning (Eq. 4.3)
-- Q = 50, r = 10, γ = 0.99, max Q' = 55, α = 0.1
-- Q ← 50 + 0.1 × (10 + 0.99 × 55 - 50) = 51.45
-
-### Exemple 4 : Espace d'action (Eq. 4.1)
-- 3 pelles, 2 dumps
-- |A| = 3 × 2 + 1 = 7 actions (0-6)
-- Action 4 → shovel_idx = 2, dump_idx = 0
-
----
-
-## Méthode de mémorisation
-
-### Flash cards
-- Créez des cartes avec question au recto, chiffre au verso
-- Exemple : "Productivité PPO nominal ?" → "8000 t/h"
-
-### Regroupement thématique
-- **Configuration** : camions, pelles, temps
-- **Hyperparamètres** : PPO, Q-Learning, DQN
-- **Résultats nominaux** : productivité, attente, consommation
-- **Robustesse** : % performance sur scénarios perturbés
-- **Économie** : gains, coûts, ROI
-
-### Répétition espacée
-- Jour 1 : Toutes les catégories
-- Jour 2 : Focus résultats nominaux
-- Jour 3 : Focus robustesse
-- Jour 4 : Focus économie
-- Jour 5 : Révision complète
-
-### Test à blanc
-- Fermez ce document
-- Essayez de réciter 10 chiffres clés
-- Vérifiez et répétez les erreurs
-
----
-
-## Checklist de mémorisation
-
-### Configuration
-- [ ] 12 camions, 3 pelles, 2 dumps
-- [ ] Capacité camion 140 t
-- [ ] Durée épisode 8h (480 min)
-- [ ] Pas de décision 5 min
-- [ ] 96 pas par épisode
-
-### Hyperparamètres PPO
-- [ ] α = 0.0003
-- [ ] γ = 0.99
-- [ ] Batch = 64
-- [ ] λ = 0.95
-- [ ] ε_clip = 0.2
-- [ ] MLP 128×128
-
-### Résultats nominaux
-- [ ] PPO 8000 t/h
-- [ ] Gain +15% vs FIFO
-- [ ] Temps attente 3.2 min
-- [ ] Consommation 0.85 L/t
-- [ ] Utilisation camions 82%
-
-### Robustesse
-- [ ] High-load : 92% performance
-- [ ] Low-load : 95% performance
-- [ ] High-breakdown : 88% performance
-- [ ] Single-shovel : 85% performance
-
-### Économie
-- [ ] Gains $65 000/jour
-- [ ] ROI > 100%
-- [ ] Coût entraînement 1-2h GPU
-- [ ] Inférence < 1ms
-
----
-
-**Score de mémorisation :** ____ / 20 cases cochées
-
-**Objectif minimal avant soutenance :** 18 / 20
-**Objectif idéal :** 20 / 20

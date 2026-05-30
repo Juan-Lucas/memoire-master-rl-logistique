@@ -28,7 +28,8 @@ def create_env(
     dump_count: int = 2,
     episode_minutes: float = 480.0,
     seed: int = 42,
-    reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05),
+    breakdown_probability: float = 0.02,
+    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 1.0),
 ) -> MineEnv:
     """Crée une instance de l'environnement minier."""
     return MineEnv(
@@ -37,6 +38,7 @@ def create_env(
         dump_count=dump_count,
         episode_minutes=episode_minutes,
         seed=seed,
+        breakdown_probability=breakdown_probability,
         reward_weights=reward_weights,
     )
 
@@ -48,7 +50,8 @@ def train_dqn(
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
-    reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05),
+    breakdown_probability: float = 0.02,
+    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 1.0),
     output_dir: str = "models/dqn_mine",
     log_freq: int = 1000,
 ) -> DQN:
@@ -58,8 +61,8 @@ def train_dqn(
     - Learning rate : 0.0003
     - Gamma : 0.99
     - Batch size : 64
-    - Buffer size : 50 000
-    - Exploration : ε de 1.0 à 0.05 (fraction 0.3)
+    - Buffer size : 200 000
+    - Exploration : ε de 1.0 à 0.02 (fraction 0.3)
     - Architecture : MLP [128, 128]
     """
     out_path = Path(output_dir)
@@ -72,6 +75,7 @@ def train_dqn(
             dump_count=dump_count,
             episode_minutes=episode_minutes,
             seed=seed,
+            breakdown_probability=breakdown_probability,
             reward_weights=reward_weights,
         ),
         n_envs=1,
@@ -84,16 +88,16 @@ def train_dqn(
         learning_rate=3e-4,
         gamma=0.99,
         batch_size=64,
-        buffer_size=50_000,
+        buffer_size=200_000,
         learning_starts=1000,
-        target_update_interval=500,
+        target_update_interval=1000,
         exploration_fraction=0.3,
         exploration_initial_eps=1.0,
-        exploration_final_eps=0.05,
+        exploration_final_eps=0.02,
         policy_kwargs={"net_arch": [128, 128]},
         verbose=1,
         seed=seed,
-        tensorboard_log=str(out_path / "tb_logs"),
+        tensorboard_log=None,  # Désactivé temporairement pour éviter le conflit TensorBoard
     )
 
     kpi_callback = KPILoggerCallback(
@@ -120,7 +124,7 @@ def train_dqn(
 def main() -> None:
     """Point d'entrée pour l'entraînement DQN."""
     train_dqn(
-        total_timesteps=50_000,
+        total_timesteps=2_000_000,
         seed=42,
         truck_count=12,
         shovel_count=3,

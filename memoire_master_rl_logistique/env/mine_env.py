@@ -66,8 +66,9 @@ class MineEnv(gym.Env):
         episode_minutes: float = 480.0,
         seed: int = 42,
         breakdown_probability: float = 0.02,
-        reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05),
+        reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
         capacity_tonnes: float = 140.0,
+        wait_action_minutes: float = 5.0,
         render_mode: str | None = None,
     ) -> None:
         super().__init__()
@@ -78,8 +79,10 @@ class MineEnv(gym.Env):
         self.episode_minutes = episode_minutes
         self._seed = seed
         self.breakdown_probability = breakdown_probability
-        self.w1, self.w2, self.w3 = reward_weights
+        self.w1, self.w2, self.w3 = reward_weights[:3]
+        self.w4 = reward_weights[3] if len(reward_weights) > 3 else 1.0
         self.capacity_tonnes = capacity_tonnes
+        self.wait_action_minutes = wait_action_minutes
         self.render_mode = render_mode
 
         self.num_actions = self.shovel_count * self.dump_count + 1
@@ -108,7 +111,11 @@ class MineEnv(gym.Env):
     ) -> tuple[np.ndarray, dict[str, Any]]:
         """Initialise la mine pour un nouvel épisode (Section 4.3.1)."""
         super().reset(seed=seed)
-        effective_seed = seed if seed is not None else self._seed
+        if seed is None:
+            self._episode_counter = getattr(self, "_episode_counter", self._seed) + 1
+            effective_seed = self._episode_counter
+        else:
+            effective_seed = seed
         self.rng = Random(effective_seed)
 
         self.graph = build_mine_graph(
@@ -165,12 +172,37 @@ class MineEnv(gym.Env):
         Si action == shovel_count * dump_count → ATTENDRE.
         """
         assert self.graph is not None and self.rng is not None
+        action = int(action)
+        if not self.action_space.contains(action):
+            msg = f"Invalid action {action}; expected 0..{self.num_actions - 1}."
+            raise ValueError(msg)
 
         truck = self.trucks[self.current_truck_idx]
-        shovel, dump = self._decode_action(action)
-
-        time_min = max(truck.available_at_min, self.current_time_min)
+        start_time = max(truck.available_at_min, self.current_time_min)
+        time_min = start_time
         location = self.truck_locations[self.current_truck_idx]
+        decision_time = self.current_time_min
+        n_pair = self.shovel_count * self.dump_count
+
+        if action == n_pair:
+            reward = self._apply_wait_action(truck, time_min)
+            self._advance_to_next_truck()
+            truncated = self.current_time_min >= self.episode_minutes
+            obs = self._get_obs()
+            info = self._get_info()
+            return obs, reward, False, truncated, info
+
+        shovel, dump = self._decode_action(action)
+        truck.assigned_shovel_idx = action // self.dump_count
+        pre_action_route_km = (
+            self._route_distance(location, shovel.node_id)
+            + self._route_distance(shovel.node_id, dump.node_id)
+            + self._route_distance(dump.node_id, shovel.node_id)
+        )
+        resource_waits = [
+            max(0.0, s.available_at_min - decision_time)
+            for s in self.shovels
+        ]
 
         # Trajet vers la pelle
         self.truck_statuses[self.current_truck_idx] = STATUS_TO_SHOVEL
@@ -242,24 +274,27 @@ class MineEnv(gym.Env):
             truck.total_fuel_l += estimate_idle_fuel_l(repair_min)
 
         # Compléter le cycle
+        delivered_tonnage = 0.0
         if time_min < self.episode_minutes:
             truck.cycles_completed += 1
             truck.total_tonnage_t += truck.capacity_tonnes
+            delivered_tonnage = truck.capacity_tonnes
 
         truck.available_at_min = time_min
         self.truck_locations[self.current_truck_idx] = location
         self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
 
-        # Récompense (Eq. 3.8)
-        reward = self._compute_reward(action)
+        # Récompense (Eq. 3.7)
+        reward = self._compute_reward(
+            delivered_tonnage_t=delivered_tonnage,
+            route_distance_km=pre_action_route_km,
+            resource_waits_min=resource_waits,
+            operational_wait_min=wait_load_min + wait_dump_min,
+        )
+        self._prev_tonnage = sum(t.total_tonnage_t for t in self.trucks)
 
         # Avancer le temps global et passer au camion suivant
-        self.current_time_min = min(
-            t.available_at_min for t in self.trucks
-        )
-        self.current_truck_idx = int(
-            np.argmin([t.available_at_min for t in self.trucks]),
-        )
+        self._advance_to_next_truck()
 
         terminated = False
         truncated = self.current_time_min >= self.episode_minutes
@@ -268,47 +303,77 @@ class MineEnv(gym.Env):
         info = self._get_info()
         return obs, reward, terminated, truncated, info
 
-    def _compute_reward(self, action: int) -> float:
-        """Récompense pondérée multi-objectif (Eq. 3.7).
+    def _apply_wait_action(self, truck: Truck, time_min: float) -> float:
+        """Applique l'action ATTENDRE sans effectuer de cycle de transport."""
+        future_events = [
+            t.available_at_min
+            for t in self.trucks
+            if t.available_at_min > time_min
+        ]
+        future_events.extend(
+            s.available_at_min for s in self.shovels if s.available_at_min > time_min
+        )
+        future_events.extend(
+            d.available_at_min for d in self.dumps if d.available_at_min > time_min
+        )
 
-        R_t = w1 * R_rendement + w2 * R_équité + w3 * R_coût
-        """
-        current_tonnage = sum(t.total_tonnage_t for t in self.trucks)
-        r_rendement = current_tonnage - self._prev_tonnage
-        self._prev_tonnage = current_tonnage
+        if future_events:
+            wait_min = min(self.wait_action_minutes, min(future_events) - time_min)
+        else:
+            wait_min = self.wait_action_minutes
+        wait_min = max(0.2, wait_min)
 
-        if len(self.shovels) >= 2:
-            wait_times = [
-                max(0.0, s.available_at_min - self.current_time_min)
-                for s in self.shovels
-            ]
-            mean_wait = sum(wait_times) / len(wait_times)
+        truck.total_wait_min += wait_min
+        truck.total_fuel_l += estimate_idle_fuel_l(wait_min)
+        truck.available_at_min = time_min + wait_min
+        truck.assigned_shovel_idx = None
+        self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
+        self._prev_tonnage = sum(t.total_tonnage_t for t in self.trucks)
+
+        resource_waits = [
+            max(0.0, s.available_at_min - self.current_time_min)
+            for s in self.shovels
+        ]
+        return self._compute_reward(
+            delivered_tonnage_t=0.0,
+            route_distance_km=0.0,
+            resource_waits_min=resource_waits,
+            operational_wait_min=wait_min,
+        )
+
+    def _advance_to_next_truck(self) -> None:
+        """Avance l'horloge globale vers le prochain camion disponible."""
+        availability = [t.available_at_min for t in self.trucks]
+        self.current_time_min = min(availability)
+        self.current_truck_idx = int(np.argmin(availability))
+
+    def _compute_reward(
+        self,
+        delivered_tonnage_t: float,
+        route_distance_km: float,
+        resource_waits_min: list[float],
+        operational_wait_min: float,
+    ) -> float:
+        """Recompense multi-objectif calculee sur le cycle execute."""
+        r_rendement = delivered_tonnage_t / max(self.capacity_tonnes, 1e-9)
+
+        if len(resource_waits_min) >= 2:
+            mean_wait = sum(resource_waits_min) / len(resource_waits_min)
             variance = sum(
-                (w - mean_wait) ** 2 for w in wait_times
-            ) / len(wait_times)
-            r_equite = -variance
+                (w - mean_wait) ** 2 for w in resource_waits_min
+            ) / len(resource_waits_min)
+            r_equite = -variance / 100.0
         else:
             r_equite = 0.0
 
-        r_cout = 0.0
-        n_pair = self.shovel_count * self.dump_count
-        if action < n_pair and self.graph is not None:
-            s_idx = action // self.dump_count
-            shovel = self.shovels[s_idx]
-            truck_loc = self.truck_locations[self.current_truck_idx]
-            route = self._find_route(truck_loc, shovel.node_id)
-            for i in range(len(route) - 1):
-                edge = self.graph.get_edge(route[i], route[i + 1])
-                r_cout -= edge.distance_km
-
-        r_rendement_norm = r_rendement / self.capacity_tonnes
-        r_equite_norm = r_equite / 100.0
-        r_cout_norm = r_cout / 5.0
+        r_cout = -route_distance_km / 5.0
+        r_attente = -min(operational_wait_min / 30.0, 1.0)
 
         return (
-            self.w1 * r_rendement_norm
-            + self.w2 * r_equite_norm
-            + self.w3 * r_cout_norm
+            self.w1 * r_rendement
+            + self.w2 * r_equite
+            + self.w3 * r_cout
+            + self.w4 * r_attente
         )
 
     def _decode_action(self, action: int) -> tuple[Shovel, DumpSite]:
@@ -339,6 +404,16 @@ class MineEnv(gym.Env):
         assert self.graph is not None
         path = self.graph.shortest_path(src, dst)
         return path if path else [src]
+
+    def _route_distance(self, src: str, dst: str) -> float:
+        """Distance totale du plus court chemin entre deux noeuds."""
+        assert self.graph is not None
+        route = self._find_route(src, dst)
+        total = 0.0
+        for i in range(len(route) - 1):
+            edge = self.graph.get_edge(route[i], route[i + 1])
+            total += edge.distance_km
+        return total
 
     def _travel_route(
         self, src: str, dst: str, loaded: bool,
@@ -393,6 +468,7 @@ class MineEnv(gym.Env):
             episode_minutes=self.episode_minutes,
             truck_locations=self.truck_locations,
             truck_statuses=self.truck_statuses,
+            current_truck_idx=self.current_truck_idx,
         )
 
     def _get_info(self) -> dict[str, Any]:
@@ -404,6 +480,8 @@ class MineEnv(gym.Env):
             "total_fuel_l": sum(t.total_fuel_l for t in self.trucks),
             "total_wait_min": sum(t.total_wait_min for t in self.trucks),
             "total_cycles": sum(t.cycles_completed for t in self.trucks),
+            "shovel_available_at": [s.available_at_min for s in self.shovels],
+            "dump_available_at": [d.available_at_min for d in self.dumps],
         }
 
     def render(self) -> str | None:

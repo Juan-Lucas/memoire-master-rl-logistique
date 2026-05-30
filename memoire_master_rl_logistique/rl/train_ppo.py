@@ -24,7 +24,8 @@ def create_env(
     dump_count: int = 2,
     episode_minutes: float = 480.0,
     seed: int = 42,
-    reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05),
+    breakdown_probability: float = 0.02,
+    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 1.0),
 ) -> MineEnv:
     """Crée une instance de l'environnement minier."""
     return MineEnv(
@@ -33,6 +34,7 @@ def create_env(
         dump_count=dump_count,
         episode_minutes=episode_minutes,
         seed=seed,
+        breakdown_probability=breakdown_probability,
         reward_weights=reward_weights,
     )
 
@@ -44,7 +46,8 @@ def train_ppo(
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
-    reward_weights: tuple[float, float, float] = (1.0, 0.1, 0.05),
+    breakdown_probability: float = 0.02,
+    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 1.0),
     output_dir: str = "models/ppo_mine",
     log_freq: int = 1000,
 ) -> PPO:
@@ -72,6 +75,7 @@ def train_ppo(
             dump_count=dump_count,
             episode_minutes=episode_minutes,
             seed=seed,
+            breakdown_probability=breakdown_probability,
             reward_weights=reward_weights,
         ),
         n_envs=1,
@@ -81,18 +85,18 @@ def train_ppo(
     model = PPO(
         policy="MlpPolicy",
         env=env,
-        learning_rate=1e-4,
+        learning_rate=3e-4,
         gamma=0.99,
         batch_size=64,
         gae_lambda=0.95,
         clip_range=0.2,
-        n_steps=2048,
+        n_steps=1024,
         n_epochs=10,
-        ent_coef=0.01,
+        ent_coef=0.02,
         policy_kwargs={"net_arch": [128, 128]},
         verbose=1,
         seed=seed,
-        tensorboard_log=str(out_path / "tb_logs"),
+        tensorboard_log=None,  # Désactivé temporairement pour éviter le conflit TensorBoard
     )
 
     kpi_callback = KPILoggerCallback(
@@ -119,7 +123,7 @@ def train_ppo(
 def main() -> None:
     """Point d'entrée pour l'entraînement."""
     train_ppo(
-        total_timesteps=50_000,
+        total_timesteps=2_000_000,
         seed=42,
         truck_count=12,
         shovel_count=3,

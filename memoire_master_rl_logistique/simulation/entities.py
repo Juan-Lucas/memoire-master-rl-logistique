@@ -27,6 +27,7 @@ class Truck:
     cycles_completed: int = 0
     total_tonnage_t: float = 0.0
     total_fuel_l: float = 0.0
+    assigned_shovel_idx: int | None = None
     history: list[dict] = field(default_factory=list)
 
 

@@ -1,84 +1,79 @@
 # Paramètres de Simulation et Hypothèses
 
-Ce document synthétise tous les paramètres utiles à la construction d'une simulation logistique minière réaliste pour l'apprentissage par renforcement, extraits des fiches de lecture, articles, thèses et rapports du projet.
+Ce document synthétise les paramètres réellement utilisés par la simulation et les choix présentés dans les chapitres 4, 5 et 6 du mémoire.
 
 ## 1. Tableau des Paramètres Utiles
 
 | Paramètre                        | Valeur / Distribution         | Source / Justification                                                                 |
 |----------------------------------|------------------------------|---------------------------------------------------------------------------------------|
-| Capacité camion (Type 1)         | 140 tonnes                   | Caterpillar 785C, Afrapoli & Askari-Nasab (2017)                                      |
-| Vitesse moyenne à vide           | LOGN(32, 26) km/h            | Table 4.4, Afrapoli (2019)                                                            |
-| Temps de cycle pelle             | NORM(17, 0.5) s              | Table 4.3, Afrapoli (2019), Hitachi 2500                                              |
-| Consommation au ralenti          | 10 L/heure                   | Standard diesel, article X                                                            |
-| Probabilité de panne camion      | 2% par shift                 | Hypothèse réaliste, discussion article Y                                              |
-| Pente route                      | 8%                           | Mohtasham et al. (2023), layout Sungun mine                                           |
-| Temps d’attente zone tampon      | NORM(5, 2) min               | Synthèse articles simulation                                                          |
-| Temps de trajet                  | LOGN(12, 4) min              | Distribution ajustée, Afrapoli & Askari-Nasab (2017)                                  |
-| Capacité godet pelle             | 15 tonnes                    | Spécification Hitachi, Table 2, Mohtasham et al. (2023)                               |
-| Production cible                 | 10 000 t/jour                | Cas d’étude, Mohtasham et al. (2023)                                                  |
-| Probabilité dégradation route    | 5% par heure                 | Hypothèse de travail, justifiée pour robustesse                                       |
-| Nombre de camions                | 12                           | Cas Kansanshi, Kangwa (2021)                                                          |
-| Nombre de pelles                 | 3                            | Cas Kansanshi, Kangwa (2021)                                                          |
-| Temps de chargement pelle        | NORM(2, 0.3) min             | Table 2, Mohtasham et al. (2023)                                                      |
-| Temps de déchargement            | NORM(1, 0.2) min             | Table 2, Mohtasham et al. (2023)                                                      |
-| Match Factor (MF)                | 0.85                         | KPI central, simulation minière, Ozdemir & Kumral (2019)                              |
-| Utilisation flotte camions       | 75%                          | Simulation, Ozdemir & Kumral (2019)                                                   |
-| Utilisation pelles               | 80%                          | Simulation, Ozdemir & Kumral (2019)                                                   |
-| Temps de cycle camion            | NORM(15, 3) min              | Synthèse simulation, Zeng et al. (2022)                                               |
-| Productivité                     | 8 000 t/shift                | Simulation, Abolghasemian et al. (2020)                                               |
-| ...                              | ...                          | ...         
+| Capacité camion                  | 140 tonnes                   | Configuration nominale du simulateur / Chapitre 5                                   |
+| Capacité godet pelle             | 15 tonnes                    | Spécification Hitachi / Chapitre 5                                                    |
+| Nombre de camions (nominal)      | 12                           | Scénario nominal / Chapitre 6                                                         |
+| Nombre de camions (high_load)    | 18                           | Scénario surcharge / Chapitre 6                                                       |
+| Nombre de pelles                 | 3                            | Scénario nominal / Chapitre 6                                                         |
+| Nombre de dumps                  | 2                            | Scénario nominal / Chapitre 6                                                         |
+| Durée épisode                    | 8 heures (480 min)           | Configuration du poste / Chapitre 5                                                   |
+| Temps de chargement pelle        | N(2, 0.3) minutes            | Chapitre 5                                                                           |
+| Temps de déchargement            | N(1, 0.2) minutes            | Chapitre 5                                                                           |
+| Temps de trajet                  | Log-normal (σ = 0.12)        | Chapitre 5                                                                           |
+| Probabilité de panne (nominal)   | 2% par cycle                 | Chapitre 6                                                                           |
+| Probabilité de panne (breakdown) | 10% par cycle                | Chapitre 6                                                                           |
+| Durée panne                      | Uniforme U[10, 30] minutes   | Chapitre 5                                                                           |
+| Pente route                      | 3-8%                         | Graphe routier / Chapitre 5                                                           |
+| Distance route                   | 1.5-3.2 km                   | Graphe routier / Chapitre 5                                                           |
+| Observation                     | 138 dimensions               | Section 4.3 / code `observation_size()`                                               |
+| Action space                    | 7 actions                    | 3 pelles × 2 dumps + ATTENDRE                                                        |
 
-## 6. Hyperparamètres RL (Tableau 4.6 du mémoire)
+## 2. Hyperparamètres RL
 
 | Paramètre | Q-Learning | SARSA | DQN | PPO |
 |-----------|------------|-------|-----|-----|
-| Taux d'apprentissage (α) | 0.1 | 0.1 | 0.0001 | 0.0003 |
+| Taux d'apprentissage (α) | 0.2 | 0.2 | 3×10⁻⁴ | 3×10⁻⁴ |
 | Facteur d'actualisation (γ) | 0.99 | 0.99 | 0.99 | 0.99 |
 | Taux d'exploration initial (ε) | 1.0 | 1.0 | - | - |
-| Taux d'exploration final | 0.01 | 0.01 | - | - |
+| Taux d'exploration final (ε) | 0.01 | 0.01 | - | - |
 | Taille du batch | - | - | 64 | 64 |
-| Taille du replay buffer | - | - | 10000 | - |
-| Période d'entraînement (épisodes) | 1000 | 1000 | 100 | 100 |
+| Taille du replay buffer | - | - | 200 000 | - |
+| Période d'entraînement | 30 000 épisodes | 30 000 épisodes | 2 000 000 steps | 2 000 000 steps |
+| Bins de discrétisation | 8 | 8 | - | - |
+| Features d'état tabulaire | 5 | 5 | - | - |
 | Architecture réseau | - | - | MLP 128×128 ReLU | MLP 128×128 ReLU |
 | GAE λ | - | - | - | 0.95 |
-| PPO clipping (ε) | - | - | - | 0.2 |                                                                          |
+| PPO clipping (ε) | - | - | - | 0.2 |
 
-*Remplir et compléter ce tableau au fur et à mesure de la lecture des articles et rapports.*
+## 3. Hypothèses et justifications
 
-## 2. Hypothèses et Justifications
+- Les temps de trajet sont modélisés par une distribution log-normal, stabilisée par σ = 0.12.
+- La probabilité de panne nominale est 2% par cycle ; 10% dans le scénario `high_breakdown`.
+- Le vecteur d'observation compte 138 dimensions pour la configuration nominale.
+- L'espace d'action discret encode les paires `(pelle, dump)` plus une action `ATTENDRE`.
+- La fonction de récompense utilise les poids `w1 = 1.0`, `w2 = 0.1`, `w3 = 0.05` et `w4 = 1.0`.
+- Les méthodes tabulaires réduisent l'état à 5 features discrétisées (8 bins chacune).
+- Les résultats sont mesurés sur 10 réplications indépendantes (seeds 42..51) pour assurer la reproductibilité.
 
-- Les distributions de temps de cycle sont supposées lognormales ou normales selon la littérature.
-- La probabilité de panne est fixée à 2% par shift, faute de données précises, mais justifiée par les discussions d’articles sur la robustesse.
-- La dégradation des routes est modélisée par une probabilité de 5% par heure, pour tester la robustesse de l’agent RL.
-- Les valeurs non trouvées dans la littérature sont fixées par hypothèse de travail et clairement justifiées.
+## 4. Limites et simplifications
 
-## 3. Limites et Simplifications
+- La simulation ne modélise pas explicitement la météo ou les incidents terrain.
+- Les pannes sont uniquement des pannes camion, pas des pannes de pelle ou de dump.
+- La consommation de carburant est estimée par modèle simple et normalisée.
+- Le simulateur actuel ne couvre pas encore l’adaptation à topologies très différentes.
+- Les résultats de DQN et PPO sont limités aux scénarios définis; le transfert de domaine n’a pas été testé exhaustivement.
 
-- Modélisation simplifiée des pannes et files d’attente.
-- Pas de prise en compte explicite de la météo ou des retards opérationnels réels.
-- Simulation sur des quarts de 8 heures, 100 réplications par scénario.
-- Modèle de consommation de carburant simplifié (charge, pente, vitesse).
+## 5. Points d’attention
 
-## 4. Exemples de Modélisation Stochastique
+- La capacité camion est **140 tonnes**, valeur industrielle.
+- Les durées de chargement et déchargement sont stochastiques.
+- Le `Match Factor` nominal est 12 / 3 = 4, ce qui explique la performance élevée de `Fixed Assignment` en nominal.
+- La normalisation des observations est essentielle pour la stabilité des agents Deep RL.
+- Le terme `w4` dans la récompense permet de rendre le signal discriminant entre actions.
 
-- Temps de trajet : `temps_trajet = np.random.lognormal(moyenne, ecart_type)`
-- Temps de chargement : `temps_chargement = np.random.normal(moyenne, ecart_type)`
-- Panne camion : `if np.random.rand() < 0.02: panne = True`
-- Dégradation route : `if np.random.rand() < 0.05: route_degradee = True`
+## 6. Sources et références
 
-## 5. Sources et Références
-
-- Afrapoli & Askari-Nasab (2017), Tableaux 2, 4.3, 4.4
-- Mohtasham et al. (2023), Tableaux 1, 2, layout Sungun mine
-- Kangwa (2021), Tableaux 1.1, 2.1, cas Kansanshi
-- Ozdemir & Kumral (2019), Simulation truck-shovel
-- Abolghasemian et al. (2020), Simulation hauling system
-- Zeng, Baafi & Fan (2022), Simulation truck allocation
-- Spécifications Caterpillar, Hitachi, Komatsu (PDF techniques)
-- Hypothèses de travail clairement justifiées
+- Chapitre 5 : implémentation du simulateur et protocole expérimental.
+- Chapitre 6 : résultats et analyse comparatives.
+- Stable-Baselines3 : implémentation de DQN et PPO.
+- Discussion théorique du choix des KPI dans les chapitres 4 et 6.
 
 ---
 
-*Ce document est évolutif et doit être enrichi à chaque nouvelle lecture ou extraction de données pertinente.*
-
-*La crédibilité de la simulation repose sur la justification de chaque paramètre par une source ou une hypothèse explicitement reconnue.*
+*Ce document doit suivre les choix réels de simulation et non les valeurs ponctuelles extraites d’un article tiers.*

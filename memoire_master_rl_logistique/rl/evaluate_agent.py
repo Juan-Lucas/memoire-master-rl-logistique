@@ -14,8 +14,8 @@ from pathlib import Path
 import numpy as np
 from stable_baselines3 import PPO
 
-from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
+from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
@@ -149,8 +149,13 @@ def evaluate_all_baselines(
     )
     results.append(evaluate_policy(
         env,
-        lambda obs, info: nearest.predict(
-            obs, info, env.truck_locations[env.current_truck_idx],
+        lambda obs, info: (
+            setattr(nearest, "graph", env.graph)
+            or nearest.predict(
+                obs,
+                info,
+                truck_location=env.truck_locations[env.current_truck_idx],
+            )
         ),
         n_episodes,
         "Nearest",
@@ -169,8 +174,13 @@ def evaluate_all_baselines(
     )
     results.append(evaluate_policy(
         env,
-        lambda obs, info: shortest_path.predict(
-            obs, info, env.truck_locations[env.current_truck_idx],
+        lambda obs, info: (
+            setattr(shortest_path, "graph", env.graph)
+            or shortest_path.predict(
+                obs,
+                info,
+                truck_location=env.truck_locations[env.current_truck_idx],
+            )
         ),
         n_episodes,
         "ShortestPath",

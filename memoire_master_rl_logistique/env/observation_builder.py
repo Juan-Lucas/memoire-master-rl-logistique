@@ -29,6 +29,7 @@ def build_observation(
     episode_minutes: float,
     truck_locations: list[str],
     truck_statuses: list[int],
+    current_truck_idx: int = 0,
 ) -> np.ndarray:
     """Construit le vecteur d'observation normalisé (Section 4.3.3 du mémoire).
 
@@ -82,6 +83,18 @@ def build_observation(
         for node in all_nodes:
             obs_parts.append(1.0 if loc == node else 0.0)
 
+    # --- Distance du camion courant vers chaque pelle (Section 4.3.3) ---
+    cur_loc = truck_locations[current_truck_idx]
+    for shovel in shovels:
+        d = graph.shortest_distance(cur_loc, shovel.node_id)
+        obs_parts.append(min(d / _MAX_DISTANCE_KM, 1.0) if d != float("inf") else 1.0)
+
+    # --- Distance de chaque pelle vers chaque dump ---
+    for shovel in shovels:
+        for dump in dumps:
+            d = graph.shortest_distance(shovel.node_id, dump.node_id)
+            obs_parts.append(min(d / _MAX_DISTANCE_KM, 1.0) if d != float("inf") else 1.0)
+
     # --- Temps courant normalisé ---
     obs_parts.append(min(current_time_min / max(episode_minutes, 1.0), 1.0))
 
@@ -101,5 +114,8 @@ def observation_size(num_trucks: int, num_shovels: int, num_dumps: int, num_node
     dump_feats = num_dumps  # 1 feature par dump
     truck_feats = num_trucks * 4  # 4 features par camion
     truck_location_feats = num_trucks * num_nodes  # one-hot position par camion
+    cur_truck_to_shovel_feats = num_shovels  # distance camion courant → chaque pelle
+    shovel_to_dump_feats = num_shovels * num_dumps  # distance chaque pelle → chaque dump
     time_feat = 1
-    return shovel_feats + dump_feats + truck_feats + truck_location_feats + time_feat
+    return (shovel_feats + dump_feats + truck_feats + truck_location_feats
+            + cur_truck_to_shovel_feats + shovel_to_dump_feats + time_feat)

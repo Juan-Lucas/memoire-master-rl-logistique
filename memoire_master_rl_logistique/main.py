@@ -27,6 +27,7 @@ from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
+
 # from memoire_master_rl_logistique.simulation.events import build_simulation  # Removed - DES not in thesis
 
 
@@ -103,8 +104,8 @@ def main() -> None:
         help="Entraîner l'agent DQN (Section 4.5.2)",
     )
     parser.add_argument(
-        "--episodes", type=int, default=10_000,
-        help="Nombre d'épisodes pour Q-Learning/SARSA (défaut: 10000)",
+        "--episodes", type=int, default=30_000,
+        help="Nombre d'épisodes pour Q-Learning/SARSA (défaut: 30000)",
     )
     parser.add_argument(
         "--benchmark-only", action="store_true",
@@ -204,7 +205,7 @@ def main() -> None:
         run_all_benchmarks(
             output_dir="data/results",
             train_ppo_flag=True,
-            scenario_names=None #["nominal", "high_breakdown", "short_shift"],  # Même config flotte
+            scenario_names=["nominal", "nominal_asymétrique", "high_breakdown", "high_load"],  # Ajout scénario asymétrique
         )
         return
 

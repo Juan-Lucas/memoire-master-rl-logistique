@@ -1,102 +1,74 @@
-# Formalisation mathématique des KPIs
+# KPIs et mesures utilisées dans le mémoire
 
-Conforme au Tableau 4.8 du mémoire (Section 4.7.4).
+Ce document formalise les indicateurs de performance effectivement utilisés dans les chapitres 4, 5 et 6 du mémoire.
 
-## 1. Productivité et Performance
+## 1. KPI principaux
 
-- **Tonnage transporté par heure** :
-	$$\text{Productivité} = \frac{\sum_{i=1}^{N} T_i}{H}$$
-	où $T_i$ est le tonnage transporté par le camion $i$ sur la période $H$ (heures).
-- **Nombre de cycles camion-pelle** :
-	$$\text{Cycles} = \sum_{i=1}^{N} C_i$$
-	où $C_i$ est le nombre de cycles réalisés par le camion $i$.
-- **Production supplémentaire** :
-	$$\Delta P = P_{opt} - P_{ref}$$
-	où $P_{opt}$ est la production obtenue avec l’optimisation, $P_{ref}$ la baseline.
+### Productivité horaire
+$$\text{Productivité} = \frac{\text{Tonnage total transporté}}{\text{Durée de l’épisode en heures}}$$
 
-## 2. Utilisation des équipements
-- **Taux d’utilisation des camions** :
-	$$\text{Utilisation} = \frac{\text{Temps actif}}{\text{Temps total}} \times 100$$
-- **Match Factor (MF)** :
-	$$\text{MF} = \frac{\text{Nombre de camions}}{\text{Nombre de pelles}}$$
+- Dans le code : $P_h = \frac{\text{total\_tonnage\_t}}{\text{episode\_minutes} / 60}$.
+- Correspondance avec le mémoire : performance opérationnelle brute.
 
-## 3. Temps d’attente et fluidité
-- **Temps moyen d’attente en zone tampon** :
-	$$\text{Temps d’attente} = \frac{1}{N} \sum_{i=1}^{N} w_i$$
-	où $w_i$ est le temps d’attente du camion $i$.
-- **Nombre d’événements de congestion** :
-	$$\text{Congestions} = \sum_{t=1}^{T} \mathbb{1}_{\text{congestion}}(t)$$
-	où $\mathbb{1}_{\text{congestion}}(t)$ vaut 1 si congestion à l’instant $t$.
+### Temps d’attente moyen par camion
+$$E_t = \frac{\text{Temps d’attente total des camions}}{\text{Nombre de camions}}$$
 
-## 4. Consommation de carburant et coûts
-- **Litres consommés par tonne** :
-	$$\text{Consommation spécifique} = \frac{\text{Litres consommés}}{\text{Tonnage transporté}}$$
-- **Coût opérationnel par tonne** :
-	$$\text{Coût} = \frac{\text{Coût total}}{\text{Tonnage transporté}}$$
-- **Coût moyen par cycle** :
-	$$\text{Coût par cycle} = \frac{\text{Total carburant}}{\text{Nombre de cycles}}$$
+- Dans le code : $E_t = \frac{\text{total\_wait\_min}}{\text{truck\_count}}$.
+- KPI central pour la fluidité et la robustesse.
 
-## 5. Qualité de service et contraintes
-- **Respect des contraintes** :
-	$$\text{Respect} = \frac{\text{Nombre de cycles conformes}}{\text{Nombre total de cycles}} \times 100$$
-- **Variabilité des temps de cycle** :
-	$$\text{Variance} = \frac{1}{N} \sum_{i=1}^{N} (c_i - \bar{c})^2$$
-	où $c_i$ est le temps de cycle du camion $i$, $\bar{c}$ la moyenne.
+### Consommation spécifique
+$$E_e = \frac{\text{Carburant total consommé}}{\text{Tonnage total transporté}}$$
 
-## 6. Adaptation et robustesse
-- **Réactivité** :
-	$$\text{Réactivité} = \frac{\text{Nombre de décisions adaptatives}}{\text{Nombre total de décisions}}$$
+- Dans le code : $E_e = \frac{\text{total\_fuel\_l}}{\text{total\_tonnage\_t}}$.
+- Sert à mesurer l’efficacité énergétique.
 
-## 7. Sécurité
-- **Incidents** :
-	$$\text{Incidents} = \sum_{i=1}^{N} \mathbb{1}_{\text{incident}}(i)$$
+### Taux d’utilisation des camions
+$$U = \frac{\text{Temps actif total des camions}}{\text{Nombre de camions} \times \text{Durée d’épisode}} \times 100$$
 
----
-## Justification du choix du "temps d’attente" comme KPI différenciant
+- Dans le code : $U = \frac{\text{total\_active\_min}}{\text{truck\_count} \times \text{episode\_minutes}} \times 100$.
+- Indicateur de disponibilité de la flotte.
 
-Le temps d’attente est un KPI central et différenciant pour la logistique minière car il reflète directement l’efficacité du dispatching, la fluidité des opérations et l’adaptation aux perturbations. Un temps d’attente élevé indique une mauvaise synchronisation entre camions et pelles, des congestions ou une sous-utilisation des équipements. Les approches classiques (heuristiques) peinent à minimiser ce KPI, tandis que les méthodes avancées (RL, optimisation dynamique) visent explicitement à le réduire, ce qui se traduit par une amélioration globale de la productivité, une réduction des coûts et une meilleure robustesse du système. C’est donc un indicateur clé pour comparer les performances des différentes stratégies d’optimisation.
-# Métriques de Succès (KPIs) – Synthèse de l’état de l’art
+### Coût moyen par cycle
+$$C_{\text{cycle}} = \frac{\text{Carburant total consommé}}{\text{Nombre total de cycles}}$$
 
-## 1. Productivité et Performance
-- Tonnage transporté par heure ou par shift ([Afrapoli & Askari-Nasab 2017], [Ozdemir & Kumral 2019])
-- Nombre de cycles camion-pelle
-- Production supplémentaire obtenue (t/shift)
-- Respect des objectifs de production
+- Dans le code : $C_{\text{cycle}} = \frac{\text{total\_fuel\_l}}{\text{total\_cycles}}$.
+- Estime le coût énergétique par tour de camion.
 
-## 2. Utilisation des équipements
-- Taux d’utilisation des camions (%) ([Munirathinam & Yingling 1994], [Ozdemir & Kumral 2019])
-- Taux d’utilisation des pelles (%)
-- Match Factor (MF) : équilibre entre flotte et pelles ([Ozdemir & Kumral 2019])
+## 2. KPI complémentaires
 
-## 3. Temps d’attente et fluidité
-- Temps moyen d’attente en zone tampon
-- Temps moyen d’attente à la pelle ([Ozdemir & Kumral 2019])
-- Nombre d’événements de congestion
-- Temps perdu dû aux congestions
+### Reward cumulée
+- Mesure la qualité globale de la politique RL pendant un épisode.
+- Sert à suivre la convergence des agents Q-Learning, SARSA, DQN et PPO.
 
-## 4. Consommation de carburant et coûts
-- Litres consommés par tonne transportée ([Afrapoli & Askari-Nasab 2017])
-- Coût opérationnel par tonne
-- Coût total du transport minier
+### Robustesse aux perturbations
+- Mesurée par la stabilité des KPI sur les scénarios perturbés (`high_load`, `high_breakdown`).
+- Une agent robuste conserve une performance proche de la baseline même en présence de pannes ou surcharge.
 
-## 5. Qualité de service et contraintes
-- Respect des contraintes de production et de qualité ([Munirathinam & Yingling 1994])
-- Variabilité des temps de cycle
-- Respect des ratios de décapage et de teneur
+### Écart-type et intervalle de confiance
+- Les résultats sont présentés en moyenne ± écart-type sur 10 réplications (seeds 42..51).
+- Cette statistique permet d’évaluer la stabilité et la reproductibilité.
 
-## 6. Adaptation et robustesse
-- Réactivité face aux perturbations (routes, météo, pannes)
-- Nombre de décisions adaptatives prises ([Nazari et al. 2018])
-- Performance de l’agent RL dans des scénarios perturbés
+## 3. Liens avec les chapitres
 
-## 7. Sécurité
-- Nombre d’incidents ou quasi-incidents liés au dispatching
+- **Chapitre 4** : choix des KPI et justification de la fonction de récompense multi-objectif.
+- **Chapitre 5** : protocole expérimental, scénarios et métriques d’évaluation.
+- **Chapitre 6** : comparaison des méthodes sur les mêmes KPI et analyse de robustesse.
+
+## 4. Pourquoi ces KPI ?
+
+- La productivité capture la performance opérationnelle brute.
+- Le temps d’attente mesure la fluidité du système.
+- La consommation spécifique traduit l’efficacité énergétique.
+- L’utilisation confirme que la flotte est mobilisée.
+- Le coût par cycle relie l’efficacité énergétique à la productivité.
+- La robustesse aux perturbations est critique pour les applications minières.
+
+## 5. Notes d’implémentation
+
+- Les KPI sont calculés dans `memoire_master_rl_logistique/simulation/kpi.py`.
+- Les valeurs de sécurité `max(..., 1e-9)` garantissent l’absence de division par zéro.
+- Les KPI sont exportés pour chaque épisode et utilisés dans les tableaux du chapitre 6.
 
 ---
-**Origine des KPIs** :
-- Afrapoli & Askari-Nasab (2017) : revue des modèles et algorithmes FMS, importance de la productivité, des coûts et de l’adaptation.
-- Munirathinam & Yingling (1994) : classification des heuristiques, métriques de productivité, utilisation, respect des contraintes.
-- Nazari et al. (2018) : KPIs pour RL appliqué au VRP, adaptation dynamique, performance en généralisation.
-- Ozdemir & Kumral (2019) : simulation et optimisation, match factor, temps d’attente, productivité.
 
-Ces KPIs sont recommandés pour évaluer quantitativement les solutions d’optimisation (heuristiques, RL) dans la logistique minière, en s’appuyant sur les standards de la littérature.
+*Ce document doit être utilisé comme référence pour la rédaction et l’interprétation des résultats.*
