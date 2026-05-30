@@ -26,7 +26,6 @@ from stable_baselines3 import DQN, PPO
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
-from memoire_master_rl_logistique.baselines.random_policy import RandomPolicy
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
@@ -123,11 +122,6 @@ def run_benchmark(
         dump_node_ids=[d.node_id for d in temp_env.dumps],
     )
 
-    random_policy_obj = RandomPolicy(
-        num_shovels=scenario.shovel_count,
-        num_dumps=scenario.dump_count,
-    )
-
     def fixed_policy(obs, info, env):
         return fixed_policy_obj.predict(obs, info)
 
@@ -150,14 +144,10 @@ def run_benchmark(
             truck_location=env.truck_locations[env.current_truck_idx],
         )
 
-    def random_policy(obs, info, env):
-        return random_policy_obj.predict(obs, info)
-
     policies = {
         "FIFO": fifo_policy,
         "Fixed": fixed_policy,
         "Nearest": nearest_policy,
-        "Random": random_policy,
         "ShortestPath": shortest_path_policy,
     }
 

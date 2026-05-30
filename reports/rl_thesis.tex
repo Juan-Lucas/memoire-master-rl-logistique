@@ -472,7 +472,7 @@ Ces hypothèses doivent être lues comme des conditions de validité du modèle,
     
     \item \textbf{Stationnarité à court terme} : On suppose que la distribution des temps de cycle reste stable sur des horizons court (quelques heures), permettant l'apprentissage avec des données récentes.
     
-    \item \textbf{Observation incomplète} : L'agent ne connaît pas parfaitement l'état complet du système (files d'attente, états des routes), mais dispose d'observations bruitées reflétant les informations disponibles en condition réelle.
+    \item \textbf{Observation partielle} : L'agent ne connaît pas parfaitement l'état complet du système (positions exactes, états des routes). Dans l'implémentation, le vecteur d'observation est construit à partir de l'état interne du simulateur (disponibilités des ressources, positions des camions, temps courant) sans injection de bruit additionnel~; la stochasticité provient de la dynamique elle-même (temps de trajet log-normaux, pannes aléatoires).
     
     \item \textbf{Camions homogènes} : Bien que les flottes réelles soient hétérogènes, on regroupe les camions par classe de capacité pour réduire la dimensionnalité de l'espace d'état, une simplification couramment mobilisée face aux contraintes de dispatching de flottes multi-capacités \cite{Ahangaran2012}.
     
@@ -513,7 +513,7 @@ Autrement dit, le modèle conserve les facteurs qui gouvernent réellement la d�
         \midrule
         Temps discret & Simulation événementielle & Permet une prise de décision séquentielle compatible avec un agent RL et un simulateur événementiel. & Sensible au choix de $\Delta t$; un pas trop grand lisse la dynamique, un pas trop fin augmente le coût de calcul. \\
         Stationnarité à court terme & Découpage temporel & Stabilise l'apprentissage sur des fenêtres opérationnelles réalistes (quelques heures). & Peut se dégrader lors de ruptures de régime (pluie, incidents, changements de plan). \\
-        Observation incomplète & Capteurs bruités & Reflète la disponibilité réelle de capteurs et d'informations bruitées en exploitation. & Introduit une part de non-markovianité apparente si l'état observé est trop pauvre. \\
+        Observation partielle & Vecteur normalisé sans bruit additionnel & La stochasticité est dans la dynamique (temps log-normaux, pannes)~; l'observation reflète l'état interne du simulateur de manière exacte mais incomplète. & Introduit une part de non-markovianité apparente si l'état observé est trop pauvre. \\
         Regroupement des camions par classes & Classification par capacité & Réduit la dimensionnalité de l'état et de l'action pour accélérer la convergence. & Perte de granularité sur les différences intra-classe (usure, performance individuelle). \\
         Points de chargement/déchargement fixes sur un épisode & Configuration statique & Simplifie le cadre expérimental et la comparaison avec les baselines. & Généralisation limitée aux contextes de repositionnement dynamique des pelles ou destinations. \\
         Absence de défaillance majeure pendant un épisode & Mode nominal & Permet d'évaluer d'abord la politique nominale dans un cadre contrôlé. & Sous-estime le risque opérationnel réel si les pannes ne sont pas ensuite injectées en tests de robustesse. \\
@@ -670,6 +670,8 @@ La récompense reflète les objectifs opérationnels. Le rendement global du sys
 \end{equation}
 
 \textit{Exemple numérique :} Si $w_1 = 1{,}0$, $w_2 = 0{,}1$, $w_3 = 0{,}05$, $R_{\text{rendement}} = 280$ tonnes, $R_{\text{équité}} = -5{,}2$ (pénalité due à files inégales), $R_{\text{coût}} = -120$ (pénalité de distance), alors $R_t = 1{,}0 \times 280 + 0{,}1 \times (-5{,}2) + 0{,}05 \times (-120) = 280 - 0{,}52 - 6 = 273{,}48$.
+
+\textbf{Note d'implémentation.} La calibration expérimentale (Section~\ref{sec:implementation-env}) a révélé que cette formulation à trois termes produisait un signal trop peu discriminant entre les actions ($\Delta R < 6 \times 10^{-4}$). Un quatrième terme $w_4 \cdot R_{\text{attente}}$ a donc été ajouté dans l'implémentation finale (Eq.~\ref{eq:reward-impl}) avec $w_4 = 0{,}3$, afin de pénaliser directement l'attente opérationnelle et rendre le signal d'apprentissage exploitable.
 
 où :
 
@@ -1253,16 +1255,17 @@ Pour démontrer la plus-value de l'agent RL, nous le comparons aux
 quatre heuristiques industrielles de référence suivantes~:
 
 \begin{itemize}
-    \item \textbf{FIFO (First In, First Out)}~: les camions sont affectés aux pelles dans l'ordre de leur arrivée en zone d'attente. Cette règle, simple et équitable, ne tient compte ni de la distance ni de la charge des pelles. Elle constitue la baseline la plus élémentaire du dispatching minier~\cite{Alarie2002}.
+    \item \textbf{FIFO (First In, First Out)} (\texttt{fifo\_policy.py})~: le camion disponible est affecté à la pelle dont la file d'attente est la plus courte, c'est-à-dire celle dont \texttt{available\_at\_min} est minimal (idle depuis le plus longtemps). Simple et équitable, cette règle ne tient compte ni de la distance ni de la charge globale~\cite{Alarie2002}.
 
-    \item \textbf{Nearest Shovel (Pelle la plus proche)}~: le camion libre est affecté à la pelle géographiquement la plus proche, selon la matrice de temps $T$ (Section~\ref{sec:reseau-routier}). Cette heuristique minimise le temps de trajet à vide mais ignore l'état des files d'attente~\cite{Alarie2002}.
+    \item \textbf{Nearest Shovel (Pelle la plus proche)} (\texttt{nearest\_policy.py})~: le camion est affecté à la pelle géographiquement la plus proche via Dijkstra, puis au dump le plus proche de cette pelle. Minimise le trajet à vide mais ignore les files d'attente~\cite{Alarie2002}.
 
-    \item \textbf{Shortest Path (Chemin le plus court)}~: le camion emprunte systématiquement l'itinéraire minimisant le coût de trajet $C_{ij}$ (Eq.~3.1), indépendamment de l'état courant des autres camions ou des files d'attente. Cette règle optimise localement le routage sans considération globale du système~\cite{Alarie2002}.
+    \item \textbf{Shortest Path (Chemin le plus court)} (\texttt{shortest\_path\_policy.py})~: choisit la paire (pelle, dump) minimisant le coût de cycle complet $C_{\text{cycle}} = \alpha T + \beta D + \gamma E$ (Eq.~3.1) sur les trois segments camion$\to$pelle$\to$dump$\to$pelle, avec $\alpha=0{,}5$, $\beta=0{,}3$, $\gamma=0{,}2$~\cite{Alarie2002}.
 
-    \item \textbf{Fixed Assignment (Affectation fixe)}~: chaque camion est dédié à une pelle fixe selon un schéma cyclique prédéfini (round-robin). Aucune adaptation dynamique n'est possible. C'est le niveau zéro de l'optimisation et la pratique la plus répandue dans les mines sans système intelligent~\cite{MohanMunirathinam1994}.
+    \item \textbf{Fixed Assignment (Affectation fixe)} (\texttt{fixed\_policy.py})~: chaque camion est dédié à une pelle selon un schéma round-robin statique (\texttt{truck\_id \% num\_shovels}). Aucune adaptation dynamique n'est possible~\cite{MohanMunirathinam1994}.
+
 \end{itemize}
 
-Ces quatre heuristiques représentent le spectre des pratiques industrielles courantes~: de la règle la plus rigide (Fixed Assignment) à la règle la plus réactive localement (Nearest Shovel). Leur comparaison avec l'agent PPO permettra de quantifier précisément le gain apporté par l'apprentissage par renforcement sur chacun des KPIs définis en Section~\ref{sec:kpis}.
+Ces quatre heuristiques représentent le spectre des pratiques industrielles courantes~: de la règle la plus rigide (Fixed Assignment) à la règle la plus réactive localement (Nearest Shovel). Leur comparaison avec les agents RL permettra de quantifier le gain apporté par l'apprentissage sur chacun des KPIs définis en Section~\ref{sec:kpis}.
 
 \subsection{Modèles RL classiques de comparaison}
 \label{sec:modeles-rl-comparaison}
