@@ -568,7 +568,7 @@ Le réseau réel n'est pas déterministe : les temps de trajet varient en foncti
     T_{ij}(t) = \bar{T}_{ij} + \eta_{ij}(t)
 \end{equation}
 
-où $\bar{T}_{ij}$ est le temps moyen et $\eta_{ij}(t)$ est un bruit reflétant la variabilité observée. Dans l'implémentation, les durées étant strictement positives, la variabilité est modélisée par une distribution \textbf{log-normale} de paramètre $\sigma = 0{,}12$, plus réaliste qu'une gaussienne pour des variables de temps (cf.\ Section~\ref{sec:implementation-env}).
+où $\bar{T}_{ij}$ est le temps moyen et $\eta_{ij}(t)$ est un bruit reflétant la variabilité observée. Les durées étant strictement positives, la variabilité est modélisée par une distribution \textbf{log-normale}, plus réaliste qu'une gaussienne pour des variables de temps.
 
 \textit{Exemple numérique :} Si $\bar{T}_{ij} = 12$ minutes et $\eta_{ij}(t) = 2{,}3$ minutes (échantillon d'une distribution normale avec $\sigma = 2{,}5$), alors $T_{ij}(t) = 12 + 2{,}3 = 14{,}3$ minutes.
 
@@ -670,8 +670,6 @@ La récompense reflète les objectifs opérationnels. Le rendement global du sys
 \end{equation}
 
 \textit{Exemple numérique :} Si $w_1 = 1{,}0$, $w_2 = 0{,}1$, $w_3 = 0{,}05$, $R_{\text{rendement}} = 280$ tonnes, $R_{\text{équité}} = -5{,}2$ (pénalité due à files inégales), $R_{\text{coût}} = -120$ (pénalité de distance), alors $R_t = 1{,}0 \times 280 + 0{,}1 \times (-5{,}2) + 0{,}05 \times (-120) = 280 - 0{,}52 - 6 = 273{,}48$.
-
-\textbf{Note d'implémentation.} La calibration expérimentale (Section~\ref{sec:implementation-env}) a révélé que cette formulation à trois termes produisait un signal trop peu discriminant entre les actions ($\Delta R < 6 \times 10^{-4}$). Un quatrième terme $w_4 \cdot R_{\text{attente}}$ a donc été ajouté dans l'implémentation finale (Eq.~\ref{eq:reward-impl}) avec $w_4 = 0{,}3$, afin de pénaliser directement l'attente opérationnelle et rendre le signal d'apprentissage exploitable.
 
 où :
 
