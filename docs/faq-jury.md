@@ -26,7 +26,7 @@ Ce document compile les questions les plus probables du jury, classées par cat�
 - **Formalisation MDP** : première formalisation complète du problème comme MDP avec récompense multi-objectif (rendement, équité, coût)
 - **Environnement réaliste** : simulation Gymnasium avec stochastique réaliste (temps de trajet lognormaux, pannes)
 - **Comparaison systématique** : 8 approches comparées (4 baselines classiques + 4 RL)
-- **Résultats quantifiés** : gains de 10-25% sur différents KPIs, robustesse démontrée sur scénarios perturbés
+- **Résultats quantifiés** : PPO meilleur temps d'attente en high_breakdown (-10% vs Fixed), robustesse démontrée sur scénarios perturbés
 
 ---
 
@@ -160,15 +160,18 @@ Ce document compile les questions les plus probables du jury, classées par cat�
 
 ### Q12 : Quels sont vos résultats principaux ?
 
-**Réponse courte :** PPO surpasse les baselines sur la plupart des KPIs : +15% productivité vs FIFO, -25% temps d'attente vs Shortest Path, -10% consommation vs Fixed Assignment.
+**Réponse courte :** PPO obtient les meilleurs temps d'attente en conditions perturbées (high_breakdown : 47.7 min, -10% vs Fixed Assignment). En nominal, Fixed Assignment domine en productivité grâce au Match Factor parfait.
 
 **Réponse détaillée :**
 - **Scénario nominal** :
-  - Productivité : PPO 8000 t/h vs FIFO 6950 t/h (+15%)
-  - Temps d'attente : PPO 3.2 min vs Shortest Path 4.3 min (-25%)
-  - Consommation : PPO 0.85 L/t vs Fixed Assignment 0.94 L/t (-10%)
-- **Robustesse** : PPO maintient >90% de performance sur scénarios perturbés
-- **Significativité** : gains statistiquement significatifs (p < 0.05) sur 10 réplications
+  - Productivité : Fixed Assignment 4 074 t/h (meilleur), PPO 3 335 t/h
+  - Temps d'attente : PPO 30.6 min (2ème), Fixed Assignment 27.9 min (1er)
+  - Consommation spécifique : Fixed Assignment 0.0431 L/t (meilleur)
+- **Scénario high_breakdown** :
+  - PPO obtient le meilleur temps d'attente : **47.7 min** vs Fixed Assignment 52.9 min (-10%)
+  - PPO surpasse Fixed Assignment sur la robustesse
+- **Effondrement des heuristiques myopes** : Nearest Shovel et Shortest Path atteignent 201 min d'attente en high_load, pire qu'une politique aléatoire
+- **Évaluation** : moyenne ± écart-type sur 10 réplications (seeds 42–51)
 
 ### Q13 : Comment comparez-vous avec les baselines ?
 
@@ -184,14 +187,14 @@ Ce document compile les questions les plus probables du jury, classées par cat�
 
 ### Q14 : Quelle est la signification statistique de vos résultats ?
 
-**Réponse courte :** Gains significatifs (p < 0.05) sur 10 réplications avec intervalles de confiance à 95%. Effet de taille (Cohen's d) > 0.8 pour la plupart des comparaisons.
+**Réponse courte :** Les résultats sont présentés sous forme de moyenne ± écart-type sur 10 réplications avec seeds fixées (42 à 51), garantissant la reproductibilité.
 
 **Réponse détaillée :**
-- **Test statistique** : t-test de Student apparié (PPO vs baseline)
-- **Niveau de signification** : p < 0.05 pour tous les gains principaux
-- **Intervalles de confiance** : IC 95% calculés sur 10 réplications
-- **Effet de taille** : Cohen's d > 0.8 (effet large) pour productivité et temps d'attente
-- **Reproductibilité** : seeds fixées, protocole documenté
+- **Protocole** : 10 réplications par scénario, seeds 42 à 51
+- **Indicateurs** : moyenne ± écart-type pour chaque KPI (productivité, attente, consommation)
+- **Reproductibilité** : seeds fixées, modèles sauvegardés, protocole documenté
+- **Comparaison** : mêmes environnements, mêmes seeds pour toutes les politiques
+- **Limite** : 10 réplications constituent un échantillon raisonnable pour un travail académique; une validation sur données terrain serait nécessaire pour une extrapolation industrielle
 
 ---
 
@@ -259,8 +262,9 @@ Ce document compile les questions les plus probables du jury, classées par cat�
 
 **Réponse détaillée :**
 - **Entraînement** :
-  - 100 épisodes, ~10 min/épisode → ~1-2 heures total
-  - GPU RTX 3080, batch size 64
+  - PPO/DQN : 2 000 000 steps (~1-2 heures sur GPU)
+  - Q-Learning/SARSA : 30 000 épisodes (~10-15 min CPU)
+  - Batch size 64
   - Acceptable pour entraînement offline
 - **Inférence** :
   - <1ms par décision (forward pass réseau)
@@ -318,10 +322,10 @@ Ce document compile les questions les plus probables du jury, classées par cat�
 **Réponse courte :** Réduction des coûts opérationnels de 10-15% (réduction consommation, meilleure productivité). ROI positif si coût d'entraînement < gains annuels.
 
 **Réponse détaillée :**
-- **Gains estimés** :
-  - Productivité +15% → +15% tonnage/shift
-  - Consommation -10% → -10% carburant
-  - Temps d'attente -25% → meilleure utilisation équipements
+- **Gains mesurés** :
+  - Temps d'attente -10% en high_breakdown (PPO 47.7 min vs Fixed 52.9 min)
+  - Meilleur taux d'utilisation des camions : PPO 97.1% vs Nearest 87.8%
+  - Robustesse : Nearest/ShortestPath s'effondrent à 201 min d'attente en surcharge
 - **Coûts** :
   - Développement : temps ingénieur
   - Entraînement : temps GPU (~2h)

@@ -1,4 +1,4 @@
-# Résultats clés - Chiffres à mémoriser
+﻿# Résultats clés - Chiffres à mémoriser
 
 Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est aligné sur les chapitres 4, 5 et 6 du mémoire.
 
@@ -12,7 +12,7 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 - **Nombre de dumps** : 2
 - **Capacité camion** : 140 tonnes
 - **Durée épisode** : 8 heures (480 minutes)
-- **Observation** : 138 dimensions normalisées
+- **Observation** : 147 dimensions normalisées
 - **Action space** : 7 actions (3×2 + ATTENDRE)
 
 ### Scénarios
@@ -28,9 +28,9 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 ---
 
 ## Fonction de récompense
-- Poids : w1 = 1.0 (rendement), w2 = 0.1 (équité), w3 = 0.05 (coût), w4 = 1.0 (attente)
-- Signal : rendement, variance des files, coût de trajet, pénalité d’attente à la pelle
-- Sans w4, signal non discriminant ; avec w4 = 1.0, signal efficace.
+- Poids : w1 = 1.0 (rendement), w2 = 0.1 (équité), w3 = 0.05 (coût), w4 = 0.3 (attente)
+- Signal : rendement, variance des files, coût de trajet, pénalité d’attente opérationnelle
+- Sans w4, signal non discriminant (Δ < 6×10⁻⁴) ; w4 = 0.3 garantit que tout cycle productif surpasse ATTENDRE.
 
 ---
 
@@ -45,7 +45,6 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 - **FIFO** : 3 318 ± 42
 - **Q-Learning** : 3 273 ± 89
 - **SARSA** : 3 222 ± 97
-- **Random** : 3 148 ± 45
 
 ### Temps d’attente moyen (min)
 - **Fixed Assignment** : 27.9 ± 3.8
@@ -54,7 +53,6 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 - **FIFO** : 32.8 ± 3.7
 - **Q-Learning** : 36.9 ± 19.4
 - **SARSA** : 52.5 ± 14.2
-- **Random** : 50.6 ± 3.9
 - **Nearest Shovel** : 74.6 ± 7.2
 - **Shortest Path** : 74.6 ± 7.2
 
@@ -66,7 +64,6 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 - **FIFO** : 0.0528 ± 0.0003
 - **Q-Learning** : 0.0534 ± 0.0008
 - **SARSA** : 0.0537 ± 0.0006
-- **Random** : 0.0551 ± 0.0005
 
 ### Taux d’utilisation camions (%)
 - **PPO** : 97.1
@@ -75,7 +72,6 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 - **FIFO** : 95.8
 - **Q-Learning** : 95.4
 - **SARSA** : 93.2
-- **Random** : 92.8
 - **Nearest Shovel / Shortest Path** : 87.8
 
 ---
@@ -89,7 +85,6 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 - **FIFO** : 4 772 ± 72 t/h
 - **PPO** : 4 748 ± 59 t/h
 - **SARSA** : 4 636 ± 62 t/h
-- **Random** : 4 547 ± 46 t/h
 - **Nearest Shovel / Shortest Path** : 3 919 ± 51 t/h (201.1 ± 11.4 min d’attente)
 
 ### High Breakdown (10% pannes)
@@ -100,7 +95,6 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 - **Q-Learning** : 3 146 ± 44 t/h
 - **FIFO** : 3 118 ± 60 t/h
 - **SARSA** : 3 083 ± 56 t/h
-- **Random** : 2 998 ± 38 t/h
 
 ---
 
@@ -122,7 +116,7 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 ## Notes techniques
 
 - Capacité camion : 140 t
-- Observation : 138 features normalisées
+- Observation : 147 features normalisées
 - Action : 7 actions
 - Entraînement : 2M steps pour PPO/DQN, 30 000 épisodes pour Q-Learning/SARSA
 

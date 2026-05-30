@@ -1,4 +1,4 @@
-# Paramètres de Simulation et Hypothèses
+﻿# Paramètres de Simulation et Hypothèses
 
 Ce document synthétise les paramètres réellement utilisés par la simulation et les choix présentés dans les chapitres 4, 5 et 6 du mémoire.
 
@@ -21,7 +21,7 @@ Ce document synthétise les paramètres réellement utilisés par la simulation 
 | Durée panne                      | Uniforme U[10, 30] minutes   | Chapitre 5                                                                           |
 | Pente route                      | 3-8%                         | Graphe routier / Chapitre 5                                                           |
 | Distance route                   | 1.5-3.2 km                   | Graphe routier / Chapitre 5                                                           |
-| Observation                     | 138 dimensions               | Section 4.3 / code `observation_size()`                                               |
+| Observation                     | 147 dimensions               | Section 4.3 / code `observation_size()`                                               |
 | Action space                    | 7 actions                    | 3 pelles × 2 dumps + ATTENDRE                                                        |
 
 ## 2. Hyperparamètres RL
@@ -45,9 +45,9 @@ Ce document synthétise les paramètres réellement utilisés par la simulation 
 
 - Les temps de trajet sont modélisés par une distribution log-normal, stabilisée par σ = 0.12.
 - La probabilité de panne nominale est 2% par cycle ; 10% dans le scénario `high_breakdown`.
-- Le vecteur d'observation compte 138 dimensions pour la configuration nominale.
+- Le vecteur d'observation compte 147 dimensions pour la configuration nominale (dont distances géométriques camion→pelles et pelles→dumps).
 - L'espace d'action discret encode les paires `(pelle, dump)` plus une action `ATTENDRE`.
-- La fonction de récompense utilise les poids `w1 = 1.0`, `w2 = 0.1`, `w3 = 0.05` et `w4 = 1.0`.
+- La fonction de récompense utilise les poids `w1 = 1.0`, `w2 = 0.1`, `w3 = 0.05` et `w4 = 0.3`.
 - Les méthodes tabulaires réduisent l'état à 5 features discrétisées (8 bins chacune).
 - Les résultats sont mesurés sur 10 réplications indépendantes (seeds 42..51) pour assurer la reproductibilité.
 

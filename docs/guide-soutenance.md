@@ -95,8 +95,9 @@ PPO a été choisi pour sa stabilité et son efficacité. Architecture MLP
 128×128 avec ReLU, hyperparamètres : α=0.0003, γ=0.99, batch=64, λ=0.95,
 ε_clip=0.2.
 
-L'entraînement se fait sur 100 épisodes, avec 10 scénarios différents pour
-tester la robustesse (nominal, high-load, low-load, high-breakdown, etc.).
+L'entraînement : 30 000 épisodes pour Q-Learning/SARSA, 2 000 000 steps
+pour PPO/DQN. Évaluation sur 3 scénarios (nominal, high-load, high-breakdown),
+10 réplications chacun (seeds 42–51).
 ```
 
 **Points techniques à maîtriser :**
@@ -117,15 +118,14 @@ Les résultats montrent que PPO surpasse les baselines sur la plupart des
 KPIs.
 
 Sur le scénario nominal :
-- Productivité : +15% vs FIFO
-- Temps d'attente moyen : -25% vs Shortest Path
-- Consommation spécifique : -10% vs Fixed Assignment
+- Fixed Assignment domine en productivité : 4 074 t/h (Match Factor parfait)
+- PPO : 3 335 t/h, meilleur temps d'attente parmi les agents RL (30.6 min)
 
-La robustesse est confirmée : PPO maintient de bonnes performances même
-sur les scénarios perturbés (high-breakdown, single-shovel).
+Sur high_breakdown (pannes fréquentes) :
+- PPO obtient le meilleur temps d'attente : 47.7 min (-10% vs Fixed 52.9 min)
+- Nearest/Shortest Path s'effondrent en high_load : 201 min d'attente
 
-L'analyse statistique montre que les gains sont significatifs (p < 0.05)
-sur 10 réplications avec différentes seeds.
+L'évaluation repose sur moyenne ± écart-type, 10 réplications, seeds 42–51.
 ```
 
 **Chiffres à mémoriser (voir resultats-cles.md) :**
