@@ -1869,13 +1869,13 @@ La convergence de PPO est confirmée par \texttt{explained\_variance = 0.999}, i
 Plusieurs limites méritent d'être explicitées pour une interprétation rigoureuse des résultats.
 
 \paragraph{Limite 1 : Signal de récompense initialement non discriminant.}
-Une analyse diagnostique préalable a révélé que la formulation originale de la récompense (sans terme $w_4$) produisait une différence inter-actions inférieure à $6 \times 10^{-4}$, rendant tout apprentissage tabulaire impossible. L'ajout du terme de pénalité d'attente directe ($w_4 = 1{,}0$) a multiplié ce signal par 53, permettant la convergence effective de Q-Learning et SARSA.  Cette découverte illustre l'importance de la calibration de la fonction de récompense dans la conception d'agents RL applicatifs.
+Une analyse diagnostique préalable a révélé que la formulation originale de la récompense (sans terme $w_4$) produisait une différence inter-actions inférieure à $6 \times 10^{-4}$, rendant tout apprentissage tabulaire impossible. L'ajout du terme de pénalité d'attente directe ($w_4 = 0{,}3$, calibré expérimentalement) a multiplié ce signal par un facteur suffisant pour permettre la convergence effective de Q-Learning et SARSA.  Cette découverte illustre l'importance de la calibration de la fonction de récompense dans la conception d'agents RL applicatifs.
 
 \paragraph{Limite 2 : Espace d'observation surdimensionné pour les méthodes tabulaires.}
-Le vecteur d'observation de 138 dimensions n'est pas discrétisable efficacement pour Q-Learning et SARSA. La solution retenue — extraire 5 features décisionnelles et les renormaliser — a permis de réduire l'espace à 6\,401 états effectifs sur 30\,000 épisodes. Cette réduction introduit néanmoins une perte d'information : des nuances d'état (positions exactes des camions, niveaux de carburant) ne sont pas capturées, limitant la finesse des politiques tabulaires.
+Le vecteur d'observation de 147 dimensions n'est pas discrétisable efficacement pour Q-Learning et SARSA. La solution retenue — extraire 6 features décisionnelles (attentes pelles/dumps + pelle la plus proche) et les renormaliser — a permis de réduire l'espace à 17\,034 états effectifs sur 30\,000 épisodes. Cette réduction introduit néanmoins une perte d'information : des nuances d'état (positions exactes des camions, niveaux de carburant) ne sont pas capturées, limitant la finesse des politiques tabulaires.
 
-\paragraph{Limite 3 : Transfert de domaine pour DQN en high\_load.}
-DQN est évalué sur high\_load avec un modèle entraîné sur le scénario nominal (12 camions). Face à 18 camions, son espace d'observation est de dimension différente, conduisant l'agent à choisir systématiquement l'action ATTENDRE (action 6 sur 100\% des décisions), produisant des résultats identiques à FIFO. Ce comportement indique une limite de généralisation : un modèle DQN entraîné sur un scénario ne transfère pas efficacement vers un scénario de complexité différente sans réentraînement.
+\paragraph{Limite 3 : Variabilité de PPO en high\_load.}
+PPO présente un écart-type élevé en high\_load ($5\,244.8 \pm 332$ t/h) : selon la graine d'évaluation, la performance varie de 4\,882 à 5\,687 t/h. Cette instabilité traduit la sensibilité de la politique on-policy aux configurations d'initialisation en contexte de surcharge. DQN, par son mécanisme d'experience replay, offre une performance plus stable ($5\,664.8 \pm 65$ t/h). Un budget d'entraînement plus élevé ou un curriculum de difficulté progressive permettrait probablement de réduire cette variance.
 
 \paragraph{Limite 4 : Fixed Assignment bénéficie d'un Match Factor parfait.}
 La supériorité de Fixed Assignment en conditions nominales est structurelle : avec $N_c = 12$ camions et $N_p = 3$ pelles, le schéma round-robin distribue exactement 4 camions par pelle, correspondant au Match Factor optimal théorique. Cette propriété disparaît en high\_load ($6 \neq 4$ camions/pelle) et en high\_breakdown (camions immobilisés par pannes). La comparaison avec Fixed Assignment en nominal est donc délibérément défavorable pour le RL : elle teste les agents dans les conditions les plus avantageuses pour l'heuristique statique.
@@ -1890,11 +1890,11 @@ L'hypothèse centrale de ce mémoire stipule qu'un agent basé sur l'apprentissa
 Les résultats obtenus permettent une \textbf{validation partielle et différenciée} de H1 :
 
 \begin{itemize}
-    \item \textbf{Sur le critère temps d'attente en conditions perturbées} (high\_breakdown) : PPO obtient 47.7 min contre 52.9 min pour Fixed Assignment, soit une réduction de \textbf{-10\%}.  H1 est \textbf{validée} sur ce critère.
-    
-    \item \textbf{Sur le critère productivité brute en conditions stables} (nominal) : Fixed Assignment (4\,074 t/h) surpasse PPO (3\,335 t/h) de 22\%. H1 est \textbf{non validée} sur ce critère en conditions nominales, du fait du Match Factor parfait de Fixed Assignment.
-    
-    \item \textbf{Sur le critère robustesse aux surcharges} (high\_load) : Nearest Shovel s'effondre à 201 minutes d'attente, validant la prémisse du titre que les heuristiques statiques ont des limites structurelles. H1 est \textbf{partiellement validée}.
+    \item \textbf{Sur le critère productivité en conditions stables} (nominal) : PPO (4\,208.8 t/h) et DQN (4\,168.5 t/h) surpassent tous deux Fixed Assignment (4\,074.0 t/h). H1 est \textbf{validée} sur ce critère.
+
+    \item \textbf{Sur le critère productivité en conditions perturbées} (high\_breakdown) : DQN (3\,991.8 t/h) et PPO (3\,946.3 t/h) surpassent Fixed Assignment (3\,860.5 t/h). H1 est \textbf{validée} sur ce critère. En revanche, Fixed Assignment conserve les meilleurs temps d'attente (53.1 min vs 65.1 min pour PPO), reflétant un compromis productivité/réactivité.
+
+    \item \textbf{Sur le critère robustesse aux surcharges} (high\_load) : Nearest Shovel s'effondre à 201 minutes d'attente, validant la prémisse du titre que les heuristiques statiques ont des limites structurelles. DQN (5\,664.8 t/h) reste compétitif face à Fixed Assignment (5\,874.8 t/h, $-3{,}6\%$). H1 est \textbf{partiellement validée}.
 \end{itemize}
 
 Cette nuance est scientifiquement cohérente avec la littérature.
@@ -1904,11 +1904,11 @@ Hazrathosseini et Afrapoli~\cite{HazrathosseiniAfrapoli2024} soulignent que le R
 
 La progression Q-Learning $\to$ SARSA $\to$ DQN $\to$ PPO révèle plusieurs enseignements méthodologiques.
 
-La comparaison Q-Learning vs SARSA confirme empiriquement la distinction théorique entre méthodes off-policy et on-policy : Q-Learning converge vers une récompense de 170 contre 133 pour SARSA sur le scénario nominal, illustrant que l'estimation de l'action optimale (off-policy) surpasse l'estimation de l'action effectivement choisie (on-policy) dans un environnement où les décisions sous-optimales sont coûteuses.
+La comparaison Q-Learning vs SARSA confirme empiriquement la distinction théorique entre méthodes off-policy et on-policy : Q-Learning converge vers une récompense de 175 contre 145 pour SARSA sur le scénario nominal (+20\%), illustrant que l'estimation de l'action optimale (off-policy) surpasse l'estimation de l'action effectivement choisie (on-policy) dans un environnement où les décisions sous-optimales sont coûteuses.
 
-La comparaison DQN vs méthodes tabulaires illustre les avantages de la généralisation par réseau de neurones : DQN maintient une performance stable malgré l'espace d'état continu de 138 dimensions, là où Q-Learning est limité à 6\,401 états effectifs.
+La comparaison DQN vs méthodes tabulaires illustre les avantages de la généralisation par réseau de neurones : DQN (4\,168.5 t/h en nominal) surpasse Q-Learning (3\,591.0 t/h) malgré un espace d'état continu de 147 dimensions, là où Q-Learning est limité à 17\,034 états effectifs sur 30\,000 épisodes.
 
-La comparaison DQN vs PPO confirme l'avantage des méthodes actor-critic sur le critère de robustesse : PPO obtient de meilleurs temps d'attente sur deux des trois scénarios grâce à sa politique stochastique on-policy, tandis que DQN tend vers des politiques déterministes (action ATTENDRE en high\_load).
+La comparaison DQN vs PPO révèle une complémentarité : PPO surpasse DQN en productivité nominale (4\,208.8 vs 4\,168.5 t/h) et obtient de meilleurs temps d'attente (31.8 vs 40.2 min) grâce à sa politique on-policy adaptative. En revanche, DQN offre une meilleure stabilité en high\_load ($\sigma = 65$ vs $\sigma = 332$ pour PPO) grâce à son experience replay.
 
 \subsection{Perspectives d'intégration industrielle}
 
@@ -1919,7 +1919,7 @@ Conformément à la question Q5 de l'introduction, l'agent RL développé est co
 
 Ce chapitre a analysé les performances de huit stratégies de dispatching sur trois scénarios représentatifs de la logistique minière à ciel ouvert.
 
-Les résultats confirment trois conclusions majeures. Premièrement, les heuristiques statiques myopes (Nearest Shovel, Shortest Path) montrent des limites structurelles en conditions de surcharge : leurs temps d'attente atteignent 201 minutes, dépassant même une politique aléatoire (63 minutes), validant ainsi le titre de ce mémoire. Deuxièmement, PPO obtient les meilleurs temps d'attente en conditions perturbées (high\_breakdown : 47.7 min, -10\% vs Fixed Assignment), validant partiellement l'hypothèse centrale H1 sur le critère de robustesse. Troisièmement, la progression algorithmique Q-Learning $\to$ SARSA $\to$ PPO confirme empiriquement les prédictions théoriques : Q-Learning surpasse SARSA (-37\% de récompense pour SARSA), et PPO surpasse DQN sur les temps d'attente grâce à sa politique on-policy adaptative.
+Les résultats confirment trois conclusions majeures. Premièrement, les heuristiques statiques myopes (Nearest Shovel, Shortest Path) montrent des limites structurelles en conditions de surcharge : leurs temps d'attente atteignent 201 minutes, validant la problématique du mémoire. Deuxièmement, PPO et DQN surpassent Fixed Assignment en productivité dans deux scénarios sur trois (nominal : +3{,}3\% et +2{,}3\% ; high\_breakdown : +2{,}2\% et +3{,}4\%), validant l'hypothèse centrale H1. Troisièmement, la progression algorithmique Q-Learning $\to$ SARSA $\to$ DQN $\to$ PPO confirme les prédictions théoriques : Q-Learning surpasse SARSA (+20\% de récompense), et PPO surpasse DQN en temps d'attente nominal (31.8 vs 40.2 min) tandis que DQN offre plus de stabilité en surcharge.
 
 Ces résultats ouvrent des perspectives directes : l'augmentation du budget d'entraînement pour les agents Deep RL, l'introduction de scénarios de panne de pelles (et non seulement de camions), et l'évaluation sur des graphes routiers plus complexes constituerait les prochaines étapes naturelles pour confirmer et étendre les contributions de ce travail.
 
