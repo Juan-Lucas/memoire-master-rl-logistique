@@ -160,17 +160,19 @@ Ce document compile les questions les plus probables du jury, classées par cat�
 
 ### Q12 : Quels sont vos résultats principaux ?
 
-**Réponse courte :** PPO obtient les meilleurs temps d'attente en conditions perturbées (high_breakdown : 47.7 min, -10% vs Fixed Assignment). En nominal, Fixed Assignment domine en productivité grâce au Match Factor parfait.
+**Réponse courte :** PPO et DQN surpassent Fixed Assignment en productivité en nominal et en high_breakdown. Les heuristiques myopes s'effondrent en surcharge.
 
 **Réponse détaillée :**
 - **Scénario nominal** :
-  - Productivité : Fixed Assignment 4 074 t/h (meilleur), PPO 3 335 t/h
-  - Temps d'attente : PPO 30.6 min (2ème), Fixed Assignment 27.9 min (1er)
-  - Consommation spécifique : Fixed Assignment 0.0431 L/t (meilleur)
-- **Scénario high_breakdown** :
-  - PPO obtient le meilleur temps d'attente : **47.7 min** vs Fixed Assignment 52.9 min (-10%)
-  - PPO surpasse Fixed Assignment sur la robustesse
-- **Effondrement des heuristiques myopes** : Nearest Shovel et Shortest Path atteignent 201 min d'attente en high_load, pire qu'une politique aléatoire
+  - PPO : 4 208.8 t/h (1er), DQN : 4 168.5 t/h (2ème), Fixed : 4 074.0 t/h (3ème)
+  - Temps d'attente : Fixed 27.9 min (meilleur), PPO 31.8 min (2ème parmi RL)
+  - Consommation : DQN 0.0405 L/t (meilleur), PPO 0.0412 L/t
+- **Scénario high_breakdown (10% pannes)** :
+  - DQN : 3 991.8 t/h (1er), PPO : 3 946.3 t/h (2ème), Fixed : 3 860.5 t/h (3ème)
+  - Fixed conserve le meilleur temps d'attente (53.1 min) mais moins productif
+- **Scénario high_load (surcharge)** :
+  - Fixed : 5 874.8 t/h, DQN proche : 5 664.8 t/h (-3.6%)
+  - Nearest/ShortestPath : 200+ min d'attente — effondrement confirmé
 - **Évaluation** : moyenne ± écart-type sur 10 réplications (seeds 42–51)
 
 ### Q13 : Comment comparez-vous avec les baselines ?

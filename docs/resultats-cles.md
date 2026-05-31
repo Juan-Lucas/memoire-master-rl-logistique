@@ -79,23 +79,24 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 ## Résultats – Scénarios perturbés
 
 ### High Load (18 camions)
-- **Fixed Assignment** : 5 875 ± 54 t/h
-- **Q-Learning** : 4 772 ± 45 t/h
-- **DQN** : 4 772 ± 73 t/h
-- **FIFO** : 4 772 ± 72 t/h
-- **PPO** : 4 748 ± 59 t/h
-- **SARSA** : 4 636 ± 62 t/h
-- **Nearest Shovel / Shortest Path** : 3 919 ± 51 t/h (201.1 ± 11.4 min d’attente)
+- **Fixed Assignment** : 5 874.8 t/h, 43.0 min attente
+- **DQN** : 5 664.8 t/h, 46.8 min attente
+- **PPO** : 5 244.8 t/h, 92.8 min attente (variable)
+- **Q-Learning** : 4 795.0 t/h, 69.1 min attente
+- **FIFO** : 4 747.8 t/h, 44.2 min attente
+- **SARSA** : 4 042.5 t/h, 119.8 min attente
+- **Shortest Path** : 3 956.8 t/h, 204.7 min attente
+- **Nearest Shovel** : 3 939.3 t/h, 200.2 min attente
 
 ### High Breakdown (10% pannes)
-- **Fixed Assignment** : 3 865 ± 28 t/h
-- **Nearest Shovel / Shortest Path** : 3 687 ± 37 t/h
-- **PPO** : 3 166 ± 52 t/h (meilleur temps d’attente : 47.7 min)
-- **DQN** : 3 162 ± 35 t/h
-- **Q-Learning** : 3 146 ± 44 t/h
-- **FIFO** : 3 118 ± 60 t/h
-- **SARSA** : 3 083 ± 56 t/h
-
+- **DQN** : 3 991.8 t/h, 68.7 min attente
+- **PPO** : 3 946.3 t/h, 65.1 min attente
+- **Fixed Assignment** : 3 860.5 t/h, 53.1 min attente (meilleur wait)
+- **Shortest Path** : 3 702.3 t/h, 91.0 min attente
+- **Nearest Shovel** : 3 692.5 t/h, 90.1 min attente
+- **Q-Learning** : 3 176.3 t/h, 88.2 min attente
+- **FIFO** : 3 115.0 t/h, 53.0 min attente
+- **SARSA** : 2 973.3 t/h, 77.5 min attente
 ---
 
 ## Statistiques d’évaluation
@@ -106,10 +107,12 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 
 ## Points à retenir
 
-- **Fixed Assignment domine en nominal** grâce au Match Factor 12/3 = 4.
-- **PPO est le meilleur agent en robustesse d’attente** sur le scénario `high_breakdown`.
-- **Nearest Shovel / Shortest Path s’effondrent en high_load** (≈ 3 919 t/h, 201 min d’attente).
-- **Q-Learning et SARSA** sont utiles pour l’analyse méthodologique ; PPO et DQN sont plus stables sur l’espace continu.
+- **PPO et DQN surpassent Fixed en nominal** : 4 208.8 et 4 168.5 t/h vs 4 074.0 — H1 validee en conditions stables.
+- **DQN et PPO surpassent Fixed en high_breakdown** : 3 991.8 et 3 946.3 t/h vs 3 860.5 — H1 validee en conditions perturbees.
+- **Fixed domine en high_load** (5 874.8 t/h) mais DQN est proche (5 664.8, -3.6%).
+- **Nearest Shovel / Shortest Path s'effondrent en high_load** : 200 min d'attente.
+- **ShortestPath != Nearest** : 3 872.8 vs 3 830.8 en nominal — Eq. 3.1 apporte une differentiation reelle.
+- **PPO variable en high_load** (5 244.8 t/h, ecart-type 332) — sensibilite aux conditions initiales.
 
 ---
 
@@ -123,4 +126,5 @@ Ce document compile les chiffres clés à mémoriser pour la soutenance. Il est 
 ---
 
 *Ce document résume les chiffres clés et la cohérence des résultats présentés dans le mémoire.*
+
 

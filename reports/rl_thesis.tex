@@ -748,7 +748,7 @@ Nous présentons d'abord le cadre méthodologique CRISP-RL qui a structuré l'en
 
 \section{Méthodologie}
 \label{sec:crisp-rl}
-Pour garantir la rigueur scientifique et la reproductibilité de nos travaux, nous adoptons le cadre méthodologique CRISP-RL (CRoss-Industry Standard Process for Reinforcement Learning Applications), tel que proposé par~\cite{Szatmári2025}. Ce standard est une évolution du CRISP-DM traditionnel, spécifiquement repensée pour les systèmes apprenant par interaction dynamique.
+Pour garantir la rigueur scientifique et la reproductibilité de notre approche, nous adoptons le cadre méthodologique CRISP-RL (CRoss-Industry Standard Process for Reinforcement Learning Applications), tel que proposé par~\cite{Szatmári2025}. Ce standard est une évolution du CRISP-DM traditionnel, spécifiquement repensée pour les systèmes apprenant par interaction dynamique.
 
 \subsection{Justification du choix de CRISP-RL}
 \label{sec:justification-crisp-rl}
@@ -1004,6 +1004,31 @@ Le TD Learning (apprentissage par différence temporelle) est le principe géné
 
 L'erreur $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ est appelée \emph{erreur de différence temporelle} (TD error). Ce mécanisme est particulièrement adapté aux environnements séquentiels comme la logistique minière, où les décisions sont prises de manière continue tout au long d'un poste de travail de 8 heures.
 
+\begin{algorithm}[H]
+\caption{TD Learning pour le dispatching minier}
+\label{alg:td-learning}
+\begin{algorithmic}[1]
+
+\REQUIRE Environnement minier $\mathcal{E}$, taux d'apprentissage $\alpha$, facteur d'actualisation $\gamma$
+\REQUIRE Fonction de valeur $V(s)$ à estimer
+
+\STATE Initialiser $V(s) \leftarrow 0$ pour tout $s \in \mathcal{S}$
+\FOR{épisode $= 1, 2, \ldots, N_{\text{épisodes}}$}
+    \STATE $s_0 \leftarrow$ \texttt{reset}($\mathcal{E}$) \COMMENT{Initialiser la mine}
+    \WHILE{épisode non terminé}
+        \STATE Choisir $a_t$ selon la politique $\pi$ (ou aléatoirement pour l'évaluation)
+        \STATE Décoder $a_t$ en paire (pelle $p_i$, dump $d_j$)
+        \STATE Exécuter $a_t$ dans $\mathcal{E}$~: observer $r_t$, $s_{t+1}$
+        \STATE Calculer l'erreur TD~: $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$
+        \STATE Mettre à jour~: $V(s_t) \leftarrow V(s_t) + \alpha \delta_t$
+        \STATE $s_t \leftarrow s_{t+1}$
+    \ENDWHILE
+\ENDFOR
+\RETURN Fonction de valeur $V(s)$
+
+\end{algorithmic}
+\end{algorithm}
+
 Le TD Learning constitue la base théorique de plusieurs méthodes RL~: Q-Learning utilise le TD error pour mettre à jour $Q(s, a)$, et cette même notion sera reprise dans le calcul du GAE (Generalized Advantage Estimation) utilisé par PPO.
 
 \subsection{SARSA comme variante TD orientée politique}
@@ -1091,6 +1116,40 @@ DQN introduit deux mécanismes clés pour stabiliser l'apprentissage~:
 \end{itemize}
 
 Bien que DQN représente une avancée majeure par rapport au Q-Learning tabulaire, il présente des limitations dans notre contexte~: il est structurellement limité aux espaces d'actions discrets de faible dimension, et la gestion simultanée de plusieurs unités de chargement peut rendre l'apprentissage instable~\cite{MoezKrichen2022}. DQN joue néanmoins un rôle important dans notre travail comme modèle de transition vers les approches actor-critic.
+
+\begin{algorithm}[H]
+\caption{DQN pour le dispatching minier}
+\label{alg:dqn}
+\begin{algorithmic}[1]
+
+\REQUIRE Environnement minier $\mathcal{E}$, réseau $Q_\theta$, réseau cible $Q_{\theta^-}$
+\REQUIRE Buffer mémoire $\mathcal{B}$ (capacité $C$), taille de batch $B$, taux de mise à jour cible $\tau$
+\REQUIRE Taux d'apprentissage $\alpha$, facteur d'actualisation $\gamma$, taux d'exploration $\epsilon$
+
+\STATE Initialiser $\theta$ et $\theta^-$ aléatoirement, $\theta^- \leftarrow \theta$
+\STATE Initialiser $\mathcal{B} \leftarrow \emptyset$
+\FOR{épisode $= 1, 2, \ldots, N_{\text{épisodes}}$}
+    \STATE $s_0 \leftarrow$ \texttt{reset}($\mathcal{E}$) \COMMENT{Initialiser la mine}
+    \WHILE{épisode non terminé}
+        \STATE Choisir $a_t$ par $\epsilon$-greedy~:
+        \STATE \hspace{1em} Avec probabilité $\epsilon$~: $a_t \sim \text{Uniforme}(\mathcal{A})$
+        \STATE \hspace{1em} Sinon~: $a_t \leftarrow \arg\max_a Q_\theta(s_t, a)$
+        \STATE Décoder $a_t$ en paire (pelle $p_i$, dump $d_j$)
+        \STATE Exécuter $a_t$ dans $\mathcal{E}$~: observer $r_t$, $s_{t+1}$
+        \STATE Stocker $(s_t, a_t, r_t, s_{t+1})$ dans $\mathcal{B}$
+        \STATE Si $|\mathcal{B}| > C$~: supprimer la transition la plus ancienne
+        \STATE Échantillonner mini-batch $\{(s_i, a_i, r_i, s'_i)\}_{i=1}^B$ depuis $\mathcal{B}$
+        \STATE Calculer les cibles~: $y_i = r_i + \gamma \max_{a'} Q_{\theta^-}(s'_i, a')$
+        \STATE Mettre à jour $\theta$ par descente de gradient sur $\frac{1}{B} \sum_i (Q_\theta(s_i, a_i) - y_i)^2$
+        \STATE Périodiquement~: $\theta^- \leftarrow \tau \theta + (1-\tau) \theta^-$
+        \STATE $s_t \leftarrow s_{t+1}$
+    \ENDWHILE
+    \STATE $\epsilon \leftarrow \max(\epsilon_{\min},\ \epsilon - \Delta\epsilon)$
+\ENDFOR
+\RETURN Politique $\pi(s) = \arg\max_a Q_\theta(s, a)$
+
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Architecture du réseau de neurones}
 \label{sec:architecture-reseau}
@@ -1658,24 +1717,22 @@ Le Tableau~\ref{tab:resultats-nominal} présente les performances moyennes sur 1
 \toprule
 \textbf{Algorithme} & \textbf{Prod. (t/h)} & \textbf{Wait (min)} & \textbf{Fuel (L/t)} & \textbf{Util. (\%)} \\
 \midrule
-Fixed Assignment & \textbf{4074.0 $\pm$ 36.5} & 27.9 $\pm$ 3.5
-    & 0.0431 $\pm$ 0.0003 & 96.8 \\
-Nearest Shovel   & 3829.5 $\pm$ 56.5 & 74.6 $\pm$ 7.2
+PPO              & \textbf{4208.8 $\pm$ 49} & 31.8 $\pm$ 3.3
+    & 0.0412 $\pm$ 0.0005 & 94.6 \\
+DQN              & 4168.5 $\pm$ 66 & 40.2 $\pm$ 2.7
+    & 0.0405 $\pm$ 0.0006 & 92.3 \\
+Fixed Assignment & 4074.0 $\pm$ 40 & \textbf{27.9 $\pm$ 3.7}
+    & 0.0431 $\pm$ 0.0003 & 96.5 \\
+Shortest Path    & 3872.8 $\pm$ 32 & 74.2 $\pm$ 7.2
+    & 0.0431 $\pm$ 0.0004 & 87.2 \\
+Nearest Shovel   & 3830.8 $\pm$ 55 & 72.6 $\pm$ 7.4
     & 0.0429 $\pm$ 0.0003 & 87.8 \\
-Shortest Path    & 3829.5 $\pm$ 56.5 & 74.6 $\pm$ 7.2
-    & 0.0429 $\pm$ 0.0003 & 87.8 \\
-PPO              & 3334.5 $\pm$ 38.2 & \textbf{30.6 $\pm$ 5.1}
-    & 0.0525 $\pm$ 0.0005 & 97.1 \\
-DQN              & 3311.0 $\pm$ 72.4 & 33.4 $\pm$ 10.4
-    & 0.0524 $\pm$ 0.0008 & 96.4 \\
-FIFO             & 3318.0 $\pm$ 42.1 & 32.8 $\pm$ 3.7
-    & 0.0528 $\pm$ 0.0003 & 95.8 \\
-Q-Learning       & 3272.5 $\pm$ 89.2 & 36.9 $\pm$ 19.4
-    & 0.0534 $\pm$ 0.0008 & 95.4 \\
-SARSA            & 3221.5 $\pm$ 97.3 & 52.5 $\pm$ 14.2
-    & 0.0537 $\pm$ 0.0006 & 93.2 \\
-Random           & 3148.3 $\pm$ 44.6 & 50.6 $\pm$ 3.9
-    & 0.0551 $\pm$ 0.0005 & 92.8 \\
+Q-Learning       & 3591.0 $\pm$ 85 & 56.3 $\pm$ 5.2
+    & 0.0481 $\pm$ 0.0012 & 91.1 \\
+FIFO             & 3290.0 $\pm$ 42 & 33.2 $\pm$ 6.2
+    & 0.0532 $\pm$ 0.0005 & 96.2 \\
+SARSA            & 3081.8 $\pm$ 64 & 66.8 $\pm$ 5.3
+    & 0.0556 $\pm$ 0.0007 & 89.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1690,24 +1747,22 @@ Random           & 3148.3 $\pm$ 44.6 & 50.6 $\pm$ 3.9
 \toprule
 \textbf{Algorithme} & \textbf{Prod. (t/h)} & \textbf{Wait (min)} & \textbf{Fuel (L/t)} & \textbf{Util. (\%)} \\
 \midrule
-Fixed Assignment & \textbf{5874.8 $\pm$ 54.2} & 42.9 $\pm$ 3.8
-    & 0.0444 $\pm$ 0.0003 & 93.7 \\
-Q-Learning       & 4772.3 $\pm$ 45.3 & 43.9 $\pm$ 2.7
-    & 0.0545 $\pm$ 0.0004 & 93.9 \\
-DQN              & 4772.3 $\pm$ 72.8 & 45.2 $\pm$ 5.5
-    & 0.0545 $\pm$ 0.0006 & 93.5 \\
-FIFO             & 4772.3 $\pm$ 71.5 & 45.2 $\pm$ 5.7
-    & 0.0544 $\pm$ 0.0006 & 93.5 \\
-PPO              & 4747.8 $\pm$ 58.7 & 46.5 $\pm$ 3.7
-    & 0.0547 $\pm$ 0.0004 & 93.7 \\
-SARSA            & 4635.8 $\pm$ 62.4 & 55.6 $\pm$ 7.1
-    & 0.0560 $\pm$ 0.0006 & 92.2 \\
-Random           & 4546.5 $\pm$ 45.8 & 63.5 $\pm$ 4.8
-    & 0.0567 $\pm$ 0.0003 & 90.8 \\
-Nearest Shovel   & 3919.2 $\pm$ 50.8 & 201.1 $\pm$ 11.4
-    & 0.0585 $\pm$ 0.0008 & 62.3 \\
-Shortest Path    & 3919.2 $\pm$ 50.8 & 201.1 $\pm$ 11.4
-    & 0.0585 $\pm$ 0.0008 & 62.3 \\
+Fixed Assignment & \textbf{5874.8 $\pm$ 53} & \textbf{43.0 $\pm$ 3.8}
+    & 0.0444 $\pm$ 0.0003 & 94.0 \\
+DQN              & 5664.8 $\pm$ 65 & 46.8 $\pm$ 2.6
+    & 0.0444 $\pm$ 0.0004 & 90.6 \\
+PPO              & 5244.8 $\pm$ 332 & 92.8 $\pm$ 21.6
+    & 0.0466 $\pm$ 0.0018 & 80.8 \\
+Q-Learning       & 4795.0 $\pm$ 106 & 69.1 $\pm$ 4.1
+    & 0.0537 $\pm$ 0.0009 & 88.9 \\
+FIFO             & 4747.8 $\pm$ 70 & 44.2 $\pm$ 3.4
+    & 0.0546 $\pm$ 0.0006 & 93.9 \\
+SARSA            & 4042.5 $\pm$ 67 & 119.8 $\pm$ 12.1
+    & 0.0613 $\pm$ 0.0011 & 78.6 \\
+Shortest Path    & 3956.8 $\pm$ 40 & 204.7 $\pm$ 6.9
+    & 0.0588 $\pm$ 0.0006 & 61.1 \\
+Nearest Shovel   & 3939.3 $\pm$ 42 & 200.2 $\pm$ 10.4
+    & 0.0580 $\pm$ 0.0007 & 62.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1722,24 +1777,22 @@ Shortest Path    & 3919.2 $\pm$ 50.8 & 201.1 $\pm$ 11.4
 \toprule
 \textbf{Algorithme} & \textbf{Prod. (t/h)} & \textbf{Wait (min)} & \textbf{Fuel (L/t)} & \textbf{Util. (\%)} \\
 \midrule
-Fixed Assignment & 3865.3 $\pm$ 28.2 & 52.9 $\pm$ 8.1
-    & 0.0456 $\pm$ 0.0005 & 91.4 \\
-Nearest Shovel   & 3687.3 $\pm$ 36.5 & 90.5 $\pm$ 6.4
-    & 0.0443 $\pm$ 0.0004 & 84.3 \\
-Shortest Path    & 3687.3 $\pm$ 36.5 & 90.5 $\pm$ 6.4
-    & 0.0443 $\pm$ 0.0004 & 84.3 \\
-PPO              & 3165.5 $\pm$ 52.4 & \textbf{47.7 $\pm$ 8.9}
-    & 0.0534 $\pm$ 0.0006 & 93.1 \\
-DQN              & 3161.5 $\pm$ 34.5 & 57.3 $\pm$ 8.2
-    & 0.0535 $\pm$ 0.0005 & 91.7 \\
-Q-Learning       & 3145.8 $\pm$ 43.7 & 55.1 $\pm$ 5.2
-    & 0.0541 $\pm$ 0.0006 & 91.4 \\
-FIFO             & 3117.5 $\pm$ 60.4 & 50.8 $\pm$ 10.3
-    & 0.0534 $\pm$ 0.0008 & 91.3 \\
-SARSA            & 3082.5 $\pm$ 55.8 & 60.0 $\pm$ 8.4
-    & 0.0561 $\pm$ 0.0006 & 90.3 \\
-Random           & 2997.5 $\pm$ 38.3 & 72.4 $\pm$ 3.8
-    & 0.0574 $\pm$ 0.0004 & 88.8 \\
+DQN              & \textbf{3991.8 $\pm$ 56} & 68.7 $\pm$ 5.5
+    & 0.0416 $\pm$ 0.0003 & 86.3 \\
+PPO              & 3946.3 $\pm$ 63 & 65.1 $\pm$ 7.0
+    & 0.0422 $\pm$ 0.0008 & 87.2 \\
+Fixed Assignment & 3860.5 $\pm$ 38 & \textbf{53.1 $\pm$ 6.0}
+    & 0.0451 $\pm$ 0.0004 & 91.7 \\
+Shortest Path    & 3702.3 $\pm$ 40 & 91.0 $\pm$ 5.5
+    & 0.0444 $\pm$ 0.0004 & 84.3 \\
+Nearest Shovel   & 3692.5 $\pm$ 42 & 90.1 $\pm$ 6.2
+    & 0.0441 $\pm$ 0.0004 & 84.4 \\
+Q-Learning       & 3176.3 $\pm$ 94 & 88.2 $\pm$ 7.1
+    & 0.0539 $\pm$ 0.0013 & 84.8 \\
+FIFO             & 3115.0 $\pm$ 74 & 53.0 $\pm$ 11.6
+    & 0.0556 $\pm$ 0.0009 & 92.2 \\
+SARSA            & 2973.3 $\pm$ 89 & 77.5 $\pm$ 8.8
+    & 0.0588 $\pm$ 0.0010 & 87.3 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1761,14 +1814,16 @@ Le Tableau~\ref{tab:synthese-comparative} présente une synthèse transversale d
 \toprule
 \textbf{Algorithme} & \textbf{Nominal} & \textbf{High Load} & \textbf{High Breakdown} & \textbf{Rang wait moyen} \\
 \midrule
-Fixed    & 4074 / 27.9 & 5875 / 42.9 & 3865 / 52.9 & 2ème \\
-PPO      & 3335 / \textbf{30.6} & 4748 / 46.5
-         & 3166 / \textbf{47.7} & \textbf{1er} \\
-DQN      & 3311 / 33.4 & 4772 / 45.2 & 3162 / 57.3 & 3ème \\
-Q-Learn. & 3273 / 36.9 & 4772 / 43.9 & 3146 / 55.1 & 4ème \\
-FIFO     & 3318 / 32.8 & 4772 / 45.2 & 3118 / 50.8 & 3ème \\
-SARSA    & 3222 / 52.5 & 4636 / 55.6 & 3083 / 60.0 & 6ème \\
-Nearest  & 3830 / 74.6 & 3919 / 201.1& 3687 / 90.5 & dernier \\
+PPO      & \textbf{4209} / 31.8 & 5245 / 92.8
+         & \textbf{3946} / 65.1 & \textbf{1er prod. (2/3)} \\
+DQN      & 4169 / 40.2 & \textbf{5665} / \textbf{46.8}
+         & 3992 / 68.7 & \textbf{1er prod. (1/3)} \\
+Fixed    & 4074 / \textbf{27.9} & \textbf{5875} / \textbf{43.0}
+         & 3861 / \textbf{53.1} & 1er wait (2/3) \\
+Q-Learn. & 3591 / 56.3 & 4795 / 69.1 & 3176 / 88.2 & 4ème \\
+FIFO     & 3290 / 33.2 & 4748 / 44.2 & 3115 / 53.0 & 5ème \\
+SARSA    & 3082 / 66.8 & 4043 / 119.8& 2973 / 77.5 & 6ème \\
+Nearest  & 3831 / 72.6 & 3939 / 200.2& 3693 / 90.1 & dernier \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1776,21 +1831,25 @@ Nearest  & 3830 / 74.6 & 3919 / 201.1& 3687 / 90.5 & dernier \\
 \subsection{Analyse par scénario}
 
 \paragraph{Scénario nominal.}
-Fixed Assignment obtient la meilleure productivité (4\,074 t/h) grâce à une distribution parfaitement équilibrée de 4 camions par pelle, correspondant au Match Factor optimal de la configuration nominale. Cette propriété est structurelle : avec $N_c = 12$ camions et $N_p = 3$ pelles, le schéma round-robin de Fixed Assignment distribue exactement $12/3 = 4$ camions par pelle, maximisant le taux d'utilisation des pelles.
+PPO (4\,208.8 t/h) et DQN (4\,168.5 t/h) surpassent tous deux Fixed Assignment (4\,074.0 t/h) en productivité, démontrant que les agents Deep RL ont appris une politique d'affectation plus efficace que le schéma round-robin statique. Ce résultat valide directement l'hypothèse H1 en conditions stables.
 
-PPO se positionne au deuxième rang sur le temps d'attente (30.6 min contre 27.9 min pour Fixed, soit +10\%), tout en maintenant le taux d'utilisation le plus élevé parmi les agents RL (97.1\%). Ce résultat confirme que PPO a appris une politique d'équilibrage des files d'attente efficace en conditions stables.
+Fixed Assignment conserve le meilleur temps d'attente (27.9 min) grâce au Match Factor parfait ($12/3 = 4$ camions/pelle), ce qui minimise structurellement les files d'attente. PPO présente le meilleur temps d'attente parmi les agents RL (31.8 min), confirmant qu'il a appris à équilibrer les files de manière adaptative.
+
+Shortest Path (3\,872.8 t/h) se distingue désormais de Nearest Shovel (3\,830.8 t/h) grâce à l'implémentation du coût de cycle complet $C = \alpha T + \beta D + \gamma E$ (Eq.~3.1), validant l'apport de la formulation multi-critère.
 
 \paragraph{Scénario high\_load.}
-Avec 18 camions pour 3 pelles, le Match Factor de Fixed Assignment reste favorable ($18/3 = 6$ camions/pelle, distribution uniforme).  En revanche, les heuristiques myopes (Nearest Shovel, Shortest Path) s'effondrent : les temps d'attente atteignent 201 minutes, contre 63 minutes pour une politique aléatoire. Ce résultat illustre le phénomène de congestion systématique prévu au Chapitre~3 : en l'absence d'équilibrage de charge, toute la flotte converge vers la pelle géographiquement la plus proche, saturant définitivement la pelle 1 au détriment des pelles 2 et 3.
+Avec 18 camions pour 3 pelles, Fixed Assignment reste dominant (5\,874.8 t/h), son Match Factor $18/3 = 6$ camions/pelle restant optimal. DQN (5\,664.8 t/h, $-3{,}6\%$ vs Fixed) se positionne comme la meilleure alternative RL avec un écart modéré et une faible variance.
 
-Q-Learning entraîné spécifiquement sur ce scénario (4\,772 t/h) égale DQN malgré sa simplicité algorithmique. Ce résultat suggère que la spécialisation au scénario prime sur la sophistication du modèle pour les méthodes tabulaires : Q-Learning a convergé vers une politique d'équilibrage explicite des pelles, confirmée par la progression de sa courbe d'apprentissage (+49\% sur 30\,000 épisodes).
+PPO affiche une performance variable ($5\,244.8 \pm 332$ t/h) : certaines réplications atteignent 5\,687 t/h (proches de Fixed) tandis que d'autres n'atteignent que 4\,882 t/h. Cette instabilité en surcharge traduit la sensibilité de la politique on-policy aux configurations de départ.
+
+Les heuristiques myopes (Nearest Shovel, Shortest Path) s'effondrent : temps d'attente $\geq 200$ minutes, pires que toutes les autres politiques. Ce phénomène confirme la congestion systématique prévue au Chapitre~3 : en l'absence d'équilibrage de charge, la flotte sature la pelle géographiquement la plus proche.
 
 \paragraph{Scénario high\_breakdown.}
-C'est le scénario déterminant pour la validation de l'hypothèse H1. PPO obtient les meilleurs temps d'attente de tous les algorithmes testés (47.7 min), surpassant Fixed Assignment (52.9 min, +11\%), FIFO (50.8 min) et DQN (57.3 min).
+C'est le scénario déterminant pour la validation de H1. DQN (3\,991.8 t/h) et PPO (3\,946.3 t/h) surpassent tous deux Fixed Assignment (3\,860.5 t/h) en productivité, confirmant la supériorité des agents Deep RL face aux perturbations stochastiques fréquentes.
 
-Ce résultat confirme l'avantage structurel de PPO dans les environnements perturbés : sa politique on-policy, entraînée sur des interactions stochastiques incluant des pannes fréquentes, a appris à redistribuer dynamiquement les camions vers les pelles disponibles dès qu'une panne survient. Fixed Assignment, rigide par construction, ne peut pas adapter ses affectations : les camions continuent d'être assignés cycliquement même en présence de camions en panne, générant des temps d'attente supérieurs.
+Fixed Assignment conserve le meilleur temps d'attente (53.1 min) : son schéma cyclique génère peu d'attente grâce à la distribution régulière des camions. PPO (65.1 min) et DQN (68.7 min) ont un temps d'attente légèrement supérieur mais produisent davantage, car ils exploitent les pelles disponibles plus agressivement dès qu'une panne libère une ressource.
 
-La différence de 5.2 minutes sur les temps d'attente (-10\%) représente, extrapolée à une flotte opérationnelle réelle de 12 camions sur un poste de 8 heures, une réduction de 624 minutes d'immobilisation improductive par poste.
+L'écart de productivité PPO $-$ Fixed (+86 t/h, $+2{,}2\%$) représente, extrapolé sur un poste de 8 heures, un gain de 688 tonnes supplémentaires transportées malgré un taux de pannes 5 fois plus élevé que le scénario nominal.
 
 \textbf{Figure à insérer ici :} une figure comparative montrant les temps d'attente des 3 scénarios côte à côte pour Fixed, PPO et DQN.
 
@@ -1799,9 +1858,9 @@ La différence de 5.2 minutes sur les temps d'attente (-10\%) représente, extra
 
 \subsection{Convergence des agents d'apprentissage}
 
-La courbe d'apprentissage de Q-Learning (Figure~\ref{fig:learning-curves}) montre une progression claire de la récompense cumulée, passant de 133 à 170 sur le scénario nominal (+28\%) et de 177 à 263 sur le scénario high\_load (+49\%). Ces progressions confirment que les corrections apportées à la discrétisation et à la fonction de récompense ont rendu l'apprentissage tabulaire effectif.
+La courbe d'apprentissage de Q-Learning montre une progression claire de la récompense cumulée, passant de 155 à 175 sur le scénario nominal ($+12{,}5\%$) et de 213 à 225 sur le scénario high\_load ($+5{,}4\%$). La Q-table couvre 17\,034 états effectifs sur 30\,000 épisodes en nominal (espace théorique : $8^6 = 262\,144$), confirmant que l'enrichissement du vecteur d'état (ajout de la pelle la plus proche du camion courant) a permis une couverture suffisante pour une politique compétitive.
 
-SARSA converge vers une valeur inférieure (133 contre 170 pour Q-Learning en nominal), conformément au comportement théorique prédit : en tant que méthode on-policy, SARSA intègre le coût de l'exploration dans ses estimations, produisant une politique conservatrice mais sous-optimale par rapport à Q-Learning off-policy.
+SARSA converge vers une valeur inférieure ($\approx 145$ contre 175 pour Q-Learning en nominal), conformément au comportement théorique prédit : en tant que méthode on-policy, SARSA intègre le coût de l'exploration dans ses estimations, produisant une politique conservatrice mais sous-optimale par rapport à Q-Learning off-policy.
 
 La convergence de PPO est confirmée par \texttt{explained\_variance = 0.999}, indiquant que le réseau critique prédit avec précision les retours futurs. Cette valeur proche de 1.0 signifie que l'agent a pleinement exploité le signal de récompense disponible dans le budget d'entraînement alloué (2M steps $\approx$ 9\,677 épisodes).
 
