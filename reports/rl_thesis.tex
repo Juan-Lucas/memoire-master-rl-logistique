@@ -1880,6 +1880,15 @@ PPO présente un écart-type élevé en high\_load ($5\,244.8 \pm 332$ t/h) : se
 \paragraph{Limite 4 : Fixed Assignment bénéficie d'un Match Factor parfait.}
 La supériorité de Fixed Assignment en conditions nominales est structurelle : avec $N_c = 12$ camions et $N_p = 3$ pelles, le schéma round-robin distribue exactement 4 camions par pelle, correspondant au Match Factor optimal théorique. Cette propriété disparaît en high\_load ($6 \neq 4$ camions/pelle) et en high\_breakdown (camions immobilisés par pannes). La comparaison avec Fixed Assignment en nominal est donc délibérément défavorable pour le RL : elle teste les agents dans les conditions les plus avantageuses pour l'heuristique statique.
 
+\paragraph{Limite 5 : Non-généralisation entre configurations de flotte.}
+Chaque agent Deep RL (DQN, PPO) est entraîné sur une configuration spécifique (nombre de camions, pelles, dumps). La dimension du vecteur d'observation dépend directement de $N_c$ : un modèle entraîné sur 12 camions (147 dimensions) ne peut pas être déployé sur une flotte de 18 camions (213 dimensions) sans réentraînement complet. Cette contrainte s'inscrit en tension avec le terme \emph{«~dynamique~»} du titre : un système véritablement adaptatif s'ajusterait à une modification de la flotte sans réentraînement. Des architectures à taille variable (attention, graph neural networks) ou le transfer learning constitueraient les pistes de résolution les plus prometteuses~\cite{WZeng2022}.
+
+\paragraph{Limite 6 : Approximation séquentielle de l'optimisation holistique.}
+À chaque étape de décision, l'agent dispatche le camion le plus tôt disponible, sans optimiser simultanément l'affectation de tous les camions libres. Cette granularité séquentielle est une approximation tractable du problème d'affectation global, qui serait de complexité combinatoire exponentielle ($|\mathcal{A}|^{N_c}$) dans sa formulation complète. Elle s'inscrit dans la même logique que les heuristiques classiques qui traitent également un camion à la fois, mais l'agent RL bénéficie d'une observation globale de la flotte pour guider ses décisions. Une extension multi-agent (chaque camion comme agent, entraînement centralisé et exécution décentralisée) permettrait de s'approcher d'une optimisation véritablement holistique~\cite{Zhao2025HierarchicalMARL}.
+
+\paragraph{Limite 7 : Validation exclusivement en simulation.}
+L'ensemble des résultats repose sur un simulateur paramétré à partir de la littérature (Afrapoli 2017, Mohtasham 2023). Aucune confrontation avec des données de terrain réelles n'a été réalisée. Les performances observées peuvent différer des conditions opérationnelles réelles, où des phénomènes non modélisés interviennent : météo, état variable des routes, comportement des opérateurs, pannes de pelles ou d'infrastructures. Une validation sur données historiques d'une mine partenaire constituerait l'étape naturelle suivante pour consolider les conclusions de ce travail.
+
 \section{Discussion}
 \label{sec:discussion}
 
