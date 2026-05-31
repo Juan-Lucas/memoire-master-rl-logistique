@@ -1,6 +1,11 @@
 # Data
 /data/
 
+# Documentation personnelle (usage interne — non publiée sur GitHub)
+# Seul docs/glossaire.md reste visible pour les lecteurs
+docs/*
+!docs/glossaire.md
+
 # Mac OS-specific storage files
 .DS_Store
 
