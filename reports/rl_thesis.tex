@@ -1856,7 +1856,12 @@ Fixed Assignment conserve le meilleur temps d'attente (53.1 min) : son schéma c
 
 L'écart de productivité PPO $-$ Fixed (+86 t/h, $+2{,}2\%$) représente, extrapolé sur un poste de 8 heures, un gain de 688 tonnes supplémentaires transportées malgré un taux de pannes 5 fois plus élevé que le scénario nominal.
 
-\textbf{Figure à insérer ici :} une figure comparative montrant les temps d'attente des 3 scénarios côte à côte pour Fixed, PPO et DQN.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/wait_time_comparison.png}
+    \caption{Temps d'attente moyen (min) — Fixed Assignment, PPO et DQN sur les trois scénarios.}
+    \label{fig:wait-comparison}
+\end{figure}
 
 \section{Analyse critique des résultats}
 \label{sec:analyse-critique}
@@ -1911,7 +1916,7 @@ Chaque agent Deep RL (DQN, PPO) est entraîné sur une configuration spécifique
 À chaque étape de décision, l'agent dispatche le camion le plus tôt disponible, sans optimiser simultanément l'affectation de tous les camions libres. Cette granularité séquentielle est une approximation tractable du problème d'affectation global, qui serait de complexité combinatoire exponentielle ($|\mathcal{A}|^{N_c}$) dans sa formulation complète. Elle s'inscrit dans la même logique que les heuristiques classiques qui traitent également un camion à la fois, mais l'agent RL bénéficie d'une observation globale de la flotte pour guider ses décisions. Une extension multi-agent (chaque camion comme agent, entraînement centralisé et exécution décentralisée) permettrait de s'approcher d'une optimisation véritablement holistique~\cite{Zhao2025HierarchicalMARL}.
 
 \paragraph{Limite 7 : Validation exclusivement en simulation.}
-L'ensemble des résultats repose sur un simulateur paramétré à partir de la littérature (Afrapoli 2017, Mohtasham 2023). Aucune confrontation avec des données de terrain réelles n'a été réalisée. Les performances observées peuvent différer des conditions opérationnelles réelles, où des phénomènes non modélisés interviennent : météo, état variable des routes, comportement des opérateurs, pannes de pelles ou d'infrastructures. Une validation sur données historiques d'une mine partenaire constituerait l'étape naturelle suivante pour consolider les conclusions de ce travail.
+L'ensemble des résultats repose sur un simulateur paramétré à partir de la littérature~\cite{Afrapoli2017, MehrnazMohtasham2023}. Aucune confrontation avec des données de terrain réelles n'a été réalisée~\cite{HazrathosseiniAfrapoli2024}. Les performances observées peuvent différer des conditions opérationnelles réelles, où des phénomènes non modélisés interviennent : météo, état variable des routes, comportement des opérateurs, pannes de pelles ou d'infrastructures. Une validation sur données historiques d'une mine partenaire constituerait l'étape naturelle suivante pour consolider les conclusions de ce travail.
 
 \section{Discussion}
 \label{sec:discussion}
