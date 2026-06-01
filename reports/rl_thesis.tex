@@ -2109,16 +2109,16 @@ Gestion de projet & Poetry / pip & — \\
 \section*{Commandes principales}
 
 \begin{lstlisting}
-# Validation de l'environnement
+# Validation de l'environnement Gymnasium
 python -m memoire_master_rl_logistique.main --check-env
 
-# Entraînement PPO (2M steps, ~2h)
+# Entrainement PPO (2M steps, ~2h GPU)
 python -m memoire_master_rl_logistique.main --train-only
 
-# Entraînement Q-Learning (30k épisodes, ~15 min)
+# Entrainement Q-Learning (30k episodes, ~15 min CPU)
 python -m memoire_master_rl_logistique.main --train-q-learning
 
-# Benchmark comparatif complet
+# Benchmark comparatif complet (tous scenarios)
 python -m memoire_master_rl_logistique.main --benchmark-only
 \end{lstlisting}
 
@@ -2189,38 +2189,38 @@ nominal\_asym. & 13 & 3 & 2 & 2\% & 4.33 & Configuration asymétrique \\
 \chapter{Architecture logicielle et structure du projet}
 \label{ann:architecture}
 
-\begin{lstlisting}
+\begin{verbatim}
 memoire-master-rl-logistique/
-├── memoire_master_rl_logistique/
-│   ├── env/
-│   │   ├── mine_env.py          # Environnement Gymnasium
-│   │   ├── observation_builder.py # Vecteur d'observation (147 dim)
-│   │   └── action_mask.py       # Masque d'actions
-│   ├── simulation/
-│   │   ├── entities.py          # Truck, Shovel, DumpSite
-│   │   ├── graph_model.py       # RoadGraph + Dijkstra
-│   │   ├── fuel_model.py        # Modèle carburant
-│   │   └── kpi.py               # Calcul des KPIs
-│   ├── rl/
-│   │   ├── train_ppo.py         # PPO (Stable-Baselines3)
-│   │   ├── train_dqn.py         # DQN (Stable-Baselines3)
-│   │   ├── train_q_learning.py  # Q-Learning tabulaire
-│   │   ├── train_sarsa.py       # SARSA tabulaire
-│   │   ├── discretize.py        # Discrétisation état
-│   │   └── evaluate_agent.py    # Évaluation
-│   ├── baselines/
-│   │   ├── fifo_policy.py       # FIFO (argmin disponibilité)
-│   │   ├── fixed_policy.py      # Fixed Assignment (round-robin)
-│   │   ├── nearest_policy.py    # Nearest Shovel (Dijkstra)
-│   │   └── shortest_path_policy.py # Shortest Path (Eq. 3.1)
-│   └── experiments/
-│       ├── scenarios.py         # Définition des scénarios
-│       └── run_benchmark.py     # Orchestration du benchmark
-├── data/results/                # Résultats CSV du benchmark
-├── models/                      # Modèles entraînés sauvegardés
-├── reports/                     # Mémoire LaTeX + figures
-└── docs/glossaire.md            # Glossaire public
-\end{lstlisting}
+|-- memoire_master_rl_logistique/
+|   |-- env/
+|   |   |-- mine_env.py            (Environnement Gymnasium)
+|   |   |-- observation_builder.py (Vecteur 147 dimensions)
+|   |   `-- action_mask.py         (Masque d'actions)
+|   |-- simulation/
+|   |   |-- entities.py            (Truck, Shovel, DumpSite)
+|   |   |-- graph_model.py         (RoadGraph + Dijkstra)
+|   |   |-- fuel_model.py          (Modele carburant)
+|   |   `-- kpi.py                 (Calcul KPIs)
+|   |-- rl/
+|   |   |-- train_ppo.py           (PPO, Stable-Baselines3)
+|   |   |-- train_dqn.py           (DQN, Stable-Baselines3)
+|   |   |-- train_q_learning.py    (Q-Learning tabulaire)
+|   |   |-- train_sarsa.py         (SARSA tabulaire)
+|   |   |-- discretize.py          (Discretisation etat)
+|   |   `-- evaluate_agent.py      (Evaluation)
+|   |-- baselines/
+|   |   |-- fifo_policy.py         (FIFO)
+|   |   |-- fixed_policy.py        (Fixed Assignment)
+|   |   |-- nearest_policy.py      (Nearest Shovel)
+|   |   `-- shortest_path_policy.py (Shortest Path Eq.3.1)
+|   `-- experiments/
+|       |-- scenarios.py           (Definition scenarios)
+|       `-- run_benchmark.py       (Benchmark comparatif)
+|-- data/results/                  (Resultats CSV)
+|-- models/                        (Modeles entraines)
+|-- reports/                       (Memoire LaTeX)
+`-- docs/glossaire.md              (Glossaire public)
+\end{verbatim}
 
 \chapter{Interfaces et démonstrations}
 \label{ann:interfaces}
