@@ -132,7 +132,10 @@
 \thispagestyle{empty}
 \vspace*{5cm}
 \begin{flushright}
-    \textit{Je dédie ce travail à...}
+    \textit{À ma famille, pour son soutien indéfectible tout au long de ce parcours.}\\[0.5cm]
+    \textit{À mes collègues et amis, pour leurs encouragements constants.}\\[0.5cm]
+    \textit{À tous ceux qui croient que la technologie peut améliorer}\\
+    \textit{les conditions de travail et la durabilité de l'industrie minière.}
 \end{flushright}
 \newpage
 
@@ -140,7 +143,15 @@
 \chapter*{Remerciements}
 \addcontentsline{toc}{chapter}{Remerciements}
 
-À compléter...
+Je tiens à exprimer ma profonde gratitude à toutes les personnes qui ont contribué, de près ou de loin, à la réalisation de ce mémoire.
+
+Mes remerciements les plus sincères vont en premier lieu à ma directrice, \textbf{Dr.~Olfa FERCHICHI}, pour sa disponibilité, ses conseils avisés et la rigueur scientifique qu'elle a su m'inculquer tout au long de ce travail. Sa guidance a été déterminante dans l'orientation et la qualité de cette recherche.
+
+Je remercie chaleureusement la direction et l'ensemble du corps enseignant de la \textbf{Faculté des Sciences Informatiques de l'Université Don Bosco de Lubumbashi} pour la formation de qualité dispensée durant ce cursus de Master~2 Data Science.
+
+Ma gratitude va également à ma famille, dont le soutien moral et affectif m'a permis de mener ce travail à son terme dans les meilleures conditions.
+
+Enfin, je remercie tous mes collègues de promotion pour les échanges enrichissants et la solidarité dont ils ont fait preuve au cours de cette année académique.
 
 \newpage
 
@@ -1968,13 +1979,45 @@ Ces résultats ouvrent des perspectives directes : l'augmentation du budget d'en
 \chapter*{Conclusion générale et perspectives}
 \addcontentsline{toc}{chapter}{Conclusion générale et perspectives}
 
-% Synthèse des contributions
+\section*{Synthèse des contributions}
 
-% Validation de l'hypothèse de recherche
+Ce mémoire s'est fixé pour objectif de dépasser les limites des heuristiques statiques dans la logistique minière en concevant et mettant en œuvre un agent autonome de dispatching fondé sur l'apprentissage par renforcement. Articulé autour du cadre méthodologique CRISP-RL, le travail a produit quatre contributions principales.
 
-% Limites du travail
+\textbf{Première contribution : un environnement de simulation réaliste.} Un simulateur de mine à ciel ouvert, conforme à l'interface standardisée Gymnasium, a été développé en Python. Il modélise un graphe routier pondéré (7~nœuds, distances de 1,5 à 3,2~km, pentes de 2 à 8\%), des temps de trajet stochastiques (distribution log-normale, $\sigma = 0{,}12$), des pannes aléatoires et la dégradation progressive des routes. Ce simulateur constitue une base reproductible pour l'évaluation comparative des stratégies de dispatching.
 
-% Perspectives de recherche et industrielles
+\textbf{Deuxième contribution : une progression algorithmique complète.} Quatre algorithmes d'apprentissage par renforcement ont été implémentés et calibrés~: Q-Learning et SARSA tabulaires (30\,000 épisodes, $\alpha = 0{,}2$, enrichissement d'état), DQN (2M steps, experience replay de 200\,000 transitions) et PPO (2M steps, architecture MLP $128 \times 128$, \texttt{explained\_variance = 0.999}). Cette progression illustre l'évolution du RL tabulaire vers le Deep RL, justifiant chaque transition par les limites de l'approche précédente.
+
+\textbf{Troisième contribution : un benchmark comparatif sur huit stratégies.} Quatre heuristiques industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et quatre agents RL ont été comparés sur trois scénarios (nominal, high\_load, high\_breakdown), avec 10~réplications par scénario (seeds 42--51), produisant des résultats statistiquement stables.
+
+\textbf{Quatrième contribution : la calibration du signal de récompense.} Un diagnostic empirique a révélé que la formulation originale à trois termes produisait un signal trop peu discriminant ($\Delta R < 6 \times 10^{-4}$). L'ajout d'un terme de pénalité d'attente ($w_4 = 0{,}3$) a rendu l'apprentissage tabulaire effectif, illustrant l'importance du reward shaping dans la conception d'agents RL applicatifs.
+
+\section*{Validation de l'hypothèse centrale}
+
+L'hypothèse H1 --- qu'un agent RL peut surpasser les heuristiques classiques en productivité et en adaptabilité aux perturbations --- est \textbf{validée dans deux scénarios sur trois}.
+
+En conditions nominales, PPO (4\,208.8~t/h) et DQN (4\,168.5~t/h) surpassent Fixed Assignment (4\,074.0~t/h), démontrant que les agents Deep RL apprennent une politique d'affectation plus efficace que le schéma round-robin statique. En conditions perturbées (high\_breakdown, $p_b = 10\%$), DQN (3\,991.8~t/h) et PPO (3\,946.3~t/h) surpassent également Fixed Assignment (3\,860.5~t/h), confirmant leur robustesse face aux pannes fréquentes.
+
+En conditions de surcharge (high\_load), les heuristiques myopes (Nearest Shovel, Shortest Path) s'effondrent à plus de 200~minutes d'attente, validant la prémisse du titre : les approches statiques montrent des limites structurelles que le RL ne partage pas. DQN (5\,664.8~t/h) reste compétitif face à Fixed Assignment (5\,874.8~t/h, $-3{,}6\%$), réaffirmant la pertinence du Deep RL en contexte de charge élevée.
+
+Ces résultats confirment que le RL n'est pas universellement supérieur aux heuristiques~\cite{HazrathosseiniAfrapoli2024}, mais apporte un avantage décisif dans les contextes dynamiques et perturbés qui caractérisent les mines en exploitation réelle.
+
+\section*{Limites du travail}
+
+Ce travail présente plusieurs limites qui bornent la portée des conclusions obtenues. Sur le plan algorithmique, la politique est entraînée offline sur une configuration fixe~: tout changement du nombre de camions impose un réentraînement complet (Limite~5). Sur le plan architectural, le dispatching séquentiel --- un camion à la fois --- est une approximation tractable de l'optimisation globale, mais ne constitue pas une optimisation holistique au sens strict (Limite~6). Enfin, l'ensemble des résultats repose sur un simulateur~: aucune validation sur données de terrain réelles n'a été réalisée (Limite~7). L'intégralité des sept limites identifiées est détaillée en Section~6.3.
+
+\section*{Perspectives de recherche et industrielles}
+
+Les contributions de ce mémoire ouvrent plusieurs axes de développement à court et moyen terme.
+
+\textbf{Apprentissage multi-agent.} La formulation actuelle (un agent centralisé) pourrait être étendue à une approche MARL où chaque camion constitue un agent décisionnel autonome, coordonné par un entraînement centralisé et une exécution décentralisée~\cite{Zhao2025HierarchicalMARL}. Cette extension lèverait la Limite~6 en rapprochant l'optimisation du sens holistique.
+
+\textbf{Généralisation par transfer learning.} Des architectures à taille variable (attention, graph neural networks) permettraient de déployer un modèle unique sur des flottes de tailles différentes sans réentraînement~\cite{WZeng2022}, levant la Limite~5 et rapprochant le système du sens dynamique du titre.
+
+\textbf{Validation sur données terrain.} Un partenariat avec une mine opérationnelle permettrait de confronter les politiques apprises aux conditions réelles~: météo, comportement des opérateurs, pannes d'infrastructure non modélisées~\cite{HazrathosseiniAfrapoli2024}. Cette étape est indispensable pour toute perspective de déploiement industriel.
+
+\textbf{Extension des scénarios.} L'introduction de pannes de pelles (et non seulement de camions), de topologies de réseau plus complexes, et de contraintes de qualité de minerai constituerait des extensions naturelles pour évaluer la robustesse des politiques dans des conditions encore plus proches de la réalité opérationnelle.
+
+En définitive, ce travail démontre que l'apprentissage par renforcement profond constitue une approche prometteuse et compétitive pour le dispatching minier dynamique. Les résultats obtenus, les outils développés et les limites identifiées forment une base solide pour une prochaine génération de systèmes d'aide à la décision minière intégrant l'intelligence artificielle.
 
 \newpage
 
@@ -2030,27 +2073,181 @@ Ces résultats ouvrent des perspectives directes : l'augmentation du budget d'en
 \chapter{Détails d'implémentation}
 \label{ann:implementation}
 
-À compléter...
+\section*{Technologies utilisées}
+
+\begin{table}[H]
+\centering
+\caption{Stack technologique du projet}
+\begin{tabular}{lll}
+\toprule
+\textbf{Composant} & \textbf{Technologie} & \textbf{Version} \\
+\midrule
+Langage & Python & 3.10+ \\
+Environnement RL & Gymnasium & 0.29+ \\
+Agents Deep RL & Stable-Baselines3 & 2.x \\
+Graphe routier & NetworkX & 3.x \\
+Calcul numérique & NumPy & 1.24+ \\
+Gestion de projet & Poetry / pip & — \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Modules principaux}
+
+\begin{itemize}
+    \item \texttt{env/mine\_env.py} : environnement Gymnasium (reset, step, render)
+    \item \texttt{env/observation\_builder.py} : construction du vecteur d'observation (147 dimensions)
+    \item \texttt{simulation/graph\_model.py} : graphe routier NetworkX, algorithme Dijkstra
+    \item \texttt{simulation/fuel\_model.py} : modèle de consommation carburant
+    \item \texttt{simulation/entities.py} : classes Truck, Shovel, DumpSite
+    \item \texttt{rl/train\_ppo.py}, \texttt{train\_dqn.py} : entraînement PPO et DQN
+    \item \texttt{rl/train\_q\_learning.py}, \texttt{train\_sarsa.py} : entraînement tabulaire
+    \item \texttt{baselines/} : FIFO, Fixed, Nearest, ShortestPath
+    \item \texttt{experiments/run\_benchmark.py} : orchestrateur du benchmark comparatif
+\end{itemize}
+
+\section*{Commandes principales}
+
+\begin{lstlisting}
+# Validation de l'environnement
+python -m memoire_master_rl_logistique.main --check-env
+
+# Entraînement PPO (2M steps, ~2h)
+python -m memoire_master_rl_logistique.main --train-only
+
+# Entraînement Q-Learning (30k épisodes, ~15 min)
+python -m memoire_master_rl_logistique.main --train-q-learning
+
+# Benchmark comparatif complet
+python -m memoire_master_rl_logistique.main --benchmark-only
+\end{lstlisting}
 
 \chapter{Hyperparamètres des modèles}
 \label{ann:hyperparametres}
 
-À compléter...
+\begin{table}[H]
+\centering
+\caption{Hyperparamètres complets de tous les agents}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Hyperparamètre} & \textbf{Q-Learning} & \textbf{SARSA} & \textbf{DQN} & \textbf{PPO} \\
+\midrule
+Taux d'apprentissage ($\alpha$) & 0.2 & 0.2 & $3\times10^{-4}$ & $3\times10^{-4}$ \\
+Facteur d'actualisation ($\gamma$) & 0.99 & 0.99 & 0.99 & 0.99 \\
+$\epsilon$ initial / final & 1.0 / 0.01 & 1.0 / 0.01 & 1.0 / 0.02 & — \\
+Épisodes / Steps & 30\,000 ép. & 30\,000 ép. & 2\,000\,000 & 2\,000\,000 \\
+Bins discrétisation & 8 & 8 & — & — \\
+Features d'état & 6 & 6 & — & — \\
+Taille buffer replay & — & — & 200\,000 & — \\
+Batch size & — & — & 64 & 64 \\
+$n\_steps$ & — & — & — & 1\,024 \\
+GAE $\lambda$ & — & — & — & 0.95 \\
+Clip range & — & — & — & 0.2 \\
+Coefficient entropie & — & — & — & 0.02 \\
+Architecture réseau & — & — & MLP [128,128] & MLP [128,128] \\
+Activation & — & — & ReLU & ReLU \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Poids de la fonction de récompense}
+
+\begin{center}
+$w_1 = 1{,}0$ (rendement) \quad $w_2 = 0{,}1$ (équité) \quad $w_3 = 0{,}05$ (coût) \quad $w_4 = 0{,}3$ (attente)
+\end{center}
 
 \chapter{Scénarios de simulation}
 \label{ann:scenarios}
 
-À compléter...
+\begin{table}[H]
+\centering
+\caption{Paramètres complets des scénarios expérimentaux}
+\begin{tabular}{lllllll}
+\toprule
+\textbf{Scénario} & \textbf{Camions} & \textbf{Pelles} & \textbf{Dumps} & \textbf{$p_b$} & \textbf{MF} & \textbf{Description} \\
+\midrule
+nominal & 12 & 3 & 2 & 2\% & 4.0 & Conditions nominales équilibrées \\
+high\_load & 18 & 3 & 2 & 2\% & 6.0 & Surcharge (flotte surdimensionnée) \\
+high\_breakdown & 12 & 3 & 2 & 10\% & 4.0 & Pannes fréquentes (5× nominal) \\
+nominal\_asym. & 13 & 3 & 2 & 2\% & 4.33 & Configuration asymétrique \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Paramètres physiques communs}
+
+\begin{itemize}
+    \item Durée d'un épisode : 480 minutes (8 heures)
+    \item Capacité des camions : 140 tonnes (Cat 785C)
+    \item Temps de chargement : $\mathcal{LN}(2{,}0~\text{min},\ \sigma = 0{,}3)$
+    \item Temps de déchargement : $\mathcal{LN}(1{,}0~\text{min},\ \sigma = 0{,}2)$
+    \item Vitesse à vide / chargé : 32 / 26 km/h (base, ajustée par pente et état route)
+    \item Dégradation route : probabilité 5\%, réduction 2\% par passage
+    \item Évaluation : 10 réplications indépendantes (seeds 42 à 51)
+\end{itemize}
 
 \chapter{Architecture logicielle et structure du projet}
 \label{ann:architecture}
 
-À compléter...
+\begin{lstlisting}
+memoire-master-rl-logistique/
+├── memoire_master_rl_logistique/
+│   ├── env/
+│   │   ├── mine_env.py          # Environnement Gymnasium
+│   │   ├── observation_builder.py # Vecteur d'observation (147 dim)
+│   │   └── action_mask.py       # Masque d'actions
+│   ├── simulation/
+│   │   ├── entities.py          # Truck, Shovel, DumpSite
+│   │   ├── graph_model.py       # RoadGraph + Dijkstra
+│   │   ├── fuel_model.py        # Modèle carburant
+│   │   └── kpi.py               # Calcul des KPIs
+│   ├── rl/
+│   │   ├── train_ppo.py         # PPO (Stable-Baselines3)
+│   │   ├── train_dqn.py         # DQN (Stable-Baselines3)
+│   │   ├── train_q_learning.py  # Q-Learning tabulaire
+│   │   ├── train_sarsa.py       # SARSA tabulaire
+│   │   ├── discretize.py        # Discrétisation état
+│   │   └── evaluate_agent.py    # Évaluation
+│   ├── baselines/
+│   │   ├── fifo_policy.py       # FIFO (argmin disponibilité)
+│   │   ├── fixed_policy.py      # Fixed Assignment (round-robin)
+│   │   ├── nearest_policy.py    # Nearest Shovel (Dijkstra)
+│   │   └── shortest_path_policy.py # Shortest Path (Eq. 3.1)
+│   └── experiments/
+│       ├── scenarios.py         # Définition des scénarios
+│       └── run_benchmark.py     # Orchestration du benchmark
+├── data/results/                # Résultats CSV du benchmark
+├── models/                      # Modèles entraînés sauvegardés
+├── reports/                     # Mémoire LaTeX + figures
+└── docs/glossaire.md            # Glossaire public
+\end{lstlisting}
 
 \chapter{Interfaces et démonstrations}
 \label{ann:interfaces}
 
-À compléter...
+\section*{Validation de l'environnement}
+
+La conformité de l'environnement avec l'interface Gymnasium est vérifiée par la commande \texttt{check\_env}, qui valide les espaces d'observation et d'action, la reproductibilité par graine fixe et l'absence d'erreurs dans la boucle reset/step~:
+
+\begin{lstlisting}
+$ python -m memoire_master_rl_logistique.main --check-env
+
+check_env OK
+  Observation : Box(0.0, 1.0, (147,), float32)
+  Action      : Discrete(7)
+  Camions=12, Pelles=3, Dumps=2
+\end{lstlisting}
+
+\section*{Format des résultats du benchmark}
+
+Le benchmark produit un fichier \texttt{data/results/benchmark\_results.csv} avec les colonnes suivantes~:
+
+\begin{center}
+\texttt{scenario, policy, seed, productivity\_tph, avg\_wait\_min\_per\_truck,}\\
+\texttt{utilization\_pct, specific\_fuel\_l\_per\_ton, total\_cycles, total\_reward}
+\end{center}
+
+Chaque ligne correspond à une réplication (seed) d'une politique sur un scénario, soit $8~\text{politiques} \times 3~\text{scénarios} \times 10~\text{seeds} = 240$~lignes pour le benchmark principal.
 
 % ============================================================================
 \end{document}
