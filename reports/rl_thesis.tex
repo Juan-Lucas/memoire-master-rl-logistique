@@ -148,10 +148,10 @@
 \chapter*{Résumé}
 \addcontentsline{toc}{chapter}{Résumé}
 
-Dans le secteur minier, l’optimisation des coûts opérationnels et la réduction de l’empreinte environnementale sont des enjeux majeurs. Les systèmes de gestion de flotte industriels, bien qu’efficaces dans des conditions stables, montrent leurs limites face à la variabilité des conditions réelles (trafic, météo, état des routes). Ce mémoire propose de dépasser ces limites en développant un agent autonome basé sur l’apprentissage par renforcement, capable d’apprendre une politique de navigation adaptative pour optimiser simultanément l’itinéraire et le rythme de déplacement des véhicules. L’approche est validée par une comparaison rigoureuse avec des heuristiques classiques, en s’appuyant sur une modélisation réaliste de l’environnement minier et des métriques quantitatives pertinentes. Les résultats attendus sont une réduction de la consommation de carburant, des temps d’attente et une meilleure adaptation aux perturbations dynamiques.
+Dans le secteur minier, l’optimisation des coûts opérationnels et la réduction de l’empreinte environnementale sont des enjeux majeurs. Les systèmes de gestion de flotte industriels, bien qu’efficaces dans des conditions stables, montrent leurs limites face à la variabilité des conditions réelles (pannes, congestion, dégradation des routes). Ce mémoire a conçu et mis en œuvre un agent autonome de dispatching basé sur l’apprentissage par renforcement profond, capable d’apprendre une politique d’affectation adaptative des camions aux pelles et aux points de déchargement. L’approche a été validée par une comparaison rigoureuse avec quatre heuristiques industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et trois algorithmes RL classiques (Q-Learning, SARSA, DQN), sur trois scénarios représentatifs d’une mine à ciel ouvert. Les résultats démontrent que PPO (4\,208.8~t/h) et DQN (4\,168.5~t/h) surpassent Fixed Assignment (4\,074.0~t/h) en conditions nominales, et que cette supériorité se confirme en conditions perturbées (DQN~: 3\,991.8~t/h, PPO~: 3\,946.3~t/h contre 3\,860.5~t/h pour Fixed Assignment). Les heuristiques myopes s’effondrent en surcharge ($\geq 200$~min d’attente), validant l’hypothèse centrale du mémoire.
 
 \vspace{1cm}
-\noindent\textbf{Mots-clés :} Apprentissage par renforcement, logistique minière, optimisation dynamique, fleet management system, dispatching, mine à ciel ouvert.
+\noindent\textbf{Mots-clés :} Apprentissage par renforcement, logistique minière, dispatching dynamique, PPO, DQN, optimisation holistique, mine à ciel ouvert.
 
 \newpage
 
@@ -159,10 +159,10 @@ Dans le secteur minier, l’optimisation des coûts opérationnels et la réduct
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-In the mining sector, optimizing operational costs and reducing environmental impact are major challenges. Industrial Fleet Management Systems, while effective under stable conditions, show limitations when facing real-world variability (traffic, weather, road conditions). This thesis proposes to overcome these limits by developing an autonomous agent based on Reinforcement Learning, able to learn an adaptive navigation policy to simultaneously optimize vehicle routing and speed. The approach is validated through rigorous comparison with classical heuristics, relying on realistic mining environment modeling and relevant quantitative metrics. Expected results include reduced fuel consumption, waiting times, and improved adaptation to dynamic disturbances.
+In the mining sector, optimizing operational costs and reducing environmental impact are major challenges. Industrial Fleet Management Systems, while effective under stable conditions, show limitations when facing real-world variability (breakdowns, congestion, road degradation). This thesis designed and implemented an autonomous truck dispatching agent based on Deep Reinforcement Learning, capable of learning an adaptive assignment policy for trucks to shovels and dump sites. The approach was validated through rigorous comparison with four industrial heuristics (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) and three classical RL algorithms (Q-Learning, SARSA, DQN), across three representative open-pit mine scenarios. Results show that PPO (4,208.8~t/h) and DQN (4,168.5~t/h) outperform Fixed Assignment (4,074.0~t/h) under nominal conditions, with this advantage confirmed under high-breakdown conditions (DQN: 3,991.8~t/h, PPO: 3,946.3~t/h vs. 3,860.5~t/h for Fixed Assignment). Myopic heuristics collapse under overload ($\geq$200~min waiting time), validating the central hypothesis of this work.
 
 \vspace{1cm}
-\noindent\textbf{Keywords :} Reinforcement learning, mining logistics, dynamic optimization, fleet management system, dispatching, open-pit mining.
+\noindent\textbf{Keywords :} Reinforcement learning, mining logistics, dynamic dispatching, PPO, DQN, holistic optimization, open-pit mining.
 
 \newpage
 
@@ -404,7 +404,8 @@ Afin de positionner précisément notre contribution, il convient d'examiner les
 \cite{BurakOzdemir2019} & Méta-heuristiques & Colonies de fourmis, optimisation partielle, adaptation limitée \\
 \hline
 \cite{MohammadrezaNazari2018} & apprentissage par renforcement pour VRP & apprentissage par renforcement pour routage, surpasse heuristiques, besoin de données, temps d’entraînement \\
-\hline & apprentissage par renforcement appliqué à la logistique & apprentissage par renforcement pour dispatching, robustesse, adaptation aux perturbations \\
+\hline
+\cite{WZeng2022, MiladAbolghasemian2020} & apprentissage par renforcement appliqué à la logistique & apprentissage par renforcement pour dispatching, robustesse, adaptation aux perturbations \\
 \hline
 \cite{WZeng2022} & apprentissage par renforcement en environnement stochastique & Politiques robustes, gestion de l’incertitude, limites pratiques \\
 \hline
