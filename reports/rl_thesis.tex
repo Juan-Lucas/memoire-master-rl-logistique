@@ -1869,18 +1869,21 @@ SARSA converge vers une valeur inférieure ($\approx 145$ contre 175 pour Q-Lear
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.48\textwidth}
-        \includegraphics[width=\textwidth]{figures/learning_curves_nominal.png}
-        \caption{Scénario nominal (155 $\to$ 175, $+12{,}5\%$)}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.48\textwidth}
-        \includegraphics[width=\textwidth]{figures/learning_curves_highload.png}
-        \caption{Scénario high\_load (213 $\to$ 225, $+5{,}4\%$)}
-    \end{subfigure}
-    \caption{Courbes de convergence de Q-Learning et SARSA — récompense cumulée
-             moyenne sur les 100 derniers épisodes (30\,000 épisodes d'entraînement).}
-    \label{fig:learning-curves}
+    \includegraphics[width=0.85\textwidth]{figures/learning_curves_nominal.png}
+    \caption{Courbes de convergence de Q-Learning et SARSA — scénario nominal
+             (récompense cumulée moyenne sur les 100 derniers épisodes, 30\,000 épisodes).
+             Q-Learning~: 155 $\to$ 175 ($+12{,}5\%$) ;
+             SARSA~: convergence vers $\approx 145$.}
+    \label{fig:learning-curves-nominal}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/learning_curves_highload.png}
+    \caption{Courbes de convergence de Q-Learning et SARSA — scénario high\_load
+             (18 camions). Q-Learning~: 213 $\to$ 225 ($+5{,}4\%$) ;
+             SARSA~: convergence vers $\approx 190$.}
+    \label{fig:learning-curves-highload}
 \end{figure}
 
 La convergence de PPO est confirmée par \texttt{explained\_variance = 0.999}, indiquant que le réseau critique prédit avec précision les retours futurs. Cette valeur proche de 1.0 signifie que l'agent a pleinement exploité le signal de récompense disponible dans le budget d'entraînement alloué (2M steps $\approx$ 9\,677 épisodes).
