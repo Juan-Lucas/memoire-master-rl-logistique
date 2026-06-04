@@ -1947,8 +1947,8 @@ Les résultats obtenus permettent une \textbf{validation partielle et différenc
     \item \textbf{Sur le critère robustesse aux surcharges} (high\_load) : Nearest Shovel s'effondre à 201 minutes d'attente, validant la prémisse du titre que les heuristiques statiques ont des limites structurelles. DQN (5\,664.8 t/h) reste compétitif face à Fixed Assignment (5\,874.8 t/h, $-3{,}6\%$). H1 est \textbf{partiellement validée}.
 \end{itemize}
 
-Cette nuance est scientifiquement cohérente avec la littérature.
-Hazrathosseini et Afrapoli~\cite{HazrathosseiniAfrapoli2024} soulignent que le RL n'est pas universellement supérieur aux heuristiques, mais apporte un avantage spécifique dans les contextes dynamiques et perturbés. Nos résultats confirment exactement cette conclusion.
+Ces résultats s'inscrivent dans la continuité de la littérature.
+Hazrathosseini et Afrapoli~\cite{HazrathosseiniAfrapoli2024} montrent que les cadres RL développés à ce jour restent insuffisants pour adresser l'ensemble des exigences opérationnelles d'un FMS minier, et que les gains obtenus sur les heuristiques de base demeurent modestes dans les travaux existants --- environ 5\% de gain de production sur une heuristique simple~\cite{HazrathosseiniAfrapoli2024}. Nos résultats s'inscrivent dans cette tendance : les gains RL sont significatifs face aux heuristiques myopes (Nearest Shovel, Shortest Path), mais limités face à Fixed Assignment dont la rigidité devient un avantage structurel en conditions nominales équilibrées.
 
 \subsection{Apports de la progression algorithmique}
 
