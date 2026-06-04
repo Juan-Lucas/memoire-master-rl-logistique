@@ -103,6 +103,18 @@ SCENARIOS: dict[str, Scenario] = {
         breakdown_probability=0.02,
         total_timesteps=2_000_000,
     ),
+    "combined_stress": Scenario(
+        name="combined_stress",
+        description="Stress combiné : 18 camions (surcharge) + 10% de pannes "
+                    "(MF=6, congestion ET pannes simultanées — Fixed Assignment "
+                    "ne peut adapter ni à l'un ni à l'autre).",
+        truck_count=18,
+        shovel_count=3,
+        dump_count=2,
+        episode_minutes=480.0,
+        breakdown_probability=0.10,
+        total_timesteps=2_000_000,
+    ),
     "extreme_stress": Scenario(
         name="extreme_stress",
         description="Topologie étendue : 15 camions, 4 pelles, 3 dumps (MF=3.75, espace d'action Discrete(13), test de scalabilité).",
