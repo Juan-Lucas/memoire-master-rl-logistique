@@ -205,7 +205,7 @@ def main() -> None:
         run_all_benchmarks(
             output_dir="data/results",
             train_ppo_flag=True,
-            scenario_names=["nominal", "nominal_asymétrique", "high_breakdown", "high_load"],  # Ajout scénario asymétrique
+            scenario_names=None,
         )
         return
 
