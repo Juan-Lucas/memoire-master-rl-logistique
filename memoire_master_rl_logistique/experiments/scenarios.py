@@ -115,8 +115,8 @@ SCENARIOS: dict[str, Scenario] = {
         breakdown_probability=0.10,
         total_timesteps=2_000_000,
     ),
-    "extreme_stress": Scenario(
-        name="extreme_stress",
+    "scaled_mine": Scenario(
+        name="scaled_mine",
         description="Topologie étendue : 15 camions, 4 pelles, 3 dumps (MF=3.75, espace d'action Discrete(13), test de scalabilité).",
         truck_count=15,
         shovel_count=4,
