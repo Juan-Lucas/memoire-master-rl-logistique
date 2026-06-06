@@ -783,6 +783,8 @@ L'approche proposée ne relève pas seulement d'un choix algorithmique. Elle s'i
 \section{Présentation générale de l'approche proposée}
 \label{sec:approche-proposee}
 
+L'architecture de la solution retenue s'articule autour de deux dimensions complémentaires : le principe fondamental de l'agent intelligent et les composantes fonctionnelles qui structurent son interaction avec le simulateur. Les sous-sections suivantes développent ces dimensions avant d'entrer dans les détails algorithmiques et expérimentaux.
+
 \subsection{Principe général de la solution}
 \label{sec:principe-general}
 La solution proposée consiste à concevoir un agent intelligent capable d'observer l'état courant du système minier (positions des camions, files d'attente aux pelles, disponibilité des dumps, état des routes), de choisir une décision de dispatching optimale (affectation camion-pelle-dump), puis d'améliorer progressivement sa politique de décision à partir des récompenses reçues. Cette approche se distingue des heuristiques statiques par sa capacité d'adaptation~: l'agent apprend à réagir aux perturbations dynamiques (pannes, congestion, dégradation des routes) sans nécessiter de reprogrammation manuelle.
@@ -1091,6 +1093,8 @@ rendent impossible le stockage explicite de toutes les valeurs $Q(s, a)$ dans un
 \section{Passage au Deep Reinforcement Learning}
 \label{sec:passage-deep-rl}
 
+Les méthodes tabulaires présentées en Section~\ref{sec:algo-classiques-rl} atteignent rapidement leurs limites face à la dimensionnalité continue du problème de dispatching minier. Le recours au Deep Reinforcement Learning s'impose alors~: une approximation neuronale remplace la table Q discrète et permet de traiter un espace d'observation de 147 dimensions sans discrétisation préalable. Les sous-sections suivantes motivent ce passage et justifient le choix de PPO comme algorithme final.
+
 \subsection{Justification du recours au Deep Learning}
 \label{sec:justification-deep-learning}
 Le recours au Deep Learning pour approximer les fonctions de valeur ou les politiques est justifié par plusieurs caractéristiques de notre problème~:
@@ -1226,6 +1230,8 @@ La Figure~\ref{fig:pipeline-donnees} illustre concrètement comment ces proprié
 \section{Configuration expérimentale des modèles d'apprentissage}
 \label{sec:config-experimentale}
 
+La performance des agents RL est fortement conditionnée par le choix de leurs hyperparamètres. Les valeurs retenues pour chaque algorithme — Q-Learning, SARSA, DQN et PPO — sont détaillées ci-après, accompagnées de leur justification par des critères de convergence et de reproductibilité.
+
 \subsection{Hyperparamètres du Q-Learning}
 \label{sec:hp-q-learning}
 Les hyperparamètres du Q-Learning tabulaire sont définis dans le Tableau~\ref{tab:hp-q-learning}.
@@ -1303,19 +1309,21 @@ L'exploration stochastique de PPO est plus nuancée que le $\epsilon$-greedy~: a
 \section{Stratégie d'évaluation comparative}
 \label{sec:strategie-evaluation}
 
+L'évaluation de l'agent RL ne peut être rigoureuse qu'en le confrontant à des références représentatives des pratiques industrielles. Les heuristiques et modèles de comparaison retenus, les indicateurs de performance mobilisés et le protocole de comparaison équitable entre toutes les approches sont présentés dans les sous-sections suivantes.
+
 \subsection{Heuristiques de référence}
 \label{sec:heuristiques-reference}
 Pour démontrer la plus-value de l'agent RL, nous le comparons aux 
 quatre heuristiques industrielles de référence suivantes~:
 
 \begin{itemize}
-    \item \textbf{FIFO (First In, First Out)} (\texttt{fifo\_policy.py})~: le camion disponible est affecté à la pelle dont la file d'attente est la plus courte, c'est-à-dire celle dont \texttt{available\_at\_min} est minimal (idle depuis le plus longtemps). Simple et équitable, cette règle ne tient compte ni de la distance ni de la charge globale~\cite{Alarie2002}.
+    \item \textbf{FIFO (First In, First Out)}~: le camion disponible est affecté à la pelle dont le temps d'attente est minimal (idle depuis le plus longtemps). Simple et équitable, cette règle ne tient compte ni de la distance ni de la charge globale~\cite{Alarie2002}.
 
-    \item \textbf{Nearest Shovel (Pelle la plus proche)} (\texttt{nearest\_policy.py})~: le camion est affecté à la pelle géographiquement la plus proche via Dijkstra, puis au dump le plus proche de cette pelle. Minimise le trajet à vide mais ignore les files d'attente~\cite{Alarie2002}.
+    \item \textbf{Nearest Shovel (Pelle la plus proche)}~: le camion est affecté à la pelle géographiquement la plus proche via Dijkstra, puis au dump le plus proche de cette pelle. Minimise le trajet à vide mais ignore les files d'attente~\cite{Alarie2002}.
 
-    \item \textbf{Shortest Path (Chemin le plus court)} (\texttt{shortest\_path\_policy.py})~: choisit la paire (pelle, dump) minimisant le coût de cycle complet $C_{\text{cycle}} = \alpha T + \beta D + \gamma E$ (Eq.~3.1) sur les trois segments camion$\to$pelle$\to$dump$\to$pelle, avec $\alpha=0{,}5$, $\beta=0{,}3$, $\gamma=0{,}2$~\cite{Alarie2002}.
+    \item \textbf{Shortest Path (Chemin le plus court)}~: choisit la paire (pelle, dump) minimisant le coût de cycle complet $C_{\text{cycle}} = \alpha T + \beta D + \gamma E$ (Eq.~3.1) sur les trois segments camion$\to$pelle$\to$dump$\to$pelle, avec $\alpha=0{,}5$, $\beta=0{,}3$, $\gamma=0{,}2$~\cite{Alarie2002}.
 
-    \item \textbf{Fixed Assignment (Affectation fixe)} (\texttt{fixed\_policy.py})~: chaque camion est dédié à une pelle selon un schéma round-robin statique (\texttt{truck\_id \% num\_shovels}). Aucune adaptation dynamique n'est possible~\cite{MohanMunirathinam1994}.
+    \item \textbf{Fixed Assignment (Affectation fixe)}~: chaque camion est dédié à une pelle selon un schéma round-robin statique (affectation par modulo du nombre de pelles). Aucune adaptation dynamique n'est possible~\cite{MohanMunirathinam1994}.
 
 \end{itemize}
 
@@ -1469,6 +1477,36 @@ Ce chapitre a présenté la méthodologie complète de notre solution, depuis le
 
 L'implémentation et l'expérimentation constituent l'étape de validation opérationnelle de la méthodologie proposée. Elles permettent de vérifier, dans un cadre contrôlé, la faisabilité technique de la solution et sa capacité à produire des résultats mesurables sur des scénarios représentatifs de la logistique minière.
 
+\section{Environnement de développement et outils}
+\label{sec:outils}
+
+L'implémentation repose sur un environnement Python géré par Conda (Anaconda), garantissant la reproductibilité des expériences indépendamment du système d'exploitation. Le packaging respecte les standards modernes PEP 517/518, avec Flit comme build-backend.
+
+\begin{table}[H]
+\centering
+\caption{Environnement de développement et bibliothèques principales}
+\label{tab:outils}
+\begin{tabular}{llll}
+\toprule
+\textbf{Outil / Bibliothèque} & \textbf{Version} & \textbf{Rôle} \\
+\midrule
+Python            & 3.11.11   & Langage de programmation principal \\
+Conda (Miniconda) & —         & Gestion de l'environnement virtuel \\
+Flit              & $\geq$3.2 & Build system conforme PEP 517/518 \\
+Gymnasium         & 1.2.3     & Interface standardisée Agent--Environnement \\
+Stable-Baselines3 & 2.8.0     & Implémentation DQN et PPO \\
+NetworkX          & 3.6.1     & Modélisation et algorithmes du graphe routier \\
+NumPy             & 2.4.6     & Calcul vectoriel et manipulation des observations \\
+Matplotlib        & 3.10.8    & Visualisation du graphe routier (code) \\
+Power BI          & —         & Figures comparatives des résultats (Ch.~6) \\
+draw.io           & —         & Diagrammes d'architecture et schémas conceptuels \\
+Git / GitHub      & —         & Versionnement et hébergement du code source \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+L'ensemble du code source est versionné avec Git et hébergé sur GitHub, assurant la traçabilité des modifications et la reproductibilité intégrale des expériences via les graines fixes (\textit{seeds}).
+
 \section{Architecture globale du système proposé}
 \label{sec:architecture}
 
@@ -1497,6 +1535,8 @@ L'ensemble du code source est structuré selon le principe de séparation des re
 
 \section{Détails d'implémentation de l'environnement}
 \label{sec:implementation-env}
+
+Les choix d'implémentation qui concrétisent la modélisation du Chapitre~3 sont détaillés ci-après. Le simulateur physique, le graphe routier, le vecteur d'observation et la fonction de récompense sont chacun décrits avec leurs valeurs numériques et les justifications techniques qui les accompagnent.
 
 \subsection{Modélisation physique du simulateur}
 
@@ -1556,7 +1596,7 @@ La fonction de récompense finale, issue du processus de calibration expériment
     \label{eq:reward-impl}
 \end{equation}
 
-avec $w_1 = 1{,}0$, $w_2 = 0{,}1$, $w_3 = 0{,}05$, $w_4 = 0{,}3$.  Le terme $w_4$ pénalise l'attente opérationnelle, créant un signal de récompense différencié entre les actions.
+avec $w_1 = 1{,}0$, $w_2 = 0{,}1$, $w_3 = 0{,}05$, $w_4 = 0{,}3$.  Ces valeurs reflètent la priorité accordée à la productivité sur l'équité et sur la réduction des coûts de trajet~: une valeur $w_1 = 1{,}0$ largement supérieure aux autres garantit que chaque tonne livrée domine les signaux de pénalité. Le terme $w_4$ pénalise l'attente opérationnelle directe, créant un signal différencié entre les actions.
 
 La valeur $w_4 = 0{,}3$ résulte d'une recalibration itérative~: une valeur initiale de $w_4 = 1{,}0$ rendait l'action ATTENDRE compétitive vis-à-vis d'un cycle productif en contexte de congestion (récompense de cycle $\approx 0$ contre pénalité d'attente $= -0{,}167$), conduisant les agents à apprendre systématiquement à ne rien faire.  Avec $w_4 = 0{,}3$, un cycle productif vaut structurellement $+0{,}7$ même avec attente maximale, garantissant que travailler surpasse toujours attendre.
 
@@ -1585,6 +1625,8 @@ Avec $w_4 = 1{,}0$ & 0.755 & 0.787 & $3{,}2 \times 10^{-2}$ \\
 
 \section{Paramètres et protocoles d'entraînement}
 \label{sec:entrainement}
+
+Un protocole d'entraînement rigoureux est indispensable pour garantir la reproductibilité des résultats et la comparabilité entre algorithmes. Les conditions communes à tous les agents — graine fixe, nombre de réplications, critères de convergence — ainsi que les paramètres spécifiques aux méthodes tabulaires et aux agents Deep RL sont présentés ci-après.
 
 \subsection{Protocole général}
 
@@ -1702,6 +1744,8 @@ L'analyse des résultats est essentielle pour apprécier la validité de la solu
 \section{Résultats expérimentaux}
 \label{sec:resultats-exp}
 
+Le benchmark comparatif a été conduit sur trois scénarios représentatifs d'une mine à ciel ouvert. Les performances des huit politiques évaluées sont rapportées sous forme de moyennes et d'écarts-types calculés sur dix réplications indépendantes, selon les métriques définies en Section~\ref{sec:metriques}.
+
 \subsection{Scénario nominal}
 
 Le Tableau~\ref{tab:resultats-nominal} présente les performances moyennes sur 10 réplications pour le scénario de référence (12 camions, 3 pelles, 2 dumps, $p_b = 2\%$).
@@ -1804,6 +1848,8 @@ SARSA            & 2973.3 $\pm$ 89 & 77.5 $\pm$ 8.8
 \section{Comparaison avec les approches de référence}
 \label{sec:comparaison}
 
+Au-delà des résultats par scénario, une lecture transversale des performances est proposée, mettant en regard l'approche Deep RL avec les heuristiques industrielles et les méthodes classiques. L'objectif est d'identifier les conditions dans lesquelles l'apprentissage par renforcement apporte une valeur ajoutée réelle et de quantifier les écarts de performance.
+
 \subsection{Analyse comparative globale}
 
 Le Tableau~\ref{tab:synthese-comparative} présente une synthèse transversale des performances sur les trois scénarios.
@@ -1863,6 +1909,8 @@ L'écart de productivité PPO $-$ Fixed (+86 t/h, $+2{,}2\%$) représente, extra
 \section{Analyse critique des résultats}
 \label{sec:analyse-critique}
 
+Les résultats quantitatifs présentés en Section~\ref{sec:resultats-exp} appellent une lecture critique qui dépasse les simples comparaisons chiffrées. La convergence des agents, les mécanismes explicatifs des écarts de performance entre scénarios et les limites inhérentes à la démarche expérimentale sont examinés dans les sous-sections suivantes.
+
 \subsection{Convergence des agents d'apprentissage}
 
 La courbe d'apprentissage de Q-Learning montre une progression claire de la récompense cumulée, passant de 155 à 175 sur le scénario nominal ($+12{,}5\%$) et de 213 à 225 sur le scénario high\_load ($+5{,}4\%$). La Q-table couvre 17\,034 états effectifs sur 30\,000 épisodes en nominal (espace théorique : $8^6 = 262\,144$), confirmant que l'enrichissement du vecteur d'état (ajout de la pelle la plus proche du camion courant) a permis une couverture suffisante pour une politique compétitive.
@@ -1917,6 +1965,8 @@ L'ensemble des résultats repose sur un simulateur paramétré à partir de la l
 
 \section{Discussion}
 \label{sec:discussion}
+
+L'ensemble des résultats obtenus est ici mis en perspective au regard des hypothèses formulées en introduction. Les sous-sections suivantes évaluent dans quelle mesure la solution proposée répond aux questions de recherche, analysent les apports de la progression algorithmique et identifient les conditions favorables à une intégration industrielle réelle.
 
 \subsection{Validation de l'hypothèse centrale H1}
 
@@ -2080,15 +2130,15 @@ Gestion de projet & Poetry / pip & — \\
 \section*{Modules principaux}
 
 \begin{itemize}
-    \item \texttt{env/mine\_env.py} : environnement Gymnasium (reset, step, render)
-    \item \texttt{env/observation\_builder.py} : construction du vecteur d'observation (147 dimensions)
-    \item \texttt{simulation/graph\_model.py} : graphe routier NetworkX, algorithme Dijkstra
-    \item \texttt{simulation/fuel\_model.py} : modèle de consommation carburant
-    \item \texttt{simulation/entities.py} : classes Truck, Shovel, DumpSite
-    \item \texttt{rl/train\_ppo.py}, \texttt{train\_dqn.py} : entraînement PPO et DQN
-    \item \texttt{rl/train\_q\_learning.py}, \texttt{train\_sarsa.py} : entraînement tabulaire
-    \item \texttt{baselines/} : FIFO, Fixed, Nearest, ShortestPath
-    \item \texttt{experiments/run\_benchmark.py} : orchestrateur du benchmark comparatif
+    \item Module \textbf{env} : environnement Gymnasium (reset, step, render)
+    \item Module \textbf{env} : construction du vecteur d'observation (147 dimensions)
+    \item Module \textbf{simulation} : graphe routier NetworkX, algorithme Dijkstra
+    \item Module \textbf{simulation} : modèle de consommation carburant
+    \item Module \textbf{simulation} : entités Truck, Shovel, DumpSite
+    \item Module \textbf{rl} : entraînement PPO et DQN (Stable-Baselines3)
+    \item Module \textbf{rl} : entraînement Q-Learning et SARSA tabulaires
+    \item Module \textbf{baselines} : heuristiques FIFO, Fixed, Nearest, ShortestPath
+    \item Module \textbf{experiments} : orchestrateur du benchmark comparatif
 \end{itemize}
 
 \section*{Commandes principales}
@@ -2177,34 +2227,14 @@ nominal\_asym. & 13 & 3 & 2 & 2\% & 4.33 & Configuration asymétrique \\
 \begin{verbatim}
 memoire-master-rl-logistique/
 |-- memoire_master_rl_logistique/
-|   |-- env/
-|   |   |-- mine_env.py            (Environnement Gymnasium)
-|   |   |-- observation_builder.py (Vecteur 147 dimensions)
-|   |   `-- action_mask.py         (Masque d'actions)
-|   |-- simulation/
-|   |   |-- entities.py            (Truck, Shovel, DumpSite)
-|   |   |-- graph_model.py         (RoadGraph + Dijkstra)
-|   |   |-- fuel_model.py          (Modele carburant)
-|   |   `-- kpi.py                 (Calcul KPIs)
-|   |-- rl/
-|   |   |-- train_ppo.py           (PPO, Stable-Baselines3)
-|   |   |-- train_dqn.py           (DQN, Stable-Baselines3)
-|   |   |-- train_q_learning.py    (Q-Learning tabulaire)
-|   |   |-- train_sarsa.py         (SARSA tabulaire)
-|   |   |-- discretize.py          (Discretisation etat)
-|   |   `-- evaluate_agent.py      (Evaluation)
-|   |-- baselines/
-|   |   |-- fifo_policy.py         (FIFO)
-|   |   |-- fixed_policy.py        (Fixed Assignment)
-|   |   |-- nearest_policy.py      (Nearest Shovel)
-|   |   `-- shortest_path_policy.py (Shortest Path Eq.3.1)
-|   `-- experiments/
-|       |-- scenarios.py           (Definition scenarios)
-|       `-- run_benchmark.py       (Benchmark comparatif)
-|-- data/results/                  (Resultats CSV)
-|-- models/                        (Modeles entraines)
-|-- reports/                       (Memoire LaTeX)
-`-- docs/glossaire.md              (Glossaire public)
+|   |-- env/           (Environnement Gymnasium, vecteur d'observation 147 dim.)
+|   |-- simulation/    (Entites, graphe routier, carburant, KPIs)
+|   |-- rl/            (Entrainement PPO, DQN, Q-Learning, SARSA)
+|   |-- baselines/     (Heuristiques FIFO, Fixed, Nearest, ShortestPath)
+|   `-- experiments/   (Scenarios et benchmark comparatif)
+|-- data/results/      (Resultats du benchmark)
+|-- models/            (Modeles entraines)
+`-- reports/           (Memoire LaTeX)
 \end{verbatim}
 
 \chapter{Interfaces et démonstrations}
@@ -2225,7 +2255,7 @@ check_env OK
 
 \section*{Format des résultats du benchmark}
 
-Le benchmark produit un fichier \texttt{data/results/benchmark\_results.csv} avec les colonnes suivantes~:
+Le benchmark produit un fichier CSV de résultats structuré avec les colonnes suivantes~:
 
 \begin{center}
 \texttt{scenario, policy, seed, productivity\_tph, avg\_wait\_min\_per\_truck,}\\
