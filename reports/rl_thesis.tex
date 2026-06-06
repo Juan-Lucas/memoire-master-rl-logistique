@@ -372,24 +372,19 @@ L'analyse de la littérature permet de classifier les travaux existants en trois
 
 \begin{table}[H]
 \centering
-\caption{Synthèse des grandes familles d’approches et opportunités pour l'apprentissage par renforcement}
-\begin{tabular}{|p{3cm}|p{4cm}|p{6cm}|}
-\hline
-\textbf{Référence} & \textbf{Approche} & \textbf{Limites principales / Opportunité pour l'apprentissage par renforcement} \\
-\hline
-\cite{Alarie2002} & Heuristiques statiques & Approche myope, peu adaptative, ne gère pas l’incertitude. Opportunité : L'apprentissage par renforcement peut apprendre une politique globale et adaptative. \\
-\hline
-\cite{Afrapoli2017, MehrnazMohtasham2023} & Systèmes industriels & Déterministes, rigides, peu réactifs aux perturbations. Opportunité : L'apprentissage par renforcement permet l’adaptation dynamique. \\
-\hline
-\cite{MJFSouza2010, Subtil2011} & Méta-heuristiques & Performantes mais peu robustes en temps réel, optimisation hors-ligne. Opportunité : L'apprentissage par renforcement gère l’incertitude et l’adaptation continue. \\
-\hline
-\cite{Ahangaran2012, AmandaSmith2020} & MILP, optimisation avancée & Complexité computationnelle, difficilement scalable, peu flexible. Opportunité : L'apprentissage par renforcement offre une solution scalable et flexible. \\
-\hline
-\cite{MohammadrezaNazari2018, CongZhang2020} & apprentissage par renforcement pour VRP/JSSP & Complexité de la modélisation, besoin de simulateur. Inspiration : Fournit un cadre état/action/récompense pour l'apprentissage par renforcement minier. \\
-\hline
-\cite{WZeng2022, MiladAbolghasemian2020} & apprentissage par renforcement appliqué à la logistique minière & L'apprentissage par renforcement montre des gains sur la robustesse et l’adaptation, mais nécessite une modélisation réaliste et des données de simulation. \\
-\hline
-\end{tabular}
+\caption{Synthèse des grandes familles d’approches et opportunités pour l’apprentissage par renforcement}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Référence} & \textbf{Approche} & \textbf{Limites principales / Opportunité pour l’apprentissage par renforcement} \\
+\midrule
+\cite{Alarie2002} & Heuristiques statiques & Approche myope, peu adaptative, ne gère pas l’incertitude. Opportunité : L’apprentissage par renforcement peut apprendre une politique globale et adaptative. \\[4pt]
+\cite{Afrapoli2017, MehrnazMohtasham2023} & Systèmes industriels & Déterministes, rigides, peu réactifs aux perturbations. Opportunité : L’apprentissage par renforcement permet l’adaptation dynamique. \\[4pt]
+\cite{MJFSouza2010, Subtil2011} & Méta-heuristiques & Performantes mais peu robustes en temps réel, optimisation hors-ligne. Opportunité : L’apprentissage par renforcement gère l’incertitude et l’adaptation continue. \\[4pt]
+\cite{Ahangaran2012, AmandaSmith2020} & MILP, optimisation avancée & Complexité computationnelle, difficilement scalable, peu flexible. Opportunité : L’apprentissage par renforcement offre une solution scalable et flexible. \\[4pt]
+\cite{MohammadrezaNazari2018, CongZhang2020} & apprentissage par renforcement pour VRP/JSSP & Complexité de la modélisation, besoin de simulateur. Inspiration : Fournit un cadre état/action/récompense pour l’apprentissage par renforcement minier. \\[4pt]
+\cite{WZeng2022, MiladAbolghasemian2020} & apprentissage par renforcement appliqué à la logistique minière & L’apprentissage par renforcement montre des gains sur la robustesse et l’adaptation, mais nécessite une modélisation réaliste et des données de simulation. \\
+\bottomrule
+\end{tabularx}
 \end{table}
 
 
@@ -400,33 +395,23 @@ Afin de positionner précisément notre contribution, il convient d'examiner les
 \centering
 \caption{Détail des contributions et limites des articles majeurs de l’état de l’art}
 \label{tab:etat-art}
-\begin{tabular}{|p{3cm}|p{4cm}|p{6cm}|}
-\hline
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}X}
+\toprule
 \textbf{Référence} & \textbf{Domaine / Approche} & \textbf{Principales contributions / Limites} \\
-\hline
-\cite{AlexandraMNewman2010} & systèmes de gestion de flotte, optimisation minière & Modélisation des flux, contraintes industrielles, limites des heuristiques \\
-\hline
-\cite{Afrapoli2017} & systèmes de gestion de flotte industriels & Suivi en temps réel, gestion des files, limites en environnement dynamique \\
-\hline
-\cite{Alarie2002} & Heuristiques classiques & Règles de dispatching, efficacité en conditions stables, manque d’adaptabilité \\
-\hline
-\cite{MarceloMorettiFioroni2008} & Heuristiques, VRP & Variabilité du trafic, limites des modèles déterministes \\
-\hline
-\cite{BurakOzdemir2019} & Méta-heuristiques & Colonies de fourmis, optimisation partielle, adaptation limitée \\
-\hline
-\cite{MohammadrezaNazari2018} & apprentissage par renforcement pour VRP & apprentissage par renforcement pour routage, surpasse heuristiques, besoin de données, temps d’entraînement \\
-\hline
-\cite{WZeng2022, MiladAbolghasemian2020} & apprentissage par renforcement appliqué à la logistique & apprentissage par renforcement pour dispatching, robustesse, adaptation aux perturbations \\
-\hline
-\cite{WZeng2022} & apprentissage par renforcement en environnement stochastique & Politiques robustes, gestion de l’incertitude, limites pratiques \\
-\hline
-\cite{ShivPrakashUpadhyay2017} & Limites des heuristiques & Incapacité à gérer la variabilité, sous-utilisation des ressources \\
-\hline
-\cite{CongZhang2020} & apprentissage par renforcement : fondements & Concepts MDP, politiques, fonctions de valeur \\
-\hline
+\midrule
+\cite{AlexandraMNewman2010} & systèmes de gestion de flotte, optimisation minière & Modélisation des flux, contraintes industrielles, limites des heuristiques \\[4pt]
+\cite{Afrapoli2017} & systèmes de gestion de flotte industriels & Suivi en temps réel, gestion des files, limites en environnement dynamique \\[4pt]
+\cite{Alarie2002} & Heuristiques classiques & Règles de dispatching, efficacité en conditions stables, manque d’adaptabilité \\[4pt]
+\cite{MarceloMorettiFioroni2008} & Heuristiques, VRP & Variabilité du trafic, limites des modèles déterministes \\[4pt]
+\cite{BurakOzdemir2019} & Méta-heuristiques & Colonies de fourmis, optimisation partielle, adaptation limitée \\[4pt]
+\cite{MohammadrezaNazari2018} & apprentissage par renforcement pour VRP & apprentissage par renforcement pour routage, surpasse heuristiques, besoin de données, temps d’entraînement \\[4pt]
+\cite{WZeng2022, MiladAbolghasemian2020} & apprentissage par renforcement appliqué à la logistique & apprentissage par renforcement pour dispatching, robustesse, adaptation aux perturbations \\[4pt]
+\cite{WZeng2022} & apprentissage par renforcement en environnement stochastique & Politiques robustes, gestion de l’incertitude, limites pratiques \\[4pt]
+\cite{ShivPrakashUpadhyay2017} & Limites des heuristiques & Incapacité à gérer la variabilité, sous-utilisation des ressources \\[4pt]
+\cite{CongZhang2020} & apprentissage par renforcement : fondements & Concepts MDP, politiques, fonctions de valeur \\[4pt]
 \cite{Subtil2011, MJFSouza2010} & Méta-heuristiques & Algorithmes génétiques, recuit simulé, optimisation locale \\
-\hline
-\end{tabular}
+\bottomrule
+\end{tabularx}
 \end{table}
 
 \section{Conclusion}
