@@ -124,7 +124,7 @@
     {\large Année académique 2025--2026}
 
     \vfill
-    {\large AVRIL, 2026}
+    {\large JUIN, 2026}
 \end{titlepage}
 
 % --- Dédicace ---
@@ -134,8 +134,6 @@
 \begin{flushright}
     \textit{À ma famille, pour son soutien indéfectible tout au long de ce parcours.}\\[0.5cm]
     \textit{À mes collègues et amis, pour leurs encouragements constants.}\\[0.5cm]
-    \textit{À tous ceux qui croient que la technologie peut améliorer}\\
-    \textit{les conditions de travail et la durabilité de l'industrie minière.}
 \end{flushright}
 \newpage
 
@@ -143,15 +141,17 @@
 \chapter*{Remerciements}
 \addcontentsline{toc}{chapter}{Remerciements}
 
-Je tiens à exprimer ma profonde gratitude à toutes les personnes qui ont contribué, de près ou de loin, à la réalisation de ce mémoire.
+À l'Éternel, Jéhovah Jiré, qui a pourvu à tous nos besoins et qui, par son Esprit Saint, nous a donné l'intelligence nécessaire pour mener ce travail à son terme sans jamais nous abandonner. Nous disons merci.
 
-Mes remerciements les plus sincères vont en premier lieu à ma directrice, \textbf{Dr.~Olfa FERCHICHI}, pour sa disponibilité, ses conseils avisés et la rigueur scientifique qu'elle a su m'inculquer tout au long de ce travail. Sa guidance a été déterminante dans l'orientation et la qualité de cette recherche.
+À notre directrice, \textbf{Dr.~Olfa FERCHICHI}, qui n'a pas hésité à nous consacrer son temps et son énergie pour nous accompagner dans la réalisation de ce travail~: puissiez-vous, Madame, trouver par ces mots l'expression de notre reconnaissance pour votre patience, votre tolérance et surtout pour vos orientations.
 
-Je remercie chaleureusement la direction et l'ensemble du corps enseignant de la \textbf{Faculté des Sciences Informatiques de l'Université Don Bosco de Lubumbashi} pour la formation de qualité dispensée durant ce cursus de Master~2 Data Science.
+Au corps professoral de la \textbf{Faculté des Sciences Informatiques de l'Université Don Bosco de Lubumbashi}, qui a mis tous ses moyens en œuvre pour assurer notre formation tout au long de ce cursus de Master Data Science, nous adressons nos remerciements.
 
-Ma gratitude va également à ma famille, dont le soutien moral et affectif m'a permis de mener ce travail à son terme dans les meilleures conditions.
+À ma mère, Célestine MUPASA, et à ma grande sœur, Gracia SAFI, recevez par ces mots toute notre gratitude pour votre soutien constant, votre confiance et vos encouragements tout au long de ce parcours~: jamais nous n'aurons assez de mots pour vous dire merci.
 
-Enfin, je remercie tous mes collègues de promotion pour les échanges enrichissants et la solidarité dont ils ont fait preuve au cours de cette année académique.
+À mes frères et sœurs, pour leurs encouragements et leur présence à mes côtés tout au long de ce parcours, nous disons merci.
+
+Enfin, nous adressons nos remerciements à toute notre famille, à nos amis ainsi qu'à nos collègues de promotion, et à toute personne ayant contribué, d'une manière ou d'une autre, à nos études et à l'élaboration de ce travail. Que chacun en soit béni en retour. Merci.
 
 \newpage
 
@@ -159,7 +159,7 @@ Enfin, je remercie tous mes collègues de promotion pour les échanges enrichiss
 \chapter*{Résumé}
 \addcontentsline{toc}{chapter}{Résumé}
 
-Dans le secteur minier, l’optimisation des coûts opérationnels et la réduction de l’empreinte environnementale sont des enjeux majeurs. Les systèmes de gestion de flotte industriels, bien qu’efficaces dans des conditions stables, montrent leurs limites face à la variabilité des conditions réelles (pannes, congestion, dégradation des routes). Ce mémoire a conçu et mis en œuvre un agent autonome de dispatching basé sur l’apprentissage par renforcement profond, capable d’apprendre une politique d’affectation adaptative des camions aux pelles et aux points de déchargement. L’approche a été validée par une comparaison rigoureuse avec quatre heuristiques industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et trois algorithmes RL classiques (Q-Learning, SARSA, DQN), sur trois scénarios représentatifs d’une mine à ciel ouvert. Les résultats démontrent que PPO (4\,208.8~t/h) et DQN (4\,168.5~t/h) surpassent Fixed Assignment (4\,074.0~t/h) en conditions nominales, et que cette supériorité se confirme en conditions perturbées (DQN~: 3\,991.8~t/h, PPO~: 3\,946.3~t/h contre 3\,860.5~t/h pour Fixed Assignment). Les heuristiques myopes s’effondrent en surcharge ($\geq 200$~min d’attente), validant l’hypothèse centrale du mémoire.
+Dans le secteur minier, l’optimisation des coûts opérationnels et la réduction de l’empreinte environnementale sont des enjeux majeurs. Les systèmes de gestion de flotte industriels, bien qu’efficaces dans des conditions stables, montrent leurs limites face à la variabilité des conditions réelles (pannes, congestion, dégradation des routes). Ce mémoire présente la conception et la mise en œuvre d’un agent autonome de dispatching basé sur l’apprentissage par renforcement profond, capable d’apprendre une politique d’affectation adaptative des camions aux pelles et aux points de déchargement. L’approche a été validée par une comparaison rigoureuse avec quatre heuristiques industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et trois autres algorithmes d’apprentissage par renforcement représentant la progression méthodologique du mémoire (Q-Learning, SARSA, DQN), sur trois scénarios représentatifs d’une mine à ciel ouvert. Les résultats démontrent que PPO (4\,208.8~t/h) et DQN (4\,168.5~t/h) surpassent Fixed Assignment (4\,074.0~t/h) en conditions nominales, et que cette supériorité se confirme en conditions perturbées (DQN~: 3\,991.8~t/h, PPO~: 3\,946.3~t/h contre 3\,860.5~t/h pour Fixed Assignment). Les heuristiques myopes s’effondrent en surcharge ($\geq 200$~min d’attente), validant l’hypothèse centrale du mémoire.
 
 \vspace{1cm}
 \noindent\textbf{Mots-clés :} Apprentissage par renforcement, logistique minière, dispatching dynamique, PPO, DQN, optimisation holistique, mine à ciel ouvert.
@@ -170,7 +170,7 @@ Dans le secteur minier, l’optimisation des coûts opérationnels et la réduct
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-In the mining sector, optimizing operational costs and reducing environmental impact are major challenges. Industrial Fleet Management Systems, while effective under stable conditions, show limitations when facing real-world variability (breakdowns, congestion, road degradation). This thesis designed and implemented an autonomous truck dispatching agent based on Deep Reinforcement Learning, capable of learning an adaptive assignment policy for trucks to shovels and dump sites. The approach was validated through rigorous comparison with four industrial heuristics (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) and three classical RL algorithms (Q-Learning, SARSA, DQN), across three representative open-pit mine scenarios. Results show that PPO (4,208.8~t/h) and DQN (4,168.5~t/h) outperform Fixed Assignment (4,074.0~t/h) under nominal conditions, with this advantage confirmed under high-breakdown conditions (DQN: 3,991.8~t/h, PPO: 3,946.3~t/h vs. 3,860.5~t/h for Fixed Assignment). Myopic heuristics collapse under overload ($\geq$200~min waiting time), validating the central hypothesis of this work.
+In the mining sector, optimizing operational costs and reducing environmental impact are major challenges. Industrial Fleet Management Systems, while effective under stable conditions, show limitations when facing real-world variability (breakdowns, congestion, road degradation). This thesis presents the design and implementation of an autonomous truck dispatching agent based on Deep Reinforcement Learning, capable of learning an adaptive assignment policy for trucks to shovels and dump sites. The approach was validated through rigorous comparison with four industrial heuristics (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) and three other reinforcement learning algorithms representing the thesis's methodological progression (Q-Learning, SARSA, DQN), across three representative open-pit mine scenarios. Results show that PPO (4,208.8~t/h) and DQN (4,168.5~t/h) outperform Fixed Assignment (4,074.0~t/h) under nominal conditions, with this advantage confirmed under high-breakdown conditions (DQN: 3,991.8~t/h, PPO: 3,946.3~t/h vs. 3,860.5~t/h for Fixed Assignment). Myopic heuristics collapse under overload ($\geq$200~min waiting time), validating the central hypothesis of this work.
 
 \vspace{1cm}
 \noindent\textbf{Keywords :} Reinforcement learning, mining logistics, dynamic dispatching, PPO, DQN, holistic optimization, open-pit mining.
@@ -219,7 +219,7 @@ L’étude s’articule autour des questions suivantes :
 
 Les réponses détaillées à ces problématiques seront développées tout au long des chapitres suivants, à travers la modélisation, l'expérimentation et l'analyse des résultats obtenus.
 
-L’hypothèse centrale est qu’un agent autonome basé sur l’apprentissage par renforcement peut surpasser les approches heuristiques classiques pour l’optimisation dynamique de la logistique minière, en réduisant la consommation de carburant, les temps d’attente et en améliorant l’adaptabilité aux perturbations \cite{Szatmári2025, WZeng2022, MohammadrezaNazari2018}. Les objectifs principaux de ce travail sont les suivants :
+L’hypothèse centrale (notée H1 dans la suite) est qu’un agent autonome basé sur l’apprentissage par renforcement peut surpasser les approches heuristiques classiques pour l’optimisation dynamique de la logistique minière, en réduisant la consommation de carburant, les temps d’attente et en améliorant l’adaptabilité aux perturbations \cite{Szatmári2025, WZeng2022, MohammadrezaNazari2018}. Les objectifs principaux de ce travail sont les suivants :
 \begin{itemize}
     \item Concevoir un environnement de simulation réaliste pour la logistique minière à ciel ouvert ;
     \item Développer un agent d’apprentissage par renforcement capable d’optimiser les décisions de dispatching et de routage ;
@@ -368,11 +368,12 @@ Face aux limites persistantes de ces approches, un nouveau paradigme issu de l�
 
 La littérature montre que, malgré les avancées des systèmes de gestion de flotte industriels et des heuristiques, l’optimisation globale et dynamique de la flotte minière reste un défi \cite{MarceloMorettiFioroni2008, BurakOzdemir2019}. Les approches d'apprentissage par renforcement offrent un potentiel inédit pour dépasser ces limites, en permettant une adaptation en temps réel, une optimisation holistique et une meilleure gestion de l’incertitude \cite{MohammadrezaNazari2018, WZeng2022}. Ce mémoire s’inscrit dans cette dynamique, en proposant une solution d'apprentissage par renforcement adaptée aux contraintes et aux spécificités de la logistique minière moderne.
 
-L'analyse de la littérature permet de classifier les travaux existants en trois catégories majeures. Premièrement, les heuristiques classiques, basées sur des règles métier simples, offrent une solution rapide mais manquent de flexibilité. Deuxièmement, les méta-heuristiques (algorithmes génétiques, colonies de fourmis) permettent de traiter des problèmes plus complexes, au prix d'une puissance de calcul plus élevée. Enfin, les approches par apprentissage par renforcement émergent comme une solution prometteuse pour une optimisation dynamique et robuste face aux aléas. Le tableau 2.1 synthétise les opportunités offertes par cette dernière famille d'approches par rapport aux méthodes conventionnelles.
+L'analyse de la littérature permet de classifier les travaux existants en trois catégories majeures. Premièrement, les heuristiques classiques, basées sur des règles métier simples, offrent une solution rapide mais manquent de flexibilité. Deuxièmement, les méta-heuristiques (algorithmes génétiques, colonies de fourmis) permettent de traiter des problèmes plus complexes, au prix d'une puissance de calcul plus élevée. Enfin, les approches par apprentissage par renforcement émergent comme une solution prometteuse pour une optimisation dynamique et robuste face aux aléas. Le tableau~\ref{tab:familles-approches} synthétise les opportunités offertes par cette dernière famille d'approches par rapport aux méthodes conventionnelles.
 
 \begin{table}[H]
 \centering
 \caption{Synthèse des grandes familles d’approches et opportunités pour l’apprentissage par renforcement}
+\label{tab:familles-approches}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Référence} & \textbf{Approche} & \textbf{Limites principales / Opportunité pour l’apprentissage par renforcement} \\
@@ -388,7 +389,7 @@ L'analyse de la littérature permet de classifier les travaux existants en trois
 \end{table}
 
 
-Afin de positionner précisément notre contribution, il convient d'examiner les apports et les limites des articles scientifiques les plus significatifs du domaine. Ces travaux couvrent aussi bien l'optimisation des flux industriels que l'application d'algorithmes d'apprentissage sur des problèmes de routage. Cette revue critique, synthétisée dans le tableau 2.2, met en évidence le besoin d'une approche holistique intégrant la variabilité stochastique du terrain.
+Afin de positionner précisément notre contribution, il convient d'examiner les apports et les limites des articles scientifiques les plus significatifs du domaine. Ces travaux couvrent aussi bien l'optimisation des flux industriels que l'application d'algorithmes d'apprentissage sur des problèmes de routage. Cette revue critique, synthétisée dans le tableau~\ref{tab:etat-art}, met en évidence le besoin d'une approche holistique intégrant la variabilité stochastique du terrain.
 
 % Tableau de synthèse des articles considérés (format harmonisé)
 \begin{table}[H]
@@ -809,7 +810,7 @@ Module d'évaluation & Comparer les performances avec les baselines industrielle
 \end{tabular}
 \end{table}
 
-Ces blocs interagissent de manière cyclique pour permettre l'apprentissage par renforcement. À chaque instant $t$, l'environnement minier simulé fournit à l'agent RL une observation de l'état du système (files d'attente, positions des camions, disponibilité des ressources). L'agent sélectionne alors une action de dispatching (affectation camion-pelle-dump), qui est exécutée par l'environnement. La fonction de récompense évalue immédiatement cette action selon les objectifs métier (maximisation du tonnage, minimisation des temps d'attente, réduction de la consommation de carburant). Cette récompense guide l'agent pour ajuster sa politique de décision. Enfin, le module d'évaluation permet de comparer les performances de l'agent RL avec des baselines industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et des méthodes RL classiques (Q-Learning, SARSA, DQN) afin de valider l'efficacité de l'approche proposée.  Ce flux d'interaction est schématisé dans l'architecture fonctionnelle présentée à la Figure 4.2 ci-dessous.
+Ces blocs interagissent de manière cyclique pour permettre l'apprentissage par renforcement. À chaque instant $t$, l'environnement minier simulé fournit à l'agent RL une observation de l'état du système (files d'attente, positions des camions, disponibilité des ressources). L'agent sélectionne alors une action de dispatching (affectation camion-pelle-dump), qui est exécutée par l'environnement. La fonction de récompense évalue immédiatement cette action selon les objectifs métier (maximisation du tonnage, minimisation des temps d'attente, réduction de la consommation de carburant). Cette récompense guide l'agent pour ajuster sa politique de décision. Enfin, le module d'évaluation permet de comparer les performances de l'agent RL avec des baselines industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et d'autres algorithmes d'apprentissage par renforcement (Q-Learning, SARSA, DQN) afin de valider l'efficacité de l'approche proposée.  Ce flux d'interaction est schématisé dans l'architecture fonctionnelle présentée à la Figure~\ref{fig:architecture-fonctionnelle} ci-dessous.
 
 \begin{figure}[H]
     \centering
@@ -1634,7 +1635,7 @@ Tous les agents sont entraînés avec une graine fixe $\text{seed} = 42$ sur le 
 
 \subsection{Paramètres des méthodes tabulaires}
 
-Pour Q-Learning et SARSA, la discrétisation de l'espace d'état continu est réalisée par extraction des 5 features décisionnelles essentielles (attentes des 3 pelles et 2 dumps), renormalisées par un facteur 50 pour étaler les valeurs sur $[0, 1]$, puis discrétisées en $n_{\text{bins}} = 8$ intervalles par dimension.  L'espace d'état effectif couvre ainsi $8^5 = 32\,768$ états théoriques, dont 6\,401 effectivement visités en 30\,000 épisodes.
+Pour Q-Learning et SARSA, la discrétisation de l'espace d'état continu est réalisée par extraction de 6 features décisionnelles essentielles (attentes des 3 pelles et 2 dumps, et indice de la pelle la plus proche du camion courant), renormalisées par un facteur 50 pour étaler les valeurs sur $[0, 1]$, puis discrétisées en $n_{\text{bins}} = 8$ intervalles par dimension (la dimension « pelle la plus proche » ne prenant que 3 valeurs possibles).  L'espace d'état théorique couvre ainsi $8^5 \times 3 = 98\,304$ états, dont 17\,034 effectivement visités en 30\,000 épisodes.
 
 \begin{table}[H]
 \centering
@@ -1648,7 +1649,7 @@ Pour Q-Learning et SARSA, la discrétisation de l'espace d'état continu est ré
 Taux d'apprentissage ($\alpha$) & 0.2 & 0.2 \\
 Facteur d'actualisation ($\gamma$) & 0.99 & 0.99 \\
 Bins de discrétisation ($n_{\text{bins}}$) & 8 & 8 \\
-Features d'état & 5 & 5 \\
+Features d'état & 6 & 6 \\
 $\epsilon$ initial / final & 1.0 / 0.01 & 1.0 / 0.01 \\
 \bottomrule
 \end{tabular}
@@ -1678,8 +1679,6 @@ Clip range & — & 0.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-La convergence de PPO est confirmée par la métrique \texttt{explained\_variance = 0.999} en fin d'entraînement, indiquant que le réseau critique prédit avec précision les retours futurs.
 
 \section{Scénarios expérimentaux}
 \label{sec:scenarios}
@@ -1878,10 +1877,30 @@ Nearest  & 3831 / 72.6 & 3939 / 200.2& 3693 / 90.1 & dernier \\
 
 \subsection{Analyse par scénario}
 
+Une analyse statistique de significativité a été effectuée sur les dix réplications indépendantes par politique, afin de déterminer si les écarts de productivité observés entre les méthodes étaient robustes et non dus au hasard. Les tests de Welch (test t pour échantillons indépendants) ont été appliqués pour comparer directement PPO et Fixed Assignment sur le scénario nominal, ainsi que DQN et Fixed Assignment sur le scénario high\_breakdown. Une ANOVA à un facteur a été conduite sur les huit méthodes en scénario nominal, suivie d'un test post-hoc de Tukey pour identifier les comparaisons significatives.
+
+\begin{table}[H]
+    \centering
+    \caption{Résumé des tests statistiques appliqués aux scénarios nominal et high\_breakdown.}
+    \label{tab:statistical_tests}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{4.7cm} >{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{4.3cm}}
+        \toprule
+        \textbf{Comparaison} & \textbf{Statistique} & \textbf{p-value} & \textbf{Conclusion} \\
+        \midrule
+        PPO vs Fixed Assignment (nominal, productivité) & $t = 6{,}356$ & $3{,}0 \times 10^{-6}$ & Différence significative, PPO supérieur à Fixed. \\
+        DQN vs Fixed Assignment (high\_breakdown, productivité) & $t = 5{,}863$ & $1{,}3 \times 10^{-5}$ & Différence significative, DQN supérieur à Fixed. \\
+        ANOVA sur les 8 méthodes (nominal, productivité) & $F(7, 72) = 481{,}25$ & $< 10^{-56}$ & Différence globale significative. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
 \paragraph{Scénario nominal.}
 PPO (4\,208.8 t/h) et DQN (4\,168.5 t/h) surpassent tous deux Fixed Assignment (4\,074.0 t/h) en productivité, démontrant que les agents Deep RL ont appris une politique d'affectation plus efficace que le schéma round-robin statique. Ce résultat valide directement l'hypothèse H1 en conditions stables.
 
 Fixed Assignment conserve le meilleur temps d'attente (27.9 min) grâce au Match Factor parfait ($12/3 = 4$ camions/pelle), ce qui minimise structurellement les files d'attente. PPO présente le meilleur temps d'attente parmi les agents RL (31.8 min), confirmant qu'il a appris à équilibrer les files de manière adaptative.
+
+L'analyse statistique confirme que l'écart de productivité observé entre PPO et Fixed Assignment en scénario nominal est significatif : test t de Welch unilatéral $t = 6{,}356$, $p = 3{,}0 \times 10^{-6}$. Une ANOVA sur les huit méthodes affiche $F(7, 72) = 481{,}25$, $p < 10^{-56}$, indiquant une différence globale significative. Le test post-hoc de Tukey montre que PPO est significativement supérieur à Fixed Assignment, tandis que la performance de DQN n'est pas significativement différente de celle de PPO sur ce scénario.
 
 Shortest Path (3\,872.8 t/h) se distingue désormais de Nearest Shovel (3\,830.8 t/h) grâce à l'implémentation du coût de cycle complet $C = \alpha T + \beta D + \gamma E$ (Eq.~3.1), validant l'apport de la formulation multi-critère.
 
@@ -1894,6 +1913,8 @@ Les heuristiques myopes (Nearest Shovel, Shortest Path) s'effondrent : temps d'a
 
 \paragraph{Scénario high\_breakdown.}
 C'est le scénario déterminant pour la validation de H1. DQN (3\,991.8 t/h) et PPO (3\,946.3 t/h) surpassent tous deux Fixed Assignment (3\,860.5 t/h) en productivité, confirmant la supériorité des agents Deep RL face aux perturbations stochastiques fréquentes.
+
+L'écart de productivité DQN $-$ Fixed est lui aussi significatif : test t de Welch unilatéral $t = 5{,}863$, $p = 1{,}3 \times 10^{-5}$. Cette validation statistique renforce l'interprétation selon laquelle les gains observés ne résultent pas d'une simple variation aléatoire entre réplications.
 
 Fixed Assignment conserve le meilleur temps d'attente (53.1 min) : son schéma cyclique génère peu d'attente grâce à la distribution régulière des camions. PPO (65.1 min) et DQN (68.7 min) ont un temps d'attente légèrement supérieur mais produisent davantage, car ils exploitent les pelles disponibles plus agressivement dès qu'une panne libère une ressource.
 
@@ -1913,7 +1934,7 @@ Les résultats quantitatifs présentés en Section~\ref{sec:resultats-exp} appel
 
 \subsection{Convergence des agents d'apprentissage}
 
-La courbe d'apprentissage de Q-Learning montre une progression claire de la récompense cumulée, passant de 155 à 175 sur le scénario nominal ($+12{,}5\%$) et de 213 à 225 sur le scénario high\_load ($+5{,}4\%$). La Q-table couvre 17\,034 états effectifs sur 30\,000 épisodes en nominal (espace théorique : $8^6 = 262\,144$), confirmant que l'enrichissement du vecteur d'état (ajout de la pelle la plus proche du camion courant) a permis une couverture suffisante pour une politique compétitive.
+La courbe d'apprentissage de Q-Learning montre une progression claire de la récompense cumulée, passant de 155 à 175 sur le scénario nominal ($+12{,}5\%$) et de 213 à 225 sur le scénario high\_load ($+5{,}4\%$). La Q-table couvre 17\,034 états effectifs sur 30\,000 épisodes en nominal (espace théorique : $8^5 \times 3 = 98\,304$), confirmant que l'enrichissement du vecteur d'état (ajout de la pelle la plus proche du camion courant) a permis une couverture suffisante pour une politique compétitive.
 
 SARSA converge vers une valeur inférieure ($\approx 145$ contre 175 pour Q-Learning en nominal), conformément au comportement théorique prédit : en tant que méthode on-policy, SARSA intègre le coût de l'exploration dans ses estimations, produisant une politique conservatrice mais sous-optimale par rapport à Q-Learning off-policy.
 
@@ -1970,7 +1991,7 @@ L'ensemble des résultats obtenus est ici mis en perspective au regard des hypot
 
 \subsection{Validation de l'hypothèse centrale H1}
 
-L'hypothèse centrale de ce mémoire stipule qu'un agent basé sur l'apprentissage par renforcement peut surpasser les approches heuristiques classiques en réduisant les temps d'attente et en améliorant l'adaptabilité aux perturbations.
+L'hypothèse centrale de ce mémoire (H1) stipule qu'un agent basé sur l'apprentissage par renforcement peut surpasser les approches heuristiques classiques en réduisant la consommation de carburant, les temps d'attente et en améliorant l'adaptabilité aux perturbations.
 
 Les résultats obtenus permettent une \textbf{validation partielle et différenciée} de H1 :
 
@@ -1979,7 +2000,7 @@ Les résultats obtenus permettent une \textbf{validation partielle et différenc
 
     \item \textbf{Sur le critère productivité en conditions perturbées} (high\_breakdown) : DQN (3\,991.8 t/h) et PPO (3\,946.3 t/h) surpassent Fixed Assignment (3\,860.5 t/h). H1 est \textbf{validée} sur ce critère. En revanche, Fixed Assignment conserve les meilleurs temps d'attente (53.1 min vs 65.1 min pour PPO), reflétant un compromis productivité/réactivité.
 
-    \item \textbf{Sur le critère robustesse aux surcharges} (high\_load) : Nearest Shovel s'effondre à 201 minutes d'attente, validant la prémisse du titre que les heuristiques statiques ont des limites structurelles. DQN (5\,664.8 t/h) reste compétitif face à Fixed Assignment (5\,874.8 t/h, $-3{,}6\%$). H1 est \textbf{partiellement validée}.
+    \item \textbf{Sur le critère robustesse aux surcharges} (high\_load) : Nearest Shovel s'effondre à 200,2 minutes d'attente, validant la prémisse du titre que les heuristiques statiques ont des limites structurelles. DQN (5\,664.8 t/h) reste compétitif face à Fixed Assignment (5\,874.8 t/h, $-3{,}6\%$). H1 est \textbf{partiellement validée}.
 \end{itemize}
 
 Ces résultats s'inscrivent dans la continuité de la littérature.
@@ -2004,7 +2025,7 @@ Conformément à la question Q5 de l'introduction, l'agent RL développé est co
 
 Ce chapitre a analysé les performances de huit stratégies de dispatching sur trois scénarios représentatifs de la logistique minière à ciel ouvert.
 
-Les résultats confirment trois conclusions majeures. Premièrement, les heuristiques statiques myopes (Nearest Shovel, Shortest Path) montrent des limites structurelles en conditions de surcharge : leurs temps d'attente atteignent 201 minutes, validant la problématique du mémoire. Deuxièmement, PPO et DQN surpassent Fixed Assignment en productivité dans deux scénarios sur trois (nominal : +3{,}3\% et +2{,}3\% ; high\_breakdown : +2{,}2\% et +3{,}4\%), validant l'hypothèse centrale H1. Troisièmement, la progression algorithmique Q-Learning $\to$ SARSA $\to$ DQN $\to$ PPO confirme les prédictions théoriques : Q-Learning surpasse SARSA (+20\% de récompense), et PPO surpasse DQN en temps d'attente nominal (31.8 vs 40.2 min) tandis que DQN offre plus de stabilité en surcharge.
+Les résultats confirment trois conclusions majeures. Premièrement, les heuristiques statiques myopes (Nearest Shovel, Shortest Path) montrent des limites structurelles en conditions de surcharge : leurs temps d'attente dépassent 200 minutes, validant la problématique du mémoire. Deuxièmement, PPO et DQN surpassent Fixed Assignment en productivité dans deux scénarios sur trois (nominal : +3{,}3\% et +2{,}3\% ; high\_breakdown : +2{,}2\% et +3{,}4\%), validant l'hypothèse centrale H1. Troisièmement, la progression algorithmique Q-Learning $\to$ SARSA $\to$ DQN $\to$ PPO confirme les prédictions théoriques : Q-Learning surpasse SARSA (+20\% de récompense), et PPO surpasse DQN en temps d'attente nominal (31.8 vs 40.2 min) tandis que DQN offre plus de stabilité en surcharge.
 
 Ces résultats ouvrent des perspectives directes : l'augmentation du budget d'entraînement pour les agents Deep RL, l'introduction de scénarios de panne de pelles (et non seulement de camions), et l'évaluation sur des graphes routiers plus complexes constituerait les prochaines étapes naturelles pour confirmer et étendre les contributions de ce travail.
 
@@ -2018,7 +2039,7 @@ Ces résultats ouvrent des perspectives directes : l'augmentation du budget d'en
 
 Ce mémoire s'est fixé pour objectif de dépasser les limites des heuristiques statiques dans la logistique minière en concevant et mettant en œuvre un agent autonome de dispatching fondé sur l'apprentissage par renforcement. Articulé autour du cadre méthodologique CRISP-RL, le travail a produit quatre contributions principales.
 
-\textbf{Première contribution : un environnement de simulation réaliste.} Un simulateur de mine à ciel ouvert, conforme à l'interface standardisée Gymnasium, a été développé en Python. Il modélise un graphe routier pondéré (7~nœuds, distances de 1,5 à 3,2~km, pentes de 2 à 8\%), des temps de trajet stochastiques (distribution log-normale, $\sigma = 0{,}12$), des pannes aléatoires et la dégradation progressive des routes. Ce simulateur constitue une base reproductible pour l'évaluation comparative des stratégies de dispatching.
+\textbf{Première contribution : un environnement de simulation réaliste.} Un simulateur de mine à ciel ouvert, conforme à l'interface standardisée Gymnasium, a été développé en Python. Il modélise un graphe routier pondéré (7~nœuds, distances de 1,5 à 3,2~km, pentes de 3 à 8\%), des temps de trajet stochastiques (distribution log-normale, $\sigma = 0{,}12$), des pannes aléatoires et la dégradation progressive des routes. Ce simulateur constitue une base reproductible pour l'évaluation comparative des stratégies de dispatching.
 
 \textbf{Deuxième contribution : une progression algorithmique complète.} Quatre algorithmes d'apprentissage par renforcement ont été implémentés et calibrés~: Q-Learning et SARSA tabulaires (30\,000 épisodes, $\alpha = 0{,}2$, enrichissement d'état), DQN (2M steps, experience replay de 200\,000 transitions) et PPO (2M steps, architecture MLP $128 \times 128$, \texttt{explained\_variance = 0.999}). Cette progression illustre l'évolution du RL tabulaire vers le Deep RL, justifiant chaque transition par les limites de l'approche précédente.
 
@@ -2081,6 +2102,7 @@ En définitive, ce travail démontre que l'apprentissage par renforcement profon
     \item[MILP] Mixed Integer Linear Programming (programmation linéaire en nombres entiers mixtes).
     \item[MLP] Multi-Layer Perceptron (perceptron multicouche).
     \item[PPO] Proximal Policy Optimization.
+    \item[Q-Learning] Q-Learning (méthode tabulaire d'apprentissage par renforcement off-policy).
     \item[RL] Reinforcement Learning (apprentissage par renforcement).
     \item[SARSA] State-Action-Reward-State-Action.
     \item[SB3] Stable-Baselines3 (bibliothèque d’implémentation d’algorithmes RL).
@@ -2204,7 +2226,6 @@ $w_1 = 1{,}0$ (rendement) \quad $w_2 = 0{,}1$ (équité) \quad $w_3 = 0{,}05$ (c
 nominal & 12 & 3 & 2 & 2\% & 4.0 & Conditions nominales équilibrées \\
 high\_load & 18 & 3 & 2 & 2\% & 6.0 & Surcharge (flotte surdimensionnée) \\
 high\_breakdown & 12 & 3 & 2 & 10\% & 4.0 & Pannes fréquentes (5× nominal) \\
-nominal\_asym. & 13 & 3 & 2 & 2\% & 4.33 & Configuration asymétrique \\
 \bottomrule
 \end{tabular}
 \end{table}

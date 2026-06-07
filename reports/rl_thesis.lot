@@ -1,15 +1,38 @@
 \babel@toc {french}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {2.1}{\ignorespaces Synthèse des grandes familles d’approches et opportunités pour l'apprentissage par renforcement}}{8}{table.caption.11}%
+\contentsline {table}{\numberline {2.1}{\ignorespaces Synthèse des grandes familles d’approches et opportunités pour l’apprentissage par renforcement}}{8}{table.caption.11}%
 \contentsline {table}{\numberline {2.2}{\ignorespaces Détail des contributions et limites des articles majeurs de l’état de l’art}}{9}{table.caption.12}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Synthèse des hypothèses: justification et limites}}{13}{table.caption.17}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Synthèse des hypothèses}}{14}{table.caption.18}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Architecture fonctionnelle de l'approche proposée}}{24}{table.caption.32}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Correspondance entre les classes logicielles et les variables du MDP}}{26}{table.caption.35}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Correspondance Q-Learning $\leftrightarrow $ dispatching minier}}{29}{table.caption.41}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Comparaison DQN et PPO pour le dispatching minier (adapté de~\cite {MoezKrichen2022})}}{35}{table.caption.45}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Hyperparamètres du Q-Learning}}{36}{table.caption.47}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces Hyperparamètres du TD Learning / SARSA}}{36}{table.caption.48}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Hyperparamètres de l'agent PPO}}{37}{table.caption.49}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Indicateurs de performance pour l'évaluation comparative}}{39}{table.caption.50}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Synthèse de la solution proposée}}{39}{table.caption.51}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Environnement de développement et bibliothèques principales}}{42}{table.caption.53}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Composition du vecteur d'observation (configuration nominale)}}{45}{table.caption.55}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Diagnostic du signal de récompense avant et après ajout de $w_4$}}{45}{table.caption.56}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces Paramètres d'entraînement des méthodes tabulaires}}{47}{table.caption.58}%
+\contentsline {table}{\numberline {5.5}{\ignorespaces Paramètres d'entraînement des agents Deep RL}}{47}{table.caption.59}%
+\contentsline {table}{\numberline {5.6}{\ignorespaces Paramètres des scénarios expérimentaux}}{47}{table.caption.60}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {6.1}{\ignorespaces Résultats comparatifs — Scénario nominal}}{49}{table.caption.62}%
+\contentsline {table}{\numberline {6.2}{\ignorespaces Résultats comparatifs — Scénario high\_load (18 camions)}}{50}{table.caption.63}%
+\contentsline {table}{\numberline {6.3}{\ignorespaces Résultats comparatifs — Scénario high\_breakdown ($p_b = 10\%$)}}{50}{table.caption.64}%
+\contentsline {table}{\numberline {6.4}{\ignorespaces Synthèse comparative multi-scénarios (productivité t/h / attente min)}}{51}{table.caption.66}%
+\contentsline {table}{\numberline {6.5}{\ignorespaces Résumé des tests statistiques appliqués aux scénarios nominal et high\_breakdown.}}{51}{table.caption.67}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {A.1}{\ignorespaces Stack technologique du projet}}{66}{table.caption.89}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {B.1}{\ignorespaces Hyperparamètres complets de tous les agents}}{68}{table.caption.92}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {C.1}{\ignorespaces Paramètres complets des scénarios expérimentaux}}{69}{table.caption.94}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }

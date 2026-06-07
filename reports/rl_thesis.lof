@@ -2,9 +2,24 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Cycle opérationnel du système camion-pelle et point d'intervention de l'agent de dispatching.}}{12}{figure.caption.14}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Représentation du réseau routier sous forme de graphe stochastique.}}{15}{figure.caption.20}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Schéma d'interaction entre l'agent RL (politique) et l'environnement (simulateur minier).}}{18}{figure.caption.26}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Structure multi-objectif de la fonction de récompense globale.}}{20}{figure.caption.28}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Cycle de vie CRISP-RL adapté à la logistique minière.}}{23}{figure.caption.31}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Architecture fonctionnelle de la solution proposée.}}{24}{figure.caption.33}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Architecture modulaire du simulateur Gymnasium.}}{26}{figure.caption.34}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Architecture du réseau de neurones (MLP) de l'agent PPO.}}{34}{figure.caption.42}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Pipeline du flux de données entre la mine et l'agent DRL.}}{35}{figure.caption.46}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Architecture globale du projet.}}{43}{figure.caption.54}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Graphe routier du simulateur minier.}}{46}{figure.caption.57}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Productivité comparative des algorithmes sur les trois scénarios.}}{50}{figure.caption.65}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces Temps d'attente moyen (min) — Fixed Assignment, PPO et DQN sur les trois scénarios.}}{53}{figure.caption.71}%
+\contentsline {figure}{\numberline {6.3}{\ignorespaces Courbes de convergence de Q-Learning et SARSA — scénario nominal (récompense cumulée moyenne sur les 100 derniers épisodes, 30\,000 épisodes). Q-Learning~: 155 $\to $ 175 ($+12{,}5\%$) ; SARSA~: convergence vers $\approx 145$.}}{54}{figure.caption.72}%
+\contentsline {figure}{\numberline {6.4}{\ignorespaces Courbes de convergence de Q-Learning et SARSA — scénario high\_load (18 camions). Q-Learning~: 213 $\to $ 225 ($+5{,}4\%$) ; SARSA~: convergence vers $\approx 190$.}}{54}{figure.caption.73}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
