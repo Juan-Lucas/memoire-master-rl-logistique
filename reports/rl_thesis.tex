@@ -159,7 +159,7 @@ Enfin, nous adressons nos remerciements à toute notre famille, à nos amis ains
 \chapter*{Résumé}
 \addcontentsline{toc}{chapter}{Résumé}
 
-Dans le secteur minier, l’optimisation des coûts opérationnels et la réduction de l’empreinte environnementale sont des enjeux majeurs. Les systèmes de gestion de flotte industriels, bien qu’efficaces dans des conditions stables, montrent leurs limites face à la variabilité des conditions réelles (pannes, congestion, dégradation des routes). Ce mémoire présente la conception et la mise en œuvre d’un agent autonome de dispatching basé sur l’apprentissage par renforcement profond, capable d’apprendre une politique d’affectation adaptative des camions aux pelles et aux points de déchargement. L’approche a été validée par une comparaison rigoureuse avec quatre heuristiques industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et trois autres algorithmes d’apprentissage par renforcement représentant la progression méthodologique du mémoire (Q-Learning, SARSA, DQN), sur trois scénarios représentatifs d’une mine à ciel ouvert. Les résultats démontrent que PPO (4\,208.8~t/h) et DQN (4\,168.5~t/h) surpassent Fixed Assignment (4\,074.0~t/h) en conditions nominales, et que cette supériorité se confirme en conditions perturbées (DQN~: 3\,991.8~t/h, PPO~: 3\,946.3~t/h contre 3\,860.5~t/h pour Fixed Assignment). Les heuristiques myopes s’effondrent en surcharge ($\geq 200$~min d’attente), validant l’hypothèse centrale du mémoire.
+Dans le secteur minier, l’optimisation des coûts opérationnels et la réduction de l’empreinte environnementale sont des enjeux majeurs. Les systèmes de gestion de flotte industriels, bien qu’efficaces dans des conditions stables, montrent leurs limites face à la variabilité des conditions réelles (pannes, congestion, dégradation des routes). Ce mémoire présente la conception et la mise en œuvre d’un agent autonome de dispatching basé sur l’apprentissage par renforcement profond, capable d’apprendre une politique d’affectation adaptative des camions aux pelles et aux points de déchargement. L’approche a été validée par une comparaison rigoureuse avec quatre heuristiques industrielles (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) et trois autres algorithmes d’apprentissage par renforcement représentant la progression méthodologique du mémoire (Q-Learning, SARSA, DQN), sur trois scénarios représentatifs d’une mine à ciel ouvert. Les résultats démontrent que PPO (4\,208.75~t/h) et DQN (4\,168.50~t/h) surpassent Fixed Assignment (4\,074.00~t/h) en conditions nominales, et que cette supériorité se confirme en conditions perturbées (DQN~: 3\,991.75~t/h, PPO~: 3\,946.25~t/h contre 3\,860.50~t/h pour Fixed Assignment). Les heuristiques myopes s’effondrent en surcharge ($\geq 200$~min d’attente), validant l’hypothèse centrale du mémoire.
 
 \vspace{1cm}
 \noindent\textbf{Mots-clés :} Apprentissage par renforcement, logistique minière, dispatching dynamique, PPO, DQN, optimisation holistique, mine à ciel ouvert.
@@ -170,7 +170,7 @@ Dans le secteur minier, l’optimisation des coûts opérationnels et la réduct
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-In the mining sector, optimizing operational costs and reducing environmental impact are major challenges. Industrial Fleet Management Systems, while effective under stable conditions, show limitations when facing real-world variability (breakdowns, congestion, road degradation). This thesis presents the design and implementation of an autonomous truck dispatching agent based on Deep Reinforcement Learning, capable of learning an adaptive assignment policy for trucks to shovels and dump sites. The approach was validated through rigorous comparison with four industrial heuristics (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) and three other reinforcement learning algorithms representing the thesis's methodological progression (Q-Learning, SARSA, DQN), across three representative open-pit mine scenarios. Results show that PPO (4,208.8~t/h) and DQN (4,168.5~t/h) outperform Fixed Assignment (4,074.0~t/h) under nominal conditions, with this advantage confirmed under high-breakdown conditions (DQN: 3,991.8~t/h, PPO: 3,946.3~t/h vs. 3,860.5~t/h for Fixed Assignment). Myopic heuristics collapse under overload ($\geq$200~min waiting time), validating the central hypothesis of this work.
+In the mining sector, optimizing operational costs and reducing environmental impact are major challenges. Industrial Fleet Management Systems, while effective under stable conditions, show limitations when facing real-world variability (breakdowns, congestion, road degradation). This thesis presents the design and implementation of an autonomous truck dispatching agent based on Deep Reinforcement Learning, capable of learning an adaptive assignment policy for trucks to shovels and dump sites. The approach was validated through rigorous comparison with four industrial heuristics (FIFO, Fixed Assignment, Nearest Shovel, Shortest Path) and three other reinforcement learning algorithms representing the thesis's methodological progression (Q-Learning, SARSA, DQN), across three representative open-pit mine scenarios. Results show that PPO (4\,208.75~t/h) and DQN (4\,168.50~t/h) outperform Fixed Assignment (4\,074.00~t/h) under nominal conditions, with this advantage confirmed under high-breakdown conditions (DQN: 3\,991.75~t/h, PPO: 3\,946.25~t/h vs. 3\,860.50~t/h for Fixed Assignment). Myopic heuristics collapse under overload ($\geq$200~min waiting time), validating the central hypothesis of this work.
 
 \vspace{1cm}
 \noindent\textbf{Keywords :} Reinforcement learning, mining logistics, dynamic dispatching, PPO, DQN, holistic optimization, open-pit mining.
@@ -1791,7 +1791,7 @@ Fixed Assignment & \textbf{5874.8 $\pm$ 53} & \textbf{43.0 $\pm$ 3.8}
     & 0.0444 $\pm$ 0.0003 & 94.0 \\
 DQN              & 5664.8 $\pm$ 65 & 46.8 $\pm$ 2.6
     & 0.0444 $\pm$ 0.0004 & 90.6 \\
-PPO              & 5244.8 $\pm$ 332 & 92.8 $\pm$ 21.6
+PPO              & 5244.8 $\pm$ 350 & 92.8 $\pm$ 21.6
     & 0.0466 $\pm$ 0.0018 & 80.8 \\
 Q-Learning       & 4795.0 $\pm$ 106 & 69.1 $\pm$ 4.1
     & 0.0537 $\pm$ 0.0009 & 88.9 \\
@@ -1896,7 +1896,7 @@ Une analyse statistique de significativité a été effectuée sur les dix répl
 \end{table}
 
 \paragraph{Scénario nominal.}
-PPO (4\,208.8 t/h) et DQN (4\,168.5 t/h) surpassent tous deux Fixed Assignment (4\,074.0 t/h) en productivité, démontrant que les agents Deep RL ont appris une politique d'affectation plus efficace que le schéma round-robin statique. Ce résultat valide directement l'hypothèse H1 en conditions stables.
+PPO (4\,208.75 t/h) et DQN (4\,168.50 t/h) surpassent tous deux Fixed Assignment (4\,074.00 t/h) en productivité, démontrant que les agents Deep RL ont appris une politique d'affectation plus efficace que le schéma round-robin statique. Ce résultat valide directement l'hypothèse H1 en conditions stables.
 
 Fixed Assignment conserve le meilleur temps d'attente (27.9 min) grâce au Match Factor parfait ($12/3 = 4$ camions/pelle), ce qui minimise structurellement les files d'attente. PPO présente le meilleur temps d'attente parmi les agents RL (31.8 min), confirmant qu'il a appris à équilibrer les files de manière adaptative.
 
@@ -1907,12 +1907,12 @@ Shortest Path (3\,872.8 t/h) se distingue désormais de Nearest Shovel (3\,830.8
 \paragraph{Scénario high\_load.}
 Avec 18 camions pour 3 pelles, Fixed Assignment reste dominant (5\,874.8 t/h), son Match Factor $18/3 = 6$ camions/pelle restant optimal. DQN (5\,664.8 t/h, $-3{,}6\%$ vs Fixed) se positionne comme la meilleure alternative RL avec un écart modéré et une faible variance.
 
-PPO affiche une performance variable ($5\,244.8 \pm 332$ t/h) : certaines réplications atteignent 5\,687 t/h (proches de Fixed) tandis que d'autres n'atteignent que 4\,882 t/h. Cette instabilité en surcharge traduit la sensibilité de la politique on-policy aux configurations de départ.
+PPO affiche une performance variable ($5\,244.8 \pm 350$ t/h) : certaines réplications atteignent 5\,687 t/h (proches de Fixed) tandis que d'autres n'atteignent que 4\,882 t/h. Cette instabilité en surcharge traduit la sensibilité de la politique on-policy aux configurations de départ.
 
 Les heuristiques myopes (Nearest Shovel, Shortest Path) s'effondrent : temps d'attente $\geq 200$ minutes, pires que toutes les autres politiques. Ce phénomène confirme la congestion systématique prévue au Chapitre~3 : en l'absence d'équilibrage de charge, la flotte sature la pelle géographiquement la plus proche.
 
 \paragraph{Scénario high\_breakdown.}
-C'est le scénario déterminant pour la validation de H1. DQN (3\,991.8 t/h) et PPO (3\,946.3 t/h) surpassent tous deux Fixed Assignment (3\,860.5 t/h) en productivité, confirmant la supériorité des agents Deep RL face aux perturbations stochastiques fréquentes.
+C'est le scénario déterminant pour la validation de H1. DQN (3\,991.75 t/h) et PPO (3\,946.25 t/h) surpassent tous deux Fixed Assignment (3\,860.50 t/h) en productivité, confirmant la supériorité des agents Deep RL face aux perturbations stochastiques fréquentes.
 
 L'écart de productivité DQN $-$ Fixed est lui aussi significatif : test t de Welch unilatéral $t = 5{,}863$, $p = 1{,}3 \times 10^{-5}$. Cette validation statistique renforce l'interprétation selon laquelle les gains observés ne résultent pas d'une simple variation aléatoire entre réplications.
 
@@ -1970,7 +1970,7 @@ Une analyse diagnostique préalable a révélé que la formulation originale de 
 Le vecteur d'observation de 147 dimensions n'est pas discrétisable efficacement pour Q-Learning et SARSA. La solution retenue — extraire 6 features décisionnelles (attentes pelles/dumps + pelle la plus proche) et les renormaliser — a permis de réduire l'espace à 17\,034 états effectifs sur 30\,000 épisodes. Cette réduction introduit néanmoins une perte d'information : des nuances d'état (positions exactes des camions, niveaux de carburant) ne sont pas capturées, limitant la finesse des politiques tabulaires.
 
 \paragraph{Limite 3 : Variabilité de PPO en high\_load.}
-PPO présente un écart-type élevé en high\_load ($5\,244.8 \pm 332$ t/h) : selon la graine d'évaluation, la performance varie de 4\,882 à 5\,687 t/h. Cette instabilité traduit la sensibilité de la politique on-policy aux configurations d'initialisation en contexte de surcharge. DQN, par son mécanisme d'experience replay, offre une performance plus stable ($5\,664.8 \pm 65$ t/h). Un budget d'entraînement plus élevé ou un curriculum de difficulté progressive permettrait probablement de réduire cette variance.
+PPO présente un écart-type élevé en high\_load ($5\,244.8 \pm 350$ t/h) : selon la graine d'évaluation, la performance varie de 4\,882 à 5\,687 t/h. Cette instabilité traduit la sensibilité de la politique on-policy aux configurations d'initialisation en contexte de surcharge. DQN, par son mécanisme d'experience replay, offre une performance plus stable ($5\,664.8 \pm 65$ t/h). Un budget d'entraînement plus élevé ou un curriculum de difficulté progressive permettrait probablement de réduire cette variance.
 
 \paragraph{Limite 4 : Fixed Assignment bénéficie d'un Match Factor parfait.}
 La supériorité de Fixed Assignment en conditions nominales est structurelle : avec $N_c = 12$ camions et $N_p = 3$ pelles, le schéma round-robin distribue exactement 4 camions par pelle, correspondant au Match Factor optimal théorique. Cette propriété disparaît en high\_load ($6 \neq 4$ camions/pelle) et en high\_breakdown (camions immobilisés par pannes). La comparaison avec Fixed Assignment en nominal est donc délibérément défavorable pour le RL : elle teste les agents dans les conditions les plus avantageuses pour l'heuristique statique.
@@ -1996,9 +1996,9 @@ L'hypothèse centrale de ce mémoire (H1) stipule qu'un agent basé sur l'appren
 Les résultats obtenus permettent une \textbf{validation partielle et différenciée} de H1 :
 
 \begin{itemize}
-    \item \textbf{Sur le critère productivité en conditions stables} (nominal) : PPO (4\,208.8 t/h) et DQN (4\,168.5 t/h) surpassent tous deux Fixed Assignment (4\,074.0 t/h). H1 est \textbf{validée} sur ce critère.
+    \item \textbf{Sur le critère productivité en conditions stables} (nominal) : PPO (4\,208.75 t/h) et DQN (4\,168.50 t/h) surpassent tous deux Fixed Assignment (4\,074.00 t/h). H1 est \textbf{validée} sur ce critère.
 
-    \item \textbf{Sur le critère productivité en conditions perturbées} (high\_breakdown) : DQN (3\,991.8 t/h) et PPO (3\,946.3 t/h) surpassent Fixed Assignment (3\,860.5 t/h). H1 est \textbf{validée} sur ce critère. En revanche, Fixed Assignment conserve les meilleurs temps d'attente (53.1 min vs 65.1 min pour PPO), reflétant un compromis productivité/réactivité.
+    \item \textbf{Sur le critère productivité en conditions perturbées} (high\_breakdown) : DQN (3\,991.75 t/h) et PPO (3\,946.25 t/h) surpassent Fixed Assignment (3\,860.50 t/h). H1 est \textbf{validée} sur ce critère. En revanche, Fixed Assignment conserve les meilleurs temps d'attente (53.1 min vs 65.1 min pour PPO), reflétant un compromis productivité/réactivité.
 
     \item \textbf{Sur le critère robustesse aux surcharges} (high\_load) : Nearest Shovel s'effondre à 200,2 minutes d'attente, validant la prémisse du titre que les heuristiques statiques ont des limites structurelles. DQN (5\,664.8 t/h) reste compétitif face à Fixed Assignment (5\,874.8 t/h, $-3{,}6\%$). H1 est \textbf{partiellement validée}.
 \end{itemize}
@@ -2012,9 +2012,9 @@ La progression Q-Learning $\to$ SARSA $\to$ DQN $\to$ PPO révèle plusieurs ens
 
 La comparaison Q-Learning vs SARSA confirme empiriquement la distinction théorique entre méthodes off-policy et on-policy : Q-Learning converge vers une récompense de 175 contre 145 pour SARSA sur le scénario nominal (+20\%), illustrant que l'estimation de l'action optimale (off-policy) surpasse l'estimation de l'action effectivement choisie (on-policy) dans un environnement où les décisions sous-optimales sont coûteuses.
 
-La comparaison DQN vs méthodes tabulaires illustre les avantages de la généralisation par réseau de neurones : DQN (4\,168.5 t/h en nominal) surpasse Q-Learning (3\,591.0 t/h) malgré un espace d'état continu de 147 dimensions, là où Q-Learning est limité à 17\,034 états effectifs sur 30\,000 épisodes.
+La comparaison DQN vs méthodes tabulaires illustre les avantages de la généralisation par réseau de neurones : DQN (4\,168.50 t/h en nominal) surpasse Q-Learning (3\,591.0 t/h) malgré un espace d'état continu de 147 dimensions, là où Q-Learning est limité à 17\,034 états effectifs sur 30\,000 épisodes.
 
-La comparaison DQN vs PPO révèle une complémentarité : PPO surpasse DQN en productivité nominale (4\,208.8 vs 4\,168.5 t/h) et obtient de meilleurs temps d'attente (31.8 vs 40.2 min) grâce à sa politique on-policy adaptative. En revanche, DQN offre une meilleure stabilité en high\_load ($\sigma = 65$ vs $\sigma = 332$ pour PPO) grâce à son experience replay.
+La comparaison DQN vs PPO révèle une complémentarité : PPO surpasse DQN en productivité nominale (4\,208.75 vs 4\,168.50 t/h) et obtient de meilleurs temps d'attente (31.8 vs 40.2 min) grâce à sa politique on-policy adaptative. En revanche, DQN offre une meilleure stabilité en high\_load ($\sigma = 65$ vs $\sigma = 350$ pour PPO) grâce à son experience replay.
 
 \subsection{Perspectives d'intégration industrielle}
 
@@ -2051,7 +2051,7 @@ Ce mémoire s'est fixé pour objectif de dépasser les limites des heuristiques 
 
 L'hypothèse H1 --- qu'un agent RL peut surpasser les heuristiques classiques en productivité et en adaptabilité aux perturbations --- est \textbf{validée dans deux scénarios sur trois}.
 
-En conditions nominales, PPO (4\,208.8~t/h) et DQN (4\,168.5~t/h) surpassent Fixed Assignment (4\,074.0~t/h), démontrant que les agents Deep RL apprennent une politique d'affectation plus efficace que le schéma round-robin statique. En conditions perturbées (high\_breakdown, $p_b = 10\%$), DQN (3\,991.8~t/h) et PPO (3\,946.3~t/h) surpassent également Fixed Assignment (3\,860.5~t/h), confirmant leur robustesse face aux pannes fréquentes.
+En conditions nominales, PPO (4\,208.75~t/h) et DQN (4\,168.50~t/h) surpassent Fixed Assignment (4\,074.00~t/h), démontrant que les agents Deep RL apprennent une politique d'affectation plus efficace que le schéma round-robin statique. En conditions perturbées (high\_breakdown, $p_b = 10\%$), DQN (3\,991.75~t/h) et PPO (3\,946.25~t/h) surpassent également Fixed Assignment (3\,860.50~t/h), confirmant leur robustesse face aux pannes fréquentes.
 
 En conditions de surcharge (high\_load), les heuristiques myopes (Nearest Shovel, Shortest Path) s'effondrent à plus de 200~minutes d'attente, validant la prémisse du titre : les approches statiques montrent des limites structurelles que le RL ne partage pas. DQN (5\,664.8~t/h) reste compétitif face à Fixed Assignment (5\,874.8~t/h, $-3{,}6\%$), réaffirmant la pertinence du Deep RL en contexte de charge élevée.
 
