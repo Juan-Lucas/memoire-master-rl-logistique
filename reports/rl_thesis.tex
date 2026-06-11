@@ -1534,6 +1534,13 @@ L'ensemble du code source est structuré selon le principe de séparation des re
     \label{fig:architecture-globale}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Architecture modulaire du simulateur Gymnasium.drawio.png}
+    \caption{Architecture modulaire de l'environnement \texttt{MineEnv} (Gymnasium).}
+    \label{fig:architecture-modulaire}
+\end{figure}
+
 \section{Détails d'implémentation de l'environnement}
 \label{sec:implementation-env}
 
@@ -1680,6 +1687,43 @@ Clip range & — & 0.2 \\
 \end{tabular}
 \end{table}
 
+\subsection{Efficacité algorithmique}
+
+Sur le plan computationnel, l'entraînement de chaque agent a été
+réalisé sur un ordinateur personnel (CPU). Les méthodes tabulaires
+(Q-Learning, SARSA) requièrent environ 45 à 60 minutes par scénario
+(30\,000 épisodes). Les agents Deep RL (DQN, PPO) nécessitent 2 à 4
+heures par scénario (2\,000\,000 steps), soit un budget d'entraînement
+total d'environ 24 heures pour l'ensemble des 12 configurations
+(4 algorithmes $\times$ 3 scénarios). Une fois entraînés, les modèles
+sont sauvegardés et l'inférence (décision par cycle) est instantanée,
+ce qui rend le déploiement en temps réel techniquement faisable.
+
+Le Tableau~\ref{tab:efficacite-algo} compare les quatre algorithmes
+sur le scénario nominal selon trois axes~: le temps d'entraînement,
+l'empreinte mémoire du modèle sauvegardé et la stabilité des
+performances en production (écart-type de la productivité, repris du
+Tableau~\ref{tab:resultats-nominal}).  Les méthodes Deep RL produisent
+des modèles nettement plus compacts (0,6 à 0,9~Mo contre plus de 3~Mo
+pour les tables Q tabulaires), tandis que PPO se distingue par la
+meilleure stabilité ($\sigma = 49$~t/h).
+
+\begin{table}[H]
+\centering
+\caption{Comparaison de l'efficacité algorithmique — scénario nominal}
+\label{tab:efficacite-algo}
+\begin{tabular}{lllrr}
+\toprule
+\textbf{Algorithme} & \textbf{Type} & \textbf{Temps d'entraînement} & \textbf{Taille modèle} & \textbf{Stabilité ($\sigma$, t/h)} \\
+\midrule
+Q-Learning & Tabulaire & $\approx$ 57 min (30\,000 ép.) & 3,17 Mo & 85 \\
+SARSA      & Tabulaire & $\approx$ 57 min (30\,000 ép.) & 3,21 Mo & 64 \\
+DQN        & Deep RL   & $\approx$ 2h13 (2M steps)      & 0,61 Mo & 66 \\
+PPO        & Deep RL   & $\approx$ 2h14 (2M steps)      & 0,90 Mo & 49 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Scénarios expérimentaux}
 \label{sec:scenarios}
 
@@ -1724,6 +1768,27 @@ Les KPIs calculés à l'issue de chaque épisode sont les suivants :
 \end{itemize}
 
 Les résultats sont présentés sous forme de moyenne $\pm$ écart-type sur les 10 réplications, permettant d'apprécier la stabilité de chaque politique. Un écart-type élevé pour un agent Deep RL signale une convergence incomplète.
+
+\subsection{Métriques de diagnostic de l'apprentissage}
+\label{sec:metriques-rl}
+
+Les KPIs précédents évaluent la \emph{politique finale} une fois l'entraînement terminé. Une seconde catégorie de métriques, propre au Reinforcement Learning, diagnostique le \emph{processus d'apprentissage} lui-même. Les métriques de classification (précision, rappel, F-score, matrice de confusion), pertinentes pour des décisions binaires correcte/incorrecte, ne s'appliquent pas à cet espace d'action (sept affectations pelle$\to$dump et l'action ATTENDRE). Les métriques retenues sont~:
+
+\begin{itemize}
+    \item \textbf{Récompense cumulée / moyenne} (\textit{Cumulative / Average Reward}) : récompense totale par épisode et sa moyenne mobile --- indicateur principal de progression de l'apprentissage.
+
+    \item \textbf{Convergence et courbe d'apprentissage} (\textit{Learning Curve}) : évolution de la récompense (Q-Learning, SARSA) ou de la productivité lissée (DQN, PPO) jusqu'à stabilisation.
+
+    \item \textbf{Exploration vs exploitation} : décroissance du taux $\epsilon$ ($\epsilon$-greedy, Section~\ref{sec:exploration-exploitation}).
+
+    \item \textbf{Erreur de différence temporelle} (\textit{TD error}, $\delta_t$, Eq.~\ref{eq:td-learning}) : écart entre valeur estimée et valeur cible à chaque mise à jour, pour Q-Learning et SARSA.
+
+    \item \textbf{Policy Loss / Value Loss} : pour PPO, pertes de la politique et de la fonction de valeur, ainsi que l'\textit{explained variance} du critique~; pour DQN, perte du réseau Q.
+
+    \item \textbf{Sample Efficiency} : pourcentage du budget d'entraînement requis pour atteindre 95\% de la performance finale (Tableau~\ref{tab:sample-efficiency}).
+\end{itemize}
+
+Les critères \textit{Success Rate} et \textit{Episode Length} ne s'appliquent pas~: le MDP est à horizon fixe ($T = 480$~min) sans état terminal, la productivité cumulée par épisode en tenant lieu. Ces métriques sont illustrées par les figures du Chapitre~\ref{chap:resultats}.
 
 \section{Conclusion}
 \label{sec:conclusion-implementation}
@@ -1900,16 +1965,31 @@ PPO (4\,208.75 t/h) et DQN (4\,168.50 t/h) surpassent tous deux Fixed Assignment
 
 Fixed Assignment conserve le meilleur temps d'attente (27.9 min) grâce au Match Factor parfait ($12/3 = 4$ camions/pelle), ce qui minimise structurellement les files d'attente. PPO présente le meilleur temps d'attente parmi les agents RL (31.8 min), confirmant qu'il a appris à équilibrer les files de manière adaptative.
 
-L'analyse statistique confirme que l'écart de productivité observé entre PPO et Fixed Assignment en scénario nominal est significatif : test t de Welch unilatéral $t = 6{,}356$, $p = 3{,}0 \times 10^{-6}$. Une ANOVA sur les huit méthodes affiche $F(7, 72) = 481{,}25$, $p < 10^{-56}$, indiquant une différence globale significative. Le test post-hoc de Tukey montre que PPO est significativement supérieur à Fixed Assignment, tandis que la performance de DQN n'est pas significativement différente de celle de PPO sur ce scénario.
+L'analyse statistique confirme que l'écart de productivité observé entre PPO et Fixed Assignment en scénario nominal est significatif : test t de Welch unilatéral $t = 6{,}356$, $p = 3{,}0 \times 10^{-6}$. Une ANOVA sur les huit méthodes affiche $F(7, 72) = 481{,}25$, $p < 10^{-56}$, indiquant une différence globale significative. Le test post-hoc de Tukey montre que PPO est significativement supérieur à Fixed Assignment ($+134{,}75$~t/h), tandis que la performance de DQN n'est pas significativement différente de celle de PPO sur ce scénario ($p = 0{,}799$). L'ensemble des comparaisons par paires est détaillé en Annexe~\ref{ann:stats}.
 
 Shortest Path (3\,872.8 t/h) se distingue désormais de Nearest Shovel (3\,830.8 t/h) grâce à l'implémentation du coût de cycle complet $C = \alpha T + \beta D + \gamma E$ (Eq.~3.1), validant l'apport de la formulation multi-critère.
 
 \paragraph{Scénario high\_load.}
 Avec 18 camions pour 3 pelles, Fixed Assignment reste dominant (5\,874.8 t/h), son Match Factor $18/3 = 6$ camions/pelle restant optimal. DQN (5\,664.8 t/h, $-3{,}6\%$ vs Fixed) se positionne comme la meilleure alternative RL avec un écart modéré et une faible variance.
 
+Si Fixed Assignment domine structurellement en high\_load, les agents
+Deep RL conservent une avance décisive sur les autres heuristiques~:
+DQN (5\,664.8~t/h) surpasse FIFO ($+917$~t/h), SARSA ($+1\,622$~t/h)
+et Nearest Shovel ($+1\,726$~t/h), tous avec $p \approx 0$.
+PPO, malgré sa variance élevée, reste lui aussi significativement
+supérieur à Nearest Shovel ($+1\,306$~t/h, $p = 3{,}5 \times 10^{-4}$)
+et à FIFO ($+497$~t/h, $p < 0{,}001$).
+
 PPO affiche une performance variable ($5\,244.8 \pm 350$ t/h) : certaines réplications atteignent 5\,687 t/h (proches de Fixed) tandis que d'autres n'atteignent que 4\,882 t/h. Cette instabilité en surcharge traduit la sensibilité de la politique on-policy aux configurations de départ.
 
 Les heuristiques myopes (Nearest Shovel, Shortest Path) s'effondrent : temps d'attente $\geq 200$ minutes, pires que toutes les autres politiques. Ce phénomène confirme la congestion systématique prévue au Chapitre~3 : en l'absence d'équilibrage de charge, la flotte sature la pelle géographiquement la plus proche.
+
+Cette supériorité des agents RL face aux heuristiques myopes est
+statistiquement confirmée~: le test~t de Welch entre DQN et Nearest
+Shovel en high\_load affiche $t = 65{,}33$, $p \approx 0$, un écart
+de $+1\,725{,}5$~t/h. Même PPO, malgré sa variance élevée, surpasse
+significativement Nearest Shovel ($t = 11{,}69$, $p = 3{,}5 \times 10^{-4}$,
+$+1\,305{,}5$~t/h).
 
 \paragraph{Scénario high\_breakdown.}
 C'est le scénario déterminant pour la validation de H1. DQN (3\,991.75 t/h) et PPO (3\,946.25 t/h) surpassent tous deux Fixed Assignment (3\,860.50 t/h) en productivité, confirmant la supériorité des agents Deep RL face aux perturbations stochastiques fréquentes.
@@ -1957,7 +2037,204 @@ SARSA converge vers une valeur inférieure ($\approx 145$ contre 175 pour Q-Lear
     \label{fig:learning-curves-highload}
 \end{figure}
 
+Sur le scénario high\_breakdown, les deux algorithmes partent d'une récompense initiale comparable ($\approx 147$) mais divergent ensuite~: Q-Learning progresse jusqu'à $\approx 158$ ($+7{,}3\%$), tandis que SARSA reste stable autour de $\approx 142$, légèrement en dessous de son point de départ. Cette tendance confirme la robustesse relative de la politique off-policy de Q-Learning face aux pannes fréquentes, au prix d'une variance accrue par rapport au scénario nominal.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/learning_curves_highbreakdown.png}
+    \caption{Courbes de convergence de Q-Learning et SARSA — scénario high\_breakdown
+             (taux de pannes 10\%). Q-Learning~: 147 $\to$ 158 ($+7{,}3\%$) ;
+             SARSA~: convergence vers $\approx 142$.}
+    \label{fig:learning-curves-highbreakdown}
+\end{figure}
+
+Les agents Deep RL (DQN, PPO) présentent une dynamique de convergence comparable, mesurée ici par la productivité (t/h) lissée sur une fenêtre glissante au cours de l'entraînement (2M steps).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/learning_curves_deeprl_nominal.png}
+    \caption{Convergence de DQN et PPO — scénario nominal (productivité t/h lissée).
+             DQN~: 3\,028 $\to$ 4\,050~t/h ($+33{,}8\%$)~;
+             PPO~: 3\,150 $\to$ 3\,999~t/h ($+27{,}0\%$).}
+    \label{fig:learning-curves-deeprl-nominal}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/learning_curves_deeprl_highload.png}
+    \caption{Convergence de DQN et PPO — scénario high\_load (productivité t/h lissée).
+             DQN~: 4\,445 $\to$ 5\,662~t/h ($+27{,}4\%$)~;
+             PPO~: 4\,515 $\to$ 5\,215~t/h ($+15{,}5\%$).}
+    \label{fig:learning-curves-deeprl-highload}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/learning_curves_deeprl_highbreakdown.png}
+    \caption{Convergence de DQN et PPO — scénario high\_breakdown (productivité t/h lissée).
+             DQN~: 2\,905 $\to$ 3\,817~t/h ($+31{,}4\%$)~;
+             PPO~: 2\,993 $\to$ 3\,559~t/h ($+19{,}0\%$).}
+    \label{fig:learning-curves-deeprl-highbreakdown}
+\end{figure}
+
+Sur les trois scénarios, DQN affiche une progression relative légèrement supérieure à PPO, mais PPO conserve une variance d'évaluation plus faible une fois la convergence atteinte (cf. Tableau~\ref{tab:efficacite-algo}). La courbe du scénario high\_breakdown illustre la robustesse des deux agents face aux pannes~: malgré un signal plus bruité, la tendance de fond reste croissante sur l'ensemble de l'entraînement.
+
 La convergence de PPO est confirmée par \texttt{explained\_variance = 0.999}, indiquant que le réseau critique prédit avec précision les retours futurs. Cette valeur proche de 1.0 signifie que l'agent a pleinement exploité le signal de récompense disponible dans le budget d'entraînement alloué (2M steps $\approx$ 9\,677 épisodes).
+
+\subsection{Diagnostics complémentaires de l'apprentissage}
+\label{sec:diagnostics-complementaires}
+
+Les quatre métriques de diagnostic restant à illustrer parmi celles introduites en Section~\ref{sec:metriques-rl} -- exploration vs exploitation, erreur TD, Policy/Value Loss et efficacité d'échantillonnage -- sont présentées ci-après pour les trois scénarios (nominal, high\_load, high\_breakdown), en cohérence avec le Tableau~\ref{tab:sample-efficiency} qui couvre déjà ces trois configurations.
+
+\paragraph{Exploration vs exploitation.}
+La Figure~\ref{fig:exploration-exploitation} illustre la transition exploration~$\to$~exploitation. Pour Q-Learning et SARSA, le taux $\epsilon$ décroît linéairement de 1{,}0 à 0{,}01 sur les 30\,000 épisodes selon le schéma $\epsilon$-greedy défini en Section~\ref{sec:exploration-exploitation}, identique pour les trois scénarios. Pour DQN, \texttt{rollout/exploration\_rate} suit une décroissance comparable, de 0{,}999 à 0{,}020 sur les 2M steps. PPO ne dispose pas d'un paramètre $\epsilon$ explicite~: l'entropie de sa politique (panneau droit) chute de 1{,}94 à 0{,}50 nat au cours de l'entraînement, traduisant une politique de plus en plus déterministe à mesure que l'agent affine ses choix d'affectation.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/exploration_exploitation_nominal.png}
+    \caption{Exploration vs exploitation — scénario nominal. Gauche~: décroissance de $\epsilon$ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt{rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}
+    \label{fig:exploration-exploitation}
+\end{figure}
+
+Les Figures~\ref{fig:exploration-exploitation-highload} et \ref{fig:exploration-exploitation-highbreakdown} reprennent cette analyse pour les scénarios high\_load et high\_breakdown. Le panneau gauche -- décroissance de $\epsilon$ pour Q-Learning/SARSA et de \texttt{rollout/exploration\_rate} pour DQN -- est, par construction, quasi identique d'un scénario à l'autre~: ces schémas ne dépendent que du nombre d'épisodes (30\,000) ou de steps (2M), fixé indépendamment de l'environnement simulé. Le panneau droit (entropie de la politique PPO) révèle en revanche une dynamique différenciée~: l'entropie finale atteint 0{,}68~nat en high\_load contre 0{,}50 en nominal et 0{,}55 en high\_breakdown, signe d'une politique légèrement moins déterministe en situation de surcharge -- cohérent avec la variance d'évaluation nettement plus élevée de PPO sur ce scénario ($5\,244.8 \pm 350$~t/h, Tableau~\ref{tab:resultats-highload}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/exploration_exploitation_highload.png}
+    \caption{Exploration vs exploitation — scénario high\_load. Gauche~: décroissance de $\epsilon$ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt{rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}
+    \label{fig:exploration-exploitation-highload}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/exploration_exploitation_highbreakdown.png}
+    \caption{Exploration vs exploitation — scénario high\_breakdown. Gauche~: décroissance de $\epsilon$ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt{rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}
+    \label{fig:exploration-exploitation-highbreakdown}
+\end{figure}
+
+\paragraph{Erreur TD.}
+La Figure~\ref{fig:td-error} présente l'évolution de l'erreur TD moyenne $|\delta_t|$ par épisode (Eq.~\ref{eq:td-learning}) pour Q-Learning et SARSA. Les deux courbes suivent un profil en cloche~: $|\delta_t|$ croît durant les premiers milliers d'épisodes -- la table Q passe de 179 entrées à plus de 13\,500 durant les 5\,000 premiers épisodes, de sorte que de nombreuses mises à jour portent sur des couples état-action récemment découverts et encore initialisés à zéro -- puis décroît progressivement à mesure que la table se stabilise (17\,034 entrées pour Q-Learning, 17\,240 pour SARSA après 30\,000 épisodes) et que $\epsilon$ diminue. Q-Learning termine sur une erreur TD nettement plus faible (0{,}19 contre 0{,}85 pour SARSA), cohérent avec sa convergence vers une récompense plus élevée (175 contre 145) : ses cibles off-policy ($\max_{a'} Q(s',a')$) se stabilisent davantage que les cibles on-policy de SARSA, encore couplées au comportement résiduel de la politique $\epsilon$-greedy ($\epsilon = 0{,}01$). Cette décroissance se poursuit au-delà du point où la récompense moyenne semble visuellement stabilisée (Figure~\ref{fig:learning-curves-nominal}), confirmant que les valeurs Q continuent de s'affiner après que la politique s'est quasiment figée.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/td_error_nominal.png}
+    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario nominal (30\,000 épisodes, moyenne mobile sur 300 épisodes).}
+    \label{fig:td-error}
+\end{figure}
+
+Les Figures~\ref{fig:td-error-highload} et \ref{fig:td-error-highbreakdown} montrent le même profil en cloche pour les scénarios high\_load et high\_breakdown, avec des valeurs finales d'erreur TD cohérentes avec les écarts de convergence observés en Section~\ref{sec:analyse-critique}~: en high\_load, Q-Learning termine à 0{,}36 contre 0{,}74 pour SARSA, écart à mettre en regard de leurs récompenses finales respectives (225 contre 190, Figure~\ref{fig:learning-curves-highload}) ; en high\_breakdown, l'écart est encore plus marqué (0{,}25 contre 0{,}85), reflet de la stagnation de SARSA autour de sa récompense initiale ($\approx 142$) alors que Q-Learning continue de progresser ($\approx 158$). Dans les trois scénarios, la table Q converge vers une taille comparable (16\,600 à 17\,500 entrées sur un espace théorique de 98\,304), confirmant que la couverture de l'espace d'états est robuste aux variations de charge et de fiabilité des équipements.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/td_error_highload.png}
+    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_load (30\,000 épisodes, moyenne mobile sur 300 épisodes).}
+    \label{fig:td-error-highload}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/td_error_highbreakdown.png}
+    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_breakdown (30\,000 épisodes, moyenne mobile sur 300 épisodes).}
+    \label{fig:td-error-highbreakdown}
+\end{figure}
+
+\paragraph{Policy Loss et Value Loss.}
+Pour DQN, la perte du réseau Q (\texttt{train/loss}, Figure~\ref{fig:loss-dqn}) diminue globalement au cours de l'entraînement, de 0{,}040 en moyenne sur le premier dixième des steps à 0{,}025 sur le dernier dixième, malgré une forte variance résiduelle (pic à 0{,}30) caractéristique de l'apprentissage hors-politique avec experience replay. Pour PPO (Figure~\ref{fig:loss-ppo}), la \textit{policy gradient loss} reste faible et stable tout au long de l'entraînement (de $-0{,}025$ à $-0{,}014$ en moyenne mobile), signe que le \textit{clipping} de l'objectif PPO empêche les mises à jour de politique excessives. La \textit{value loss} décroît fortement, de 32{,}0 à 0{,}17 (échelle logarithmique sur la figure), cohérent avec l'\textit{explained variance} de 0{,}999 mentionnée ci-dessus.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/loss_dqn_nominal.png}
+    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario nominal (moyenne mobile sur 30 points).}
+    \label{fig:loss-dqn}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/loss_ppo_nominal.png}
+    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario nominal (moyenne mobile sur 30 points).}
+    \label{fig:loss-ppo}
+\end{figure}
+
+Les Figures~\ref{fig:loss-dqn-highload}, \ref{fig:loss-ppo-highload}, \ref{fig:loss-dqn-highbreakdown} et \ref{fig:loss-ppo-highbreakdown} reproduisent cette analyse pour les scénarios high\_load et high\_breakdown. Pour DQN, la perte du réseau Q suit la même tendance décroissante que sur le scénario nominal~: de 0{,}048 à 0{,}034 en moyenne (premier vs dernier dixième des steps) en high\_load, et de 0{,}033 à 0{,}022 en high\_breakdown -- des niveaux globalement inférieurs au scénario nominal (0{,}040 $\to$ 0{,}025), avec un pic résiduel plus élevé en high\_load (0{,}50 contre 0{,}30 en nominal), cohérent avec la complexité accrue de l'environnement à 18 camions. Pour PPO, la \textit{policy gradient loss} reste faible et stable dans les deux scénarios (de $-0{,}021$ à $-0{,}017$ en moyenne mobile, dans les deux cas), tandis que la \textit{value loss} décroît fortement (de 29{,}3 à 0{,}11 en high\_load, de 32{,}0 à 0{,}12 en high\_breakdown), confirmée par une \textit{explained variance} finale proche de 1{,}0 dans les deux cas (0{,}9999 et 0{,}9998 respectivement) -- comme pour le scénario nominal.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/loss_dqn_highload.png}
+    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario high\_load (moyenne mobile sur 30 points).}
+    \label{fig:loss-dqn-highload}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/loss_ppo_highload.png}
+    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_load (moyenne mobile sur 30 points).}
+    \label{fig:loss-ppo-highload}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/loss_dqn_highbreakdown.png}
+    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario high\_breakdown (moyenne mobile sur 30 points).}
+    \label{fig:loss-dqn-highbreakdown}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/loss_ppo_highbreakdown.png}
+    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_breakdown (moyenne mobile sur 30 points).}
+    \label{fig:loss-ppo-highbreakdown}
+\end{figure}
+
+\paragraph{Efficacité d'échantillonnage.}
+Le Tableau~\ref{tab:sample-efficiency} reporte, pour chaque algorithme et chaque scénario, le pourcentage du budget d'entraînement nécessaire pour que la valeur lissée (récompense pour Q-Learning/SARSA, productivité pour DQN/PPO) reste à moins de 5\% de sa valeur finale jusqu'à la fin de l'entraînement. Sur les trois scénarios, DQN et PPO atteignent ce seuil avec 28 à 80\% de leur budget de 2M steps, contre 83 à 99\% pour Q-Learning et SARSA sur leurs 30\,000 épisodes~: les agents Deep RL stabilisent leur comportement relativement plus tôt dans leur propre budget d'entraînement que les méthodes tabulaires. La valeur de 0{,}0\% pour SARSA en high\_breakdown ne traduit pas une convergence instantanée mais l'absence de progression nette~: comme indiqué précédemment, SARSA reste stable autour de 142 dès le début de l'entraînement dans ce scénario.
+
+\begin{table}[H]
+\centering
+\caption{Efficacité d'échantillonnage~: \% du budget d'entraînement requis pour atteindre 95\% de la performance finale}
+\label{tab:sample-efficiency}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Algorithme} & \textbf{Nominal} & \textbf{High Load} & \textbf{High Breakdown} \\
+\midrule
+Q-Learning & 85{,}1\% & 98{,}6\% & 96{,}3\% \\
+SARSA      & 99{,}0\% & 83{,}2\% & 0{,}0\% \\
+DQN        & 41{,}1\% & 73{,}4\% & 42{,}6\% \\
+PPO        & 37{,}6\% & 80{,}2\% & 28{,}2\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Comportement décisionnel des agents}
+\label{sec:comportement-decisionnel}
+
+Les Figures~\ref{fig:action-distribution-nominal}, \ref{fig:action-distribution-highload} et \ref{fig:action-distribution-highbreakdown} présentent la distribution des actions choisies par chaque politique sur 10 épisodes, respectivement pour les scénarios nominal, high\_load et high\_breakdown. Cette analyse, équivalente à une matrice de confusion pour un problème de classification, permet de vérifier qu'aucun agent ne converge vers une politique totalement dégénérée (choix systématique d'une seule action) et d'évaluer la robustesse du comportement décisionnel face aux variations de charge et de fiabilité des équipements.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/action_distribution_nominal.png}
+    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario nominal (10 épisodes).}
+    \label{fig:action-distribution-nominal}
+\end{figure}
+
+Q-Learning, SARSA et PPO répartissent leurs décisions sur l'ensemble des 7 actions, avec une préférence marquée pour les paires impliquant la Pelle~2 et la Pelle~3 (entre 10\% et 28\% chacune) et un recours modéré à l'action ATTENDRE ($0{,}5\%$ pour Q-Learning, $5{,}3\%$ pour SARSA, $17{,}7\%$ pour PPO). DQN se distingue par une politique nettement plus concentrée~: $44{,}7\%$ des décisions correspondent à ATTENDRE et $35{,}6\%$ à Pelle1$\to$Dump1, ces deux actions représentant à elles seules $80{,}3\%$ des choix, contre une action jamais sélectionnée (Pelle3$\to$Dump2, $0\%$) et deux actions quasi inutilisées (Pelle1$\to$Dump2~: $0{,}1\%$~; Pelle2$\to$Dump1~: $1{,}0\%$). Ce comportement, bien que non strictement dégénéré, illustre la limitation structurelle de DQN évoquée en Section~\ref{sec:choix-ppo}~: face à un espace d'action discret combinatoire, l'agent tend à se replier sur un sous-ensemble restreint de paires pelle-dump jugées suffisamment performantes, plutôt que d'exploiter finement l'ensemble des combinaisons disponibles.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/action_distribution_highload.png}
+    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_load (10 épisodes).}
+    \label{fig:action-distribution-highload}
+\end{figure}
+
+Sous le scénario high\_load (18 camions, charge accrue), Q-Learning et SARSA conservent un comportement actif~: l'action ATTENDRE reste marginale ($0{,}5\%$ et $0{,}8\%$ respectivement), Q-Learning répartissant ses décisions de façon quasi uniforme entre les six paires pelle-dump (de $13{,}3\%$ à $20{,}6\%$ chacune) tandis que SARSA concentre $52{,}7\%$ de ses choix sur Pelle2$\to$Dump2 et $22{,}6\%$ sur Pelle3$\to$Dump1. Les agents Deep RL adoptent à l'inverse un comportement très majoritairement passif~: ATTENDRE représente $67{,}0\%$ des décisions de DQN et $93{,}3\%$ de celles de PPO, ce dernier devenant quasi dégénéré (les six autres actions cumulent moins de $7\%$ des choix). Cette inversion par rapport au scénario nominal --- où PPO n'utilisait ATTENDRE qu'à $17{,}7\%$ --- suggère que face à l'engorgement induit par la flotte élargie, les politiques Deep RL apprennent qu'une réaffectation immédiate apporte peu de bénéfice et privilégient l'inaction, au risque de sous-exploiter les opportunités de réaffectation fine que permettrait une flotte plus nombreuse.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/action_distribution_highbreakdown.png}
+    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_breakdown (10 épisodes).}
+    \label{fig:action-distribution-highbreakdown}
+\end{figure}
+
+Sous le scénario high\_breakdown (probabilité de panne $p_b = 0{,}10$), Q-Learning maintient une politique active et diversifiée sur les 7 actions (ATTENDRE~: $0{,}15\%$), avec une légère préférence pour Pelle1$\to$Dump2 ($25{,}1\%$). SARSA accroît son recours à ATTENDRE ($9{,}1\%$, contre $5{,}3\%$ en nominal) et concentre $44{,}3\%$ de ses décisions sur Pelle3$\to$Dump1. DQN et PPO présentent un comportement convergent et notable~: les deux agents n'assignent plus aucun camion à la Pelle~3 (Pelle3$\to$Dump1 et Pelle3$\to$Dump2 à $0\%$ pour les deux politiques) et augmentent fortement leur recours à ATTENDRE ($39{,}6\%$ pour DQN, $56{,}5\%$ pour PPO, contre $44{,}7\%$ et $17{,}7\%$ en nominal). Ce report total vers les Pelles~1 et~2 suggère que les agents Deep RL ont appris à éviter une ressource jugée peu fiable sous fort taux de pannes, quitte à augmenter l'inaction lorsque les pelles restantes sont indisponibles --- un comportement d'évitement cohérent mais potentiellement sous-optimal si la Pelle~3 redevient disponible plus rapidement que prévu.
 
 \subsection{Limites identifiées}
 
@@ -2001,6 +2278,16 @@ Les résultats obtenus permettent une \textbf{validation partielle et différenc
     \item \textbf{Sur le critère productivité en conditions perturbées} (high\_breakdown) : DQN (3\,991.75 t/h) et PPO (3\,946.25 t/h) surpassent Fixed Assignment (3\,860.50 t/h). H1 est \textbf{validée} sur ce critère. En revanche, Fixed Assignment conserve les meilleurs temps d'attente (53.1 min vs 65.1 min pour PPO), reflétant un compromis productivité/réactivité.
 
     \item \textbf{Sur le critère robustesse aux surcharges} (high\_load) : Nearest Shovel s'effondre à 200,2 minutes d'attente, validant la prémisse du titre que les heuristiques statiques ont des limites structurelles. DQN (5\,664.8 t/h) reste compétitif face à Fixed Assignment (5\,874.8 t/h, $-3{,}6\%$). H1 est \textbf{partiellement validée}.
+
+    \item \textbf{Sur le critère consommation de carburant} : PPO
+    (0{,}0412~L/t) et DQN (0{,}0404~L/t) consomment significativement
+    moins que Fixed Assignment (0{,}0431~L/t) en conditions nominales,
+    soit des gains de $-4{,}4\%$ et $-6{,}3\%$ respectivement
+    (test~t de Welch~: $t = -10{,}01$, $p < 10^{-8}$).
+    En conditions perturbées, PPO (0{,}0424~L/t) et DQN (0{,}0416~L/t)
+    conservent cet avantage face à Fixed (0{,}0449~L/t, $-5{,}6\%$ et
+    $-7{,}4\%$~; $p = 2 \times 10^{-6}$).
+    H1 est \textbf{validée} sur ce critère dans deux scénarios sur trois.
 \end{itemize}
 
 Ces résultats s'inscrivent dans la continuité de la littérature.
@@ -2015,6 +2302,8 @@ La comparaison Q-Learning vs SARSA confirme empiriquement la distinction théori
 La comparaison DQN vs méthodes tabulaires illustre les avantages de la généralisation par réseau de neurones : DQN (4\,168.50 t/h en nominal) surpasse Q-Learning (3\,591.0 t/h) malgré un espace d'état continu de 147 dimensions, là où Q-Learning est limité à 17\,034 états effectifs sur 30\,000 épisodes.
 
 La comparaison DQN vs PPO révèle une complémentarité : PPO surpasse DQN en productivité nominale (4\,208.75 vs 4\,168.50 t/h) et obtient de meilleurs temps d'attente (31.8 vs 40.2 min) grâce à sa politique on-policy adaptative. En revanche, DQN offre une meilleure stabilité en high\_load ($\sigma = 65$ vs $\sigma = 350$ pour PPO) grâce à son experience replay.
+
+Sur le plan statistique, cet écart de productivité n'est pas significatif (test post-hoc de Tukey, $p = 0{,}799$, Tableau~\ref{tab:tukey-nominal}) : PPO et DQN sont donc statistiquement équivalents en productivité nominale. Le choix de PPO comme algorithme final (Section~\ref{sec:choix-ppo}) repose ainsi sur un ensemble de critères complémentaires plutôt que sur une supériorité en productivité~: un temps d'attente nominal inférieur (31,8 contre 40,2~min), une meilleure stabilité en conditions nominales ($\sigma = 49$ contre $66$~t/h, Tableau~\ref{tab:efficacite-algo}) --- avantage qui s'inverse toutefois en surcharge comme indiqué ci-dessus ---, une politique décisionnelle plus diversifiée en nominal (DQN concentre $80{,}3\%$ de ses choix sur deux actions contre une répartition sur les sept actions pour PPO, Section~\ref{sec:comportement-decisionnel}), et une cohérence avec le cadre théorique retenu (objectif tronqué, apprentissage on-policy, Section~\ref{sec:choix-ppo}). Cette analyse multicritère justifie le choix de PPO sans invalider DQN comme alternative crédible, en particulier en conditions de surcharge où sa stabilité supérieure constitue un atout opérationnel.
 
 \subsection{Perspectives d'intégration industrielle}
 
@@ -2056,6 +2345,55 @@ En conditions nominales, PPO (4\,208.75~t/h) et DQN (4\,168.50~t/h) surpassent F
 En conditions de surcharge (high\_load), les heuristiques myopes (Nearest Shovel, Shortest Path) s'effondrent à plus de 200~minutes d'attente, validant la prémisse du titre : les approches statiques montrent des limites structurelles que le RL ne partage pas. DQN (5\,664.8~t/h) reste compétitif face à Fixed Assignment (5\,874.8~t/h, $-3{,}6\%$), réaffirmant la pertinence du Deep RL en contexte de charge élevée.
 
 Ces résultats confirment que le RL n'est pas universellement supérieur aux heuristiques~\cite{HazrathosseiniAfrapoli2024}, mais apporte un avantage décisif dans les contextes dynamiques et perturbés qui caractérisent les mines en exploitation réelle.
+
+\section*{Réponses aux questions de recherche}
+
+\textbf{Q1 — Modélisation de l'environnement.}
+L'environnement minier a été modélisé comme un MDP à horizon fini
+($T = 480$~min) couplé à un graphe orienté pondéré (7~nœuds,
+algorithme de Dijkstra) implémenté via NetworkX. La stochasticité
+est capturée par des temps de trajet log-normaux ($\sigma = 0{,}12$)
+et des pannes de type Bernoulli($p_b$). L'interface standardisée
+Gymnasium assure la compatibilité avec les bibliothèques RL et la
+reproductibilité des expériences.
+
+\textbf{Q2 — Architecture d'agent.}
+PPO avec un réseau MLP $128 \times 128$ et activation ReLU constitue
+l'architecture la plus performante en productivité nominale
+(4\,208{,}75~t/h) et en conditions perturbées (3\,946{,}25~t/h).
+DQN offre une meilleure stabilité en surcharge ($\sigma = 65$ contre
+$350$ pour PPO) grâce à son mécanisme d'experience replay.
+
+\textbf{Q3 — Fonction de récompense.}
+La récompense à quatre termes $R = w_1 r_{\text{prod}} + w_2
+r_{\text{équité}} + w_3 r_{\text{coût}} + w_4 r_{\text{attente}}$
+avec $w_4 = 0{,}3$ (calibré empiriquement) résout le problème
+du signal non discriminant : sans $w_4$, $\Delta R < 6 \times 10^{-4}$,
+rendant tout apprentissage tabulaire impossible.
+
+\textbf{Q4 — Métriques et protocoles.}
+Quatre KPIs (productivité~t/h, attente~min, carburant~L/t,
+utilisation~\%) calculés sur 10~réplications indépendantes par
+politique et par scénario. La significativité statistique est
+établie par des tests de Welch (H1: PPO $> $ Fixed, $p = 3{,}0
+\times 10^{-6}$), une ANOVA ($F(7,72) = 481{,}25$, $p < 10^{-56}$)
+et un test post-hoc de Tukey HSD. Les métriques de diagnostic de
+l'apprentissage (Convergence, Learning Curve, TD Error, Exploration
+vs Exploitation, Sample Efficiency, Policy/Value Loss) complètent ce
+protocole et sont détaillées au Chapitre~6 et à l'Annexe~B. Le \textit{Success
+Rate} et l'\textit{Episode Length}, usuels pour les tâches RL à but
+terminal, ne s'appliquent pas directement~: notre MDP est à horizon
+fixe ($T = 480$~min, sans état terminal de succès/échec), de sorte
+que la productivité cumulée par épisode joue le rôle de métrique de
+performance globale.
+
+\textbf{Q5 — Intégration industrielle.}
+L'agent RL est conçu comme une couche d'intelligence additionnelle
+au-dessus des FMS existants, sans remplacement d'infrastructure.
+Il opère comme un module de recommandation d'affectation à chaque
+cycle camion, permettant une architecture hybride FMS + RL qui
+cumule la fiabilité opérationnelle des systèmes industriels et
+l'adaptabilité apprise face aux perturbations.
 
 \section*{Limites du travail}
 
@@ -2241,6 +2579,40 @@ high\_breakdown & 12 & 3 & 2 & 10\% & 4.0 & Pannes fréquentes (5× nominal) \\
     \item Dégradation route : probabilité 5\%, réduction 2\% par passage
     \item Évaluation : 10 réplications indépendantes (seeds 42 à 51)
 \end{itemize}
+
+\chapter{Résultats statistiques complémentaires}
+\label{ann:stats}
+
+\section*{Test post-hoc de Tukey HSD — scénario nominal}
+
+Le Tableau~\ref{tab:tukey-nominal} présente les comparaisons par paires
+les plus pertinentes issues du test post-hoc de Tukey HSD appliqué à
+l'ANOVA sur les huit méthodes en scénario nominal
+($F(7,72) = 481{,}25$, $p < 10^{-56}$, voir Tableau~\ref{tab:statistical_tests}).
+PPO est significativement supérieur à Fixed Assignment
+($+134{,}75$~t/h), tandis que l'écart entre DQN et PPO n'est pas
+significatif ($p = 0{,}799$), confirmant leur équivalence statistique
+en conditions nominales.
+
+\begin{table}[H]
+\centering
+\caption{Résultats post-hoc Tukey HSD — scénario nominal (paires significatives)}
+\label{tab:tukey-nominal}
+\small
+\begin{tabular}{llrrrl}
+\toprule
+\textbf{Groupe 1} & \textbf{Groupe 2} & \textbf{Diff. (t/h)} & \textbf{IC 95\% inf.} & \textbf{IC 95\% sup.} & \textbf{Rejet H0} \\
+\midrule
+PPO   & Fixed      & $+134{,}75$ & $+51{,}6$  & $+217{,}9$ & Oui \\
+PPO   & DQN        & $+40{,}25$  & $-42{,}9$  & $+123{,}4$ & \textbf{Non} \\
+DQN   & Fixed      & $-94{,}5$   & $-177{,}6$ & $-11{,}4$  & Oui \\
+Fixed & Q-Learning & $+483{,}0$  & $+399{,}9$ & $+566{,}1$ & Oui \\
+Nearest & ShortestPath & $+42{,}0$ & $-41{,}1$ & $+125{,}1$ & \textbf{Non} \\
+\midrule
+\multicolumn{6}{l}{\textit{Note : toutes les autres paires sont significatives ($p < 0{,}001$).}} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \chapter{Architecture logicielle et structure du projet}
 \label{ann:architecture}

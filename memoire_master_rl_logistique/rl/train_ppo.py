@@ -13,6 +13,7 @@ from pathlib import Path
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.logger import configure
 
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
@@ -104,6 +105,9 @@ def train_ppo(
         log_freq=log_freq,
         verbose=1,
     )
+
+    new_logger = configure(str(out_path / "sb3_logs"), ["csv"])
+    model.set_logger(new_logger)
 
     print(f"Début de l'entraînement PPO ({total_timesteps} steps)...")
     model.learn(

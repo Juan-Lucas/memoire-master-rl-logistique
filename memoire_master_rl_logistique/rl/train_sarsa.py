@@ -64,6 +64,8 @@ def train_sarsa(
     epsilon_decay = (epsilon_start - epsilon_min) / max(n_episodes, 1)
 
     rewards_per_episode: list[float] = []
+    epsilons_per_episode: list[float] = []
+    td_errors_per_episode: list[float] = []
 
     def _select_action(state: tuple[int, ...], eps: float) -> int:
         if state not in q_table:
@@ -79,6 +81,7 @@ def train_sarsa(
         state = _discretize_obs(obs, n_bins, shovel_count, dump_count)
         action = _select_action(state, epsilon)
         total_reward = 0.0
+        td_errors: list[float] = []
 
         while True:
             obs_next, reward, terminated, truncated, _info = env.step(action)
@@ -95,7 +98,9 @@ def train_sarsa(
                 q_table[next_state] = np.zeros(n_actions)
 
             td_target = reward + gamma * q_table[next_state][next_action]
-            q_table[state][action] += alpha * (td_target - q_table[state][action])
+            td_error = td_target - q_table[state][action]
+            td_errors.append(abs(td_error))
+            q_table[state][action] += alpha * td_error
 
             state = next_state
             action = next_action
@@ -104,6 +109,8 @@ def train_sarsa(
                 break
 
         rewards_per_episode.append(total_reward)
+        epsilons_per_episode.append(epsilon)
+        td_errors_per_episode.append(float(np.mean(td_errors)))
         epsilon = max(epsilon_min, epsilon - epsilon_decay)
 
         if (ep + 1) % 1000 == 0 or ep == 0:
@@ -132,6 +139,13 @@ def train_sarsa(
         for i, r in enumerate(rewards_per_episode):
             f.write(f"{i},{r:.4f}\n")
     print(f"Récompenses d'entraînement : {rewards_path}")
+
+    diagnostics_path = out_path / "training_diagnostics.csv"
+    with diagnostics_path.open("w", encoding="utf-8") as f:
+        f.write("episode,total_reward,epsilon,mean_abs_td_error\n")
+        for i, (r, eps, td) in enumerate(zip(rewards_per_episode, epsilons_per_episode, td_errors_per_episode)):
+            f.write(f"{i},{r:.4f},{eps:.6f},{td:.6f}\n")
+    print(f"Diagnostics d'entraînement : {diagnostics_path}")
 
     return q_table
 

@@ -64,6 +64,8 @@ def train_q_learning(
     epsilon_decay = (epsilon_start - epsilon_min) / max(n_episodes, 1)
 
     rewards_per_episode: list[float] = []
+    epsilons_per_episode: list[float] = []
+    td_errors_per_episode: list[float] = []
 
     print(f"Début de l'entraînement Q-Learning ({n_episodes} épisodes)...")
 
@@ -71,6 +73,7 @@ def train_q_learning(
         obs, _info = env.reset(seed=seed + ep)
         state = _discretize_obs(obs, n_bins, shovel_count, dump_count)
         total_reward = 0.0
+        td_errors: list[float] = []
 
         while True:
             if state not in q_table:
@@ -92,7 +95,9 @@ def train_q_learning(
             # Q-Learning update (off-policy): Eq. 4.1
             best_next = float(np.max(q_table[next_state]))
             td_target = reward + gamma * best_next
-            q_table[state][action] += alpha * (td_target - q_table[state][action])
+            td_error = td_target - q_table[state][action]
+            td_errors.append(abs(td_error))
+            q_table[state][action] += alpha * td_error
 
             state = next_state
 
@@ -100,6 +105,8 @@ def train_q_learning(
                 break
 
         rewards_per_episode.append(total_reward)
+        epsilons_per_episode.append(epsilon)
+        td_errors_per_episode.append(float(np.mean(td_errors)))
         epsilon = max(epsilon_min, epsilon - epsilon_decay)
 
         if (ep + 1) % 1000 == 0 or ep == 0:
@@ -128,6 +135,13 @@ def train_q_learning(
         for i, r in enumerate(rewards_per_episode):
             f.write(f"{i},{r:.4f}\n")
     print(f"Récompenses d'entraînement : {rewards_path}")
+
+    diagnostics_path = out_path / "training_diagnostics.csv"
+    with diagnostics_path.open("w", encoding="utf-8") as f:
+        f.write("episode,total_reward,epsilon,mean_abs_td_error\n")
+        for i, (r, eps, td) in enumerate(zip(rewards_per_episode, epsilons_per_episode, td_errors_per_episode)):
+            f.write(f"{i},{r:.4f},{eps:.6f},{td:.6f}\n")
+    print(f"Diagnostics d'entraînement : {diagnostics_path}")
 
     return q_table
 
