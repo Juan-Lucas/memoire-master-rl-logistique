@@ -16,27 +16,30 @@
 \contentsline {table}{\numberline {4.8}{\ignorespaces Indicateurs de performance pour l'évaluation comparative}}{39}{table.caption.50}%
 \contentsline {table}{\numberline {4.9}{\ignorespaces Synthèse de la solution proposée}}{39}{table.caption.51}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {5.1}{\ignorespaces Environnement de développement et bibliothèques principales}}{42}{table.caption.53}%
-\contentsline {table}{\numberline {5.2}{\ignorespaces Composition du vecteur d'observation (configuration nominale)}}{45}{table.caption.56}%
-\contentsline {table}{\numberline {5.3}{\ignorespaces Diagnostic du signal de récompense avant et après ajout de $w_4$}}{46}{table.caption.57}%
-\contentsline {table}{\numberline {5.4}{\ignorespaces Paramètres d'entraînement des méthodes tabulaires}}{47}{table.caption.59}%
-\contentsline {table}{\numberline {5.5}{\ignorespaces Paramètres d'entraînement des agents Deep RL}}{47}{table.caption.60}%
-\contentsline {table}{\numberline {5.6}{\ignorespaces Comparaison de l'efficacité algorithmique — scénario nominal}}{48}{table.caption.61}%
-\contentsline {table}{\numberline {5.7}{\ignorespaces Paramètres des scénarios expérimentaux}}{48}{table.caption.62}%
+\contentsline {table}{\numberline {5.1}{\ignorespaces Environnement de développement et bibliothèques principales}}{43}{table.caption.53}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Configuration matérielle utilisée pour le développement et l'entraînement}}{43}{table.caption.54}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Composition du vecteur d'observation (configuration nominale)}}{45}{table.caption.56}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces Diagnostic du signal de récompense avant et après ajout de $w_4$}}{46}{table.caption.57}%
+\contentsline {table}{\numberline {5.5}{\ignorespaces Paramètres d'entraînement des méthodes tabulaires}}{48}{table.caption.59}%
+\contentsline {table}{\numberline {5.6}{\ignorespaces Paramètres d'entraînement des agents Deep RL}}{48}{table.caption.60}%
+\contentsline {table}{\numberline {5.7}{\ignorespaces Comparaison de l'efficacité algorithmique — scénario nominal}}{49}{table.caption.61}%
+\contentsline {table}{\numberline {5.8}{\ignorespaces Paramètres des scénarios expérimentaux}}{49}{table.caption.62}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {6.1}{\ignorespaces Résultats comparatifs — Scénario nominal}}{51}{table.caption.64}%
 \contentsline {table}{\numberline {6.2}{\ignorespaces Résultats comparatifs — Scénario high\_load (18 camions)}}{52}{table.caption.65}%
 \contentsline {table}{\numberline {6.3}{\ignorespaces Résultats comparatifs — Scénario high\_breakdown ($p_b = 10\%$)}}{52}{table.caption.66}%
 \contentsline {table}{\numberline {6.4}{\ignorespaces Synthèse comparative multi-scénarios (productivité t/h / attente min)}}{53}{table.caption.68}%
-\contentsline {table}{\numberline {6.5}{\ignorespaces Résumé des tests statistiques appliqués aux scénarios nominal et high\_breakdown.}}{53}{table.caption.69}%
-\contentsline {table}{\numberline {6.6}{\ignorespaces Efficacité d'échantillonnage~: \% du budget d'entraînement requis pour atteindre 95\% de la performance finale}}{66}{table.caption.96}%
+\contentsline {table}{\numberline {6.5}{\ignorespaces Résumé des tests statistiques appliqués aux trois scénarios.}}{54}{table.caption.69}%
+\contentsline {table}{\numberline {6.6}{\ignorespaces Efficacité d'échantillonnage~: \% du budget d'entraînement requis pour atteindre 95\% de la performance finale}}{67}{table.caption.96}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {A.1}{\ignorespaces Stack technologique du projet}}{80}{table.caption.116}%
+\contentsline {table}{\numberline {A.1}{\ignorespaces Stack technologique du projet}}{81}{table.caption.116}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {B.1}{\ignorespaces Hyperparamètres complets de tous les agents}}{82}{table.caption.119}%
+\contentsline {table}{\numberline {B.1}{\ignorespaces Hyperparamètres complets de tous les agents}}{83}{table.caption.119}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {C.1}{\ignorespaces Paramètres complets des scénarios expérimentaux}}{83}{table.caption.121}%
+\contentsline {table}{\numberline {C.1}{\ignorespaces Paramètres complets des scénarios expérimentaux}}{84}{table.caption.121}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {D.1}{\ignorespaces Résultats post-hoc Tukey HSD — scénario nominal (paires significatives)}}{84}{table.caption.124}%
+\contentsline {table}{\numberline {D.1}{\ignorespaces Résultats post-hoc Tukey HSD — scénario nominal (paires significatives)}}{85}{table.caption.124}%
+\contentsline {table}{\numberline {D.2}{\ignorespaces Résultats post-hoc Tukey HSD — scénario high\_load (paires pertinentes)}}{86}{table.caption.126}%
+\contentsline {table}{\numberline {D.3}{\ignorespaces Résultats post-hoc Tukey HSD — scénario high\_breakdown (paires pertinentes)}}{86}{table.caption.128}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }

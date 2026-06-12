@@ -209,7 +209,7 @@ L’étude s’articule autour des questions suivantes :
 
     Q1 : Comment modéliser l'environnement minier complexe (réseau routier, zones tampons, événements stochastiques) dans un cadre d'apprentissage par renforcement compatible avec les standards industriels ?
 
-    Q2 : Quelle architecture d'agent d'apprentissage par renforcement est la plus adaptée pour apprendre une politique de navigation holistique intégrant à la fois le choix d'itinéraire et le contrôle de vitesse ?
+    Q2 : Quelle architecture d'agent d'apprentissage par renforcement est la plus adaptée pour apprendre une politique de dispatching adaptative (affectation camion $\to$ pelle $\to$ point de déchargement) dans un environnement minier stochastique ?
 
     Q3 : Comment concevoir une fonction de récompense qui capture fidèlement les coûts réels (carburant, usure, temps) tout en pénalisant les comportements non souhaitables ?
 
@@ -1171,7 +1171,7 @@ L'agent repose sur une architecture de type Perceptron Multicouche (MLP) compren
 
 \subsection{Choix de l'algorithme final~: PPO}
 \label{sec:choix-ppo}
-Le choix de l'algorithme final est le résultat d'une progression scientifique~: Q-Learning et TD Learning servent de bases théoriques, DQN assure la transition vers le Deep Reinforcement Learning, et PPO (Proximal Policy Optimization)~\cite{MoezKrichen2022} est retenu comme approche finale en raison de sa stabilité et de sa robustesse dans les environnements dynamiques.
+Le choix de l'algorithme final est le résultat d'une progression scientifique~: Q-Learning et TD Learning servent de bases théoriques, DQN assure la transition vers le Deep Reinforcement Learning, et PPO (Proximal Policy Optimization)~\cite{Schulman2017PPO, MoezKrichen2022} est retenu comme approche finale en raison de sa stabilité et de sa robustesse dans les environnements dynamiques.
 
 La comparaison naturelle s'établit entre DQN et PPO, ces deux algorithmes représentant respectivement l'approche basée sur la valeur et l'approche basée sur la politique dans le spectre du Deep Reinforcement Learning.
 
@@ -1181,7 +1181,7 @@ DQN constitue l'extension profonde du Q-Learning~: il remplace la table Q par un
 \paragraph{Avantages déterminants de PPO~:}
 PPO est une méthode actor-critic on-policy qui surmonte directement ces deux limitations~:
 \begin{itemize}
-    \item \textbf{Stabilité par objectif tronqué}~: le mécanisme de Clipped Surrogate Objective limite l'amplitude des mises à jour de politique, empêchant les divergences causées par les perturbations stochastiques de l'environnement minier~\cite{MoezKrichen2022}.
+    \item \textbf{Stabilité par objectif tronqué}~: le mécanisme de Clipped Surrogate Objective limite l'amplitude des mises à jour de politique, empêchant les divergences causées par les perturbations stochastiques de l'environnement minier~\cite{Schulman2017PPO, MoezKrichen2022}.
     \item \textbf{Apprentissage on-policy}~: PPO apprend directement à partir de ses interactions actuelles avec le simulateur, sans nécessiter de replay buffer, ce qui le rend plus adapté aux environnements dont la dynamique évolue en cours d'épisode.
     \item \textbf{Robustesse au réglage}~: PPO est peu sensible aux hyperparamètres, ce qui garantit la reproductibilité des expériences~\cite{MoezKrichen2022, Szatmári2025}.
 \end{itemize}
@@ -1478,6 +1478,8 @@ Ce chapitre a présenté la méthodologie complète de notre solution, depuis le
 
 L'implémentation et l'expérimentation constituent l'étape de validation opérationnelle de la méthodologie proposée. Elles permettent de vérifier, dans un cadre contrôlé, la faisabilité technique de la solution et sa capacité à produire des résultats mesurables sur des scénarios représentatifs de la logistique minière.
 
+Ce chapitre présente d'abord l'environnement de développement et la configuration matérielle utilisés (Section~\ref{sec:outils}), puis l'architecture globale du système implémenté (Section~\ref{sec:architecture}) et les détails d'implémentation de l'environnement de simulation, jusqu'à sa validation (Section~\ref{sec:implementation-env}). Les paramètres et protocoles d'entraînement (Section~\ref{sec:entrainement}), les scénarios expérimentaux (Section~\ref{sec:scenarios}) et les métriques d'évaluation (Section~\ref{sec:metriques}) sont ensuite détaillés, avant la conclusion qui fait le lien avec l'analyse des résultats du Chapitre~6.
+
 \section{Environnement de développement et outils}
 \label{sec:outils}
 
@@ -1508,6 +1510,29 @@ Git / GitHub      & —         & Versionnement et hébergement du code source \
 
 L'ensemble du code source est versionné avec Git et hébergé sur GitHub, assurant la traçabilité des modifications et la reproductibilité intégrale des expériences via les graines fixes (\textit{seeds}).
 
+\subsection{Configuration matérielle}
+
+L'ensemble du développement, de l'entraînement et de l'évaluation a été réalisé sur l'ordinateur portable dont les caractéristiques sont résumées au Tableau~\ref{tab:config-materielle}.
+
+\begin{table}[H]
+\centering
+\caption{Configuration matérielle utilisée pour le développement et l'entraînement}
+\label{tab:config-materielle}
+\begin{tabular}{ll}
+\toprule
+\textbf{Composant} & \textbf{Spécification} \\
+\midrule
+Modèle & Dell Latitude 5510 (ordinateur portable) \\
+Processeur & Intel Core i5-10310U (1,70~GHz, turbo jusqu'à 2,21~GHz) \\
+Mémoire RAM & 16~Go (15,6~Go utilisables) \\
+Carte graphique & Intel UHD 128~Mo (intégrée, affichage uniquement) \\
+GPU dédié & Aucun \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tous les entraînements (méthodes tabulaires et Deep RL) s'exécutent exclusivement sur CPU, ce qui explique les durées d'entraînement rapportées en Section~\ref{sec:entrainement}.
+
 \section{Architecture globale du système proposé}
 \label{sec:architecture}
 
@@ -1532,13 +1557,6 @@ L'ensemble du code source est structuré selon le principe de séparation des re
     \includegraphics[width=0.85\textwidth]{figures/Architecture logicielle du projet.drawio.png}
     \caption{Architecture globale du projet.}
     \label{fig:architecture-globale}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{figures/Architecture modulaire du simulateur Gymnasium.drawio.png}
-    \caption{Architecture modulaire de l'environnement \texttt{MineEnv} (Gymnasium).}
-    \label{fig:architecture-modulaire}
 \end{figure}
 
 \section{Détails d'implémentation de l'environnement}
@@ -1630,6 +1648,10 @@ Avec $w_4 = 1{,}0$ & 0.755 & 0.787 & $3{,}2 \times 10^{-2}$ \\
     \caption{Graphe routier du simulateur minier.}
     \label{fig:graphe-reseau}
 \end{figure}
+
+\subsection{Validation du simulateur}
+
+Une fois ces éléments implémentés, la cohérence du simulateur a été vérifiée par la commande \texttt{gymnasium.utils.check\_env()}, qui valide la conformité des espaces d'observation et d'action, la reproductibilité avec graine fixe et l'absence d'erreurs dans la boucle \texttt{reset}/\texttt{step}. Cette validation préalable conditionne la fiabilité des protocoles d'entraînement présentés ci-après.
 
 \section{Paramètres et protocoles d'entraînement}
 \label{sec:entrainement}
@@ -1745,10 +1767,6 @@ High Breakdown& 12 & 3 & 2 & 10\% & Pannes fréquentes \\
 \end{table}
 
 Le scénario \textbf{nominal} sert de référence pour calibrer les agents et valider la cohérence du simulateur.  Le scénario \textbf{high\_load} teste la capacité des algorithmes à équilibrer la charge entre pelles lorsque le nombre de camions dépasse le Match Factor optimal.  Le scénario \textbf{high\_breakdown} évalue la robustesse des politiques face aux perturbations stochastiques fréquentes, directement lié à l'hypothèse centrale H1.
-
-\subsection{Validation du simulateur}
-
-La cohérence du simulateur a été vérifiée par la commande \texttt{gymnasium.utils.check\_env()}, qui valide la conformité des espaces d'observation et d'action, la reproductibilité avec graine fixe et l'absence d'erreurs dans la boucle \texttt{reset}/\texttt{step}.
 
 \section{Métriques d'évaluation}
 \label{sec:metriques}
@@ -1942,11 +1960,11 @@ Nearest  & 3831 / 72.6 & 3939 / 200.2& 3693 / 90.1 & dernier \\
 
 \subsection{Analyse par scénario}
 
-Une analyse statistique de significativité a été effectuée sur les dix réplications indépendantes par politique, afin de déterminer si les écarts de productivité observés entre les méthodes étaient robustes et non dus au hasard. Les tests de Welch (test t pour échantillons indépendants) ont été appliqués pour comparer directement PPO et Fixed Assignment sur le scénario nominal, ainsi que DQN et Fixed Assignment sur le scénario high\_breakdown. Une ANOVA à un facteur a été conduite sur les huit méthodes en scénario nominal, suivie d'un test post-hoc de Tukey pour identifier les comparaisons significatives.
+Une analyse statistique de significativité a été effectuée sur les dix réplications indépendantes par politique, afin de déterminer si les écarts de productivité observés entre les méthodes étaient robustes et non dus au hasard. Les tests de Welch (test t pour échantillons indépendants) ont été appliqués pour comparer directement PPO et Fixed Assignment sur le scénario nominal, ainsi que DQN et Fixed Assignment sur le scénario high\_breakdown. Une ANOVA à un facteur a été conduite sur les huit méthodes pour chacun des trois scénarios, suivie dans chaque cas d'un test post-hoc de Tukey pour identifier les comparaisons significatives (Annexe~\ref{ann:stats}).
 
 \begin{table}[H]
     \centering
-    \caption{Résumé des tests statistiques appliqués aux scénarios nominal et high\_breakdown.}
+    \caption{Résumé des tests statistiques appliqués aux trois scénarios.}
     \label{tab:statistical_tests}
     \small
     \begin{tabular}{>{\raggedright\arraybackslash}p{4.7cm} >{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{4.3cm}}
@@ -1956,6 +1974,8 @@ Une analyse statistique de significativité a été effectuée sur les dix répl
         PPO vs Fixed Assignment (nominal, productivité) & $t = 6{,}356$ & $3{,}0 \times 10^{-6}$ & Différence significative, PPO supérieur à Fixed. \\
         DQN vs Fixed Assignment (high\_breakdown, productivité) & $t = 5{,}863$ & $1{,}3 \times 10^{-5}$ & Différence significative, DQN supérieur à Fixed. \\
         ANOVA sur les 8 méthodes (nominal, productivité) & $F(7, 72) = 481{,}25$ & $< 10^{-56}$ & Différence globale significative. \\
+        ANOVA sur les 8 méthodes (high\_load, productivité) & $F(7, 72) = 298{,}97$ & $1{,}5 \times 10^{-50}$ & Différence globale significative. \\
+        ANOVA sur les 8 méthodes (high\_breakdown, productivité) & $F(7, 72) = 352{,}28$ & $4{,}9 \times 10^{-53}$ & Différence globale significative. \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -1991,6 +2011,15 @@ de $+1\,725{,}5$~t/h. Même PPO, malgré sa variance élevée, surpasse
 significativement Nearest Shovel ($t = 11{,}69$, $p = 3{,}5 \times 10^{-4}$,
 $+1\,305{,}5$~t/h).
 
+Le test post-hoc de Tukey, appliqué à l'ANOVA sur les huit méthodes en
+high\_load ($F(7,72) = 298{,}97$, $p = 1{,}5 \times 10^{-50}$, Tableau~\ref{tab:statistical_tests}),
+confirme par ailleurs que DQN reste significativement supérieur à PPO
+dans ce scénario ($+420{,}0$~t/h, $p < 0{,}001$) --- à l'inverse de la
+situation nominale où les deux algorithmes sont statistiquement
+équivalents (Tableau~\ref{tab:tukey-nominal}). L'ensemble des
+comparaisons par paires pour high\_load est détaillé en
+Annexe~\ref{ann:stats} (Tableau~\ref{tab:tukey-highload}).
+
 \paragraph{Scénario high\_breakdown.}
 C'est le scénario déterminant pour la validation de H1. DQN (3\,991.75 t/h) et PPO (3\,946.25 t/h) surpassent tous deux Fixed Assignment (3\,860.50 t/h) en productivité, confirmant la supériorité des agents Deep RL face aux perturbations stochastiques fréquentes.
 
@@ -1999,6 +2028,18 @@ L'écart de productivité DQN $-$ Fixed est lui aussi significatif : test t de W
 Fixed Assignment conserve le meilleur temps d'attente (53.1 min) : son schéma cyclique génère peu d'attente grâce à la distribution régulière des camions. PPO (65.1 min) et DQN (68.7 min) ont un temps d'attente légèrement supérieur mais produisent davantage, car ils exploitent les pelles disponibles plus agressivement dès qu'une panne libère une ressource.
 
 L'écart de productivité PPO $-$ Fixed (+86 t/h, $+2{,}2\%$) représente, extrapolé sur un poste de 8 heures, un gain de 688 tonnes supplémentaires transportées malgré un taux de pannes 5 fois plus élevé que le scénario nominal.
+
+Le test post-hoc de Tukey, appliqué à l'ANOVA sur les huit méthodes en
+high\_breakdown ($F(7,72) = 352{,}28$, $p = 4{,}9 \times 10^{-53}$,
+Tableau~\ref{tab:statistical_tests}), confirme la supériorité de DQN sur
+Fixed Assignment même après correction pour comparaisons multiples
+($+131{,}25$~t/h, $p = 0{,}0014$). L'écart PPO $-$ Fixed, bien que
+numériquement positif comme indiqué ci-dessus, n'atteint en revanche pas
+le seuil de significativité une fois cette correction appliquée
+($p = 0{,}112$). DQN et PPO restent par ailleurs statistiquement
+équivalents dans ce scénario ($p = 0{,}813$), comme en conditions
+nominales. Le détail des comparaisons par paires pour high\_breakdown est
+fourni en Annexe~\ref{ann:stats} (Tableau~\ref{tab:tukey-highbreakdown}).
 
 \begin{figure}[H]
     \centering
@@ -2362,7 +2403,13 @@ PPO avec un réseau MLP $128 \times 128$ et activation ReLU constitue
 l'architecture la plus performante en productivité nominale
 (4\,208{,}75~t/h) et en conditions perturbées (3\,946{,}25~t/h).
 DQN offre une meilleure stabilité en surcharge ($\sigma = 65$ contre
-$350$ pour PPO) grâce à son mécanisme d'experience replay.
+$350$ pour PPO) grâce à son mécanisme d'experience replay. Au-delà
+des indicateurs agrégés, l'analyse du comportement décisionnel
+(Section~\ref{sec:comportement-decisionnel}) montre qu'en conditions
+nominales, DQN concentre $80{,}3\%$ de ses décisions sur seulement
+2 des 7 actions disponibles, alors que PPO répartit ses choix sur
+l'ensemble de l'espace d'action --- un argument supplémentaire en
+faveur de PPO comme architecture recommandée.
 
 \textbf{Q3 — Fonction de récompense.}
 La récompense à quatre termes $R = w_1 r_{\text{prod}} + w_2
@@ -2507,7 +2554,7 @@ Gestion de projet & Poetry / pip & — \\
 # Validation de l'environnement Gymnasium
 python -m memoire_master_rl_logistique.main --check-env
 
-# Entrainement PPO (2M steps, ~2h GPU)
+# Entrainement PPO (2M steps, ~2h CPU)
 python -m memoire_master_rl_logistique.main --train-only
 
 # Entrainement Q-Learning (30k episodes, ~15 min CPU)
@@ -2610,6 +2657,85 @@ Fixed & Q-Learning & $+483{,}0$  & $+399{,}9$ & $+566{,}1$ & Oui \\
 Nearest & ShortestPath & $+42{,}0$ & $-41{,}1$ & $+125{,}1$ & \textbf{Non} \\
 \midrule
 \multicolumn{6}{l}{\textit{Note : toutes les autres paires sont significatives ($p < 0{,}001$).}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Test post-hoc de Tukey HSD — scénario high\_load}
+
+Le Tableau~\ref{tab:tukey-highload} présente les comparaisons par paires
+les plus pertinentes issues du test post-hoc de Tukey HSD appliqué à
+l'ANOVA sur les huit méthodes en scénario high\_load
+($F(7,72) = 298{,}97$, $p = 1{,}5 \times 10^{-50}$, voir Tableau~\ref{tab:statistical_tests}).
+À l'inverse du scénario nominal, Fixed Assignment est ici
+significativement supérieur à DQN ($+210{,}0$~t/h) et DQN est lui-même
+significativement supérieur à PPO ($+420{,}0$~t/h, $p < 0{,}001$) --- les
+deux algorithmes Deep RL ne sont donc plus statistiquement équivalents
+en surcharge. DQN et PPO conservent néanmoins un avantage écrasant sur
+Nearest Shovel ($+1\,725{,}5$ et $+1\,305{,}5$~t/h respectivement,
+$p < 0{,}001$), confirmant les écarts de productivité déjà cités pour
+ce scénario. Enfin, Nearest Shovel et Shortest Path restent
+statistiquement indissociables ($p = 1{,}000$), comme en scénario
+nominal.
+
+\begin{table}[H]
+\centering
+\caption{Résultats post-hoc Tukey HSD — scénario high\_load (paires pertinentes)}
+\label{tab:tukey-highload}
+\small
+\begin{tabular}{llrrrl}
+\toprule
+\textbf{Groupe 1} & \textbf{Groupe 2} & \textbf{Diff. (t/h)} & \textbf{IC 95\% inf.} & \textbf{IC 95\% sup.} & \textbf{Rejet H0} \\
+\midrule
+Fixed & DQN          & $+210{,}0$    & $+13{,}9$    & $+406{,}1$   & Oui \\
+DQN   & PPO          & $+420{,}0$    & $+223{,}9$   & $+616{,}1$   & Oui \\
+DQN   & Nearest      & $+1\,725{,}5$ & $+1\,529{,}4$ & $+1\,921{,}6$ & Oui \\
+PPO   & Nearest      & $+1\,305{,}5$ & $+1\,109{,}4$ & $+1\,501{,}6$ & Oui \\
+ShortestPath & Nearest & $+17{,}5$   & $-178{,}6$   & $+213{,}6$   & \textbf{Non} \\
+\midrule
+\multicolumn{6}{l}{\textit{Note : les autres paires sont significatives ($p < 0{,}01$), à}} \\
+\multicolumn{6}{l}{\textit{l'exception de trois paires supplémentaires parmi les méthodes les}} \\
+\multicolumn{6}{l}{\textit{moins performantes (FIFO vs Q-Learning, $p = 0{,}995$~; Nearest vs}} \\
+\multicolumn{6}{l}{\textit{SARSA, $p = 0{,}722$~; SARSA vs Shortest Path, $p = 0{,}870$), sans}} \\
+\multicolumn{6}{l}{\textit{incidence sur l'analyse de H1.}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Test post-hoc de Tukey HSD — scénario high\_breakdown}
+
+Pour le scénario high\_breakdown, le Tableau~\ref{tab:tukey-highbreakdown}
+présente les comparaisons par paires les plus pertinentes issues du
+test post-hoc de Tukey HSD appliqué à l'ANOVA sur les huit méthodes
+($F(7,72) = 352{,}28$, $p = 4{,}9 \times 10^{-53}$, voir Tableau~\ref{tab:statistical_tests}).
+DQN reste significativement supérieur à Fixed Assignment même après
+correction pour comparaisons multiples ($+131{,}25$~t/h,
+$p = 0{,}0014$), confirmant le test de Welch du Tableau~\ref{tab:statistical_tests}.
+L'écart PPO $-$ Fixed ($+85{,}75$~t/h) est en revanche \textbf{non
+significatif} après cette correction ($p = 0{,}112$) : si PPO conserve
+un avantage numérique sur Fixed en conditions perturbées, celui-ci est
+plus ténu que celui de DQN et ne peut être affirmé statistiquement à
+l'échelle de dix réplications. DQN et PPO restent par ailleurs
+statistiquement équivalents ($p = 0{,}813$), comme en scénario nominal.
+
+\begin{table}[H]
+\centering
+\caption{Résultats post-hoc Tukey HSD — scénario high\_breakdown (paires pertinentes)}
+\label{tab:tukey-highbreakdown}
+\small
+\begin{tabular}{llrrrl}
+\toprule
+\textbf{Groupe 1} & \textbf{Groupe 2} & \textbf{Diff. (t/h)} & \textbf{IC 95\% inf.} & \textbf{IC 95\% sup.} & \textbf{Rejet H0} \\
+\midrule
+DQN   & Fixed   & $+131{,}25$ & $+35{,}5$  & $+227{,}0$ & Oui \\
+PPO   & Fixed   & $+85{,}75$  & $-10{,}0$  & $+181{,}5$ & \textbf{Non} \\
+DQN   & PPO     & $+45{,}5$   & $-50{,}2$  & $+141{,}2$ & \textbf{Non} \\
+Fixed & SARSA   & $+887{,}25$ & $+791{,}5$ & $+983{,}0$ & Oui \\
+ShortestPath & Nearest & $+29{,}75$ & $-66{,}0$ & $+125{,}5$ & \textbf{Non} \\
+\midrule
+\multicolumn{6}{l}{\textit{Note : les autres paires sont significatives ($p < 0{,}01$), à}} \\
+\multicolumn{6}{l}{\textit{l'exception de FIFO vs Q-Learning ($p = 0{,}491$), sans incidence}} \\
+\multicolumn{6}{l}{\textit{sur l'analyse de H1.}} \\
 \bottomrule
 \end{tabular}
 \end{table}
