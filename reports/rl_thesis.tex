@@ -13,11 +13,12 @@
 % ============================================================================
 
 \documentclass[11pt,a4paper]{report}
-\setlength{\headheight}{15.35403pt} % Correction du warning fancyhdr
+\setlength{\headheight}{27.7595pt} % Correction du warning fancyhdr
 
 % --- Encodage et langue ---
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{amssymb}
 
 \usepackage[numbers, sort&compress]{natbib}
 \usepackage[french]{babel}
@@ -572,7 +573,7 @@ où $\bar{T}_{ij}$ est le temps moyen et $\eta_{ij}(t)$ est un bruit reflétant 
 
 Cette modélisation stochastique est essentielle pour évaluer la robustesse des politiques apprises, car elle oblige l'agent à anticiper les variations plutôt que de se fier à des temps de trajet figés. Cette exigence de robustesse est également mise en avant dans les travaux récents de RL multi-agent appliqués au dispatching minier \cite{Zhao2025HierarchicalMARL}.
 
-\section{Formulation du problème en tant que processus de \\décision markovien}
+\section{Formulation du problème en tant que processus de décision markovien}
 \label{sec:mdp}
 
 La formalisation du problème de dispatching minier en tant que processus de décision markovien est l'étape décisive qui transforme le système opérationnel en un problème d'apprentissage par renforcement. Ce cadrage rejoint les études récentes de dispatching minier fondées sur des formulations explicites de type MDP, ainsi que les travaux fondateurs en apprentissage par renforcement séquentiel appliqué à des problèmes de routage et d'ordonnancement \cite{MohammadrezaNazari2018, CongZhang2020, MarticorenaDAngelo2025}. Un processus de décision markovien est défini par le 4-tuple $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R})$ où :
@@ -677,7 +678,7 @@ où :
         D_t = \{c \in \text{Camions} \mid c \text{ est déchargé dans } [t, t+\Delta t]\}
     \end{equation}
     \begin{equation}
-        R_{\text{rendement}}(s_t, s'_t) = \sum_{c \in D_t} \mathrm{capacité}(c)
+        R_{\text{rendement}}(s_t, s'_t) = \sum_{c \in D_t} \text{capacit\'e}(c)
     \end{equation}
 
     \textit{Exemple numérique :} Si 2 camions sont déchargés dans l'intervalle $[t, t+\Delta t]$ avec des capacités de $140$ tonnes chacun, alors $R_{\text{rendement}} = 140 + 140 = 280$ tonnes.
