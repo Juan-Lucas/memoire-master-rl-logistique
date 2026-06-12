@@ -214,3 +214,24 @@ Ce glossaire est aligné sur les termes utilisés dans le projet et les chapitre
 **Définition :** Matériau sans valeur économique extrait pour accéder au minerai.
 **Explication :** L’extraction du stérile est nécessaire mais augmente les coûts et le ratio de décapage.
 **Exemple :** Roche stérile extraite avant d’atteindre le minerai.
+
+---
+
+## Match Factor (MF)
+**Définition :** Ratio entre la capacité de transport de la flotte de camions et la capacité de chargement des pelles.
+**Explication :** Un MF proche de 1 indique un équilibre flotte/pelles ; un MF élevé traduit une surcapacité de camions par rapport aux pelles disponibles.
+**Exemple :** Le scénario high_load (18 camions, 3 pelles) a un MF = 6,0, contre 4,0 pour le scénario nominal (12 camions).
+
+---
+
+## Explained Variance
+**Définition :** Proportion de la variance des retours (returns) expliquée par la fonction de valeur apprise par le critique.
+**Explication :** Une valeur proche de 1 indique que le critique prédit fidèlement les retours, signe que l'agent a convergé vers une estimation de valeur fiable.
+**Exemple :** PPO atteint `explained_variance = 0.999` en nominal, confirmant la convergence de l'entraînement.
+
+---
+
+## Significativité statistique (Welch, ANOVA, Tukey HSD)
+**Définition :** Ensemble de tests utilisés pour vérifier si une différence observée entre deux ou plusieurs politiques est réelle ou due au hasard de l'échantillonnage.
+**Explication :** Le test de Welch compare deux moyennes (ex. PPO vs Fixed) sans supposer des variances égales ; l'ANOVA compare simultanément plusieurs politiques ; le test post-hoc de Tukey HSD identifie ensuite quelles paires de politiques diffèrent réellement, avec un intervalle de confiance (IC).
+**Exemple :** Tukey HSD montre que PPO et DQN sont statistiquement équivalents en productivité nominale (p = 0,799), alors que PPO et Fixed diffèrent significativement en carburant (p < 10⁻⁸).
