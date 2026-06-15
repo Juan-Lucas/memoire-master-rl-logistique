@@ -12,14 +12,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from memoire_master_rl_logistique.experiments.plot_utils import save_figure
+from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
+
 ALGOS = ["Q-Learning", "SARSA", "DQN", "PPO"]
 COLORS = {"Q-Learning": "#4CAF50", "SARSA": "#9C27B0", "DQN": "#2196F3", "PPO": "#FF5722"}
 
-SCENARIOS = [
-    ("nominal", "nominal", "scénario nominal"),
-    ("high_load", "highload", "scénario high_load"),
-    ("high_breakdown", "highbreakdown", "scénario high_breakdown"),
-]
+SCENARIOS = [(s.key, s.suffix, f"scénario {s.key}") for s in SCENARIO_DISPLAYS]
 
 
 def main() -> None:
@@ -47,9 +46,7 @@ def main() -> None:
         plt.tight_layout()
 
         out_path = out_dir / f"action_distribution_{suffix}.png"
-        plt.savefig(out_path, dpi=150)
-        plt.close(fig)
-        print(f"Figure sauvegardée : {out_path}")
+        save_figure(fig, out_path)
 
 
 if __name__ == "__main__":

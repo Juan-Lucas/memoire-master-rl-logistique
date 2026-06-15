@@ -12,7 +12,7 @@ def _extract_decision_features(obs: np.ndarray, num_shovels: int, num_dumps: int
 
     Normalisation par max réaliste :
     - Attente pelle max réaliste : 30 min → 30/480 = 0.0625
-    - On renormalise pour étaler sur [0,1] avec facteur ×10
+    - On renormalise pour étaler sur [0,1] avec facteur ×50
     """
     shovel_waits = obs[:num_shovels]
     dump_waits = obs[num_shovels:num_shovels + num_dumps]

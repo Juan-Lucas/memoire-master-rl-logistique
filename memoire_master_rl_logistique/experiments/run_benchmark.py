@@ -23,6 +23,7 @@ from pathlib import Path
 
 from stable_baselines3 import DQN, PPO
 
+from memoire_master_rl_logistique.baselines.base import BaselinePolicy
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
@@ -122,46 +123,32 @@ def run_benchmark(
         dump_node_ids=[d.node_id for d in temp_env.dumps],
     )
 
-    def fixed_policy(obs, info, env):
-        return fixed_policy_obj.predict(obs, info)
-
-    def nearest_policy(obs, info, env):
-        nearest_policy_obj.graph = env.graph
-        return nearest_policy_obj.predict(
-            obs,
-            info,
-            truck_location=env.truck_locations[env.current_truck_idx],
-        )
-
-    def fifo_policy(obs, info, env):
-        return fifo_policy_obj.predict(obs, info)
-
-    def shortest_path_policy(obs, info, env):
-        shortest_path_policy_obj.graph = env.graph
-        return shortest_path_policy_obj.predict(
-            obs,
-            info,
-            truck_location=env.truck_locations[env.current_truck_idx],
-        )
+    def _make_policy_fn(policy_obj: BaselinePolicy, needs_graph_sync: bool = False):
+        """Adapte une BaselinePolicy à la signature policy_fn(obs, info, env)."""
+        def policy_fn(obs, info, env):
+            if needs_graph_sync:
+                policy_obj.graph = env.graph
+            return policy_obj.predict(
+                obs,
+                info,
+                truck_location=env.truck_locations[env.current_truck_idx],
+            )
+        return policy_fn
 
     policies = {
-        "FIFO": fifo_policy,
-        "Fixed": fixed_policy,
-        "Nearest": nearest_policy,
-        "ShortestPath": shortest_path_policy,
+        "FIFO": _make_policy_fn(fifo_policy_obj),
+        "Fixed": _make_policy_fn(fixed_policy_obj),
+        "Nearest": _make_policy_fn(nearest_policy_obj, needs_graph_sync=True),
+        "ShortestPath": _make_policy_fn(shortest_path_policy_obj, needs_graph_sync=True),
     }
 
     # --- Q-Learning (Section 4.4.1) ---
     ql_dir = output_dir / f"q_learning_{scenario.name}"
     ql_path = ql_dir / "q_table.pkl"
-    ql_path_manual = Path("models/q_learning/q_table.pkl")
 
     if ql_path.exists():
         print(f"  Chargement Q-Learning existant: {ql_path}")
         ql_agent = QLearningPolicy.load(ql_path)
-    elif scenario.name == "nominal" and ql_path_manual.exists():
-        print(f"  Chargement Q-Learning nominal manuel: {ql_path_manual}")
-        ql_agent = QLearningPolicy.load(ql_path_manual)
     else:
         print(f"  Entraînement Q-Learning pour '{scenario.name}'...")
         train_q_learning(
@@ -187,14 +174,10 @@ def run_benchmark(
     # --- SARSA (Section 4.4.3) ---
     sarsa_dir = output_dir / f"sarsa_{scenario.name}"
     sarsa_path = sarsa_dir / "sarsa_table.pkl"
-    sarsa_path_manual = Path("models/sarsa/sarsa_table.pkl")
 
     if sarsa_path.exists():
         print(f"  Chargement SARSA existant: {sarsa_path}")
         sarsa_agent = SarsaPolicy.load(sarsa_path)
-    elif scenario.name == "nominal" and sarsa_path_manual.exists():
-        print(f"  Chargement SARSA nominal manuel: {sarsa_path_manual}")
-        sarsa_agent = SarsaPolicy.load(sarsa_path_manual)
     else:
         print(f"  Entraînement SARSA pour '{scenario.name}'...")
         train_sarsa(
@@ -220,18 +203,14 @@ def run_benchmark(
     # --- DQN (Section 4.5.2) ---
     if train_ppo_flag:
         dqn_path_scenario = output_dir / f"dqn_{scenario.name}" / "dqn_mine_agent.zip"
-        dqn_path_nominal = Path("data/results/dqn_nominal/dqn_mine_agent.zip")
 
         if dqn_path_scenario.exists():
             print(f"  Chargement DQN scénario '{scenario.name}': {dqn_path_scenario}")
             dqn_model = DQN.load(str(dqn_path_scenario))
-        elif scenario.name == "nominal" and dqn_path_nominal.exists():
-            print("  Chargement DQN nominal existant")
-            dqn_model = DQN.load(str(dqn_path_nominal))
         else:
             print(f"  Entraînement DQN pour scénario '{scenario.name}'...")
             dqn_model = train_dqn(
-                total_timesteps=2_000_000,
+                total_timesteps=scenario.total_timesteps,
                 seed=scenario.seeds[0],
                 truck_count=scenario.truck_count,
                 shovel_count=scenario.shovel_count,
@@ -252,18 +231,14 @@ def run_benchmark(
     ppo_model = None
     if train_ppo_flag:
         ppo_path_scenario = output_dir / f"ppo_{scenario.name}" / "ppo_mine_agent.zip"
-        ppo_path_nominal = Path("data/results/ppo_nominal/ppo_mine_agent.zip")
 
         if ppo_path_scenario.exists():
             print(f"  Chargement PPO scénario '{scenario.name}': {ppo_path_scenario}")
             ppo_model = PPO.load(str(ppo_path_scenario))
-        elif scenario.name == "nominal" and ppo_path_nominal.exists():
-            print("  Chargement PPO nominal existant")
-            ppo_model = PPO.load(str(ppo_path_nominal))
         else:
             print(f"  Entraînement PPO pour scénario '{scenario.name}'...")
             ppo_model = train_ppo(
-                total_timesteps=2_000_000,
+                total_timesteps=scenario.total_timesteps,
                 seed=scenario.seeds[0],
                 truck_count=scenario.truck_count,
                 shovel_count=scenario.shovel_count,
@@ -349,7 +324,7 @@ def main() -> None:
     run_all_benchmarks(
         output_dir="data/results",
         train_ppo_flag=True,
-        scenario_names=["nominal"],
+        scenario_names=["nominal", "high_load", "high_breakdown"], # Les 3 scénarios du Chapitre 6
     )
 
 

@@ -18,6 +18,8 @@ from typing import Any
 
 import numpy as np
 
+from memoire_master_rl_logistique.baselines.base import encode_action
+
 
 class FIFOPolicy:
     """Baseline FIFO : affecter à la pelle la plus sous-utilisée (idle la plus longue)."""
@@ -30,6 +32,7 @@ class FIFOPolicy:
         self,
         observation: np.ndarray,
         info: dict[str, Any] | None = None,
+        truck_location: str | None = None,
     ) -> int:
         """Retourne la paire (pelle la plus disponible, dump le plus disponible).
 
@@ -48,4 +51,4 @@ class FIFOPolicy:
         # Dump le plus tôt disponible (indépendant)
         best_dump = int(np.argmin(dump_times))
 
-        return best_shovel * self.num_dumps + best_dump
+        return encode_action(best_shovel, best_dump, self.num_dumps)

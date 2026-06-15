@@ -57,36 +57,11 @@ def run_check_env(
     print(f"  Action      : {env.action_space}")
     print(f"  Camions={truck_count}, Pelles={shovel_count}, Dumps={dump_count}")
 
-
-def run_simulation_demo(
-    seed: int = 42,
-    truck_count: int = 12,
-    shovel_count: int = 3,
-    dump_count: int = 2,
-) -> None:
-    """Lance une simulation DES pour valider le moteur.
-    
-    NOTE : Cette fonction utilise la simulation DES (events.py) qui a été
-    supprimée car non décrite dans les Chapitres 3 et 4 du mémoire.
-    L'environnement Gymnasium (mine_env.py) doit être utilisé à la place.
-    """
-    print("=" * 60)
-    print("Simulation DES — NON DISPONIBLE")
-    print("=" * 60)
-    print("La simulation DES a été supprimée car non conforme au mémoire.")
-    print("Utilisez l'environnement Gymnasium (mine_env.py) à la place.")
-    print("Exemple : python -m memoire_master_rl_logistique.main --check-env")
-
-
 def main() -> None:
     """Point d'entrée CLI."""
     parser = argparse.ArgumentParser(
         description="Système de dispatching minier par RL",
     )
-    # parser.add_argument(
-    #     "--sim-only", action="store_true",
-    #     help="Exécuter uniquement la simulation DES",
-    # )  # Disabled - DES simulation removed (not in thesis)
     parser.add_argument(
         "--train-only", action="store_true",
         help="Exécuter uniquement l'entraînement PPO",
@@ -156,15 +131,7 @@ def main() -> None:
             dump_count=args.dump_count,
         )
         return
-
-    # if args.sim_only:
-    #     run_simulation_demo(
-    #         truck_count=args.truck_count,
-    #         shovel_count=args.shovel_count,
-    #         dump_count=args.dump_count,
-    #     )
-    #     return  # Disabled - DES simulation removed (not in thesis)
-
+    
     if args.train_q_learning:
         train_q_learning(
             n_episodes=args.episodes,
@@ -214,17 +181,7 @@ def main() -> None:
     print("PIPELINE COMPLET — Dispatching minier par RL")
     print("=" * 60)
 
-    # Étape 1 : Validation de l'environnement
-    run_check_env(
-        truck_count=args.truck_count,
-        shovel_count=args.shovel_count,
-        dump_count=args.dump_count,
-    )
-
-    # Étape 2 : Entraînement PPO
-    print("\n" + "=" * 60)
-    print("Entraînement PPO")
-    print("=" * 60)
+    # Étape 1 : Entraînement PPO (Modèle final proposé)
     train_ppo(
         total_timesteps=args.timesteps,
         truck_count=args.truck_count,
@@ -232,14 +189,11 @@ def main() -> None:
         dump_count=args.dump_count,
     )
 
-    # Étape 3 : Benchmark
-    print("\n" + "=" * 60)
-    print("Benchmark comparatif")
-    print("=" * 60)
+    # Étape 2 : Benchmark sur TOUS les scénarios du mémoire
     run_all_benchmarks(
         output_dir="data/results",
         train_ppo_flag=True,
-        scenario_names=["nominal"],
+        scenario_names=["nominal", "high_load", "high_breakdown"],
     )
 
 

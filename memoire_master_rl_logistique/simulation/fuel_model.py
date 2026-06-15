@@ -1,3 +1,6 @@
+from memoire_master_rl_logistique.simulation.constants import SLOPE_PENALTY_PER_PCT
+
+
 def estimate_travel_fuel_l(
     distance_km: float,
     slope_pct: float,
@@ -7,7 +10,7 @@ def estimate_travel_fuel_l(
     """Approximation simple de la consommation sur un segment."""
 
     base_l_per_km = 0.65 if loaded else 0.45
-    slope_factor = 1.0 + max(0.0, slope_pct) * 0.03
+    slope_factor = 1.0 + max(0.0, slope_pct) * SLOPE_PENALTY_PER_PCT
     road_factor = 1.0 + max(0.0, 1.0 - road_state) * 0.5
     return max(0.0, distance_km * base_l_per_km * slope_factor * road_factor)
 

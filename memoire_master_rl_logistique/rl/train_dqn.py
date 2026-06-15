@@ -19,29 +19,8 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.logger import configure
 
-from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
-
-
-def create_env(
-    truck_count: int = 12,
-    shovel_count: int = 3,
-    dump_count: int = 2,
-    episode_minutes: float = 480.0,
-    seed: int = 42,
-    breakdown_probability: float = 0.02,
-    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
-) -> MineEnv:
-    """Crée une instance de l'environnement minier."""
-    return MineEnv(
-        truck_count=truck_count,
-        shovel_count=shovel_count,
-        dump_count=dump_count,
-        episode_minutes=episode_minutes,
-        seed=seed,
-        breakdown_probability=breakdown_probability,
-        reward_weights=reward_weights,
-    )
+from memoire_master_rl_logistique.rl.env_factory import create_env
 
 
 def train_dqn(

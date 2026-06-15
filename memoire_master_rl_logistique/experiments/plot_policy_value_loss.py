@@ -17,13 +17,12 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from memoire_master_rl_logistique.experiments.plot_utils import save_figure
+from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
+
 WINDOW = 30
 
-SCENARIOS = [
-    ("nominal", "nominal", "scénario nominal"),
-    ("high_load", "highload", "scénario high_load"),
-    ("high_breakdown", "highbreakdown", "scénario high_breakdown"),
-]
+SCENARIOS = [(s.key, s.suffix, f"scénario {s.key}") for s in SCENARIO_DISPLAYS]
 
 
 def plot_dqn(out_dir: Path, scenario_dir: str, suffix: str, scenario_label: str) -> None:
@@ -43,9 +42,7 @@ def plot_dqn(out_dir: Path, scenario_dir: str, suffix: str, scenario_label: str)
     plt.tight_layout()
 
     out_path = out_dir / f"loss_dqn_{suffix}.png"
-    plt.savefig(out_path, dpi=150)
-    plt.close(fig)
-    print(f"Figure sauvegardée : {out_path}")
+    save_figure(fig, out_path)
 
 
 def plot_ppo(out_dir: Path, scenario_dir: str, suffix: str, scenario_label: str) -> None:
@@ -70,9 +67,7 @@ def plot_ppo(out_dir: Path, scenario_dir: str, suffix: str, scenario_label: str)
     plt.tight_layout()
 
     out_path = out_dir / f"loss_ppo_{suffix}.png"
-    plt.savefig(out_path, dpi=150)
-    plt.close(fig)
-    print(f"Figure sauvegardée : {out_path}")
+    save_figure(fig, out_path)
 
 
 def main() -> None:

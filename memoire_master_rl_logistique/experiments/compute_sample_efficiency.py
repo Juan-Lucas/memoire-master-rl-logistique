@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import pandas as pd
 
-SCENARIOS = ["Nominal", "High Load", "High Breakdown"]
+from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
+
+SCENARIOS = [s.label for s in SCENARIO_DISPLAYS]
 
 
 def convergence_point(df: pd.DataFrame, value_col: str) -> float:

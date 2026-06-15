@@ -9,11 +9,9 @@ from __future__ import annotations
 
 import pandas as pd
 
-SCENARIOS = [
-    ("nominal", "Nominal"),
-    ("high_load", "High Load"),
-    ("high_breakdown", "High Breakdown"),
-]
+from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
+
+SCENARIOS = [(s.key, s.label) for s in SCENARIO_DISPLAYS]
 
 ALGOS = [
     ("q_learning", "Q-Learning"),

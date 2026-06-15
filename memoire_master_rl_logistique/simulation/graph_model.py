@@ -19,6 +19,8 @@ from random import Random
 
 import networkx as nx
 
+from memoire_master_rl_logistique.simulation.constants import SLOPE_PENALTY_PER_PCT
+
 
 @dataclass(slots=True)
 class RoadEdge:
@@ -155,22 +157,31 @@ class RoadGraph:
     # Temps de trajet stochastique (Eq. 3.2)
     # ------------------------------------------------------------------
 
+    def mean_travel_time_minutes(self, src: str, dst: str, loaded: bool) -> float:
+        """Temps de trajet moyen déterministe T̄_ij (Eq. 3.2 sans bruit η).
+
+        Tient compte de la vitesse de base, de la pente et de l'état
+        de la route. Utilisé à la fois pour échantillonner les trajets
+        réels (avec bruit log-normal) et pour estimer le coût d'un
+        cycle dans les politiques de type ShortestPath (Eq. 3.1).
+        """
+        edge = self.get_edge(src, dst)
+        base_speed_kmh = 26.0 if loaded else 32.0
+
+        slope_factor = max(0.55, 1.0 - max(0.0, edge.slope_pct) * SLOPE_PENALTY_PER_PCT)
+        state_factor = max(0.55, min(1.2, edge.road_state))
+        mean_speed_kmh = max(5.0, base_speed_kmh * slope_factor * state_factor)
+        return (edge.distance_km / mean_speed_kmh) * 60.0
+
     def sample_travel_time_minutes(
         self, src: str, dst: str, loaded: bool, rng: Random,
     ) -> float:
         """Échantillonne un temps de trajet log-normal (Eq. 3.2).
 
         T_ij(t) = T̄_ij + η_ij(t), implémenté via une distribution
-        log-normale tenant compte de la vitesse, pente et état route.
+        log-normale centrée sur le temps moyen déterministe.
         """
-        edge = self.get_edge(src, dst)
-        base_speed_kmh = 26.0 if loaded else 32.0
-
-        slope_factor = max(0.55, 1.0 - max(0.0, edge.slope_pct) * 0.03)
-        state_factor = max(0.55, min(1.2, edge.road_state))
-        mean_speed_kmh = max(5.0, base_speed_kmh * slope_factor * state_factor)
-        mean_time_min = (edge.distance_km / mean_speed_kmh) * 60.0
-
+        mean_time_min = self.mean_travel_time_minutes(src, dst, loaded)
         sigma = 0.12
         mu = log(max(0.2, mean_time_min)) - 0.5 * sigma * sigma
         return max(0.2, rng.lognormvariate(mu, sigma))
@@ -215,6 +226,7 @@ def build_mine_graph(
         dist, slope = shovel_params[idx]
         node = f"shovel_{i}"
         graph.add_edge("junction_1", node, distance_km=dist, slope_pct=slope)
+        # Pente de retour réduite (descente partielle), plancher à 1.0 (heuristique).
         graph.add_edge(node, "junction_1", distance_km=dist, slope_pct=max(1.0, slope - 2.0))
 
     # Junction ↔ Dumps
@@ -228,6 +240,7 @@ def build_mine_graph(
         dist, slope = dump_params[idx]
         node = f"dump_{i}"
         graph.add_edge("junction_1", node, distance_km=dist, slope_pct=slope)
+        # Pente de retour réduite (descente partielle), plancher à 1.0 (heuristique).
         graph.add_edge(node, "junction_1", distance_km=dist, slope_pct=max(1.0, slope - 3.0))
 
     # Pelles → Dumps (trajets chargés directs)

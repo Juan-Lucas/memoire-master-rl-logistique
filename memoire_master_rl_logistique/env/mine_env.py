@@ -80,7 +80,7 @@ class MineEnv(gym.Env):
         self._seed = seed
         self.breakdown_probability = breakdown_probability
         self.w1, self.w2, self.w3 = reward_weights[:3]
-        self.w4 = reward_weights[3] if len(reward_weights) > 3 else 1.0
+        self.w4 = reward_weights[3] if len(reward_weights) > 3 else 0.3 # Poids par défaut calibré
         self.capacity_tonnes = capacity_tonnes
         self.wait_action_minutes = wait_action_minutes
         self.render_mode = render_mode
@@ -193,16 +193,12 @@ class MineEnv(gym.Env):
             return obs, reward, False, truncated, info
 
         shovel, dump = self._decode_action(action)
-        truck.assigned_shovel_idx = action // self.dump_count
         pre_action_route_km = (
             self._route_distance(location, shovel.node_id)
             + self._route_distance(shovel.node_id, dump.node_id)
             + self._route_distance(dump.node_id, shovel.node_id)
         )
-        resource_waits = [
-            max(0.0, s.available_at_min - decision_time)
-            for s in self.shovels
-        ]
+        resource_waits = self._shovel_waits(decision_time)
 
         # Trajet vers la pelle
         self.truck_statuses[self.current_truck_idx] = STATUS_TO_SHOVEL
@@ -326,20 +322,20 @@ class MineEnv(gym.Env):
         truck.total_wait_min += wait_min
         truck.total_fuel_l += estimate_idle_fuel_l(wait_min)
         truck.available_at_min = time_min + wait_min
-        truck.assigned_shovel_idx = None
         self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
         self._prev_tonnage = sum(t.total_tonnage_t for t in self.trucks)
 
-        resource_waits = [
-            max(0.0, s.available_at_min - self.current_time_min)
-            for s in self.shovels
-        ]
+        resource_waits = self._shovel_waits(self.current_time_min)
         return self._compute_reward(
             delivered_tonnage_t=0.0,
             route_distance_km=0.0,
             resource_waits_min=resource_waits,
             operational_wait_min=wait_min,
         )
+
+    def _shovel_waits(self, at_time: float) -> list[float]:
+        """Temps d'attente estimés à chaque pelle à l'instant donné."""
+        return [max(0.0, s.available_at_min - at_time) for s in self.shovels]
 
     def _advance_to_next_truck(self) -> None:
         """Avance l'horloge globale vers le prochain camion disponible."""
@@ -354,7 +350,7 @@ class MineEnv(gym.Env):
         resource_waits_min: list[float],
         operational_wait_min: float,
     ) -> float:
-        """Recompense multi-objectif calculee sur le cycle execute."""
+        """Récompense multi-objectif calculée sur le cycle exécuté."""
         r_rendement = delivered_tonnage_t / max(self.capacity_tonnes, 1e-9)
 
         if len(resource_waits_min) >= 2:
@@ -500,6 +496,6 @@ class MineEnv(gym.Env):
                 )
             output = "\n".join(lines)
             if self.render_mode == "human":
-                print(output)  # noqa: T201
+                print(output)
             return output
         return None

@@ -13,12 +13,15 @@ en utilisant l'action effectivement choisie par la politique ε-greedy
 from __future__ import annotations
 
 from pathlib import Path
-import pickle
 
 import numpy as np
 
-from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.rl.discretize import _discretize_obs
+from memoire_master_rl_logistique.rl.tabular_training import (
+    TabularPolicy,
+    init_tabular_training,
+    save_tabular_artifacts,
+)
 
 
 def train_sarsa(
@@ -46,22 +49,18 @@ def train_sarsa(
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    env = MineEnv(
+    env, q_table, rng, epsilon, epsilon_decay, n_actions = init_tabular_training(
+        seed=seed,
         truck_count=truck_count,
         shovel_count=shovel_count,
         dump_count=dump_count,
         episode_minutes=episode_minutes,
-        seed=seed,
         breakdown_probability=breakdown_probability,
         reward_weights=reward_weights,
+        epsilon_start=epsilon_start,
+        epsilon_min=epsilon_min,
+        n_episodes=n_episodes,
     )
-
-    n_actions = env.action_space.n
-    q_table: dict[tuple[int, ...], np.ndarray] = {}
-    rng = np.random.default_rng(seed)
-
-    epsilon = epsilon_start
-    epsilon_decay = (epsilon_start - epsilon_min) / max(n_episodes, 1)
 
     rewards_per_episode: list[float] = []
     epsilons_per_episode: list[float] = []
@@ -122,68 +121,17 @@ def train_sarsa(
                 f"|Q-table| = {len(q_table)}"
             )
 
-    # Sauvegarder
-    model_path = out_path / "sarsa_table.pkl"
-    with model_path.open("wb") as f:
-        pickle.dump({
-            "q_table": q_table,
-            "n_bins": n_bins,
-            "num_shovels": shovel_count,
-            "num_dumps": dump_count,
-        }, f)
-    print(f"SARSA table sauvegardée : {model_path}")
-
-    rewards_path = out_path / "training_rewards.csv"
-    with rewards_path.open("w", encoding="utf-8") as f:
-        f.write("episode,total_reward\n")
-        for i, r in enumerate(rewards_per_episode):
-            f.write(f"{i},{r:.4f}\n")
-    print(f"Récompenses d'entraînement : {rewards_path}")
-
-    diagnostics_path = out_path / "training_diagnostics.csv"
-    with diagnostics_path.open("w", encoding="utf-8") as f:
-        f.write("episode,total_reward,epsilon,mean_abs_td_error\n")
-        for i, (r, eps, td) in enumerate(zip(rewards_per_episode, epsilons_per_episode, td_errors_per_episode)):
-            f.write(f"{i},{r:.4f},{eps:.6f},{td:.6f}\n")
-    print(f"Diagnostics d'entraînement : {diagnostics_path}")
+    save_tabular_artifacts(
+        out_path, "sarsa_table.pkl", "SARSA table",
+        q_table, n_bins, shovel_count, dump_count,
+        rewards_per_episode, epsilons_per_episode, td_errors_per_episode,
+    )
 
     return q_table
 
 
-class SarsaPolicy:
+class SarsaPolicy(TabularPolicy):
     """Politique gloutonne basée sur une table SARSA entraînée."""
-
-    def __init__(
-        self,
-        q_table: dict[tuple[int, ...], np.ndarray],
-        n_bins: int = 8,
-        num_shovels: int = 3,
-        num_dumps: int = 2,
-    ) -> None:
-        self.q_table = q_table
-        self.n_bins = n_bins
-        self.num_shovels = num_shovels
-        self.num_dumps = num_dumps
-
-    @classmethod
-    def load(cls, model_path: str | Path) -> SarsaPolicy:
-        """Charge une table SARSA depuis un fichier pickle."""
-        with Path(model_path).open("rb") as f:
-            data = pickle.load(f)  # noqa: S301
-        return cls(
-            q_table=data["q_table"],
-            n_bins=data["n_bins"],
-            num_shovels=data.get("num_shovels", 3),
-            num_dumps=data.get("num_dumps", 2),
-        )
-
-    def predict(self, observation: np.ndarray) -> int:
-        """Retourne l'action gloutonne pour l'observation donnée."""
-        from memoire_master_rl_logistique.rl.discretize import _discretize_obs
-        state = _discretize_obs(observation, self.n_bins, self.num_shovels, self.num_dumps)
-        if state in self.q_table:
-            return int(np.argmax(self.q_table[state]))
-        return 0
 
 
 def main() -> None:

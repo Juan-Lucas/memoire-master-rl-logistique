@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 """Tests statistiques pour les résultats de benchmark.
 
 Ce module reproduit l'analyse statistique décrite au chapitre 6 du mémoire.
 Il réalise :
 
 - Tests t de Welch (comparaisons par paires)
-- ANOVA à un facteur sur les 8 politiques (scénario = nominal)
+- ANOVA à un facteur sur les 8 politiques, pour chacun des 3 scénarios
 - Test post-hoc de Tukey HSD pour identifier les paires significativement
     différentes
 
@@ -15,6 +13,8 @@ le fichier d'entrée est `data/results/benchmark_results.csv` et le script
 doit être exécuté dans l'environnement conda `datascience` utilisé pour
 les expériences.
 """
+
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -97,29 +97,50 @@ def run_anova(df: pd.DataFrame, scenario: str) -> None:
 
 
 def main() -> None:
-    """Point d'entrée : charger les données et lancer les tests.
-
-    Le flux courant reproduit les analyses du chapitre 6 :
-    - PPO vs Fixed (nominal)
-    - DQN vs Fixed (high_breakdown)
-    - ANOVA + Tukey sur le scénario nominal
+    """Point d'entrée : automatisation complète de l'analyse du Chapitre 6.
+    
+    Réalise les tests de significativité pour les 3 scénarios du mémoire
+    et compare les agents RL (PPO/DQN) aux baselines industrielles (Fixed).
     """
-    results_csv = Path(__file__).resolve().parents[2] / "data" / "results" / "benchmark_results.csv"
+    # Chemin relatif robuste vers les résultats
+    base_dir = Path(__file__).resolve().parents[2]
+    results_csv = base_dir / "data" / "results" / "benchmark_results.csv"
 
-    # Charger les résultats et afficher la source pour traçabilité
+    if not results_csv.exists():
+        print(f"ERREUR : Le fichier {results_csv} est introuvable.")
+        return
+
     df = load_results(results_csv)
-    print("Fichier de résultats:", results_csv)
+    print(f"Analyse des résultats : {results_csv}")
+    print(f"Nombre de réplications détectées : {len(df)}")
 
-    # Tests par paires (afficher résumé puis effectuer le test)
-    print_group_stats(df, "nominal", ["PPO", "Fixed"])
-    run_t_test(df, "nominal", "PPO", "Fixed")
+    # Liste des scénarios officiels du mémoire
+    scenarios = ["nominal", "high_load", "high_breakdown"]
+    
+    for sc in scenarios:
+        print(f"\n\n" + "="*80)
+        print(f" ÉTUDE STATISTIQUE DU SCÉNARIO : {sc.upper()}")
+        print("="*80)
 
-    print_group_stats(df, "high_breakdown", ["DQN", "Fixed"])
-    run_t_test(df, "high_breakdown", "DQN", "Fixed")
+        # 1. Statistiques descriptives
+        available_policies = df[df["scenario"] == sc]["policy"].unique()
+        print_group_stats(df, sc, list(available_policies))
 
-    # ANOVA sur toutes les politiques pour le scénario nominal
-    run_anova(df, "nominal")
+        # 2. ANOVA Globale (Pour prouver que le choix de l'algo compte)
+        run_anova(df, sc)
 
+        # 3. Tests t de comparaison (Les preuves de l'hypothèse H1)
+        print(f"\n--- Tests de supériorité (Hypothèse H1) ---")
+        
+        if "PPO" in available_policies and "Fixed" in available_policies:
+            run_t_test(df, sc, "PPO", "Fixed")
+            
+        if "DQN" in available_policies and "Fixed" in available_policies:
+            run_t_test(df, sc, "DQN", "Fixed")
+
+    print("\n" + "="*80)
+    print("FIN DE L'ANALYSE STATISTIQUE")
+    print("="*80)
 
 if __name__ == "__main__":
     main()

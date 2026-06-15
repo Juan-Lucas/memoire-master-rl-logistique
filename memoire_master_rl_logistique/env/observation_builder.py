@@ -15,9 +15,17 @@ from memoire_master_rl_logistique.simulation.entities import DumpSite, Shovel, T
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
 # Constantes de normalisation
-_MAX_QUEUE = 10.0
 _MAX_DISTANCE_KM = 10.0
 _MAX_TIME_MIN = 480.0  # 8 heures
+_MAX_TONNAGE_T = 2000.0
+_MAX_FUEL_L = 500.0
+
+
+def _normalize_distance(distance_km: float) -> float:
+    """Normalise une distance dans [0, 1], 1.0 si aucun chemin n'existe."""
+    if distance_km == float("inf"):
+        return 1.0
+    return min(distance_km / _MAX_DISTANCE_KM, 1.0)
 
 
 def build_observation(
@@ -73,10 +81,10 @@ def build_observation(
         obs_parts.append(min(avail / _MAX_TIME_MIN, 1.0))
 
         # Tonnage accumulé normalisé
-        obs_parts.append(min(truck.total_tonnage_t / 2000.0, 1.0))
+        obs_parts.append(min(truck.total_tonnage_t / _MAX_TONNAGE_T, 1.0))
 
         # Carburant consommé normalisé
-        obs_parts.append(min(truck.total_fuel_l / 500.0, 1.0))
+        obs_parts.append(min(truck.total_fuel_l / _MAX_FUEL_L, 1.0))
 
         # Position du camion : one-hot encoding par rapport aux nœuds
         loc = truck_locations[i]
@@ -87,13 +95,13 @@ def build_observation(
     cur_loc = truck_locations[current_truck_idx]
     for shovel in shovels:
         d = graph.shortest_distance(cur_loc, shovel.node_id)
-        obs_parts.append(min(d / _MAX_DISTANCE_KM, 1.0) if d != float("inf") else 1.0)
+        obs_parts.append(_normalize_distance(d))
 
     # --- Distance de chaque pelle vers chaque dump ---
     for shovel in shovels:
         for dump in dumps:
             d = graph.shortest_distance(shovel.node_id, dump.node_id)
-            obs_parts.append(min(d / _MAX_DISTANCE_KM, 1.0) if d != float("inf") else 1.0)
+            obs_parts.append(_normalize_distance(d))
 
     # --- Temps courant normalisé ---
     obs_parts.append(min(current_time_min / max(episode_minutes, 1.0), 1.0))

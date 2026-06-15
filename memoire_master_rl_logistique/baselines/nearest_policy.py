@@ -11,6 +11,7 @@ from typing import Any
 
 import numpy as np
 
+from memoire_master_rl_logistique.baselines.base import encode_action
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
 
@@ -21,11 +22,11 @@ class NearestShovelPolicy:
         self,
         graph: RoadGraph,
         shovel_node_ids: list[str],
-        dump_node_ids: list[str] | None = None,
+        dump_node_ids: list[str],
     ) -> None:
         self.graph = graph
         self.shovel_node_ids = shovel_node_ids
-        self.dump_node_ids = dump_node_ids or []
+        self.dump_node_ids = dump_node_ids
 
     def _estimate_distance(self, src: str, dst: str) -> float:
         """Distance du plus court chemin via Dijkstra (Section 3.2)."""
@@ -42,7 +43,7 @@ class NearestShovelPolicy:
             raise ValueError(
                 "truck_location must be provided to NearestShovelPolicy.predict"
             )
-        num_dumps = max(len(self.dump_node_ids), 1)
+        num_dumps = len(self.dump_node_ids)
 
         # Pelle la plus proche géographiquement (distance uniquement)
         best_shovel = 0
@@ -56,13 +57,12 @@ class NearestShovelPolicy:
 
         # Dump le plus proche de la pelle choisie
         best_dump = 0
-        if self.dump_node_ids:
-            min_dump_distance = float("inf")
-            shovel_node = self.shovel_node_ids[best_shovel]
-            for j, d_node in enumerate(self.dump_node_ids):
-                dist = self._estimate_distance(shovel_node, d_node)
-                if dist < min_dump_distance:
-                    min_dump_distance = dist
-                    best_dump = j
+        min_dump_distance = float("inf")
+        shovel_node = self.shovel_node_ids[best_shovel]
+        for j, d_node in enumerate(self.dump_node_ids):
+            dist = self._estimate_distance(shovel_node, d_node)
+            if dist < min_dump_distance:
+                min_dump_distance = dist
+                best_dump = j
 
-        return best_shovel * num_dumps + best_dump
+        return encode_action(best_shovel, best_dump, num_dumps)

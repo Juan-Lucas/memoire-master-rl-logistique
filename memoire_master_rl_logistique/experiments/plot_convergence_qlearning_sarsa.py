@@ -11,11 +11,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-SCENARIOS = [
-    ("Nominal", "nominal", "Scénario nominal"),
-    ("High Load", "highload", "Scénario high_load"),
-    ("High Breakdown", "highbreakdown", "Scénario high_breakdown"),
-]
+from memoire_master_rl_logistique.experiments.plot_utils import save_figure
+from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
+
+SCENARIOS = [(s.label, s.suffix, f"Scénario {s.key}") for s in SCENARIO_DISPLAYS]
 
 ALGO_STYLE = {
     "Q-Learning": "#4CAF50",
@@ -42,9 +41,7 @@ def main() -> None:
         plt.tight_layout()
 
         out_path = out_dir / f"learning_curves_{suffix}.png"
-        plt.savefig(out_path, dpi=150)
-        plt.close(fig)
-        print(f"Figure sauvegardée : {out_path}")
+        save_figure(fig, out_path)
 
 
 if __name__ == "__main__":

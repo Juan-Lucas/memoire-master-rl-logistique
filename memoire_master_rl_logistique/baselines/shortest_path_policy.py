@@ -23,6 +23,7 @@ from typing import Any
 
 import numpy as np
 
+from memoire_master_rl_logistique.baselines.base import encode_action
 from memoire_master_rl_logistique.simulation.fuel_model import estimate_travel_fuel_l
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
@@ -34,14 +35,14 @@ class ShortestPathPolicy:
         self,
         graph: RoadGraph,
         shovel_node_ids: list[str],
-        dump_node_ids: list[str] | None = None,
+        dump_node_ids: list[str],
         alpha: float = 0.5,
         beta: float = 0.3,
         gamma: float = 0.2,
     ) -> None:
         self.graph = graph
         self.shovel_node_ids = shovel_node_ids
-        self.dump_node_ids = dump_node_ids or []
+        self.dump_node_ids = dump_node_ids
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
@@ -64,13 +65,9 @@ class ShortestPathPolicy:
         for i in range(len(path) - 1):
             edge = self.graph.get_edge(path[i], path[i + 1])
 
-            # Temps moyen déterministe (Eq. 3.2 sans bruit)
-            base_speed_kmh = 26.0 if loaded else 32.0
-            slope_factor = max(0.55, 1.0 - max(0.0, edge.slope_pct) * 0.03)
-            state_factor = max(0.55, min(1.2, edge.road_state))
-            mean_speed = max(5.0, base_speed_kmh * slope_factor * state_factor)
-            total_time += (edge.distance_km / mean_speed) * 60.0
-
+            total_time += self.graph.mean_travel_time_minutes(
+                path[i], path[i + 1], loaded,
+            )
             total_dist += edge.distance_km
 
             total_fuel += estimate_travel_fuel_l(
@@ -105,21 +102,16 @@ class ShortestPathPolicy:
             raise ValueError(
                 "truck_location must be provided to ShortestPathPolicy.predict"
             )
-        num_dumps = max(len(self.dump_node_ids), 1)
+        num_dumps = len(self.dump_node_ids)
         best_action = 0
         best_cost = float("inf")
-        dump_list = list(enumerate(self.dump_node_ids)) if self.dump_node_ids else [(0, None)]
 
         for i, s_node in enumerate(self.shovel_node_ids):
-            for j, d_node in dump_list:
-                if d_node is not None:
-                    cost = self._cycle_cost(truck_location, s_node, d_node)
-                else:
-                    _, d, e = self._segment_cost(truck_location, s_node, loaded=False)
-                    cost = self.alpha * 0.0 + self.beta * d + self.gamma * e
+            for j, d_node in enumerate(self.dump_node_ids):
+                cost = self._cycle_cost(truck_location, s_node, d_node)
 
                 if cost < best_cost:
                     best_cost = cost
-                    best_action = i * num_dumps + j
+                    best_action = encode_action(i, j, num_dumps)
 
         return best_action

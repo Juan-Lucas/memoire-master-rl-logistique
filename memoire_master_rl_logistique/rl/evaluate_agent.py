@@ -147,19 +147,14 @@ def evaluate_all_baselines(
         shovel_node_ids=[s.node_id for s in env.shovels],
         dump_node_ids=[d.node_id for d in env.dumps],
     )
-    results.append(evaluate_policy(
-        env,
-        lambda obs, info: (
-            setattr(nearest, "graph", env.graph)
-            or nearest.predict(
-                obs,
-                info,
-                truck_location=env.truck_locations[env.current_truck_idx],
-            )
-        ),
-        n_episodes,
-        "Nearest",
-    ))
+
+    def nearest_policy_fn(obs, info):
+        nearest.graph = env.graph
+        return nearest.predict(
+            obs, info, truck_location=env.truck_locations[env.current_truck_idx],
+        )
+
+    results.append(evaluate_policy(env, nearest_policy_fn, n_episodes, "Nearest"))
 
     # Shortest Path
     env = MineEnv(
@@ -172,19 +167,14 @@ def evaluate_all_baselines(
         shovel_node_ids=[s.node_id for s in env.shovels],
         dump_node_ids=[d.node_id for d in env.dumps],
     )
-    results.append(evaluate_policy(
-        env,
-        lambda obs, info: (
-            setattr(shortest_path, "graph", env.graph)
-            or shortest_path.predict(
-                obs,
-                info,
-                truck_location=env.truck_locations[env.current_truck_idx],
-            )
-        ),
-        n_episodes,
-        "ShortestPath",
-    ))
+
+    def shortest_path_policy_fn(obs, info):
+        shortest_path.graph = env.graph
+        return shortest_path.predict(
+            obs, info, truck_location=env.truck_locations[env.current_truck_idx],
+        )
+
+    results.append(evaluate_policy(env, shortest_path_policy_fn, n_episodes, "ShortestPath"))
 
     return results
 
@@ -216,7 +206,7 @@ def main() -> None:
             f"± {result['specific_fuel_l_per_ton_std']:.3f} L/t"
         )
 
-    model_path = Path("models/ppo_mine/ppo_mine_agent.zip")
+    model_path = Path("data/results/ppo_nominal/ppo_mine_agent.zip")
     if model_path.exists():
         print("\n=== Évaluation PPO ===")
         ppo_result = evaluate_ppo(str(model_path), n_episodes=10)

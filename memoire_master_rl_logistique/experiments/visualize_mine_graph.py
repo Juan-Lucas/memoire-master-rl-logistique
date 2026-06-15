@@ -196,8 +196,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--output", type=str,
-        default="figures/graphe_reseau_minier.png",
-        help="Chemin de sortie (défaut: figures/graphe_reseau_minier.png)",
+        default="reports/figures/graphe_reseau_minier.png",
+        help="Chemin de sortie (défaut: reports/figures/graphe_reseau_minier.png)",
     )
     parser.add_argument(
         "--show", action="store_true",

@@ -74,3 +74,24 @@ SCENARIOS: dict[str, Scenario] = {
         total_timesteps=2_000_000,
     ),
 }
+
+
+@dataclass(frozen=True)
+class ScenarioDisplay:
+    """Métadonnées d'affichage pour les scripts de génération de figures.
+
+    key : clé canonique (= clé de ``SCENARIOS`` / nom de répertoire, ex. "high_load").
+    label : libellé d'affichage utilisé dans les CSV Power BI (ex. "High Load").
+    suffix : suffixe de nom de fichier de figure, sans underscore (ex. "highload").
+    """
+
+    key: str
+    label: str
+    suffix: str
+
+
+SCENARIO_DISPLAYS: tuple[ScenarioDisplay, ...] = (
+    ScenarioDisplay("nominal", "Nominal", "nominal"),
+    ScenarioDisplay("high_load", "High Load", "highload"),
+    ScenarioDisplay("high_breakdown", "High Breakdown", "highbreakdown"),
+)
