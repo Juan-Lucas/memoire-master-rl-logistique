@@ -95,37 +95,89 @@
 % ============================================================================
 \pagenumbering{Roman}
 
-% --- Page de garde ---
+% --- Page de garde (couverture) ---
 \begin{titlepage}
 
     \centering
-    {\Large \textbf{UNIVERSIT\'E DON BOSCO DE LUBUMBASHI}}\\[0.3cm]
+    {\Large \textbf{UNIVERSIT\'E DON BOSCO DE LUBUMBASHI}}\\[0.2cm]
     {\large \textsc{Facult\'e des Sciences Informatiques}}\\[0.2cm]
-    {\normalsize Lubumbashi}\\[0.2cm]
+    {\normalsize R\'epublique D\'emocratique du Congo}\\[0.2cm]
+    {\normalsize Province du Haut-Katanga -- Lubumbashi}\\[0.2cm]
     {\small \url{www.udbl.ac.cd}}\\[0.5cm]
-    
-\rule{\textwidth}{0.5pt}
-
-\vspace{1.0cm}
-
-\includegraphics[width=8cm]{logo-udbl.png}\\[0.3cm]
 
 \rule{\textwidth}{0.5pt}
 
-    \vspace{1cm}
+\vspace{1.2cm}
 
-    {\LARGE \textbf{Au-delà des heuristiques statiques :}}\\[0.250cm]
-    {\Large \textbf{Conception et mise en \oe uvre d'un agent d'apprentissage par renforcement pour l'optimisation holistique et dynamique de la logistique minière}}
+\includegraphics[width=8cm]{logo-udbl.png}
 
-    \rule{\textwidth}{0.5pt}
-    
-    {\large Présenté par : \textbf{Jean-Luc MUPASA KALUNGA}}\\[0.3cm]
-    {\large Dirigé par : \textbf{Dr. Olfa FERCHICHI}}\\[0.3cm]
-    {\large Master 2 Data Science — Spécialité Logistique}\\[0.3cm]
-    {\large Année académique 2025--2026}
+\vspace{1.2cm}
+\rule{\textwidth}{0.5pt}
 
-    \vfill
-    {\large JUIN, 2026}
+\vspace{0.3cm}
+
+    {\LARGE \textbf{Au-del\`a des heuristiques statiques :}}\\[0.25cm]
+    {\large \textbf{Conception et mise en \oe uvre d'un agent d'apprentissage par renforcement pour l'optimisation holistique et dynamique de la logistique mini\`ere}}\\[0.3cm]
+
+\vspace{0.3cm}
+\rule{\textwidth}{0.5pt}
+
+\vfill
+
+\begin{flushright}
+{\normalsize \hfill\begin{minipage}{0.7\textwidth}\raggedleft\emph{M\'emoire pr\'esent\'e en vue de l'obtention du Dipl\^ome de Master en Data Science}\end{minipage}}\\[0.5cm]
+{\large \textbf{Pr\'esent\'e par :} MUPASA KALUNGA Jean-Luc}\\[0.3cm]
+{\large \textbf{Promotion :} Master 2 Data Science --- Sp\'ecialit\'e Logistique}\\[0.3cm]
+% {\large \textbf{Ann\'ee acad\'emique :} 2025--2026}
+\end{flushright}
+
+\vfill
+
+\centering
+{\large \textbf{JUIN 2026}}
+\end{titlepage}
+
+% --- Feuille de garde (page int\'erieure, avec la directrice) ---
+\begin{titlepage}
+
+    \centering
+    {\Large \textbf{UNIVERSIT\'E DON BOSCO DE LUBUMBASHI}}\\[0.2cm]
+    {\large \textsc{Facult\'e des Sciences Informatiques}}\\[0.2cm]
+    {\normalsize R\'epublique D\'emocratique du Congo}\\[0.2cm]
+    {\normalsize Province du Haut-Katanga -- Lubumbashi}\\[0.2cm]
+    {\small \url{www.udbl.ac.cd}}\\[0.5cm]
+
+\rule{\textwidth}{0.5pt}
+
+\vspace{1.2cm}
+
+\includegraphics[width=8cm]{logo-udbl.png}
+
+\vspace{1.2cm}
+\rule{\textwidth}{0.5pt}
+
+\vspace{0.3cm}
+
+    {\LARGE \textbf{Au-del\`a des heuristiques statiques :}}\\[0.25cm]
+    {\large \textbf{Conception et mise en \oe uvre d'un agent d'apprentissage par renforcement pour l'optimisation holistique et dynamique de la logistique mini\`ere}}\\[0.3cm]
+
+\vspace{0.3cm}
+\rule{\textwidth}{0.5pt}
+
+\vfill
+
+\begin{flushright}
+{\normalsize \hfill\begin{minipage}{0.7\textwidth}\raggedleft\emph{M\'emoire pr\'esent\'e en vue de l'obtention du Dipl\^ome de Master en Data Science}\end{minipage}}\\[0.5cm]
+{\large \textbf{Pr\'esent\'e par :} MUPASA KALUNGA Jean-Luc}\\[0.3cm]
+{\large \textbf{Dirig\'e par :} Dr. Olfa FERCHICHI}\\[0.3cm]
+{\large \textbf{Promotion :} Master 2 Data Science --- Sp\'ecialit\'e Logistique}\\[0.3cm]
+% {\large \textbf{Ann\'ee acad\'emique :} 2025--2026}
+\end{flushright}
+
+\vfill
+
+\centering
+{\large \textbf{JUIN 2026}}
 \end{titlepage}
 
 % --- Dédicace ---
@@ -148,7 +200,7 @@
 
 Au corps professoral de la \textbf{Faculté des Sciences Informatiques de l'Université Don Bosco de Lubumbashi}, qui a mis tous ses moyens en œuvre pour assurer notre formation tout au long de ce cursus de Master Data Science, nous adressons nos remerciements.
 
-À ma mère, Célestine MUPASA, et à ma grande sœur, Gracia SAFI, recevez par ces mots toute notre gratitude pour votre soutien constant, votre confiance et vos encouragements tout au long de ce parcours~: jamais nous n'aurons assez de mots pour vous dire merci.
+À ma mère, Célestine MUPASA, et à ma sœur aînée, Gracia SAFI, recevez par ces mots toute notre gratitude pour votre soutien constant, votre confiance et vos encouragements tout au long de ce parcours~: jamais nous n'aurons assez de mots pour vous dire merci.
 
 À mes frères et sœurs, pour leurs encouragements et leur présence à mes côtés tout au long de ce parcours, nous disons merci.
 
@@ -448,6 +500,8 @@ Le système de transport minier considéré dans ce mémoire repose sur le modè
 
 Le fonctionnement du système repose sur un cycle répétitif : (1) Assignation d'un camion à une pelle par le système de dispatching ; (2) Transport du camion vers la pelle ; (3) Attente à la queue de chargement ; (4) Chargement du matériau ; (5) Transport vers un point de déchargement ; (6) Déchargement ; (7) Retour au point de chargement. L'objectif opérationnel est de maximiser le tonnage transporté par unité de temps (rendement) tout en respectant les contraintes de sécurité, de maintenance et de disponibilité des ressources, y compris dans des contextes intégrant des flottes partiellement ou totalement autonomes \cite{MehrnazMohtasham2023, PeiYangGong2026}.
 
+La figure~\ref{fig:cycle-transport} illustre le cycle op\'erationnel complet du syst\`eme camion-pelle d\'ecrit ci-dessus. On y suit la s\'equence \emph{affectation $\rightarrow$ trajet $\rightarrow$ chargement $\rightarrow$ trajet $\rightarrow$ d\'echargement $\rightarrow$ retour}, et l'on rep\`ere le point pr\'ecis o\`u l'agent de dispatching intervient~: la d\'ecision d'affectation. Cette repr\'esentation met en \'evidence que l'agent n'agit pas sur la physique du transport, mais uniquement sur le choix de la destination du camion, ce qui circonscrit son levier d'action.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/Description du système de transport minier.drawio.png}
@@ -502,6 +556,8 @@ Autrement dit, le modèle conserve les facteurs qui gouvernent réellement la d�
 
 \subsubsection*{Synthèse des hypothèses de modélisation}
 
+Le tableau~\ref{tab:hypotheses-justification-limites} r\'ecapitule chaque hypoth\`ese de mod\'elisation en la confrontant \`a sa justification et \`a ses inconv\'enients. Sa lecture en colonnes permet d'appr\'ecier le compromis assum\'e entre r\'ealisme et tractabilit\'e~: chaque simplification (temps discret, stationnarit\'e, observation partielle, etc.) acc\'el\`ere l'apprentissage au prix d'une perte de finesse qu'il conviendra de garder \`a l'esprit lors de l'interpr\'etation des r\'esultats.
+
 \begin{table}[H]
     \centering
     \caption{Synthèse des hypothèses}
@@ -535,6 +591,8 @@ Le réseau routier est modélisé comme un graphe pondéré $G = (V, E)$ où :
 \end{itemize}
 
 Ce graphe peut être orienté (sens uniques, routes à sens limité) ou non-orienté (routes bidirectionnelles) selon la configuration du site.
+
+La figure~\ref{fig:graphe-routier} donne une repr\'esentation concr\`ete du graphe pond\'er\'e $G=(V,E)$ formalis\'e ci-dessus. Les n\oe uds y figurent les points d'int\'er\^et (pelles, dumps, jonctions) et les arcs les liaisons routi\`eres, chacun porteur d'attributs (distance, temps, \'etat). La nature stochastique des pond\'erations, symbolis\'ee sur le sch\'ema, traduit la variabilit\'e des temps de trajet que l'agent devra apprendre \`a anticiper.
 
 \begin{figure}[H]
     \centering
@@ -636,6 +694,8 @@ Le modèle de transition décrit comment le système évolue suite à une action
 
 où $\Delta t$ est l'intervalle de temps entre deux décisions.
 
+La figure~\ref{fig:mdp-boucle} sch\'ematise la boucle d'interaction au c\oe ur du cadre MDP~: \`a chaque pas, l'agent observe l'\'etat $s_t$, choisit une action $a_t$, et l'environnement (le simulateur minier) renvoie l'\'etat suivant $s_{t+1}$ et la r\'ecompense $r_t$. Cette repr\'esentation montre que l'apprentissage repose enti\`erement sur cette boucle ferm\'ee, o\`u la politique se construit par essais successifs plut\^ot que par une r\'esolution analytique.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/Formulation du problème en tant que MDP.drawio.png}
@@ -709,6 +769,8 @@ où :
 
 Les poids $w_1, w_2, w_3$ permettent de moduler l'importance relative de chaque objectif selon les priorités métier.
 
+La figure~\ref{fig:reward-structure} synth\'etise la composition multi-objectif de la r\'ecompense globale d\'etaill\'ee par l'\'equation pr\'ec\'edente. Elle montre comment les trois signaux --- rendement (positif), \'equit\'e et co\^ut (p\'enalit\'es) --- sont agr\'eg\'es via leurs poids $w_1,w_2,w_3$ en un unique scalaire. Cette vue d'ensemble fait appara\^itre la hi\'erarchie des priorit\'es m\'etier~: le rendement domine, l'\'equit\'e et le co\^ut jouant un r\^ole de r\'egulation.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/Fonction de récompense.drawio.png}
@@ -767,6 +829,8 @@ Conformément aux travaux de Szatmári~\cite{Szatmári2025}, nous suivons un cyc
     \item \textbf{Entraînement et test}~: Phase d'apprentissage intensif où l'agent explore des milliers de scénarios de dispatching dans le simulateur.
     \item \textbf{Évaluation comparative}~: Vérification de la performance de l'agent par rapport aux heuristiques industrielles et aux méthodes RL classiques, selon des indicateurs opérationnels quantitatifs.
 \end{itemize}
+
+La figure~\ref{fig:cycle-vie-rl} repr\'esente le cycle de vie CRISP-RL en six \'etapes adapt\'e au contexte minier. Sa lecture circulaire souligne le caract\`ere it\'eratif de la d\'emarche~: chaque \'etape alimente la suivante, et l'\'evaluation finale peut renvoyer \`a la mod\'elisation de l'environnement ou \`a la formulation MDP. C'est cette boucle de r\'etroaction qui distingue CRISP-RL d'un processus lin\'eaire d'analyse de donn\'ees statiques.
 
 \begin{figure}[H]
     \centering
@@ -841,6 +905,8 @@ Nous avons développé un simulateur adapté en langage Python, en utilisant l'i
     \item \textbf{step(action)}~: C'est le c\oe ur de la boucle Agent-Environnement. À partir d'une décision de dispatching, elle fait évoluer la mine de $\Delta t$ et renvoie cinq valeurs cruciales~: l'observation suivante ($s_{t+1}$), la récompense ($r_t$), ainsi que les signaux \texttt{terminated} (but atteint/échec), \texttt{truncated} (limite de temps du poste atteinte) et \texttt{info}.
     \item \textbf{render()}~: Permet la visualisation de l'état de la flotte et des pelles pour le suivi humain.
 \end{itemize}
+
+La figure~\ref{fig:architecture-simulateur} d\'etaille l'organisation modulaire du simulateur autour de l'interface Gymnasium. On y distingue le r\^ole des quatre m\'ethodes cl\'es (\texttt{reset}, \texttt{step}, \texttt{render} et les espaces d'observation/action), qui structurent la boucle agent--environnement. Cette modularit\'e garantit que l'agent interagit avec la mine via une interface standardis\'ee, ind\'ependamment de la complexit\'e interne de la simulation.
 
 \begin{figure}[H]
     \centering
@@ -1163,6 +1229,8 @@ L'agent repose sur une architecture de type Perceptron Multicouche (MLP) compren
     \item \textbf{Couche de sortie}~: une couche de dimension $|\mathcal{A}|$ utilisant une fonction \textbf{Softmax} pour transformer les activations en probabilités d'action.
 \end{itemize}
 
+La figure~\ref{fig:structure-reseau} repr\'esente l'architecture du perceptron multicouche (MLP) sur lequel repose l'agent. On y suit le cheminement de l'information depuis la couche d'entr\'ee (de dimension \'egale \`a celle du vecteur d'\'etat) vers la couche de sortie (de dimension $|\mathcal{A}|$), \`a travers deux couches cach\'ees de 128 neurones activ\'ees par ReLU. Cette structure est ce qui permet \`a l'agent de g\'en\'eraliser \`a des \'etats jamais rencontr\'es, l\`a o\`u une table $Q$ serait limit\'ee aux seuls \'etats visit\'es.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/Architecture du réseau de neurones (MLP) de l'agent PPO.drawio.png}
@@ -1186,6 +1254,8 @@ PPO est une méthode actor-critic on-policy qui surmonte directement ces deux li
     \item \textbf{Apprentissage on-policy}~: PPO apprend directement à partir de ses interactions actuelles avec le simulateur, sans nécessiter de replay buffer, ce qui le rend plus adapté aux environnements dont la dynamique évolue en cours d'épisode.
     \item \textbf{Robustesse au réglage}~: PPO est peu sensible aux hyperparamètres, ce qui garantit la reproductibilité des expériences~\cite{MoezKrichen2022, Szatmári2025}.
 \end{itemize}
+
+Le tableau~\ref{tab:comparaison-algos} confronte DQN et PPO sur les crit\`eres d\'eterminants pour notre probl\`eme. Sa lecture ligne par ligne fait ressortir l'avantage syst\'ematique de PPO en mati\`ere de stabilit\'e, de robustesse au bruit et de scalabilit\'e de l'espace d'action --- propri\'et\'es qui justifient son choix comme approche finale, DQN \'etant conserv\'e comme \'etape interm\'ediaire de comparaison.
 
 \begin{table}[H]
 \centering
@@ -1486,6 +1556,8 @@ Ce chapitre présente d'abord l'environnement de développement et la configurat
 
 L'implémentation repose sur un environnement Python géré par Conda (Anaconda), garantissant la reproductibilité des expériences indépendamment du système d'exploitation. Le packaging respecte les standards modernes PEP 517/518, avec Flit comme build-backend.
 
+Le tableau~\ref{tab:outils} r\'ecapitule l'environnement de d\'eveloppement et les biblioth\`eques mobilis\'ees, avec leur r\^ole respectif dans la cha\^ine de traitement. Il met en \'evidence le caract\`ere enti\`erement \emph{open-source} et reproductible de la pile logicielle, depuis la simulation (Gymnasium, NetworkX) jusqu'\`a l'apprentissage (Stable-Baselines3) et la restitution des r\'esultats.
+
 \begin{table}[H]
 \centering
 \caption{Environnement de développement et bibliothèques principales}
@@ -1643,6 +1715,8 @@ Avec $w_4 = 1{,}0$ & 0.755 & 0.787 & $3{,}2 \times 10^{-2}$ \\
 \end{tabular}
 \end{table}
 
+La figure~\ref{fig:graphe-reseau} pr\'esente le graphe routier effectivement impl\'ement\'e dans le simulateur pour la configuration nominale (7 n\oe uds~: yard, jonction, 3 pelles, 2 dumps). Elle permet de visualiser la topologie sur laquelle circulent les camions et de v\'erifier que la structure du r\'eseau correspond bien aux hypoth\`eses de distances et de pentes d\'ecrites ci-dessus.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/graphe_reseau_minier.png}
@@ -1667,6 +1741,8 @@ Tous les agents sont entraînés avec une graine fixe $\text{seed} = 42$ sur le 
 
 Pour Q-Learning et SARSA, la discrétisation de l'espace d'état continu est réalisée par extraction de 6 features décisionnelles essentielles (attentes des 3 pelles et 2 dumps, et indice de la pelle la plus proche du camion courant), renormalisées par un facteur 50 pour étaler les valeurs sur $[0, 1]$, puis discrétisées en $n_{\text{bins}} = 8$ intervalles par dimension (la dimension « pelle la plus proche » ne prenant que 3 valeurs possibles).  L'espace d'état théorique couvre ainsi $8^5 \times 3 = 98\,304$ états, dont 17\,034 effectivement visités en 30\,000 épisodes.
 
+Le tableau~\ref{tab:params-tabulaires} regroupe les param\`etres d'entra\^inement retenus pour les m\'ethodes tabulaires (Q-Learning et SARSA). Leur alignement volontaire --- m\^emes $\alpha$, $\gamma$, nombre d'\'episodes et sch\'ema de discr\'etisation --- garantit que toute diff\'erence de performance observ\'ee par la suite proviendra de la r\`egle de mise \`a jour (off-policy vs on-policy) et non d'un r\'eglage in\'egal.
+
 \begin{table}[H]
 \centering
 \caption{Paramètres d'entraînement des méthodes tabulaires}
@@ -1688,6 +1764,8 @@ $\epsilon$ initial / final & 1.0 / 0.01 & 1.0 / 0.01 \\
 \subsection{Paramètres des agents Deep RL}
 
 DQN et PPO sont entraînés sur 2\,000\,000 steps ($\approx$ 9\,677 épisodes) via Stable-Baselines3 avec un réseau MLP 128$\times$128 et activation ReLU.
+
+Le tableau~\ref{tab:params-deeprl} pr\'ecise les param\`etres d'entra\^inement des deux agents Deep RL. \`A nouveau, les valeurs communes (steps, learning rate, $\gamma$, architecture) assurent une comparaison \'equitable, les seules diff\'erences (buffer/$n\_steps$, exploration, GAE, clipping) refl\'etant la nature respective off-policy de DQN et on-policy de PPO.
 
 \begin{table}[H]
 \centering
@@ -1751,6 +1829,8 @@ PPO        & Deep RL   & $\approx$ 2h14 (2M steps)      & 0,90 Mo & 49 \\
 \label{sec:scenarios}
 
 Trois scénarios sont retenus pour couvrir les conditions opérationnelles représentatives d'une mine à ciel ouvert.  Chaque scénario est évalué sur 10 réplications indépendantes.
+
+Le tableau~\ref{tab:scenarios} d\'efinit les trois sc\'enarios exp\'erimentaux qui structurent l'ensemble de l'\'evaluation. Leur conception est progressive~: le sc\'enario nominal sert de r\'ef\'erence, high\_load stresse l'\'equilibrage de charge, et high\_breakdown --- directement li\'e \`a l'hypoth\`ese H1 --- \'eprouve la robustesse des politiques face aux pannes fr\'equentes.
 
 \begin{table}[H]
 \centering
@@ -1863,6 +1943,8 @@ SARSA            & 3081.8 $\pm$ 64 & 66.8 $\pm$ 5.3
 
 \subsection{Scénario high\_load}
 
+Le tableau~\ref{tab:resultats-highload} rapporte les performances en situation de surcharge (18 camions pour 3 pelles). Sa lecture r\'ev\`ele deux ph\'enom\`enes majeurs~: la domination de Fixed Assignment, dont le Match Factor reste optimal, et surtout l'effondrement des heuristiques myopes (Nearest Shovel, Shortest Path), dont le temps d'attente d\'epasse 200 minutes --- un point central pour la validation de la probl\'ematique.
+
 \begin{table}[H]
 \centering
 \caption{Résultats comparatifs — Scénario high\_load (18 camions)}
@@ -1893,6 +1975,8 @@ Nearest Shovel   & 3939.3 $\pm$ 42 & 200.2 $\pm$ 10.4
 
 \subsection{Scénario high\_breakdown}
 
+Le tableau~\ref{tab:resultats-breakdown} pr\'esente les r\'esultats sous pannes fr\'equentes ($p_b = 10\%$), sc\'enario d\'eterminant pour l'hypoth\`ese H1. On y observe que DQN et PPO devancent d\'esormais Fixed Assignment en productivit\'e, confirmant l'avantage des agents Deep RL lorsque l'environnement devient instable et que l'adaptation dynamique prend toute sa valeur.
+
 \begin{table}[H]
 \centering
 \caption{Résultats comparatifs — Scénario high\_breakdown ($p_b = 10\%$)}
@@ -1920,6 +2004,8 @@ SARSA            & 2973.3 $\pm$ 89 & 77.5 $\pm$ 8.8
 \bottomrule
 \end{tabular}
 \end{table}
+
+La figure~\ref{fig:barplot-productivite} offre une lecture visuelle synth\'etique des productivit\'es des huit politiques sur les trois sc\'enarios. Elle permet de saisir d'un coup d'\oe il les renversements de hi\'erarchie d'un sc\'enario \`a l'autre --- notamment le passage de Fixed Assignment en t\^ete (high\_load) \`a DQN/PPO en t\^ete (nominal, high\_breakdown).
 
 \begin{figure}[H]
     \centering
@@ -1962,6 +2048,8 @@ Nearest  & 3831 / 72.6 & 3939 / 200.2& 3693 / 90.1 & dernier \\
 \subsection{Analyse par scénario}
 
 Une analyse statistique de significativité a été effectuée sur les dix réplications indépendantes par politique, afin de déterminer si les écarts de productivité observés entre les méthodes étaient robustes et non dus au hasard. Les tests de Welch (test t pour échantillons indépendants) ont été appliqués pour comparer directement PPO et Fixed Assignment sur le scénario nominal, ainsi que DQN et Fixed Assignment sur le scénario high\_breakdown. Une ANOVA à un facteur a été conduite sur les huit méthodes pour chacun des trois scénarios, suivie dans chaque cas d'un test post-hoc de Tukey pour identifier les comparaisons significatives (Annexe~\ref{ann:stats}).
+
+Le tableau~\ref{tab:statistical_tests} synth\'etise les tests statistiques conduits pour s'assurer que les \'ecarts observ\'es ne rel\`event pas du hasard. Les tr\`es faibles p-values (toutes inf\'erieures \`a $10^{-5}$) confirment la significativit\'e des diff\'erences, donnant une base statistique solide \`a la validation de l'hypoth\`ese H1.
 
 \begin{table}[H]
     \centering
@@ -2042,6 +2130,8 @@ le seuil de significativité une fois cette correction appliquée
 nominales. Le détail des comparaisons par paires pour high\_breakdown est
 fourni en Annexe~\ref{ann:stats} (Tableau~\ref{tab:tukey-highbreakdown}).
 
+La figure~\ref{fig:wait-comparison} compare le temps d'attente moyen de Fixed Assignment, PPO et DQN sur les trois sc\'enarios. Elle \'eclaire le compromis productivit\'e--attente~: les agents Deep RL acceptent une attente l\'eg\`erement sup\'erieure \`a celle de Fixed Assignment en \'echange d'un tonnage plus \'elev\'e, en exploitant plus agressivement les ressources disponibles.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/wait_time_comparison.png}
@@ -2063,19 +2153,16 @@ SARSA converge vers une valeur inférieure ($\approx 145$ contre 175 pour Q-Lear
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/learning_curves_nominal.png}
-    \caption{Courbes de convergence de Q-Learning et SARSA — scénario nominal
-             (récompense cumulée moyenne sur les 100 derniers épisodes, 30\,000 épisodes).
-             Q-Learning~: 155 $\to$ 175 ($+12{,}5\%$) ;
-             SARSA~: convergence vers $\approx 145$.}
+    \caption{Courbes de convergence de Q-Learning et SARSA — scénario nominal.}
     \label{fig:learning-curves-nominal}
 \end{figure}
+
+La figure~\ref{fig:learning-curves-highload} transpose cette analyse de convergence au sc\'enario high\_load. La m\^eme hi\'erarchie se retrouve, Q-Learning convergeant vers une r\'ecompense sup\'erieure \`a celle de SARSA, \`a un niveau global plus \'elev\'e du fait de la flotte \'elargie.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/learning_curves_highload.png}
-    \caption{Courbes de convergence de Q-Learning et SARSA — scénario high\_load
-             (18 camions). Q-Learning~: 213 $\to$ 225 ($+5{,}4\%$) ;
-             SARSA~: convergence vers $\approx 190$.}
+    \caption{Courbes de convergence de Q-Learning et SARSA — scénario high\_load.}
     \label{fig:learning-curves-highload}
 \end{figure}
 
@@ -2084,9 +2171,7 @@ Sur le scénario high\_breakdown, les deux algorithmes partent d'une récompense
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/learning_curves_highbreakdown.png}
-    \caption{Courbes de convergence de Q-Learning et SARSA — scénario high\_breakdown
-             (taux de pannes 10\%). Q-Learning~: 147 $\to$ 158 ($+7{,}3\%$) ;
-             SARSA~: convergence vers $\approx 142$.}
+    \caption{Courbes de convergence de Q-Learning et SARSA — scénario high\_breakdown.}
     \label{fig:learning-curves-highbreakdown}
 \end{figure}
 
@@ -2095,27 +2180,25 @@ Les agents Deep RL (DQN, PPO) présentent une dynamique de convergence comparabl
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/learning_curves_deeprl_nominal.png}
-    \caption{Convergence de DQN et PPO — scénario nominal (productivité t/h lissée).
-             DQN~: 3\,028 $\to$ 4\,050~t/h ($+33{,}8\%$)~;
-             PPO~: 3\,150 $\to$ 3\,999~t/h ($+27{,}0\%$).}
+    \caption{Convergence de DQN et PPO — scénario nominal (productivité t/h lissée).}
     \label{fig:learning-curves-deeprl-nominal}
 \end{figure}
+
+La figure~\ref{fig:learning-curves-deeprl-highload} montre la convergence des agents Deep RL en surcharge. Les deux courbes restent croissantes, DQN conservant une progression l\'eg\`erement sup\'erieure \`a celle de PPO.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/learning_curves_deeprl_highload.png}
-    \caption{Convergence de DQN et PPO — scénario high\_load (productivité t/h lissée).
-             DQN~: 4\,445 $\to$ 5\,662~t/h ($+27{,}4\%$)~;
-             PPO~: 4\,515 $\to$ 5\,215~t/h ($+15{,}5\%$).}
+    \caption{Convergence de DQN et PPO — scénario high\_load (productivité t/h lissée).}
     \label{fig:learning-curves-deeprl-highload}
 \end{figure}
+
+La figure~\ref{fig:learning-curves-deeprl-highbreakdown} illustre la convergence sous pannes fr\'equentes. Malgr\'e un signal plus bruit\'e, la tendance de fond demeure croissante, confirmant la robustesse de l'apprentissage des deux agents face aux perturbations.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/learning_curves_deeprl_highbreakdown.png}
-    \caption{Convergence de DQN et PPO — scénario high\_breakdown (productivité t/h lissée).
-             DQN~: 2\,905 $\to$ 3\,817~t/h ($+31{,}4\%$)~;
-             PPO~: 2\,993 $\to$ 3\,559~t/h ($+19{,}0\%$).}
+    \caption{Convergence de DQN et PPO — scénario high\_breakdown (productivité t/h lissée).}
     \label{fig:learning-curves-deeprl-highbreakdown}
 \end{figure}
 
@@ -2134,7 +2217,7 @@ La Figure~\ref{fig:exploration-exploitation} illustre la transition exploration~
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/exploration_exploitation_nominal.png}
-    \caption{Exploration vs exploitation — scénario nominal. Gauche~: décroissance de $\epsilon$ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt{rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}
+    \caption{Exploration vs exploitation — scénario nominal.}
     \label{fig:exploration-exploitation}
 \end{figure}
 
@@ -2143,14 +2226,16 @@ Les Figures~\ref{fig:exploration-exploitation-highload} et \ref{fig:exploration-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/exploration_exploitation_highload.png}
-    \caption{Exploration vs exploitation — scénario high\_load. Gauche~: décroissance de $\epsilon$ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt{rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}
+    \caption{Exploration vs exploitation — scénario high\_load.}
     \label{fig:exploration-exploitation-highload}
 \end{figure}
+
+La figure~\ref{fig:exploration-exploitation-highbreakdown} pr\'esente la m\^eme analyse exploration--exploitation pour le sc\'enario high\_breakdown, \`a mettre en regard de la figure pr\'ec\'edente.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/exploration_exploitation_highbreakdown.png}
-    \caption{Exploration vs exploitation — scénario high\_breakdown. Gauche~: décroissance de $\epsilon$ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt{rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}
+    \caption{Exploration vs exploitation — scénario high\_breakdown.}
     \label{fig:exploration-exploitation-highbreakdown}
 \end{figure}
 
@@ -2160,7 +2245,7 @@ La Figure~\ref{fig:td-error} présente l'évolution de l'erreur TD moyenne $|\de
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/td_error_nominal.png}
-    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario nominal (30\,000 épisodes, moyenne mobile sur 300 épisodes).}
+    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario nominal.}
     \label{fig:td-error}
 \end{figure}
 
@@ -2169,14 +2254,16 @@ Les Figures~\ref{fig:td-error-highload} et \ref{fig:td-error-highbreakdown} mont
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/td_error_highload.png}
-    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_load (30\,000 épisodes, moyenne mobile sur 300 épisodes).}
+    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_load.}
     \label{fig:td-error-highload}
 \end{figure}
+
+La figure~\ref{fig:td-error-highbreakdown} compl\`ete l'analyse de l'erreur TD pour le sc\'enario high\_breakdown, o\`u l'\'ecart final entre Q-Learning et SARSA est le plus marqu\'e.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/td_error_highbreakdown.png}
-    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_breakdown (30\,000 épisodes, moyenne mobile sur 300 épisodes).}
+    \caption{Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_breakdown.}
     \label{fig:td-error-highbreakdown}
 \end{figure}
 
@@ -2186,14 +2273,16 @@ Pour DQN, la perte du réseau Q (\texttt{train/loss}, Figure~\ref{fig:loss-dqn})
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/loss_dqn_nominal.png}
-    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario nominal (moyenne mobile sur 30 points).}
+    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario nominal.}
     \label{fig:loss-dqn}
 \end{figure}
+
+La figure~\ref{fig:loss-ppo} pr\'esente, en compl\'ement, les pertes de PPO (\textit{policy loss} et \textit{value loss}) sur le sc\'enario nominal.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/loss_ppo_nominal.png}
-    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario nominal (moyenne mobile sur 30 points).}
+    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario nominal.}
     \label{fig:loss-ppo}
 \end{figure}
 
@@ -2202,28 +2291,34 @@ Les Figures~\ref{fig:loss-dqn-highload}, \ref{fig:loss-ppo-highload}, \ref{fig:l
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/loss_dqn_highload.png}
-    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario high\_load (moyenne mobile sur 30 points).}
+    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario high\_load.}
     \label{fig:loss-dqn-highload}
 \end{figure}
+
+La figure~\ref{fig:loss-ppo-highload} montre les pertes de PPO en surcharge (high\_load).
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/loss_ppo_highload.png}
-    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_load (moyenne mobile sur 30 points).}
+    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_load.}
     \label{fig:loss-ppo-highload}
 \end{figure}
+
+La figure~\ref{fig:loss-dqn-highbreakdown} reprend la perte du r\'eseau Q de DQN sous pannes fr\'equentes.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/loss_dqn_highbreakdown.png}
-    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario high\_breakdown (moyenne mobile sur 30 points).}
+    \caption{DQN — perte du réseau Q (\texttt{train/loss}) au cours de l'entraînement, scénario high\_breakdown.}
     \label{fig:loss-dqn-highbreakdown}
 \end{figure}
+
+La figure~\ref{fig:loss-ppo-highbreakdown} montre enfin les pertes de PPO sous pannes fr\'equentes (high\_breakdown).
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/loss_ppo_highbreakdown.png}
-    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_breakdown (moyenne mobile sur 30 points).}
+    \caption{PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_breakdown.}
     \label{fig:loss-ppo-highbreakdown}
 \end{figure}
 
@@ -2254,7 +2349,7 @@ Les Figures~\ref{fig:action-distribution-nominal}, \ref{fig:action-distribution-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/action_distribution_nominal.png}
-    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario nominal (10 épisodes).}
+    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario nominal.}
     \label{fig:action-distribution-nominal}
 \end{figure}
 
@@ -2263,7 +2358,7 @@ Q-Learning, SARSA et PPO répartissent leurs décisions sur l'ensemble des 7 act
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/action_distribution_highload.png}
-    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_load (10 épisodes).}
+    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_load.}
     \label{fig:action-distribution-highload}
 \end{figure}
 
@@ -2272,11 +2367,11 @@ Sous le scénario high\_load (18 camions, charge accrue), Q-Learning et SARSA co
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/action_distribution_highbreakdown.png}
-    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_breakdown (10 épisodes).}
+    \caption{Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_breakdown.}
     \label{fig:action-distribution-highbreakdown}
 \end{figure}
 
-Sous le scénario high\_breakdown (probabilité de panne $p_b = 0{,}10$), Q-Learning maintient une politique active et diversifiée sur les 7 actions (ATTENDRE~: $0{,}15\%$), avec une légère préférence pour Pelle1$\to$Dump2 ($25{,}1\%$). SARSA accroît son recours à ATTENDRE ($9{,}1\%$, contre $5{,}3\%$ en nominal) et concentre $44{,}3\%$ de ses décisions sur Pelle3$\to$Dump1. DQN et PPO présentent un comportement convergent et notable~: les deux agents n'assignent plus aucun camion à la Pelle~3 (Pelle3$\to$Dump1 et Pelle3$\to$Dump2 à $0\%$ pour les deux politiques) et augmentent fortement leur recours à ATTENDRE ($39{,}6\%$ pour DQN, $56{,}5\%$ pour PPO, contre $44{,}7\%$ et $17{,}7\%$ en nominal). Ce report total vers les Pelles~1 et~2 suggère que les agents Deep RL ont appris à éviter une ressource jugée peu fiable sous fort taux de pannes, quitte à augmenter l'inaction lorsque les pelles restantes sont indisponibles --- un comportement d'évitement cohérent mais potentiellement sous-optimal si la Pelle~3 redevient disponible plus rapidement que prévu.
+Sous le scénario high\_breakdown (probabilité de panne $p_b = 0{,}10$), Q-Learning maintient une politique active et diversifiée sur les 7 actions (ATTENDRE~: $0{,}15\%$), avec une légère préférence pour Pelle1$\to$Dump2 ($25{,}1\%$). SARSA accroît son recours à ATTENDRE ($9{,}1\%$, contre $5{,}3\%$ en nominal) et concentre $44{,}3\%$ de ses décisions sur Pelle3$\to$Dump1. DQN et PPO présentent un comportement convergent et notable~: les deux agents n'assignent plus aucun camion à la Pelle~3 (Pelle3$\to$Dump1 et Pelle3$\to$Dump2 à $0\%$ pour les deux politiques). Leur recours à ATTENDRE évolue cependant de façon différenciée~: PPO l'augmente fortement ($17{,}7\%$ en nominal $\to$ $56{,}5\%$ en high\_breakdown), tandis que DQN le diminue légèrement ($44{,}7\% \to 39{,}6\%$). Ce report total vers les Pelles~1 et~2 suggère que les agents Deep RL ont appris à éviter une ressource jugée peu fiable sous fort taux de pannes, quitte à augmenter l'inaction lorsque les pelles restantes sont indisponibles --- un comportement d'évitement cohérent mais potentiellement sous-optimal si la Pelle~3 redevient disponible plus rapidement que prévu.
 
 \subsection{Limites identifiées}
 
@@ -2322,13 +2417,13 @@ Les résultats obtenus permettent une \textbf{validation partielle et différenc
     \item \textbf{Sur le critère robustesse aux surcharges} (high\_load) : Nearest Shovel s'effondre à 200,2 minutes d'attente, validant la prémisse du titre que les heuristiques statiques ont des limites structurelles. DQN (5\,664.8 t/h) reste compétitif face à Fixed Assignment (5\,874.8 t/h, $-3{,}6\%$). H1 est \textbf{partiellement validée}.
 
     \item \textbf{Sur le critère consommation de carburant} : PPO
-    (0{,}0412~L/t) et DQN (0{,}0404~L/t) consomment significativement
+    (0{,}0412~L/t) et DQN (0{,}0405~L/t) consomment significativement
     moins que Fixed Assignment (0{,}0431~L/t) en conditions nominales,
-    soit des gains de $-4{,}4\%$ et $-6{,}3\%$ respectivement
+    soit des gains de $-4{,}4\%$ et $-6{,}0\%$ respectivement
     (test~t de Welch~: $t = -10{,}01$, $p < 10^{-8}$).
-    En conditions perturbées, PPO (0{,}0424~L/t) et DQN (0{,}0416~L/t)
-    conservent cet avantage face à Fixed (0{,}0449~L/t, $-5{,}6\%$ et
-    $-7{,}4\%$~; $p = 2 \times 10^{-6}$).
+    En conditions perturbées, PPO (0{,}0422~L/t) et DQN (0{,}0416~L/t)
+    conservent cet avantage face à Fixed (0{,}0451~L/t, $-6{,}4\%$ et
+    $-7{,}8\%$~; $p = 2 \times 10^{-6}$).
     H1 est \textbf{validée} sur ce critère dans deux scénarios sur trois.
 \end{itemize}
 
@@ -2527,6 +2622,8 @@ En définitive, ce travail démontre que l'apprentissage par renforcement profon
 
 \section*{Technologies utilisées}
 
+Le tableau ci-dessous r\'ecapitule la pile technologique compl\`ete du projet, avec les versions exactes employ\'ees. Il garantit la reproductibilit\'e de l'environnement logiciel et compl\`ete les \'el\'ements pr\'esent\'es au Chapitre~5.
+
 \begin{table}[H]
 \centering
 \caption{Stack technologique du projet}
@@ -2577,6 +2674,8 @@ python -m memoire_master_rl_logistique.main --benchmark-only
 \chapter{Hyperparamètres des modèles}
 \label{ann:hyperparametres}
 
+Le tableau ci-dessous regroupe, \`a des fins de r\'ef\'erence, l'int\'egralit\'e des hyperparam\`etres des quatre agents en une seule vue comparative. Les tirets (---) indiquent les param\`etres non applicables \`a une m\'ethode donn\'ee, faisant appara\^itre les sp\'ecificit\'es de chaque famille d'algorithmes (tabulaire vs Deep RL, off-policy vs on-policy).
+
 \begin{table}[H]
 \centering
 \caption{Hyperparamètres complets de tous les agents}
@@ -2610,6 +2709,8 @@ $w_1 = 1{,}0$ (rendement) \quad $w_2 = 0{,}1$ (équité) \quad $w_3 = 0{,}05$ (c
 
 \chapter{Scénarios de simulation}
 \label{ann:scenarios}
+
+Le tableau ci-dessous d\'etaille l'ensemble des param\`etres des trois sc\'enarios, en compl\'etant le Match Factor (MF) th\'eorique de chacun. Il met en \'evidence que seuls deux leviers varient d'un sc\'enario \`a l'autre --- la taille de flotte et le taux de pannes --- toutes les autres conditions restant constantes pour isoler leurs effets.
 
 \begin{table}[H]
 \centering
