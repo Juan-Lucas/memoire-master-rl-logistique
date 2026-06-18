@@ -127,7 +127,7 @@
 \begin{flushright}
 {\normalsize \hfill\begin{minipage}{0.7\textwidth}\raggedleft\emph{M\'emoire pr\'esent\'e en vue de l'obtention du Dipl\^ome de Master en Data Science}\end{minipage}}\\[0.5cm]
 {\large \textbf{Pr\'esent\'e par :} MUPASA KALUNGA Jean-Luc}\\[0.3cm]
-{\large \textbf{Promotion :} Master 2 Data Science --- Sp\'ecialit\'e Logistique}\\[0.3cm]
+{\large \textbf{Promotion :} Master 2 Data Science --- Supply Chain}\\[0.3cm]
 % {\large \textbf{Ann\'ee acad\'emique :} 2025--2026}
 \end{flushright}
 
@@ -170,7 +170,7 @@
 {\normalsize \hfill\begin{minipage}{0.7\textwidth}\raggedleft\emph{M\'emoire pr\'esent\'e en vue de l'obtention du Dipl\^ome de Master en Data Science}\end{minipage}}\\[0.5cm]
 {\large \textbf{Pr\'esent\'e par :} MUPASA KALUNGA Jean-Luc}\\[0.3cm]
 {\large \textbf{Dirig\'e par :} Dr. Olfa FERCHICHI}\\[0.3cm]
-{\large \textbf{Promotion :} Master 2 Data Science --- Sp\'ecialit\'e Logistique}\\[0.3cm]
+{\large \textbf{Promotion :} Master 2 Data Science --- Supply Chain}\\[0.3cm]
 % {\large \textbf{Ann\'ee acad\'emique :} 2025--2026}
 \end{flushright}
 
@@ -627,7 +627,7 @@ Le réseau réel n'est pas déterministe : les temps de trajet varient en foncti
 
 où $\bar{T}_{ij}$ est le temps moyen et $\eta_{ij}(t)$ est un bruit reflétant la variabilité observée. Les durées étant strictement positives, la variabilité est modélisée par une distribution \textbf{log-normale}, plus réaliste qu'une gaussienne pour des variables de temps.
 
-\textit{Exemple numérique :} Si $\bar{T}_{ij} = 12$ minutes et $\eta_{ij}(t) = 2{,}3$ minutes (échantillon d'une distribution normale avec $\sigma = 2{,}5$), alors $T_{ij}(t) = 12 + 2{,}3 = 14{,}3$ minutes.
+\textit{Exemple numérique :} Si $\bar{T}_{ij} = 12$ minutes et $\eta_{ij}(t) = 2{,}3$ minutes (échantillon d'une distribution log-normale avec $\sigma = 0{,}12$), alors $T_{ij}(t) = 12 + 2{,}3 = 14{,}3$ minutes.
 
 Cette modélisation stochastique est essentielle pour évaluer la robustesse des politiques apprises, car elle oblige l'agent à anticiper les variations plutôt que de se fier à des temps de trajet figés. Cette exigence de robustesse est également mise en avant dans les travaux récents de RL multi-agent appliqués au dispatching minier \cite{Zhao2025HierarchicalMARL}.
 
@@ -728,7 +728,7 @@ La récompense reflète les objectifs opérationnels. Le rendement global du sys
     R_t = w_1 \cdot R_{\text{rendement}}(s_t, s'_t) + w_2 \cdot R_{\text{équité}}(s_t) + w_3 \cdot R_{\text{coût}}(a_t)
 \end{equation}
 
-\textit{Exemple numérique :} Si $w_1 = 1{,}0$, $w_2 = 0{,}1$, $w_3 = 0{,}05$, $R_{\text{rendement}} = 280$ tonnes, $R_{\text{équité}} = -5{,}2$ (pénalité due à files inégales), $R_{\text{coût}} = -120$ (pénalité de distance), alors $R_t = 1{,}0 \times 280 + 0{,}1 \times (-5{,}2) + 0{,}05 \times (-120) = 280 - 0{,}52 - 6 = 273{,}48$.
+\textit{Exemple numérique :} Si $w_1 = 1{,}0$, $w_2 = 0{,}1$, $w_3 = 0{,}05$, $R_{\text{rendement}} = 280$ tonnes, $R_{\text{équité}} = -5{,}2$ (pénalité due à files inégales), $R_{\text{coût}} = -14{,}66$ (coût des trajets des deux camions assignés, voir sous-exemple ci-dessous), alors $R_t = 1{,}0 \times 280 + 0{,}1 \times (-5{,}2) + 0{,}05 \times (-14{,}66) = 280 - 0{,}52 - 0{,}73 = 278{,}75$.
 
 où :
 
@@ -1255,6 +1255,12 @@ PPO est une méthode actor-critic on-policy qui surmonte directement ces deux li
     \item \textbf{Robustesse au réglage}~: PPO est peu sensible aux hyperparamètres, ce qui garantit la reproductibilité des expériences~\cite{MoezKrichen2022, Szatmári2025}.
 \end{itemize}
 
+\textit{Exemple numérique du clipping~:} Supposons $\hat{A}_t = +2{,}0$ (bonne décision, mieux qu'attendu) et deux cas de ratio $r_t = \pi_\theta(a|s)/\pi_{\theta_\text{old}}(a|s)$, avec $\epsilon_\text{clip} = 0{,}2$~:
+\begin{itemize}
+    \item $r_t = 1{,}5$ (nouvelle politique 50\,\% plus probable sur cette action)~: terme non clippé $= 1{,}5 \times 2{,}0 = 3{,}0$~; terme clippé $= \text{clip}(1{,}5,\ 0{,}8,\ 1{,}2) \times 2{,}0 = 1{,}2 \times 2{,}0 = 2{,}4$~; $L^{\text{CLIP}} = \min(3{,}0,\ 2{,}4) = 2{,}4$ \textrightarrow{} le clipping plafonne la mise à jour et empêche un changement trop radical.
+    \item $r_t = 1{,}1$ (ajustement modéré, dans la zone $[0{,}8~;~1{,}2]$)~: terme non clippé $= 1{,}1 \times 2{,}0 = 2{,}2$~; terme clippé $= 1{,}1 \times 2{,}0 = 2{,}2$~; $L^{\text{CLIP}} = 2{,}2$ \textrightarrow{} pas de clipping, mise à jour normale.
+\end{itemize}
+
 Le tableau~\ref{tab:comparaison-algos} confronte DQN et PPO sur les crit\`eres d\'eterminants pour notre probl\`eme. Sa lecture ligne par ligne fait ressortir l'avantage syst\'ematique de PPO en mati\`ere de stabilit\'e, de robustesse au bruit et de scalabilit\'e de l'espace d'action --- propri\'et\'es qui justifient son choix comme approche finale, DQN \'etant conserv\'e comme \'etape interm\'ediaire de comparaison.
 
 \begin{table}[H]
@@ -1534,6 +1540,15 @@ L'Algorithme~\ref{alg:ppo-dispatching} formalise la procédure complète d'entra
 \end{algorithm}
 
 Cet algorithme illustre comment les composantes théoriques définies au Chapitre~3 (MDP, récompense pondérée, stochasticité) s'articulent avec les choix techniques du présent chapitre (PPO, architecture réseau, hyperparamètres) pour former une boucle d'apprentissage complète et cohérente. La ligne~9 montre en particulier l'encodage de l'espace d'action $\mathcal{A} = \text{Discrete}(|\mathcal{P}| \times |\mathcal{D}| + 1)$ qui permet à l'agent de choisir simultanément la pelle et le point de déchargement. Le terme +1 représente l'action neutre (ATTENDRE), permettant à l'agent de temporiser si aucune affectation n'est productive à l'instant $t$.
+
+\textit{Exemple numérique du GAE~:} Supposons trois erreurs TD consécutives après une bonne décision d'affectation~: $\delta_0 = 0{,}8$ (le camion est livré, mieux qu'attendu), $\delta_1 = 0{,}4$ (le cycle suivant se déroule également bien) et $\delta_2 = 0{,}1$ (effet positif résiduel). Avec $\gamma = 0{,}99$, $\lambda = 0{,}95$ et $\gamma\lambda = 0{,}9405$~:
+\begin{equation}
+    \hat{A}_0 = \delta_0 + (\gamma\lambda)\,\delta_1 + (\gamma\lambda)^2\,\delta_2
+             = 0{,}8 + 0{,}9405 \times 0{,}4 + 0{,}9405^2 \times 0{,}1
+             = 0{,}800 + 0{,}376 + 0{,}088
+             = 1{,}26
+\end{equation}
+L'avantage $\hat{A}_0 = 1{,}26 > 0$ indique que la décision d'affectation prise était significativement meilleure que ce que le critique anticipait~: PPO augmentera donc la probabilité de cette action dans cette situation lors de la mise à jour suivante. Si les erreurs avaient été négatives (pelle congestionnée, cycle improductif), $\hat{A}_0$ serait négatif et PPO diminuerait la probabilité de cette action.
 
 \section{Conclusion}
 \label{sec:conclusion-methodologie}
