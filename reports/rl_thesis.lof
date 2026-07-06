@@ -3,42 +3,42 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {3.1}{\ignorespaces Cycle opérationnel du système camion-pelle et point d'intervention de l'agent de dispatching.}}{12}{figure.caption.14}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Représentation du réseau routier sous forme de graphe stochastique.}}{15}{figure.caption.20}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Schéma d'interaction entre l'agent RL (politique) et l'environnement (simulateur minier).}}{18}{figure.caption.26}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Structure multi-objectif de la fonction de récompense globale.}}{20}{figure.caption.28}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Représentation du réseau routier sous forme de graphe stochastique.}}{16}{figure.caption.20}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Schéma d'interaction entre l'agent RL (politique) et l'environnement (simulateur minier).}}{19}{figure.caption.26}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Structure multi-objectif de la fonction de récompense globale.}}{21}{figure.caption.28}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Cycle de vie CRISP-RL adapté à la logistique minière.}}{23}{figure.caption.31}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Architecture fonctionnelle de la solution proposée.}}{24}{figure.caption.33}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Architecture modulaire du simulateur Gymnasium.}}{26}{figure.caption.34}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Architecture du réseau de neurones (MLP) de l'agent PPO.}}{34}{figure.caption.42}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Pipeline du flux de données entre la mine et l'agent DRL.}}{35}{figure.caption.46}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Cycle de vie CRISP-RL adapté à la logistique minière.}}{25}{figure.caption.31}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Architecture fonctionnelle de la solution proposée.}}{26}{figure.caption.33}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Architecture modulaire du simulateur Gymnasium.}}{28}{figure.caption.34}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Architecture du réseau de neurones (MLP) de l'agent PPO.}}{36}{figure.caption.42}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Pipeline du flux de données entre la mine et l'agent DRL.}}{38}{figure.caption.46}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {5.1}{\ignorespaces Architecture globale du projet.}}{44}{figure.caption.55}%
-\contentsline {figure}{\numberline {5.2}{\ignorespaces Graphe routier du simulateur minier.}}{47}{figure.caption.58}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Architecture globale du projet.}}{47}{figure.caption.55}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Graphe routier du simulateur minier.}}{50}{figure.caption.58}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {6.1}{\ignorespaces Productivité comparative des algorithmes sur les trois scénarios.}}{52}{figure.caption.67}%
-\contentsline {figure}{\numberline {6.2}{\ignorespaces Temps d'attente moyen (min) — Fixed Assignment, PPO et DQN sur les trois scénarios.}}{56}{figure.caption.73}%
-\contentsline {figure}{\numberline {6.3}{\ignorespaces Courbes de convergence de Q-Learning et SARSA — scénario nominal (récompense cumulée moyenne sur les 100 derniers épisodes, 30\,000 épisodes). Q-Learning~: 155 $\to $ 175 ($+12{,}5\%$) ; SARSA~: convergence vers $\approx 145$.}}{57}{figure.caption.74}%
-\contentsline {figure}{\numberline {6.4}{\ignorespaces Courbes de convergence de Q-Learning et SARSA — scénario high\_load (18 camions). Q-Learning~: 213 $\to $ 225 ($+5{,}4\%$) ; SARSA~: convergence vers $\approx 190$.}}{57}{figure.caption.75}%
-\contentsline {figure}{\numberline {6.5}{\ignorespaces Courbes de convergence de Q-Learning et SARSA — scénario high\_breakdown (taux de pannes 10\%). Q-Learning~: 147 $\to $ 158 ($+7{,}3\%$) ; SARSA~: convergence vers $\approx 142$.}}{58}{figure.caption.76}%
-\contentsline {figure}{\numberline {6.6}{\ignorespaces Convergence de DQN et PPO — scénario nominal (productivité t/h lissée). DQN~: 3\,028 $\to $ 4\,050~t/h ($+33{,}8\%$)~; PPO~: 3\,150 $\to $ 3\,999~t/h ($+27{,}0\%$).}}{58}{figure.caption.77}%
-\contentsline {figure}{\numberline {6.7}{\ignorespaces Convergence de DQN et PPO — scénario high\_load (productivité t/h lissée). DQN~: 4\,445 $\to $ 5\,662~t/h ($+27{,}4\%$)~; PPO~: 4\,515 $\to $ 5\,215~t/h ($+15{,}5\%$).}}{59}{figure.caption.78}%
-\contentsline {figure}{\numberline {6.8}{\ignorespaces Convergence de DQN et PPO — scénario high\_breakdown (productivité t/h lissée). DQN~: 2\,905 $\to $ 3\,817~t/h ($+31{,}4\%$)~; PPO~: 2\,993 $\to $ 3\,559~t/h ($+19{,}0\%$).}}{59}{figure.caption.79}%
-\contentsline {figure}{\numberline {6.9}{\ignorespaces Exploration vs exploitation — scénario nominal. Gauche~: décroissance de $\epsilon $ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt {rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}}{60}{figure.caption.81}%
-\contentsline {figure}{\numberline {6.10}{\ignorespaces Exploration vs exploitation — scénario high\_load. Gauche~: décroissance de $\epsilon $ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt {rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}}{61}{figure.caption.82}%
-\contentsline {figure}{\numberline {6.11}{\ignorespaces Exploration vs exploitation — scénario high\_breakdown. Gauche~: décroissance de $\epsilon $ (Q-Learning/SARSA, schéma analytique~; DQN, \texttt {rollout/exploration\_rate}). Droite~: entropie de la politique PPO (moyenne mobile, 20 points).}}{61}{figure.caption.83}%
-\contentsline {figure}{\numberline {6.12}{\ignorespaces Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario nominal (30\,000 épisodes, moyenne mobile sur 300 épisodes).}}{62}{figure.caption.85}%
-\contentsline {figure}{\numberline {6.13}{\ignorespaces Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_load (30\,000 épisodes, moyenne mobile sur 300 épisodes).}}{62}{figure.caption.86}%
-\contentsline {figure}{\numberline {6.14}{\ignorespaces Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_breakdown (30\,000 épisodes, moyenne mobile sur 300 épisodes).}}{63}{figure.caption.87}%
-\contentsline {figure}{\numberline {6.15}{\ignorespaces DQN — perte du réseau Q (\texttt {train/loss}) au cours de l'entraînement, scénario nominal (moyenne mobile sur 30 points).}}{63}{figure.caption.89}%
-\contentsline {figure}{\numberline {6.16}{\ignorespaces PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario nominal (moyenne mobile sur 30 points).}}{64}{figure.caption.90}%
-\contentsline {figure}{\numberline {6.17}{\ignorespaces DQN — perte du réseau Q (\texttt {train/loss}) au cours de l'entraînement, scénario high\_load (moyenne mobile sur 30 points).}}{65}{figure.caption.91}%
-\contentsline {figure}{\numberline {6.18}{\ignorespaces PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_load (moyenne mobile sur 30 points).}}{65}{figure.caption.92}%
-\contentsline {figure}{\numberline {6.19}{\ignorespaces DQN — perte du réseau Q (\texttt {train/loss}) au cours de l'entraînement, scénario high\_breakdown (moyenne mobile sur 30 points).}}{66}{figure.caption.93}%
-\contentsline {figure}{\numberline {6.20}{\ignorespaces PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_breakdown (moyenne mobile sur 30 points).}}{66}{figure.caption.94}%
-\contentsline {figure}{\numberline {6.21}{\ignorespaces Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario nominal (10 épisodes).}}{67}{figure.caption.97}%
-\contentsline {figure}{\numberline {6.22}{\ignorespaces Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_load (10 épisodes).}}{68}{figure.caption.98}%
-\contentsline {figure}{\numberline {6.23}{\ignorespaces Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_breakdown (10 épisodes).}}{69}{figure.caption.99}%
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Productivité comparative des algorithmes sur les trois scénarios.}}{57}{figure.caption.67}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces Temps d'attente moyen (min) — Fixed Assignment, PPO et DQN sur les trois scénarios.}}{60}{figure.caption.73}%
+\contentsline {figure}{\numberline {6.3}{\ignorespaces Courbes de convergence de Q-Learning et SARSA — scénario nominal.}}{61}{figure.caption.74}%
+\contentsline {figure}{\numberline {6.4}{\ignorespaces Courbes de convergence de Q-Learning et SARSA — scénario high\_load.}}{61}{figure.caption.75}%
+\contentsline {figure}{\numberline {6.5}{\ignorespaces Courbes de convergence de Q-Learning et SARSA — scénario high\_breakdown.}}{62}{figure.caption.76}%
+\contentsline {figure}{\numberline {6.6}{\ignorespaces Convergence de DQN et PPO — scénario nominal (productivité t/h lissée).}}{62}{figure.caption.77}%
+\contentsline {figure}{\numberline {6.7}{\ignorespaces Convergence de DQN et PPO — scénario high\_load (productivité t/h lissée).}}{63}{figure.caption.78}%
+\contentsline {figure}{\numberline {6.8}{\ignorespaces Convergence de DQN et PPO — scénario high\_breakdown (productivité t/h lissée).}}{63}{figure.caption.79}%
+\contentsline {figure}{\numberline {6.9}{\ignorespaces Exploration vs exploitation — scénario nominal.}}{64}{figure.caption.81}%
+\contentsline {figure}{\numberline {6.10}{\ignorespaces Exploration vs exploitation — scénario high\_load.}}{65}{figure.caption.82}%
+\contentsline {figure}{\numberline {6.11}{\ignorespaces Exploration vs exploitation — scénario high\_breakdown.}}{65}{figure.caption.83}%
+\contentsline {figure}{\numberline {6.12}{\ignorespaces Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario nominal.}}{66}{figure.caption.85}%
+\contentsline {figure}{\numberline {6.13}{\ignorespaces Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_load.}}{66}{figure.caption.86}%
+\contentsline {figure}{\numberline {6.14}{\ignorespaces Évolution de l'erreur TD moyenne par épisode — Q-Learning et SARSA, scénario high\_breakdown.}}{67}{figure.caption.87}%
+\contentsline {figure}{\numberline {6.15}{\ignorespaces DQN — perte du réseau Q (\texttt {train/loss}) au cours de l'entraînement, scénario nominal.}}{67}{figure.caption.89}%
+\contentsline {figure}{\numberline {6.16}{\ignorespaces PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario nominal.}}{68}{figure.caption.90}%
+\contentsline {figure}{\numberline {6.17}{\ignorespaces DQN — perte du réseau Q (\texttt {train/loss}) au cours de l'entraînement, scénario high\_load.}}{69}{figure.caption.91}%
+\contentsline {figure}{\numberline {6.18}{\ignorespaces PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_load.}}{69}{figure.caption.92}%
+\contentsline {figure}{\numberline {6.19}{\ignorespaces DQN — perte du réseau Q (\texttt {train/loss}) au cours de l'entraînement, scénario high\_breakdown.}}{70}{figure.caption.93}%
+\contentsline {figure}{\numberline {6.20}{\ignorespaces PPO — Policy Loss et Value Loss (échelle log) au cours de l'entraînement, scénario high\_breakdown.}}{70}{figure.caption.94}%
+\contentsline {figure}{\numberline {6.21}{\ignorespaces Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario nominal.}}{71}{figure.caption.97}%
+\contentsline {figure}{\numberline {6.22}{\ignorespaces Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_load.}}{72}{figure.caption.98}%
+\contentsline {figure}{\numberline {6.23}{\ignorespaces Distribution des actions choisies par Q-Learning, SARSA, DQN et PPO — scénario high\_breakdown.}}{73}{figure.caption.99}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
