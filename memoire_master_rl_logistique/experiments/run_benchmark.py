@@ -6,7 +6,7 @@ du Chapitre 6.
 
 Protocole expérimental (Section 5.4 du mémoire) :
 - Mêmes scénarios pour toutes les méthodes
-- 10 réplications par scénario (seeds 42..51)
+- 30 réplications par scénario (seeds 42..71)
 - KPIs calculés de la même manière
 - Résultats sauvegardés en CSV reproductible
 
@@ -19,6 +19,7 @@ Méthodes comparées (Section 4.7.1 du mémoire) :
 from __future__ import annotations
 
 import csv
+import time
 from pathlib import Path
 
 from stable_baselines3 import DQN, PPO
@@ -48,9 +49,12 @@ def run_single_episode(
     obs, info = env.reset(seed=seed)
     total_reward = 0.0
     actions_taken = []
+    inference_times_ms: list[float] = []
 
     while True:
+        t0 = time.perf_counter()
         action = policy_fn(obs, info, env)
+        inference_times_ms.append((time.perf_counter() - t0) * 1_000)
         if debug_actions and len(actions_taken) < 10:  # Log first 10 actions
             actions_taken.append(action)
         obs, reward, terminated, truncated, info = env.step(action)
@@ -78,6 +82,10 @@ def run_single_episode(
         total_cycles=total_cycles,
     )
     kpis["total_reward"] = total_reward
+    kpis["inference_time_ms_mean"] = (
+        sum(inference_times_ms) / len(inference_times_ms) if inference_times_ms else 0.0
+    )
+    kpis["inference_time_ms_max"] = max(inference_times_ms) if inference_times_ms else 0.0
     return kpis
 
 
@@ -85,9 +93,17 @@ def run_benchmark(
     scenario: Scenario,
     output_dir: Path,
     train_ppo_flag: bool = True,
+    model_scenario: str | None = None,
 ) -> list[dict]:
-    """Exécute le benchmark pour un scénario donné."""
+    """Exécute le benchmark pour un scénario donné.
+
+    model_scenario : nom du scénario dont les modèles entraînés sont réutilisés.
+        Si None, utilise scenario.name (comportement normal).
+        Pour les scénarios de généralisation ("unseen_*"), passer "nominal" afin
+        d'évaluer des modèles non spécialisés sur des conditions nouvelles.
+    """
     results = []
+    model_key = model_scenario if model_scenario is not None else scenario.name
 
     # Créer un environnement temporaire pour initialiser les politiques
     temp_env = MineEnv(
@@ -143,7 +159,7 @@ def run_benchmark(
     }
 
     # --- Q-Learning (Section 4.4.1) ---
-    ql_dir = output_dir / f"q_learning_{scenario.name}"
+    ql_dir = output_dir / f"q_learning_{model_key}"
     ql_path = ql_dir / "q_table.pkl"
 
     if ql_path.exists():
@@ -172,7 +188,7 @@ def run_benchmark(
     policies["Q-Learning"] = q_learning_policy
 
     # --- SARSA (Section 4.4.3) ---
-    sarsa_dir = output_dir / f"sarsa_{scenario.name}"
+    sarsa_dir = output_dir / f"sarsa_{model_key}"
     sarsa_path = sarsa_dir / "sarsa_table.pkl"
 
     if sarsa_path.exists():
@@ -202,13 +218,13 @@ def run_benchmark(
 
     # --- DQN (Section 4.5.2) ---
     if train_ppo_flag:
-        dqn_path_scenario = output_dir / f"dqn_{scenario.name}" / "dqn_mine_agent.zip"
+        dqn_path_scenario = output_dir / f"dqn_{model_key}" / "dqn_mine_agent.zip"
 
         if dqn_path_scenario.exists():
-            print(f"  Chargement DQN scénario '{scenario.name}': {dqn_path_scenario}")
+            print(f"  Chargement DQN ({model_key}): {dqn_path_scenario}")
             dqn_model = DQN.load(str(dqn_path_scenario))
         else:
-            print(f"  Entraînement DQN pour scénario '{scenario.name}'...")
+            print(f"  Entraînement DQN pour scénario '{model_key}'...")
             dqn_model = train_dqn(
                 total_timesteps=scenario.total_timesteps,
                 seed=scenario.seeds[0],
@@ -218,7 +234,7 @@ def run_benchmark(
                 episode_minutes=scenario.episode_minutes,
                 breakdown_probability=scenario.breakdown_probability,
                 reward_weights=scenario.reward_weights,
-                output_dir=str(output_dir / f"dqn_{scenario.name}"),
+                output_dir=str(output_dir / f"dqn_{model_key}"),
             )
 
         def dqn_policy(obs, info, env, _model=dqn_model):
@@ -230,13 +246,13 @@ def run_benchmark(
     # --- PPO (Section 4.5.4) ---
     ppo_model = None
     if train_ppo_flag:
-        ppo_path_scenario = output_dir / f"ppo_{scenario.name}" / "ppo_mine_agent.zip"
+        ppo_path_scenario = output_dir / f"ppo_{model_key}" / "ppo_mine_agent.zip"
 
         if ppo_path_scenario.exists():
-            print(f"  Chargement PPO scénario '{scenario.name}': {ppo_path_scenario}")
+            print(f"  Chargement PPO ({model_key}): {ppo_path_scenario}")
             ppo_model = PPO.load(str(ppo_path_scenario))
         else:
-            print(f"  Entraînement PPO pour scénario '{scenario.name}'...")
+            print(f"  Entraînement PPO pour scénario '{model_key}'...")
             ppo_model = train_ppo(
                 total_timesteps=scenario.total_timesteps,
                 seed=scenario.seeds[0],
@@ -246,7 +262,7 @@ def run_benchmark(
                 episode_minutes=scenario.episode_minutes,
                 breakdown_probability=scenario.breakdown_probability,
                 reward_weights=scenario.reward_weights,
-                output_dir=str(output_dir / f"ppo_{scenario.name}"),
+                output_dir=str(output_dir / f"ppo_{model_key}"),
             )
 
         def ppo_policy(obs, info, env, _model=ppo_model):
@@ -306,17 +322,21 @@ def run_all_benchmarks(
         print(f"\n{'='*60}")
         print(f"Scénario: {name} — {scenario.description}")
         print(f"{'='*60}")
-        results = run_benchmark(scenario, out_path, train_ppo_flag)
+        # Scénarios "non vus" : réutiliser les modèles nominal (test de généralisation)
+        model_src = "nominal" if name.startswith("unseen_") else None
+        results = run_benchmark(scenario, out_path, train_ppo_flag, model_scenario=model_src)
         all_results.extend(results)
 
     csv_path = out_path / "benchmark_results.csv"
     if all_results:
         fieldnames = list(all_results[0].keys())
-        with csv_path.open("w", newline="", encoding="utf-8") as f:
+        write_header = not csv_path.exists()
+        with csv_path.open("a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
+            if write_header:
+                writer.writeheader()
             writer.writerows(all_results)
-        print(f"\nRésultats sauvegardés : {csv_path}")
+        print(f"\nRésultats sauvegardés : {csv_path}  ({len(all_results)} nouvelles lignes)")
 
 
 def main() -> None:
@@ -324,7 +344,7 @@ def main() -> None:
     run_all_benchmarks(
         output_dir="data/results",
         train_ppo_flag=True,
-        scenario_names=["nominal", "high_load", "high_breakdown"], # Les 3 scénarios du Chapitre 6
+        scenario_names=["nominal", "high_load", "high_breakdown"],
     )
 
 

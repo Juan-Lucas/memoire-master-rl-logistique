@@ -14,7 +14,7 @@ import pandas as pd
 from memoire_master_rl_logistique.experiments.plot_utils import save_figure
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
 
-SCENARIOS = [(s.label, s.suffix, f"Scénario {s.key}") for s in SCENARIO_DISPLAYS]
+SCENARIOS = [(s.label, s.suffix, s.label) for s in SCENARIO_DISPLAYS]
 
 ALGO_STYLE = {
     "DQN": "#2196F3",
@@ -33,9 +33,9 @@ def main() -> None:
             sub = df[(df["algorithm"] == algo) & (df["scenario"] == scenario_value)]
             ax.plot(sub["episode"], sub["productivity_smooth"], color=color, label=algo, linewidth=1.5)
 
-        ax.set_xlabel("Épisode")
-        ax.set_ylabel("Productivité (t/h) — lissée")
-        ax.set_title(f"Convergence de DQN et PPO — {scenario_label}")
+        ax.set_xlabel("Episode")
+        ax.set_ylabel("Productivity (t/h) — smoothed")
+        ax.set_title(f"DQN and PPO convergence — {scenario_label} scenario")
         ax.legend()
         ax.grid(True, alpha=0.3)
         plt.tight_layout()

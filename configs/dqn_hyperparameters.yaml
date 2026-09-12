@@ -1,0 +1,12 @@
+algorithm: DQN
+seed: 42
+learning_rate: 0.0003
+gamma: 0.99
+batch_size: 64
+buffer_size: 200000
+learning_starts: 1000
+target_update_interval: 1000
+exploration_fraction: 0.3
+exploration_initial_eps: 1.0
+exploration_final_eps: 0.02
+net_arch: [128, 128]

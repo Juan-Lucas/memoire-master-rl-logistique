@@ -1,10 +1,10 @@
-"""Entraînement de l'agent PPO pour le dispatching minier.
+﻿"""Entraînement de l'agent PPO pour le dispatching minier.
 
 Conforme au Chapitre 4, Section 4.5 du mémoire :
 - Algorithme : PPO (Proximal Policy Optimization)
 - Bibliothèque : Stable-Baselines3
 - Hyperparamètres : Tableau 4.6 du mémoire (Section 4.6.3)
-- Architecture réseau : MLP 128×128 avec ReLU (Section 4.5.3)
+- Architecture réseau : MLP 128×128 avec Tanh (Section 4.5.3)
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def train_ppo(
     - Batch size : 64
     - GAE Lambda : 0.95
     - Clip range : 0.2
-    - Architecture : MLP [128, 128] avec ReLU (Section 4.5.3)
+    - Architecture : MLP [128, 128] avec Tanh (Section 4.5.3)
 
     Note : Stable-Baselines3 utilise des logits pour les espaces d'actions
     discrets, ce qui est équivalent à une politique Softmax (les logits

@@ -14,7 +14,7 @@ import pandas as pd
 from memoire_master_rl_logistique.experiments.plot_utils import save_figure
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
 
-SCENARIOS = [(s.label, s.suffix, f"Scénario {s.key}") for s in SCENARIO_DISPLAYS]
+SCENARIOS = [(s.label, s.suffix, s.label) for s in SCENARIO_DISPLAYS]
 
 ALGO_STYLE = {
     "Q-Learning": "#4CAF50",
@@ -33,9 +33,9 @@ def main() -> None:
             sub = df[(df["algorithm"] == algo) & (df["scenario"] == scenario_value)]
             ax.plot(sub["episode"], sub["reward_smooth"], color=color, label=algo, linewidth=1.5)
 
-        ax.set_xlabel("Épisode")
-        ax.set_ylabel("Récompense cumulée — moyenne mobile (100 épisodes)")
-        ax.set_title(f"Convergence de Q-Learning et SARSA — {scenario_label}")
+        ax.set_xlabel("Episode")
+        ax.set_ylabel("Cumulative reward — 100-episode moving average")
+        ax.set_title(f"Q-Learning and SARSA convergence — {scenario_label} scenario")
         ax.legend()
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
