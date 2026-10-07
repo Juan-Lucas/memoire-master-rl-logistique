@@ -8,6 +8,7 @@
 \usepackage[a4paper,margin=2.2cm]{geometry}
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{graphicx}
+\graphicspath{{../}} % les figures sont dans reports/figures
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{tabularx}
@@ -60,7 +61,7 @@
 
 \author{%
 \begin{tabular}{c}
-Jean-Luc MUPASA KALUNGA$^{1}$ \qquad Olfa FERCHICHI$^{2}$\\[0.5em]
+Jean-Luc Mupasa Kalunga$^{1}$ \qquad Olfa Ferchichi$^{2}$\\[0.5em]
 {\small $^{1}$Faculty of Computer Science, Don Bosco University of Lubumbashi (UDBL), Lubumbashi, DRC}\\
 {\small $^{2}$RIADI Laboratory, ENSI, University of Manouba, Tunis, Tunisia}\\[0.3em]
 {\small\texttt{16mk293@esisalama.org; olfaferchichi@yahoo.fr}}
@@ -81,19 +82,19 @@ resilience of adaptive agents under disruption poorly characterised.  This paper
 operational robustness of eight dispatching policies: four classical heuristics, two tabular reinforcement
 learning agents (Q-Learning, SARSA), and two deep reinforcement learning agents (Deep Q-Network (DQN),
 Proximal Policy Optimization (PPO)), across three scenarios: nominal conditions, fleet oversaturation and high
-equipment-failure frequency. Four primary performance indicators are assessed (productivity, average waiting time, 
+equipment-failure frequency. Four primary performance indicators are assessed (productivity, average waiting time,
 equipment utilisation and specific fuel consumption) using 30 independent replications per (policy, scenario)
-pair and corrected statistical tests (Welch Analysis of Variance / Kruskal--Wallis, Holm--Bonferroni correction).  Three principal 
-findings emerge. First, PPO achieves the highest nominal productivity (4,176.7~t/h, $+2.6\%$ over Fixed Assignment, 
+pair and corrected statistical tests (Welch Analysis of Variance / Kruskal--Wallis, Holm--Bonferroni correction).  Three principal
+findings emerge. First, PPO achieves the highest nominal productivity (4,176.7~t/h, $+2.6\%$ over Fixed Assignment,
 $p < 0.001$, $d=1.94$). Second, a congestion collapse specific to distance-based heuristics is identified under
 fleet oversaturation: Nearest Shovel and Shortest Path reach waiting times near 200 minutes per cycle, while
 queue-based and deep reinforcement learning agents remain below 100 minutes.  Third, DQN delivers the highest
 observed throughput under high-breakdown conditions (3,949.2~t/h), leading Fixed Assignment by 130.7~t/h (Dunn $p=5.78\times10^{-3}$, $d=1.896$); its 49.6~t/h advantage over PPO is not significant under the rank-based post-hoc test ($p=0.686$).  These results demonstrate that the benefits of deep reinforcement learning for truck
-dispatching are strongly regime-dependent rather than universally superior to those of conventional heuristics. 
-PPO provides the highest productivity under nominal conditions, whereas Fixed Assignment remains highly competitive 
+dispatching are strongly regime-dependent rather than universally superior to those of conventional heuristics.
+PPO provides the highest productivity under nominal conditions, whereas Fixed Assignment remains highly competitive
 under fleet oversaturation, and DQN exhibits the strongest absolute throughput under frequent equipment failures.
-The observed reversal in policy rankings across operating regimes highlights the limitations of single-scenario 
-evaluation and supports the use of multi-regime stress-testing when assessing the operational resilience of 
+The observed reversal in policy rankings across operating regimes highlights the limitations of single-scenario
+evaluation and supports the use of multi-regime stress-testing when assessing the operational resilience of
 intelligent fleet-management policies.
 \end{abstract}
 
@@ -193,7 +194,8 @@ This work makes four contributions to mining engineering and intelligent fleet m
   \item \textbf{C4. Empirical decoupling of nominal efficiency from operational resilience.} The performance ranking of dispatching policies is shown to reverse across regimes, so that nominal productivity is a poor predictor of robustness under disruption. This result has direct implications for the design of evaluation protocols for mining fleet management systems.
 \end{itemize}
 
-The remainder of the paper is organised as follows. \cref{sec:relwork} reviews the literature on truck dispatching across three paradigms. \cref{sec:positioning} states the positioning of the study with respect to that literature. \cref{sec:formulation} formalises the dispatching problem. \cref{sec:framework} describes the proposed framework, \cref{sec:design} the experimental design and \cref{sec:results} the results. \cref{sec:discussion} discusses the findings and \cref{sec:conclusion} concludes.
+The remainder of the paper is organised as follows. \cref{sec:relwork} (\nameref{sec:relwork}) reviews the literature on truck dispatching across three paradigms. \cref{sec:positioning} (\nameref{sec:positioning}) states the positioning of the study with respect to that literature. \cref{sec:formulation} (\nameref{sec:formulation}) formalises the dispatching problem. \cref{sec:framework} (\nameref{sec:framework}) describes the proposed framework, \cref{sec:design} (\nameref{sec:design}) the experimental design, and \cref{sec:results} (\nameref{sec:results}) the results. \cref{sec:discussion} (\nameref{sec:discussion}) discusses the findings, and \cref{sec:conclusion} (\nameref{sec:conclusion}) concludes the paper.
+
 \section{Related Work}
 \label{sec:relwork}
 
@@ -607,7 +609,14 @@ This section details the integrated framework developed to evaluate and compare 
 
 \subsection{Simulation environment}
 
-In order to bridge the gap between abstract RL research and industrial applications, we developed a custom simulation environment compliant with the OpenAI Gymnasium interface \cite{MarkTowers2025}. This standardisation guarantees compatibility with state-of-the-art RL libraries \cite{AntoninRaffin2021} and facilitates reproducibility.
+In order to bridge the gap between abstract RL research and industrial applications, we developed a custom simulation environment compliant with the OpenAI Gymnasium interface \cite{MarkTowers2025}. This standardisation guarantees compatibility with state-of-the-art RL libraries \cite{AntoninRaffin2021} and facilitates reproducibility. The resulting software architecture is illustrated in \cref{fig:simulation}, which decomposes the framework into five functional modules described below.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{"figures/Architecture_logicielle_du_projet_EN_v2.drawio.png"}
+\caption{Modular software architecture of the proposed deep reinforcement learning dispatching framework.}
+\label{fig:simulation}
+\end{figure}
 
 The architecture is organised into several functional modules:
 
@@ -619,7 +628,7 @@ The architecture is organised into several functional modules:
   \item \textbf{KPI and benchmark modules:} these components track operational indicators in real time, enabling direct comparison between active RL agents and predefined industrial heuristics.
 \end{itemize}
 
-The modular architecture of the framework (\cref{fig:architecture}) separates the learning logic from the operational simulation, allowing any SB3-compatible policy to be substituted without modifying the environment core.
+The modular architecture of the framework (\cref{fig:simulation}) separates the learning logic from the operational simulation, allowing any SB3-compatible policy to be substituted without modifying the environment core.
 
 \subsection{Proximal Policy Optimization policy}
 
@@ -783,9 +792,10 @@ The system architecture relies on a decoupled design that separates the learning
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.88\textwidth]{"figures/Architecture fonctionnelle.drawio.png"}
-\caption{Overview of the proposed deep reinforcement learning dispatching framework.}
+\caption{Agent--environment interaction loop of the proposed framework.}
 \label{fig:architecture}
 \end{figure}
+
 \subsubsection{Computational efficiency}
 
 The framework is optimised for both training and deployment:
@@ -909,7 +919,7 @@ In line with high-impact research standards, we do not rely on single simulation
 To ensure the reproducibility of this study, all simulation parameters and hyperparameters are fixed. The simulation is implemented in Python 3.11.11 using Gymnasium 1.2.3 \cite{MarkTowers2025} and Stable-Baselines3 \cite{AntoninRaffin2021}. Training of the PPO and DQN agents was carried out on a standardised hardware configuration, with all random number generators (RNG) initialised from a global seed. The specific reward weights ($w_1 = 1$, $w_2 = 0.1$, $w_3 = 0.05$, $w_4 = 0.3$) were kept constant throughout the reinforcement learning experiments. The source code, configuration files and seed lists are archived in the repository and described in the Code Availability section so that the full experimental protocol can be inspected and rerun.
 
 \paragraph{Training and evaluation protocol.}
-PPO and DQN were trained exclusively on the nominal scenario ($N=12$ trucks, breakdown rate~$=2\%$) for 2~million environment timesteps. Q-Learning and SARSA, whose natural unit of progress is the episode rather than the individual environment interaction, were trained for 30,000 episodes on the same scenario (see Table~\ref{tab:hyper}); the two budgets are not directly comparable in wall-clock terms. The deep agents converge within their budget; the tabular agents do not, so their reported performance is a lower bound rather than a converged optimum. Evaluation on the high-load and high-breakdown scenarios was subsequently performed in \textit{zero-shot} fashion: the trained agents were deployed without any additional fine-tuning, directly measuring out-of-distribution generalisation. This train-on-nominal / test-on-disrupted design is the methodological basis of the resilience claims in \cref{sec:results}: if agents had been retrained per scenario, the study would measure adaptation, not robustness. 
+PPO and DQN were trained exclusively on the nominal scenario ($N=12$ trucks, breakdown rate~$=2\%$) for 2~million environment timesteps. Q-Learning and SARSA, whose natural unit of progress is the episode rather than the individual environment interaction, were trained for 30,000 episodes on the same scenario (see Table~\ref{tab:hyper}); the two budgets are not directly comparable in wall-clock terms. The deep agents converge within their budget; the tabular agents do not, so their reported performance is a lower bound rather than a converged optimum. Evaluation on the high-load and high-breakdown scenarios was subsequently performed in \textit{zero-shot} fashion: the trained agents were deployed without any additional fine-tuning, directly measuring out-of-distribution generalisation. This train-on-nominal / test-on-disrupted design is the methodological basis of the resilience claims in \cref{sec:results}: if agents had been retrained per scenario, the study would measure adaptation, not robustness.
 % ============================================================================
 % Section 6: Results
 % ============================================================================
