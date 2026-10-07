@@ -822,7 +822,7 @@ Les quatre règles de référence sont définies dans le \cref{tab:baselines} te
 
 \aexp{ajouter au moins une règle tenant compte des files et des trajets, telle que le temps d'attente minimal des camions, et une politique fondée sur un programme linéaire de taux de flux cibles (M25).}
 
-\adir{conserver Pelle la plus proche et Plus court chemin comme bornes basses, ou les corriger (par exemple calcul de la distance depuis la verse) et relancer l'évaluation.}
+\adir{conserver Pelle la plus proche et Plus court chemin comme bornes basses, ou les rendre réalistes en prenant la décision d'affectation à la verse, après le déversement. Modifier seulement la règle pour mesurer la distance depuis la verse ne suffit pas : dans le simulateur, le camion est déjà revenu à son ancienne pelle quand il reçoit sa nouvelle affectation. Cette option modifie le simulateur pour toutes les politiques et impose de réentraîner les agents (plan de correction, T16 bis et T21).}
 
 \begin{table}[H]
 \centering
@@ -1522,7 +1522,7 @@ Les travaux futurs porteront d'abord sur la consolidation de ces résultats : pl
 
 Le code source du simulateur, les scripts d'entraînement et d'évaluation et la liste des graines utilisées pour les 30 réplications (graines 42 à 71) sont accessibles sur GitHub à l'adresse \url{https://github.com/Juan-Lucas/memoire-master-rl-logistique}.
 
-\adir{la version précédente mentionnait des fichiers YAML d'hyperparamètres dans un répertoire \texttt{configs/}, absent du code analysé : ajouter ce répertoire ou retirer la mention ; nettoyer les références internes au mémoire dans les commentaires du code avant publication (rapport d'audit, N10).}
+\adir{la version précédente mentionnait des fichiers YAML d'hyperparamètres dans un répertoire \texttt{configs/}. Ce répertoire existe, mais aucun script ne lit ses fichiers : les valeurs sont recopiées en dur dans le code et \texttt{experiment\_config.yaml} indique une version de Python erronée. Faire lire ces fichiers par les scripts, ou retirer la mention (plan de correction, T28). Les références internes au mémoire ont été retirées des commentaires du code le 7 octobre 2026 (rapport d'audit, N10).}
 
 \section*{Contributions des auteurs}
 
