@@ -1,6 +1,13 @@
 # Data
 /data/
 
+# Articles PDF de la bibliographie (droits d'auteur : conservés en local seulement)
+references/**/*.pdf
+
+# Sorties de compilation LaTeX et configuration de l'IDE
+$build/
+.idea/
+
 # Documentation personnelle (usage interne — non publiée sur GitHub)
 # Seul docs/glossaire.md reste visible pour les lecteurs
 docs/*
