@@ -1,4 +1,4 @@
-"""Tests de non-regression pour le simulateur minier."""
+"""Tests de base de l'environnement minier et de la politique FIFO."""
 
 from __future__ import annotations
 

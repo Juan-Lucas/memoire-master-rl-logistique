@@ -8,24 +8,26 @@ import numpy as np
 
 
 def _extract_decision_features(obs: np.ndarray, num_shovels: int, num_dumps: int) -> np.ndarray:
-    """Extrait et renormalise les features décisionnelles.
+    """Extrait les attentes aux pelles et aux verses et les étale sur [0, 1].
 
-    Normalisation par max réaliste :
-    - Attente pelle max réaliste : 30 min → 30/480 = 0.0625
-    - On renormalise pour étaler sur [0,1] avec facteur ×50
+    Dans l'observation, une attente vaut minutes / 480. Multipliée par 50 et
+    bornée à 1, elle sature au-delà de 480 / 50 = 9,6 min.
     """
     shovel_waits = obs[:num_shovels]
     dump_waits = obs[num_shovels:num_shovels + num_dumps]
     features = np.concatenate([shovel_waits, dump_waits])
 
-    # Renormalisation : les valeurs sont dans [0, 0.02] en pratique
-    # On les étale sur [0, 1] en multipliant par 50
     features = np.clip(features * 50.0, 0.0, 1.0)
     return features
 
 
 def _discretize_obs(obs: np.ndarray, n_bins: int, num_shovels: int = 3, num_dumps: int = 2) -> tuple[int, ...]:
-    """Discrétise uniquement les features essentielles."""
+    """État discret : 5 attentes (3 pelles, 2 verses) en ``n_bins`` intervalles,
+    plus l'indice de la pelle la plus proche du camion courant.
+
+    Avec les réglages par défaut : 8⁵ × 3 = 98 304 états possibles. Le nombre
+    de camions n'apparaît pas, d'où l'indépendance vis-à-vis de N.
+    """
     reduced = _extract_decision_features(obs, num_shovels, num_dumps)
     clipped = np.clip(reduced, 0.0, 1.0)
     indices = list(np.minimum((clipped * n_bins).astype(int), n_bins - 1))

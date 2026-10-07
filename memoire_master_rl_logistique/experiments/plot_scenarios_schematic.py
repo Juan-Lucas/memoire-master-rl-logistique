@@ -1,4 +1,4 @@
-"""Génère le schéma conceptuel des 3 scénarios expérimentaux (Fig 3).
+"""Génère le schéma conceptuel des 3 scénarios expérimentaux.
 
 Affiche pour chaque scénario : flotte de camions, shovels, dumps,
 et le taux de pannes — sous forme de diagramme minimaliste.

@@ -1,5 +1,5 @@
 """Ré-entraînement Q-Learning / SARSA (scénario nominal) avec journalisation
-de l'epsilon et de l'erreur TD par épisode (figures de diagnostic RL, §6.3.1).
+de l'epsilon et de l'erreur TD par épisode (figures de diagnostic).
 
 Hyperparamètres identiques à run_benchmark.py (scénario nominal, seed=42) :
 le résultat (q_table / sarsa_table) est donc identique, seul un fichier

@@ -1,6 +1,6 @@
 """Politique FIFO (First In, First Out).
 
-Baseline classique (Section 4.7.1 du mémoire) :
+Heuristique de référence :
 les camions sont affectés à la pelle dont la file d'attente est la plus
 courte, c'est-à-dire la pelle disponible le plus tôt (idle depuis le plus
 longtemps). Cette règle est simple et équitable mais ne tient compte ni

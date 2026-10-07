@@ -8,9 +8,12 @@ def compute_kpis(
     total_cycles: int = 0,
     total_distance_km: float = 0.0,
 ) -> dict[str, float]:
-    """Calcule les KPIs de performance de la simulation minière.
+    """Calcule les indicateurs d'un poste.
 
-    Conforme au Tableau 4.8 du mémoire (Section 4.7.4).
+    ``avg_wait_min_per_truck`` est l'attente cumulée par camion sur tout le
+    poste (files, réparations et action ATTENDRE confondues), pas par cycle.
+    ``utilization_pct`` compte aussi le temps actif du dernier cycle quand il
+    déborde après la fin du poste.
     """
     episode_hours = max(episode_minutes / 60.0, 1e-9)
     max_available_minutes = max(float(truck_count) * episode_minutes, 1e-9)
@@ -20,7 +23,7 @@ def compute_kpis(
     utilization_pct = (total_active_min / max_available_minutes) * 100.0
     specific_fuel_l_per_ton = total_fuel_l / max(total_tonnage_t, 1e-9)
 
-    # Coût moyen par cycle (Section 4.7.4)
+    # Carburant moyen par cycle (L)
     cost_per_cycle = total_fuel_l / max(float(total_cycles), 1.0)
 
     return {

@@ -2,8 +2,8 @@
 
 Source : data/results/benchmark_results.csv
 Output :
-- reports/figures/barplot_productivite_scenarios.png  (Fig 4: productivity bar chart)
-- reports/figures/wait_time_comparison.png            (Fig 5: waiting-time bar chart)
+- reports/figures/barplot_productivite_scenarios.png  (productivity bar chart)
+- reports/figures/wait_time_comparison.png            (waiting-time bar chart)
 """
 
 from __future__ import annotations

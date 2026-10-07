@@ -1,1 +1,1 @@
-"""Module d'expérimentation (Chapitre 5)."""
+"""Scénarios, benchmark, analyses statistiques et figures."""

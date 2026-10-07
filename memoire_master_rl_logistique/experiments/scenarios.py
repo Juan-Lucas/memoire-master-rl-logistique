@@ -1,14 +1,11 @@
-"""Scénarios expérimentaux (Section 5.4 du mémoire).
+"""Scénarios expérimentaux (régimes, ablation, scénarios non vus).
 
-Chaque scénario est une configuration paramétrique permettant
-d'évaluer la robustesse et la performance des stratégies de
-dispatching sur des conditions variées.
-
-Valeurs par défaut basées sur la littérature :
+Valeurs par défaut inspirées de la littérature :
 - 12 camions Cat 785C (Kangwa 2021, Kansanshi)
 - 3 pelles Hitachi 2500 (Mohtasham 2023)
-- 2 dumps, shift de 8 heures
-- 30 réplications par scénario (seeds 42..71, exigence Q1)
+- 2 verses, poste de 8 heures
+- 30 réplications par scénario (graines 42 à 71). Attention : ``seeds[0]``
+  sert aussi de graine d'entraînement dans ``run_benchmark``.
 """
 
 from __future__ import annotations
@@ -28,7 +25,7 @@ class Scenario:
     episode_minutes: float = 480.0
     breakdown_probability: float = 0.02
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3)
-    seeds: list[int] = field(default_factory=lambda: list(range(42, 72)))  # 30 réplications (Q1)
+    seeds: list[int] = field(default_factory=lambda: list(range(42, 72)))  # 30 réplications
     total_timesteps: int = 2_000_000
 
 
@@ -41,7 +38,7 @@ SCENARIOS: dict[str, Scenario] = {
         dump_count=2,
         episode_minutes=480.0,
         breakdown_probability=0.02,
-        total_timesteps=2_000_000,  # Augmenté à 2M pour améliorer PPO/DQN
+        total_timesteps=2_000_000,
     ),
     "nominal_asymétrique": Scenario(
         name="nominal_asymétrique",
@@ -77,8 +74,8 @@ SCENARIOS: dict[str, Scenario] = {
 
 
 # ---------------------------------------------------------------------------
-# Scénarios d'ablation — reward shaping (section 5.8.6 de l'article Q1)
-# Teste l'impact de w4 sur les 8 politiques (toutes comparées à w4=0.3 du nominal).
+# Ablation sur w4 (poids de la pénalité d'attente), régime nominal sinon.
+# w4 = 0,3 correspond au scénario "nominal" lui-même.
 # ---------------------------------------------------------------------------
 _ABLATION_W4 = [0.0, 0.1, 0.5]  # w4=0.3 déjà dans nominal
 for _w4 in _ABLATION_W4:
@@ -90,8 +87,9 @@ for _w4 in _ABLATION_W4:
     )
 
 # ---------------------------------------------------------------------------
-# Scénarios non vus pendant l'entraînement — généralisation (section 8, bonus Q1)
-# Non requis pour l'article principal. Définis ici pour usage futur.
+# Scénarios non vus, évalués avec les modèles nominaux (voir run_all_benchmarks).
+# unseen_medium_load (15 camions) est incompatible avec les modèles PPO et DQN
+# nominaux : la taille de l'observation dépend du nombre de camions.
 # ---------------------------------------------------------------------------
 SCENARIOS["unseen_medium_load"] = Scenario(
     name="unseen_medium_load",

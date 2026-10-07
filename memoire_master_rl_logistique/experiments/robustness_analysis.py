@@ -1,4 +1,4 @@
-"""Analyse de robustesse inter-scénarios (section 5.8.3 du plan Q1).
+"""Analyse de robustesse inter-scénarios.
 
 Calcule le Robustness Ratio pour chaque politique et chaque scénario :
 
@@ -10,7 +10,7 @@ nominales sous perturbation. Un ratio faible indique une dégradation.
 Produit :
 - Un tableau CSV `data/results/robustness_ratios.csv`
 - Un affichage console du tableau et du Δ_breakdown
-- Une heatmap (Figure 6 de l'article)
+- Une heatmap de dégradation
 """
 
 from __future__ import annotations
@@ -110,7 +110,7 @@ def plot_robustness_heatmap(
     results_csv: str | Path | None = None,
     output_path: str | Path | None = None,
 ) -> None:
-    """Two-block degradation heatmap (Figure 7).
+    """Two-block degradation heatmap.
 
     Top block  : productivity signed % change vs nominal = (RR-1)*100
                  positive (blue) = improvement, negative (red) = degradation

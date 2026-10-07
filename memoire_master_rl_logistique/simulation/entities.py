@@ -1,9 +1,7 @@
-"""Entités du système de transport minier.
+"""Entités du système de transport : camions, pelles et verses.
 
-Correspondance avec le MDP (Tableau 4.2 du mémoire) :
-- Truck  → x_c (localisation, statut) — Eq. 3.3
-- Shovel → q_p (file d'attente), z_r  — Eq. 3.3
-- DumpSite → z_r (disponibilité)      — Eq. 3.3
+Les durées sont en minutes ; ``available_at_min`` est l'heure à laquelle
+l'entité redevient libre.
 """
 
 from __future__ import annotations
@@ -13,10 +11,10 @@ from dataclasses import dataclass, field
 
 @dataclass(slots=True)
 class Truck:
-    """Camion minier — encode la composante x_c de l'état s_t.
+    """Camion : disponibilité et compteurs cumulés sur le poste.
 
-    Suit en temps réel la position, le statut et les KPIs
-    individuels (tonnage, carburant, temps d'attente).
+    La position et le statut du camion sont gardés par ``MineEnv``
+    (``truck_locations``, ``truck_statuses``). ``history`` n'est pas utilisé.
     """
 
     truck_id: str
@@ -32,11 +30,7 @@ class Truck:
 
 @dataclass(slots=True)
 class Shovel:
-    """Pelle excavatrice — encode q_p et z_r dans l'état s_t.
-
-    Les paramètres load_time_mean_min et load_time_std_min
-    permettent d'échantillonner le bruit stochastique η (Eq. 3.2).
-    """
+    """Pelle : durée de chargement log-normale (moyenne et écart-type en min)."""
 
     shovel_id: str
     node_id: str
@@ -47,11 +41,7 @@ class Shovel:
 
 @dataclass(slots=True)
 class DumpSite:
-    """Point de déchargement — encode z_r dans l'état s_t.
-
-    Modélise les goulots d'étranglement potentiels en fin de
-    parcours avec la même stochasticité gaussienne que les pelles.
-    """
+    """Verse (point de déchargement) : durée de déversement log-normale."""
 
     dump_id: str
     node_id: str

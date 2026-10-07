@@ -1,4 +1,4 @@
-"""Interface commune aux politiques baseline (Section 4.7.1 du mémoire).
+"""Interface commune aux heuristiques de référence.
 
 Toutes les baselines exposent la même signature ``predict(observation,
 info, truck_location)`` afin que ``run_benchmark.py`` et

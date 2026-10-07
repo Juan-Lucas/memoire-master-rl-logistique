@@ -1,14 +1,11 @@
-"""Point d'entrée principal du système de dispatching minier.
+"""Point d'entrée en ligne de commande.
 
-Pipeline complet :
-  1. Simulation DES pour validation du moteur
-  2. Entraînement des agents RL (Section 4.4–4.5)
-  3. Évaluation comparative heuristiques + RL classiques + Deep RL (Section 4.7)
-  4. Génération du rapport statistique (Chapitre 6)
+Sans option, le pipeline complet entraîne PPO dans ``models/ppo_mine`` puis
+lance le benchmark, qui relit ses modèles dans ``data/results`` : le PPO de
+l'étape 1 n'est donc pas celui évalué.
 
 Usage :
   python -m memoire_master_rl_logistique.main
-  python -m memoire_master_rl_logistique.main --sim-only
   python -m memoire_master_rl_logistique.main --train-only
   python -m memoire_master_rl_logistique.main --train-q-learning
   python -m memoire_master_rl_logistique.main --train-sarsa
@@ -27,8 +24,6 @@ from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
-
-# from memoire_master_rl_logistique.simulation.events import build_simulation  # Removed - DES not in thesis
 
 
 def run_check_env(
@@ -68,15 +63,15 @@ def main() -> None:
     )
     parser.add_argument(
         "--train-q-learning", action="store_true",
-        help="Entraîner l'agent Q-Learning tabulaire (Section 4.4.1)",
+        help="Entraîner l'agent Q-Learning tabulaire",
     )
     parser.add_argument(
         "--train-sarsa", action="store_true",
-        help="Entraîner l'agent SARSA tabulaire (Section 4.4.3)",
+        help="Entraîner l'agent SARSA tabulaire",
     )
     parser.add_argument(
         "--train-dqn", action="store_true",
-        help="Entraîner l'agent DQN (Section 4.5.2)",
+        help="Entraîner l'agent DQN",
     )
     parser.add_argument(
         "--episodes", type=int, default=30_000,
@@ -108,7 +103,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--visualize-graph", action="store_true",
-        help="Générer la figure du réseau routier minier (Section 3.2)",
+        help="Générer la figure du réseau routier minier",
     )
 
     args = parser.parse_args()
@@ -181,7 +176,7 @@ def main() -> None:
     print("PIPELINE COMPLET — Dispatching minier par RL")
     print("=" * 60)
 
-    # Étape 1 : Entraînement PPO (Modèle final proposé)
+    # Étape 1 : entraînement PPO
     train_ppo(
         total_timesteps=args.timesteps,
         truck_count=args.truck_count,
@@ -189,7 +184,7 @@ def main() -> None:
         dump_count=args.dump_count,
     )
 
-    # Étape 2 : Benchmark sur TOUS les scénarios du mémoire
+    # Étape 2 : benchmark sur les trois régimes
     run_all_benchmarks(
         output_dir="data/results",
         train_ppo_flag=True,

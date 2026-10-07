@@ -1,13 +1,12 @@
-"""Étude d'ablation de la fonction de récompense (section 5.8.6 du plan Q1).
+"""Étude d'ablation sur w4, le poids de la pénalité d'attente.
 
-Teste l'impact du terme de pénalité d'attente w4 sur la convergence
-des méthodes tabulaires (Q-Learning, SARSA) et des agents Deep RL.
+Pour chaque valeur, le benchmark est relancé et les quatre agents sont
+réentraînés une fois, avec la même graine.
 
 Valeurs testées : w4 = 0.0 / 0.1 / 0.3 (valeur retenue) / 0.5
 Scénario fixé  : nominal (12 camions, pb=2 %)
 
-Les résultats sont sauvegardés dans data/results/ablation/ablation_w4.csv
-et permettent de tracer le tableau 14 de l'article (étude d'ablation).
+Les résultats sont sauvegardés dans data/results/ablation/ablation_w4.csv.
 """
 
 from __future__ import annotations

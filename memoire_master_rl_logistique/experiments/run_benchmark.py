@@ -1,19 +1,12 @@
-"""Benchmark comparatif complet.
+"""Benchmark : 8 politiques × scénarios × 30 graines d'évaluation.
 
-Exécute toutes les méthodes (heuristiques + RL classiques + Deep RL)
-sur tous les scénarios avec plusieurs seeds pour produire les données
-du Chapitre 6.
-
-Protocole expérimental (Section 5.4 du mémoire) :
-- Mêmes scénarios pour toutes les méthodes
-- 30 réplications par scénario (seeds 42..71)
-- KPIs calculés de la même manière
-- Résultats sauvegardés en CSV reproductible
-
-Méthodes comparées (Section 4.7.1 du mémoire) :
 - Heuristiques : FIFO, Fixed, Nearest, ShortestPath
-- RL classiques : Q-Learning, SARSA
-- Deep RL : DQN, PPO
+- RL tabulaire : Q-Learning, SARSA
+- RL profond : DQN, PPO
+
+Les agents sont chargés depuis ``output_dir`` s'ils existent, sinon entraînés
+(un agent par scénario, graine ``seeds[0]``). Les résultats sont AJOUTÉS à
+``benchmark_results.csv`` : relancer le script duplique les lignes.
 """
 
 from __future__ import annotations
@@ -158,7 +151,7 @@ def run_benchmark(
         "ShortestPath": _make_policy_fn(shortest_path_policy_obj, needs_graph_sync=True),
     }
 
-    # --- Q-Learning (Section 4.4.1) ---
+    # --- Q-Learning ---
     ql_dir = output_dir / f"q_learning_{model_key}"
     ql_path = ql_dir / "q_table.pkl"
 
@@ -187,7 +180,7 @@ def run_benchmark(
 
     policies["Q-Learning"] = q_learning_policy
 
-    # --- SARSA (Section 4.4.3) ---
+    # --- SARSA ---
     sarsa_dir = output_dir / f"sarsa_{model_key}"
     sarsa_path = sarsa_dir / "sarsa_table.pkl"
 
@@ -216,7 +209,7 @@ def run_benchmark(
 
     policies["SARSA"] = sarsa_policy_fn
 
-    # --- DQN (Section 4.5.2) ---
+    # --- DQN ---
     if train_ppo_flag:
         dqn_path_scenario = output_dir / f"dqn_{model_key}" / "dqn_mine_agent.zip"
 
@@ -243,7 +236,7 @@ def run_benchmark(
 
         policies["DQN"] = dqn_policy
 
-    # --- PPO (Section 4.5.4) ---
+    # --- PPO ---
     ppo_model = None
     if train_ppo_flag:
         ppo_path_scenario = output_dir / f"ppo_{model_key}" / "ppo_mine_agent.zip"

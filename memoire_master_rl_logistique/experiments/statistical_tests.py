@@ -1,15 +1,10 @@
-"""Tests statistiques pour les résultats de benchmark.
+"""Tests statistiques sur benchmark_results.csv.
 
-Ce module reproduit l'analyse statistique décrite au chapitre 6 du mémoire
-et étend cette analyse aux exigences d'une revue Q1 (section 5.7.4 du plan
-d'article) :
+Les politiques sont traitées comme des groupes indépendants, et le CSV est lu
+tel quel, sans retrait des doublons.
 
-Mémoire (déjà présent) :
-- Tests t de Welch (comparaisons par paires)
-- ANOVA à un facteur sur les 8 politiques
-- Test post-hoc de Tukey HSD
-
-Ajouts Q1 :
+- Tests t de Welch unilatéraux (comparaisons par paires)
+- ANOVA, Welch-ANOVA ou Kruskal–Wallis selon les prérequis, puis Tukey ou Dunn
 - Test de Shapiro-Wilk (normalité par groupe)
 - Test de Levene (homogénéité des variances)
 - Kruskal-Wallis (alternative non paramétrique si normalité rejetée)
@@ -120,11 +115,7 @@ def run_t_test(df: pd.DataFrame, scenario: str, policy_a: str, policy_b: str) ->
 
 
 def run_welch_anova(groups: list[np.ndarray]) -> tuple[float, float]:
-    """Welch-ANOVA (Brown-Forsythe) via scipy — robuste aux variances hétérogènes.
-
-    Utilise scipy.stats.f_oneway avec equal_var=False via une implémentation manuelle
-    basée sur la statistique de Welch à un facteur.
-    """
+    """ANOVA de Welch à un facteur (variances hétérogènes), calculée à la main."""
     k = len(groups)
     n_i = np.array([len(g) for g in groups])
     m_i = np.array([g.mean() for g in groups])
@@ -150,17 +141,16 @@ def dunn_test(groups: list[np.ndarray], labels: list[str], alpha: float = 0.05) 
     """Test de Dunn post-hoc après Kruskal-Wallis, avec correction de Holm-Bonferroni.
 
     Implémentation directe basée sur les rangs joints (pas de dépendance externe).
-    Conforme à la préconisation du plan Q1 : KW → Dunn + Holm.
     """
     all_data = np.concatenate(groups)
     N = len(all_data)
     all_ranks = rankdata(all_data)
 
-    # Tie correction factor
+    # Correction pour les ex aequo
     _, counts = np.unique(all_data, return_counts=True)
     tie_correction = (counts ** 3 - counts).sum() / (12 * (N - 1)) if N > 1 else 0.0
 
-    # Mean ranks per group
+    # Rang moyen par groupe
     idx = 0
     mean_ranks: list[float] = []
     ns: list[int] = []
@@ -197,9 +187,9 @@ def run_anova(
     use_kruskal: bool = False,
     homogeneous_variances: bool = True,
 ) -> None:
-    """ANOVA classique, Welch-ANOVA ou Kruskal-Wallis + post-hoc Tukey.
+    """ANOVA classique, Welch-ANOVA ou Kruskal-Wallis, puis un post-hoc.
 
-    Règle de sélection (cohérente avec le plan Q1 de Dr Ferchichi) :
+    Règle de sélection :
     - Normalité rejetée              → Kruskal-Wallis
     - Normalité OK + variances homo  → ANOVA classique (Fisher)
     - Normalité OK + variances hétéro → Welch-ANOVA
@@ -221,13 +211,12 @@ def run_anova(
     if use_kruskal:
         stat, pval = kruskal(*groups)
         print(f"  H={stat:.4f}  p={pval:.2e}")
-        # KW → Dunn + Holm (non-parametric post-hoc, methodologically aligned)
+        # Kruskal–Wallis → Dunn + Holm
         dunn_test(groups, policy_names)
     elif not homogeneous_variances:
         F, pval = run_welch_anova(groups)
         print(f"  F={F:.4f}  p={pval:.2e}  (Welch — variances hétérogènes)")
-        # Welch ANOVA → pairwise Welch t-tests + Holm (see run_pairwise_welch below).
-        # Tukey HSD shown here as reference only; not cited in article (assumes homoscedasticity).
+        # Tukey suppose des variances égales : affiché pour information seulement.
         print("\nPost-hoc Tukey HSD (reference only — pairwise Welch t-tests + Holm are the primary post-hoc):")
         tukey = pairwise_tukeyhsd(subset["productivity_tph"], subset["policy"], alpha=0.05)
         print(tukey)
@@ -325,7 +314,7 @@ def bootstrap_ci(
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    """Analyse statistique complète — mémoire + exigences Q1."""
+    """Lance l'analyse complète pour les trois régimes, puis le carburant."""
     base_dir = Path(__file__).resolve().parents[2]
     results_csv = base_dir / "data" / "results" / "benchmark_results.csv"
 
@@ -359,7 +348,7 @@ def main() -> None:
         # 3. Test global
         run_anova(df, sc, use_kruskal=use_kruskal, homogeneous_variances=homogeneous)
 
-        # 4. Tests par paires + tailles d'effet (hypothèse H1)
+        # 4. Tests par paires + tailles d'effet
         print(f"\n--- Comparaisons par paires (H1) ---")
         pairs = [("PPO", "Fixed"), ("DQN", "Fixed"), ("PPO", "DQN")]
         raw_pvalues, pair_labels = [], []
@@ -379,7 +368,7 @@ def main() -> None:
         if raw_pvalues:
             run_holm_correction(raw_pvalues, pair_labels)
 
-    # --- Analyse carburant (section 4.3 et 5.7.3 du plan Q1) ---
+    # --- Analyse carburant ---
     print(f"\n\n{'='*80}")
     print("  ANALYSE CARBURANT — specific_fuel_l_per_ton")
     print("=" * 80)
@@ -407,11 +396,10 @@ def main() -> None:
 
 
 def summarise_energy_efficiency(csv_path: str | Path = "data/results/benchmark_results.csv") -> dict[str, float | str]:
-    """Résumé exploitable pour la réunion sur la consommation spécifique.
+    """Compare la consommation spécifique (L/t) de DQN et de l'Affectation fixe.
 
-    Retourne un dictionnaire structuré avec la différence en pourcentage et la
-    p-value du test de Welch pour une utilisation directe dans le manuscrit ou
-    les notes de discussion.
+    Retourne la différence en pourcentage et la valeur p d'un test de Welch
+    unilatéral.
     """
     df = load_results(csv_path)
     nominal = df[(df["scenario"] == "nominal") & (df["policy"].isin(["DQN", "Fixed"]))]

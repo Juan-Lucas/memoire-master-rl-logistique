@@ -1,11 +1,4 @@
-﻿"""Entraînement de l'agent PPO pour le dispatching minier.
-
-Conforme au Chapitre 4, Section 4.5 du mémoire :
-- Algorithme : PPO (Proximal Policy Optimization)
-- Bibliothèque : Stable-Baselines3
-- Hyperparamètres : Tableau 4.6 du mémoire (Section 4.6.3)
-- Architecture réseau : MLP 128×128 avec Tanh (Section 4.5.3)
-"""
+﻿"""Entraînement de l'agent PPO (Stable-Baselines3, MLP [128, 128], Tanh)."""
 
 from __future__ import annotations
 
@@ -31,19 +24,10 @@ def train_ppo(
     output_dir: str = "models/ppo_mine",
     log_freq: int = 1000,
 ) -> PPO:
-    """Entraîne un agent PPO sur l'environnement minier.
+    """Entraîne un agent PPO et l'enregistre dans ``output_dir``.
 
-    Hyperparamètres conformes au Tableau 4.6 du mémoire (Section 4.6.3) :
-    - Learning rate : 0.0003
-    - Gamma : 0.99
-    - Batch size : 64
-    - GAE Lambda : 0.95
-    - Clip range : 0.2
-    - Architecture : MLP [128, 128] avec Tanh (Section 4.5.3)
-
-    Note : Stable-Baselines3 utilise des logits pour les espaces d'actions
-    discrets, ce qui est équivalent à une politique Softmax (les logits
-    sont passés par une Softmax lors de l'échantillonnage).
+    Pour un espace d'actions discret, la politique produit des logits passés
+    dans une Softmax. Avec une même graine, l'entraînement est déterministe.
     """
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -76,7 +60,7 @@ def train_ppo(
         policy_kwargs={"net_arch": [128, 128]},
         verbose=1,
         seed=seed,
-        tensorboard_log=None,  # Désactivé temporairement pour éviter le conflit TensorBoard
+        tensorboard_log=None,  # métriques écrites en CSV dans sb3_logs/
     )
 
     kpi_callback = KPILoggerCallback(

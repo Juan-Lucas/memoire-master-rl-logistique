@@ -1,14 +1,7 @@
-"""Entraînement DQN pour le dispatching minier.
+"""Entraînement de l'agent DQN (Stable-Baselines3, MLP [128, 128], ReLU).
 
-Conforme au Chapitre 4, Section 4.5.2 du mémoire :
-- Algorithme : DQN (Deep Q-Network)
-- Bibliothèque : Stable-Baselines3
-- Rôle : Transition du tabulaire vers le Deep RL
-- Architecture : MLP 128×128 avec ReLU (Section 4.5.3)
-
-DQN remplace la Q-table par un réseau de neurones qui approxime
-la fonction Q(s, a). Il sert de modèle intermédiaire entre les
-méthodes tabulaires (Q-Learning, SARSA) et PPO.
+DQN remplace la Q-table par un réseau qui approxime Q(s, a), avec tampon de
+rejeu et réseau cible.
 """
 
 from __future__ import annotations
@@ -35,15 +28,9 @@ def train_dqn(
     output_dir: str = "models/dqn_mine",
     log_freq: int = 1000,
 ) -> DQN:
-    """Entraîne un agent DQN sur l'environnement minier.
+    """Entraîne un agent DQN et l'enregistre dans ``output_dir``.
 
-    Hyperparamètres conformes au Chapitre 4 (Section 4.6.3) :
-    - Learning rate : 0.0003
-    - Gamma : 0.99
-    - Batch size : 64
-    - Buffer size : 200 000
-    - Exploration : ε de 1.0 à 0.02 (fraction 0.3)
-    - Architecture : MLP [128, 128]
+    ε décroît de 1,0 à 0,02 sur les 30 % premiers pas d'entraînement.
     """
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -77,7 +64,7 @@ def train_dqn(
         policy_kwargs={"net_arch": [128, 128]},
         verbose=1,
         seed=seed,
-        tensorboard_log=None,  # Désactivé temporairement pour éviter le conflit TensorBoard
+        tensorboard_log=None,  # métriques écrites en CSV dans sb3_logs/
     )
 
     kpi_callback = KPILoggerCallback(

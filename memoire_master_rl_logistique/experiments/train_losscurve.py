@@ -1,7 +1,7 @@
 """Ré-entraînement DQN / PPO avec journalisation Stable-Baselines3
 (sb3_logs/progress.csv) pour les figures Policy/Value Loss et Exploration vs
-Exploitation (§6.3.2), pour un scénario expérimental donné (nominal,
-high_load, high_breakdown).
+Exploitation, pour un scénario donné (nominal, high_load, high_breakdown).
+Ces modèles sont distincts de ceux évalués par run_benchmark.
 
 Usage : python -m memoire_master_rl_logistique.experiments.train_losscurve {dqn,ppo} {nominal,high_load,high_breakdown}
 """

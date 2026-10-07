@@ -1,6 +1,7 @@
-"""Évaluation de l'agent PPO entraîné et des baselines.
+"""Évaluation de l'agent PPO entraîné et des heuristiques de référence.
 
-Produit les métriques de performance (Section 4.7 du mémoire) :
+Ce module n'est pas utilisé pour les résultats de l'article (voir
+``experiments/run_benchmark.py``). Métriques :
 - Productivité horaire (t/h)
 - Temps d'attente moyen par camion (min)
 - Consommation spécifique (L/t)
@@ -77,7 +78,10 @@ def benchmark_policy_inference(
     n_calls: int = 1000,
     warmup_calls: int = 100,
 ) -> dict[str, float]:
-    """Mesure la latence d'une politique sur plusieurs appels."""
+    """Mesure la latence d'une politique sur plusieurs appels.
+
+    Attention : la politique est appelée avec ``(None, None)``, sans observation.
+    """
     for _ in range(warmup_calls):
         policy_fn(None, None)
 
@@ -128,9 +132,8 @@ def evaluate_all_baselines(
     dump_count: int = 2,
     episode_minutes: float = 480.0,
 ) -> list[dict[str, float]]:
-    """Évalue toutes les baselines et retourne les résultats.
-    
-    Baselines conformes à la Section 4.7.1 du mémoire :
+    """Évalue toutes les heuristiques de référence et retourne les résultats.
+
     - FIFO (First In, First Out)
     - Nearest Shovel (Pelle la plus proche)
     - Shortest Path (Chemin le plus court)

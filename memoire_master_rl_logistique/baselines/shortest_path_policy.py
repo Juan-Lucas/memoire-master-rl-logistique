@@ -1,14 +1,11 @@
 """Politique Shortest Path (Chemin le plus court).
 
-Baseline classique (Section 4.7.1 du mémoire) :
-le camion emprunte l'itinéraire minimisant le coût de cycle complet
-C_ij (Eq. 3.1), en combinant temps de trajet, distance et consommation
-de carburant sur les trois segments du cycle :
-  camion → pelle (à vide) + pelle → dump (chargé) + dump → pelle (à vide).
+Heuristique de référence : choisir la paire (pelle, verse) qui minimise le
+coût du cycle complet, sur les trois segments
+  camion → pelle (à vide) + pelle → verse (chargé) + verse → pelle (à vide) :
 
-Équation 3.1 :
-  C_cycle = α · T_cycle + β · D_cycle + γ · E_cycle
-  avec α=0.5, β=0.3, γ=0.2 (valeurs de la thèse, Section 3.2)
+  C_cycle = α · T_cycle (min) + β · D_cycle (km) + γ · E_cycle (L)
+  avec α = 0,5, β = 0,3, γ = 0,2. Les temps sont les temps moyens, sans aléa.
 
 Différence avec Nearest Shovel :
   Nearest minimise uniquement d(camion→pelle).
@@ -29,7 +26,7 @@ from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
 
 class ShortestPathPolicy:
-    """Minimise le coût de cycle complet C = α·T + β·D + γ·E (Eq. 3.1)."""
+    """Minimise le coût de cycle complet C = α·T + β·D + γ·E."""
 
     def __init__(
         self,
@@ -80,7 +77,7 @@ class ShortestPathPolicy:
         return total_time, total_dist, total_fuel
 
     def _cycle_cost(self, truck_loc: str, shovel_node: str, dump_node: str) -> float:
-        """Coût total du cycle camion→pelle→dump→pelle selon Eq. 3.1."""
+        """Coût total du cycle camion → pelle → verse → pelle."""
         t1, d1, e1 = self._segment_cost(truck_loc, shovel_node, loaded=False)
         t2, d2, e2 = self._segment_cost(shovel_node, dump_node, loaded=True)
         t3, d3, e3 = self._segment_cost(dump_node, shovel_node, loaded=False)
@@ -97,7 +94,7 @@ class ShortestPathPolicy:
         info: dict[str, Any] | None = None,
         truck_location: str | None = None,
     ) -> int:
-        """Retourne la paire (pelle, dump) avec le coût de cycle minimal (Eq. 3.1)."""
+        """Retourne la paire (pelle, verse) de coût de cycle minimal."""
         if truck_location is None:
             raise ValueError(
                 "truck_location must be provided to ShortestPathPolicy.predict"

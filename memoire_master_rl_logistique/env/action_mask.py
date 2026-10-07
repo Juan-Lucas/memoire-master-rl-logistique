@@ -1,15 +1,10 @@
-"""Masquage dynamique des actions invalides.
+"""Masque des actions valides.
 
-Conformément à la Section 3.4.2 du mémoire :
-- L'espace d'action est A = Discrete(|P| × |D| + 1)
-- Chaque action encode une paire (pelle, dump) par division entière
-- Si a_t = |P| × |D| : action ATTENDRE
-- Toutes les paires (pelle, dump) sont considérées valides car l'agent
-  peut choisir d'attendre la disponibilité des ressources
-- L'action ATTENDRE est toujours valide
+Espace d'action : Discrete(|P| × |D| + 1). Les |P| × |D| premières actions
+encodent une paire (pelle, dump) ; la dernière est ATTENDRE.
 
-Cette approche simplifie l'espace de recherche tout en préservant
-la flexibilité décisionnelle requise pour le dispatching minier.
+Le masque actuel autorise toutes les actions, et il n'est appelé nulle part
+dans le projet.
 """
 
 from __future__ import annotations
@@ -25,11 +20,7 @@ def compute_action_mask(
     current_time_min: float,
     include_wait: bool = True,
 ) -> np.ndarray:
-    """Calcule le masque d'actions valides (Section 3.4.2 du mémoire).
-
-    Conformément au mémoire, toutes les paires (pelle, dump) sont
-    considérées valides. ATTENDRE est toujours valide.
-    """
+    """Renvoie un masque où toutes les actions, ATTENDRE comprise, sont valides."""
     n_pairs = len(shovels) * max(len(dumps), 1)
     n_actions = n_pairs + (1 if include_wait else 0)
     mask = np.ones(n_actions, dtype=np.int8)

@@ -1,13 +1,7 @@
-"""Entraînement SARSA pour le dispatching minier.
+"""Entraînement SARSA tabulaire (on-policy, ε-greedy à décroissance linéaire).
 
-Conforme au Chapitre 4, Section 4.4.3 du mémoire :
-- Algorithme : SARSA (on-policy, tabulaire)
-- Hyperparamètres : Tableau 4.5 du mémoire (Section 4.6.2)
-- Politique : ε-greedy avec décroissance linéaire
-
-Contrairement au Q-Learning (off-policy), SARSA met à jour la Q-table
-en utilisant l'action effectivement choisie par la politique ε-greedy
-(Eq. 4.3 du mémoire).
+Contrairement à Q-Learning, la cible utilise l'action suivante réellement
+choisie par la politique ε-greedy, et non le maximum sur les actions.
 """
 
 from __future__ import annotations
@@ -87,10 +81,10 @@ def train_sarsa(
             next_state = _discretize_obs(obs_next, n_bins, shovel_count, dump_count)
             total_reward += reward
 
-            # SARSA: choose next action BEFORE update (on-policy)
+            # On choisit l'action suivante AVANT la mise à jour (on-policy).
             next_action = _select_action(next_state, epsilon)
 
-            # SARSA update (on-policy): Eq. 4.3
+            # Mise à jour on-policy : cible r + γ · Q(s', a')
             if state not in q_table:
                 q_table[state] = np.zeros(n_actions)
             if next_state not in q_table:

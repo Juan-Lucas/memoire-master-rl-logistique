@@ -1,4 +1,4 @@
-"""Baselines de comparaison pour le dispatching minier (Section 4.7)."""
+"""Heuristiques de référence pour le dispatching minier."""
 
 from .base import BaselinePolicy, encode_action
 from .fifo_policy import FIFOPolicy

@@ -1,6 +1,7 @@
 """Ré-entraînement Q-Learning / SARSA avec journalisation de l'epsilon et de
-l'erreur TD par épisode (figures de diagnostic RL, §6.3.2), pour un scénario
-expérimental donné (nominal, high_load, high_breakdown).
+l'erreur TD par épisode (figures de diagnostic), pour un scénario donné
+(nominal, high_load, high_breakdown). Les tables produites sont distinctes de
+celles évaluées par run_benchmark.
 
 Usage : python -m memoire_master_rl_logistique.experiments.train_diagnostics {q_learning,sarsa} {nominal,high_load,high_breakdown}
 """

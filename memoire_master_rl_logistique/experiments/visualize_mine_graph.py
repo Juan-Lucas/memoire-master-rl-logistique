@@ -1,4 +1,4 @@
-"""Visualisation du réseau routier minier (Section 3.2 du mémoire).
+"""Visualisation du réseau routier minier.
 
 Génère une figure du graphe G = (V, E) représentant le réseau routier
 de la mine : yard, jonctions, pelles, dumps et les routes avec distances.

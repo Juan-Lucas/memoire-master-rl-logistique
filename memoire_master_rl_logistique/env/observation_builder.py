@@ -1,10 +1,7 @@
-"""Construction du vecteur d'observation normalisé pour l'agent RL.
+"""Construction du vecteur d'observation, normalisé dans [0, 1].
 
-L'observation encode l'état s_t du MDP (Eq. 3.3 du mémoire) :
-  s_t = ({q_p}, {x_c}, {z_r}, t_courant)
-
-Les valeurs sont normalisées dans [0, 1] pour stabiliser l'apprentissage
-(cf. Section 4.3.3 du mémoire — définition de l'espace d'observation).
+Taille 15 + 11N avec 3 pelles, 2 verses et 7 nœuds : 147 pour N = 12 camions,
+213 pour N = 18. Un réseau entraîné sur une taille ne peut pas recevoir l'autre.
 """
 
 from __future__ import annotations
@@ -39,9 +36,9 @@ def build_observation(
     truck_statuses: list[int],
     current_truck_idx: int = 0,
 ) -> np.ndarray:
-    """Construit le vecteur d'observation normalisé (Section 4.3.3 du mémoire).
+    """Construit le vecteur d'observation normalisé.
 
-    Composantes conformes au mémoire :
+    Composantes :
     - Disponibilité des pelles : temps estimé avant disponibilité (proxy de la file)
     - Disponibilité des dumps : temps estimé avant disponibilité
     - Statut des camions : libre, en route vers pelle, en chargement,
@@ -52,7 +49,8 @@ def build_observation(
     - Position des camions : one-hot encoding par rapport aux nœuds du graphe
     - Temps courant : progression de l'épisode normalisée
 
-    Toutes les valeurs sont normalisées dans [0, 1] pour stabiliser l'apprentissage.
+    Les temps sont divisés par 480 min, les distances par 10 km, le tonnage
+    par 2 000 t et le carburant par 500 L, puis bornés à 1.
     """
     obs_parts: list[float] = []
 
@@ -91,7 +89,7 @@ def build_observation(
         for node in all_nodes:
             obs_parts.append(1.0 if loc == node else 0.0)
 
-    # --- Distance du camion courant vers chaque pelle (Section 4.3.3) ---
+    # --- Distance du camion courant vers chaque pelle ---
     cur_loc = truck_locations[current_truck_idx]
     for shovel in shovels:
         d = graph.shortest_distance(cur_loc, shovel.node_id)

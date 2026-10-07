@@ -1,4 +1,8 @@
-"""Compatibilité des artefacts entraînés avec la version de l'environnement."""
+"""Compatibilité des modèles entraînés avec la version de l'environnement.
+
+Ces fonctions ne sont appelées nulle part pour l'instant : un ancien modèle
+peut donc être rechargé sans contrôle.
+"""
 
 from __future__ import annotations
 

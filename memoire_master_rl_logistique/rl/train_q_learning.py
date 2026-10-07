@@ -1,13 +1,7 @@
-"""Entraînement Q-Learning tabulaire pour le dispatching minier.
+"""Entraînement Q-Learning tabulaire (off-policy, ε-greedy à décroissance linéaire).
 
-Conforme au Chapitre 4, Section 4.4.1 du mémoire :
-- Algorithme : Q-Learning (off-policy, tabulaire)
-- Hyperparamètres : Tableau 4.4 du mémoire (Section 4.6.1)
-- Politique : ε-greedy avec décroissance linéaire
-
-L'observation continue est discrétisée en bins pour permettre
-l'utilisation d'une Q-table. Chaque dimension de l'observation
-est divisée en ``n_bins`` intervalles égaux dans [0, 1].
+L'observation est réduite à 6 variables discrètes (voir ``rl/discretize.py``) :
+les 5 attentes aux pelles et aux verses, et la pelle la plus proche.
 """
 
 from __future__ import annotations
@@ -78,7 +72,7 @@ def train_q_learning(
             if state not in q_table:
                 q_table[state] = np.zeros(n_actions)
 
-            # ε-greedy action selection (Eq. 4.1)
+            # Choix ε-greedy
             if rng.random() < epsilon:
                 action = int(rng.integers(n_actions))
             else:
@@ -91,7 +85,7 @@ def train_q_learning(
             if next_state not in q_table:
                 q_table[next_state] = np.zeros(n_actions)
 
-            # Q-Learning update (off-policy): Eq. 4.1
+            # Mise à jour off-policy : cible r + γ · max_a' Q(s', a')
             best_next = float(np.max(q_table[next_state]))
             td_target = reward + gamma * best_next
             td_error = td_target - q_table[state][action]

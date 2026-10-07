@@ -1,7 +1,7 @@
 """Constantes physiques partagées par les modèles de trajet et de carburant.
 
 Regroupe les coefficients utilisés à la fois par ``graph_model`` (temps de
-trajet, Eq. 3.2) et ``fuel_model`` (consommation de carburant) afin d'éviter
+trajet) et ``fuel_model`` (consommation de carburant) afin d'éviter
 toute divergence entre les deux modèles.
 """
 

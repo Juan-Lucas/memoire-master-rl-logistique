@@ -1,6 +1,6 @@
 """Politique d'assignation fixe (Fixed Assignment).
 
-Baseline de niveau zéro (Section 4.7.1 du mémoire) :
+Heuristique de référence de niveau zéro :
 chaque camion est dédié à une pelle selon un schéma round-robin statique
 (affectation par modulo du nombre de pelles). Le dump est assigné de la
 même manière, par modulo du nombre de dumps.

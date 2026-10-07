@@ -1,9 +1,8 @@
 """Composants partagés par les entraînements tabulaires (Q-Learning, SARSA).
 
 Les deux algorithmes partagent l'initialisation de l'environnement et de la
-Q-table ainsi que la sauvegarde des artefacts d'entraînement. Seule la règle
-de mise à jour (Eq. 4.1 pour Q-Learning, Eq. 4.3 pour SARSA) diffère et reste
-implémentée séparément dans train_q_learning.py / train_sarsa.py.
+Q-table ainsi que la sauvegarde des artefacts. Seule la règle de mise à jour
+diffère (train_q_learning.py, train_sarsa.py).
 """
 
 from __future__ import annotations
@@ -45,7 +44,7 @@ class TabularPolicy:
         )
 
     def predict(self, observation: np.ndarray) -> int:
-        """Retourne l'action gloutonne pour l'observation donnée."""
+        """Action gloutonne ; action 0 (pelle 1, verse 1) si l'état est inconnu."""
         state = _discretize_obs(observation, self.n_bins, self.num_shovels, self.num_dumps)
         if state in self.q_table:
             return int(np.argmax(self.q_table[state]))

@@ -1,17 +1,10 @@
-"""Environnement Gymnasium pour le dispatching minier.
+"""Environnement Gymnasium pour le dispatching camions–pelles.
 
-Implémente l'interface standardisée Gymnasium (reset / step / render)
-conformément au Chapitre 4 du mémoire (Section 4.3).
-
-L'environnement orchestre la boucle Agent–Environnement :
-  observation (s_t) → action (a_t) → récompense (r_t) → observation (s_{t+1})
-
-Architecture conforme au Tableau 4.2 du mémoire :
-  Truck   → x_c (localisation, statut)
-  Shovel  → q_p (file d'attente), z_r
-  DumpSite → z_r (disponibilité)
-  RoadGraph → arcs (u,v), distances, pentes
-  Environment → f(s_t, a_t) transition (Eq. 3.5–3.6)
+Une décision est prise chaque fois qu'un camion devient disponible. ``step``
+simule alors d'un seul tenant tout le cycle de ce camion (trajet, file,
+chargement, trajet chargé, file, déversement, retour à vide, panne éventuelle)
+en réservant les pelles et les verses (``available_at_min``), puis avance
+l'horloge jusqu'au prochain camion disponible.
 """
 
 from __future__ import annotations
@@ -80,7 +73,7 @@ class MineEnv(gym.Env):
         self._seed = seed
         self.breakdown_probability = breakdown_probability
         self.w1, self.w2, self.w3 = reward_weights[:3]
-        self.w4 = reward_weights[3] if len(reward_weights) > 3 else 0.3 # Poids par défaut calibré
+        self.w4 = reward_weights[3] if len(reward_weights) > 3 else 0.3  # w4 par défaut si 3 poids
         self.capacity_tonnes = capacity_tonnes
         self.wait_action_minutes = wait_action_minutes
         self.render_mode = render_mode
@@ -109,7 +102,11 @@ class MineEnv(gym.Env):
         seed: int | None = None,
         options: dict[str, Any] | None = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
-        """Initialise la mine pour un nouvel épisode (Section 4.3.1)."""
+        """Initialise un nouveau poste.
+
+        Sans graine, un compteur interne est utilisé (graine du constructeur
+        + 1, + 2, …) : c'est le cas pendant l'entraînement de PPO et DQN.
+        """
         super().reset(seed=seed)
         if seed is None:
             self._episode_counter = getattr(self, "_episode_counter", self._seed) + 1
@@ -253,7 +250,8 @@ class MineEnv(gym.Env):
         truck.total_fuel_l += estimate_idle_fuel_l(unload_min)
         dump.available_at_min = time_min
 
-        # Retour à vide
+        # Retour à vide vers la même pelle : c'est là que le camion attendra
+        # sa prochaine décision.
         self.truck_statuses[self.current_truck_idx] = STATUS_RETURNING
         t, f = self._travel_route(dump.node_id, shovel.node_id, False)
         time_min += t
@@ -262,14 +260,14 @@ class MineEnv(gym.Env):
         location = shovel.node_id
         self.truck_locations[self.current_truck_idx] = location
 
-        # Panne éventuelle
+        # Panne éventuelle du camion ; la réparation est comptée comme attente.
         if self.rng.random() < self.breakdown_probability:
             repair_min = self.rng.uniform(10.0, 30.0)
             time_min += repair_min
             truck.total_wait_min += repair_min
             truck.total_fuel_l += estimate_idle_fuel_l(repair_min)
 
-        # Compléter le cycle
+        # Le tonnage n'est compté que si le cycle se termine avant la fin du poste.
         delivered_tonnage = 0.0
         if time_min < self.episode_minutes:
             truck.cycles_completed += 1
@@ -280,7 +278,7 @@ class MineEnv(gym.Env):
         self.truck_locations[self.current_truck_idx] = location
         self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
 
-        # Récompense (Eq. 3.7)
+        # Récompense
         reward = self._compute_reward(
             delivered_tonnage_t=delivered_tonnage,
             route_distance_km=pre_action_route_km,
@@ -350,7 +348,13 @@ class MineEnv(gym.Env):
         resource_waits_min: list[float],
         operational_wait_min: float,
     ) -> float:
-        """Récompense multi-objectif calculée sur le cycle exécuté."""
+        """Récompense d'une décision.
+
+        R = w1 · tonnage / capacité
+            − w2 · variance des attentes aux pelles / 100
+            − w3 · distance du cycle (km) / 5
+            − w4 · min(attente / 30 min, 1)   (files pelle + verse, ou ATTENDRE)
+        """
         r_rendement = delivered_tonnage_t / max(self.capacity_tonnes, 1e-9)
 
         if len(resource_waits_min) >= 2:
@@ -376,7 +380,8 @@ class MineEnv(gym.Env):
         """Décode l'action en paire (pelle, dump).
 
         Actions 0..(S*D-1) : shovel_idx = action // D, dump_idx = action % D
-        Action S*D          : ATTENDRE (pelle la plus tôt, dump le plus tôt)
+        Action S*D          : pelle et verse libres le plus tôt (branche non
+                              atteinte depuis ``step``, qui traite ATTENDRE avant)
         """
         n_pair = self.shovel_count * self.dump_count
         if action >= n_pair:
@@ -396,7 +401,7 @@ class MineEnv(gym.Env):
         return shovel, dump
 
     def _find_route(self, src: str, dst: str) -> list[str]:
-        """Plus court chemin via Dijkstra (Section 3.2 du mémoire)."""
+        """Plus court chemin (Dijkstra sur la distance)."""
         assert self.graph is not None
         path = self.graph.shortest_path(src, dst)
         return path if path else [src]
@@ -414,7 +419,7 @@ class MineEnv(gym.Env):
     def _travel_route(
         self, src: str, dst: str, loaded: bool,
     ) -> tuple[float, float]:
-        """Trajet multi-sauts via le graphe → (durée, carburant)."""
+        """Trajet sur le plus court chemin → (durée en min, carburant en L)."""
         assert self.graph is not None and self.rng is not None
         route = self._find_route(src, dst)
         if len(route) < 2:
@@ -430,7 +435,8 @@ class MineEnv(gym.Env):
     def _travel(
         self, src: str, dst: str, loaded: bool,
     ) -> tuple[float, float]:
-        """Trajet direct avec stochasticité (Eq. 3.2)."""
+        """Parcourt une arête : durée aléatoire, carburant, et 5 % de chances
+        de dégrader la piste de 0,02 (plancher 0,6)."""
         assert self.graph is not None and self.rng is not None
         travel_min = self.graph.sample_travel_time_minutes(
             src=src, dst=dst, loaded=loaded, rng=self.rng,
@@ -447,7 +453,7 @@ class MineEnv(gym.Env):
         return travel_min, travel_fuel_l
 
     def _sample_duration(self, mean_min: float, std_min: float) -> float:
-        """Durée log-normale (Eq. 3.2)."""
+        """Durée log-normale de moyenne ``mean_min`` (minimum 0,2 min)."""
         assert self.rng is not None
         sigma = std_min / max(mean_min, 0.1)
         mu = log(max(0.2, mean_min)) - 0.5 * sigma * sigma

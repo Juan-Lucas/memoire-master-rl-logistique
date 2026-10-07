@@ -1,7 +1,9 @@
 """Analyse comportementale : dynamique des files d'attente par pelle.
 
-Compare Nearest Shovel vs PPO sur un épisode de 480 min (scénario high-load).
-Montre le mécanisme de "congestion collapse" des heuristiques distancielles.
+Compare Nearest Shovel et PPO sur un seul épisode de 480 min (forte charge,
+graine unique). Nearest Shovel envoie toute la flotte à la pelle 1 dans tous
+les régimes, car le camion reste à la pelle qu'il vient de servir : la file
+observée n'est donc pas un effet propre à la forte charge.
 Génère :
   - reports/figures/behavioral_analysis.png
 

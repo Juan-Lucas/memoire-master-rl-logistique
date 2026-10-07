@@ -1,8 +1,4 @@
-"""Callbacks personnalisés pour l'entraînement PPO.
-
-Enregistre les métriques clés (KPIs) à intervalles réguliers
-pour produire les learning curves (Section 4.6 du mémoire).
-"""
+"""Callback d'entraînement (PPO et DQN) qui enregistre les KPIs de chaque épisode."""
 
 from __future__ import annotations
 
@@ -12,7 +8,11 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 
 class KPILoggerCallback(BaseCallback):
-    """Enregistre les KPIs de l'environnement minier dans un CSV."""
+    """Enregistre tonnage, attente et carburant de chaque épisode terminé.
+
+    Les moyennes cumulées sont envoyées au logger tous les ``log_freq`` pas ;
+    le détail par épisode est écrit dans ``log_path`` en fin d'entraînement.
+    """
 
     def __init__(
         self,
