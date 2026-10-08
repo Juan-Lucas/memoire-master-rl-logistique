@@ -5,7 +5,7 @@ experiment:
   episode_minutes: 480
   reward_weights: [1.0, 0.1, 0.05, 0.3]
 reproducibility:
-  python_version: "3.10"
-  gymnasium_version: "0.26"
-  stable_baselines3_version: "2.x"
+  python_version: "3.11.11"
+  gymnasium_version: "1.2.3"
+  stable_baselines3_version: "2.8.0"
   note: "Seeds and hyperparameters are archived in configs/ for peer review and reproducibility."
