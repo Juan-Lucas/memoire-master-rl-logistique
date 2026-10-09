@@ -5,8 +5,9 @@
 - RL profond : DQN, PPO
 
 Les agents sont chargés depuis ``output_dir`` s'ils existent, sinon entraînés
-(un agent par scénario, graine ``seeds[0]``). Les résultats sont AJOUTÉS à
-``benchmark_results.csv`` : relancer le script duplique les lignes.
+(un agent par scénario, graine ``seeds[0]``). Chaque lancement écrit ses résultats
+dans un nouveau fichier ``benchmark_<AAAAMMJJ_HHMMSS>.csv`` (colonne ``run_id``) ;
+un doublon (scénario, politique, graine) lève ``ValueError`` (voir ``write_results``).
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 import time
+import datetime as dt
 
 from stable_baselines3 import DQN, PPO
 
@@ -293,6 +295,38 @@ def run_benchmark(
 
     return results
 
+def write_results(
+        rows: list[dict],
+        output_dir: Path,
+        run_id: str | None = None
+) -> Path:
+    """Écrit les résultats d'une exécution dans un nouveau fichier daté. Renvoie son chemin."""
+
+    if not rows:
+        raise ValueError("La liste des résultats est vide.")
+
+    seen = set()
+
+    for row in rows:
+        triplet = (row["scenario"], row["policy"], row["seed"])
+        if triplet not in seen:
+            seen.add(triplet)
+        else:
+            raise ValueError(f"Doublon détecté: {triplet}")
+
+    if run_id is None:
+        run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    csv_path = output_dir / f"benchmark_{run_id}.csv"
+
+    with open(csv_path, "x", newline="", encoding="utf-8") as f:
+        fieldnames = ["run_id"] + list(rows[0].keys())
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({"run_id": run_id, **row})
+
+    return csv_path
 
 def run_all_benchmarks(
     output_dir: str = "data/results",
@@ -320,17 +354,11 @@ def run_all_benchmarks(
         results = run_benchmark(scenario, out_path, train_ppo_flag, model_scenario=model_src)
         all_results.extend(results)
 
-    csv_path = out_path / "benchmark_results.csv"
     if all_results:
-        fieldnames = list(all_results[0].keys())
-        write_header = not csv_path.exists()
-        with csv_path.open("a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if write_header:
-                writer.writeheader()
-            writer.writerows(all_results)
+        csv_path = write_results(all_results, out_path)
         print(f"\nRésultats sauvegardés : {csv_path}  ({len(all_results)} nouvelles lignes)")
-
+    else:
+        raise ValueError("Aucun résultat n'a été obtenu.")
 
 def main() -> None:
     """Point d'entrée pour le benchmark complet."""
