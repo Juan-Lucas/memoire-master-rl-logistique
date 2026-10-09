@@ -15,7 +15,7 @@ import csv
 from pathlib import Path
 
 from memoire_master_rl_logistique.experiments.run_benchmark import run_benchmark
-from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
+from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
 
 # w4 = 0.3 correspond au scénario nominal existant ; les autres sont dans SCENARIOS
 ABLATION_KEYS = ["ablation_w4_00", "ablation_w4_01", "nominal", "ablation_w4_05"]

@@ -19,7 +19,6 @@ from math import log2
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import numpy as np
 from stable_baselines3 import PPO
 

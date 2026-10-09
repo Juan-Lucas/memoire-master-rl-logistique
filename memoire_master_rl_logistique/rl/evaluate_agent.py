@@ -10,8 +10,8 @@ Ce module n'est pas utilisé pour les résultats de l'article (voir
 
 from __future__ import annotations
 
-import time
 from pathlib import Path
+import time
 
 import numpy as np
 from stable_baselines3 import PPO

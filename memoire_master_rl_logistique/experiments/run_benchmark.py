@@ -12,8 +12,8 @@ Les agents sont chargés depuis ``output_dir`` s'ils existent, sinon entraînés
 from __future__ import annotations
 
 import csv
-import time
 from pathlib import Path
+import time
 
 from stable_baselines3 import DQN, PPO
 

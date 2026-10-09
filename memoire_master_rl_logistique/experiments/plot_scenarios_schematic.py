@@ -10,11 +10,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyArrowPatch
+import matplotlib.pyplot as plt
 import numpy as np
-
 
 TRUCK_COLOR   = "#546E7A"
 SHOVEL_COLOR  = "#1565C0"

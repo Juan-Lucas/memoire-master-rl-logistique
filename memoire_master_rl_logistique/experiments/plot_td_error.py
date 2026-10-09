@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from memoire_master_rl_logistique.experiments.plot_utils import save_figure
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS

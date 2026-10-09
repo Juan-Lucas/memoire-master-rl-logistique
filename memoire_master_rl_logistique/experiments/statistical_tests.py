@@ -16,19 +16,17 @@ tel quel, sans retrait des doublons.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import itertools
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 from scipy import stats
 from scipy.stats import kruskal, levene, rankdata, shapiro
+import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from statsmodels.stats.multitest import multipletests
-
 
 # ---------------------------------------------------------------------------
 # Chargement
@@ -349,7 +347,7 @@ def main() -> None:
         run_anova(df, sc, use_kruskal=use_kruskal, homogeneous_variances=homogeneous)
 
         # 4. Tests par paires + tailles d'effet
-        print(f"\n--- Comparaisons par paires (H1) ---")
+        print("\n--- Comparaisons par paires (H1) ---")
         pairs = [("PPO", "Fixed"), ("DQN", "Fixed"), ("PPO", "DQN")]
         raw_pvalues, pair_labels = [], []
 
