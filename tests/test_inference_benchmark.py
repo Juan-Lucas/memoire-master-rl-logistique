@@ -23,14 +23,14 @@ def test_summarise_energy_efficiency_returns_metrics(tmp_path) -> None:
     csv_path = tmp_path / "benchmark_results.csv"
     pd.DataFrame(
         [
-            {"scenario": "nominal", "policy": "DQN", "specific_fuel_l_per_ton": 0.0405},
-            {"scenario": "nominal", "policy": "Fixed", "specific_fuel_l_per_ton": 0.0431},
-            {"scenario": "nominal", "policy": "DQN", "specific_fuel_l_per_ton": 0.0408},
-            {"scenario": "nominal", "policy": "Fixed", "specific_fuel_l_per_ton": 0.0429},
+            {"scenario": "nominal", "policy": "DQN", "specific_fuel_l_per_ton": 0.0405, "seed": 42},
+            {"scenario": "nominal", "policy": "Fixed", "specific_fuel_l_per_ton": 0.0431, "seed": 42},
+            {"scenario": "nominal", "policy": "DQN", "specific_fuel_l_per_ton": 0.0408, "seed": 43},
+            {"scenario": "nominal", "policy": "Fixed", "specific_fuel_l_per_ton": 0.0429, "seed": 43},
         ]
     ).to_csv(csv_path, index=False)
 
-    metrics = summarise_energy_efficiency(csv_path)
+    metrics = summarise_energy_efficiency(csv_path, n_expected=2)
 
     assert metrics["scenario"] == "nominal"
     assert metrics["policy_a"] == "DQN"

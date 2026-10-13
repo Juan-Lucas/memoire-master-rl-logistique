@@ -21,6 +21,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from rich import columns
 from scipy import stats
 from scipy.stats import kruskal, levene, rankdata, shapiro
 import statsmodels.api as sm
@@ -28,14 +29,89 @@ from statsmodels.formula.api import ols
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from statsmodels.stats.multitest import multipletests
 
+DYNAMIC_COLUMNS = ["run_id", "inference_time_ms_mean", "inference_time_ms_max"]
+
 # ---------------------------------------------------------------------------
 # Chargement
 # ---------------------------------------------------------------------------
 
-def load_results(csv_path: str | Path) -> pd.DataFrame:
-    """Charger le CSV de résultats dans un DataFrame pandas."""
-    return pd.read_csv(csv_path)
+def load_results(csv_path: str | Path, n_expected: int = 30) -> pd.DataFrame:
+    """ Charger le CSV de résultats et vérifier qu'il est exploitable
+        - Les doublons identiques sont retirés, en ignorant les colonnes de DYNAMIC_COLUMNS
+        - Un doublon contradictoire lève ValueError
+        - Un groupe (scenario, policy) dont l'effectif est différent de n_expected lève ValueError.
+    """
 
+    #1. Charger les données
+    data = pd.read_csv(csv_path)
+
+    #2. Retirer les doublons identiques (lignes)
+    static_columns = [c for c in list(data.columns) if c not in DYNAMIC_COLUMNS]
+    data_cleaned = data.drop_duplicates(subset=static_columns)
+
+    #3. Détecter les doublons contradictoires
+    nb_duplicated = data_cleaned.duplicated(subset=["scenario", "policy", "seed"]).sum()
+
+    if nb_duplicated > 0:
+        raise ValueError(f"{nb_duplicated} doublons contradictoires ont été détectés.")
+
+    #4. Vérifier les effectifs
+    nb_groups = data_cleaned.groupby(["scenario", "policy"]).size()
+
+    mask = nb_groups != n_expected
+
+    if mask.any():
+        raise ValueError(f"Les groupes incomplets (attendu: {n_expected}) : {nb_groups[mask].to_dict()}.")
+
+    return data_cleaned.reset_index(drop=True)
+
+def paired_table(data: pd.DataFrame, scenario: str, metric: str) -> pd.DataFrame:
+    """ Tableau apparié graine × politique pour un régime et une métrique.
+    - Graines en lignes, politiques en colonnes, valeurs de metric, pour le régime demandé
+    - ValueError si une graine n'a pas toutes les politiques.
+    """
+
+    data = data[data["scenario"] == scenario]
+
+    data_pivot = pd.pivot(data, index="seed", columns="policy", values=metric)
+
+    data_empty = data_pivot.isna()
+
+    if data_empty.any().any():
+        bad_seeds = data_pivot.index[data_empty.any(axis=1)].tolist()
+        raise ValueError(f"Cases vides : les graines {bad_seeds} n'ont pas toutes les politiques.")
+
+    return data_pivot
+
+def friedman_test(table: pd.DataFrame) -> tuple[float, float]:
+    """Test de Friedman sur un tableau graines × politiques ; renvoie (statistique, valeur p)."""
+
+    columns = [table[col] for col in table.columns]
+
+    result = stats.friedmanchisquare(*columns)
+
+    return result.statistic, result.pvalue
+
+def paired_comparisons(table: pd.DataFrame, pairs: list[tuple[str, str]]) -> pd.DataFrame:
+    """"""
+    rows = []
+
+    for a, b in pairs:
+        diff = table[a] - table[b]
+        res = stats.wilcoxon(table[a], table[b])
+        rows.append(
+            {
+                "pair": f"{a}-{b}",
+                "mean_diff": np.mean(diff),
+                "p_value": res.pvalue
+            }
+        )
+
+    result = pd.DataFrame(rows)
+
+    result["p_holm"] = multipletests(result["p_value"], method="holm")[1]
+
+    return result
 
 # ---------------------------------------------------------------------------
 # Statistiques descriptives
@@ -393,13 +469,13 @@ def main() -> None:
     print("=" * 80)
 
 
-def summarise_energy_efficiency(csv_path: str | Path = "data/results/benchmark_results.csv") -> dict[str, float | str]:
+def summarise_energy_efficiency(csv_path: str | Path = "data/results/benchmark_results.csv", n_expected: int = 30) -> dict[str, float | str]:
     """Compare la consommation spécifique (L/t) de DQN et de l'Affectation fixe.
 
     Retourne la différence en pourcentage et la valeur p d'un test de Welch
     unilatéral.
     """
-    df = load_results(csv_path)
+    df = load_results(csv_path, n_expected=n_expected)
     nominal = df[(df["scenario"] == "nominal") & (df["policy"].isin(["DQN", "Fixed"]))]
     if nominal.empty:
         return {"scenario": "nominal", "policy_a": "DQN", "policy_b": "Fixed", "delta_pct": float("nan"), "p_value": float("nan")}
