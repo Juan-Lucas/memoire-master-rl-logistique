@@ -3,8 +3,9 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import numpy as np
 
-from memoire_master_rl_logistique.experiments.statistical_tests import load_results, paired_table, friedman_test, paired_comparisons
+from memoire_master_rl_logistique.experiments.statistical_tests import load_results, paired_table, friedman_test, paired_comparisons, paired_bootstrap_ci,  interaction_test
 
 
 def make_rows() -> pd.DataFrame:
@@ -147,4 +148,83 @@ def test_holm_trois_paires():
     assert data_table.loc[1, "p_holm"] == pytest.approx(3 * 2 / 2**30)
     assert data_table.loc[2, "p_holm"] == pytest.approx(3 * 2 / 2**30)
 
+def test_bootstrap_differences_constantes():
+    """Des différences toutes égales à 5 donnent IC = (5, 5)."""
+
+    diff = [5] * 30
+    low, high = paired_bootstrap_ci(diff)
+    assert low == 5
+    assert high == 5
+
+def test_bootstrap_reproductible():
+    """Même graine, même résultat."""
+
+    table = make_table()
+
+    diff = table["B"] - table["A"]
+    first = paired_bootstrap_ci(diff)
+    second = paired_bootstrap_ci(diff)
+    third = paired_bootstrap_ci(diff, seed = 1)
+    assert first == second
+    assert first != third
+
+def test_bootstrap_encadre_la_moyenne():
+    """L'IC contient la moyenne des différences (15,5). """
+
+    table = make_table()
+
+    diff = table["B"] - table["A"]
+    low, high = paired_bootstrap_ci(diff)
+    assert low < 15.5 < high
+
+def test_comparisons_contient_ic():
+    """Chaque comparaison contient son IC bootstrap. """
+
+    data_table = paired_comparisons(make_table(), [("B", "A")])
+    assert data_table.loc[0, "ci_low"] < 15.5
+    assert data_table.loc[0, "ci_high"] > 15.5
+
+def make_interaction_rows(with_interaction):
+    """Fausses données 3 régimes × 3 politiques × 5 graines, avec ou sans interaction."""
+
+    rng = np.random.default_rng(0)
+    base = {"A": 0, "B": 10, "C": 20}
+    regimes = ["s1", "s2", "s3"]
+    policies = ["A", "B", "C"]
+    seeds = [s for s in range(5)]
+    rows = []
+
+    for reg in regimes:
+        for p in policies:
+            for s in seeds:
+                e = base[p]
+                if with_interaction and reg == "s2":
+                    e = 20 - base[p]
+                if with_interaction and reg == "s3":
+                    e = 10
+                rows.append(
+                    {
+                        "scenario": reg,
+                        "policy": p,
+                        "seed": s,
+                        "truck_count": 1,
+                        "productivity_tph" : 100 + e + rng.normal(0, 1)
+                    }
+                )
+    return pd.DataFrame(rows)
+
+def test_interaction_forte():
+    """ Classement inversé selon le régime : interaction très significative."""
+
+    result = interaction_test(make_interaction_rows(True))
+
+    assert result["p_value"] < 0.001
+    assert result["df_num"] == 4
+    assert result["df_den"] == 24
+
+def test_pas_d_interaction():
+    """Même classement dans tous les régimes : pas d'interaction."""
+
+    result = interaction_test(make_interaction_rows(False))
+    assert result["p_value"] > 0.05
 

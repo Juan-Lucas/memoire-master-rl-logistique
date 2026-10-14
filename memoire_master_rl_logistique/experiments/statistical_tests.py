@@ -28,6 +28,7 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from statsmodels.stats.multitest import multipletests
+from torch import return_types
 
 DYNAMIC_COLUMNS = ["run_id", "inference_time_ms_mean", "inference_time_ms_max"]
 
@@ -93,17 +94,20 @@ def friedman_test(table: pd.DataFrame) -> tuple[float, float]:
     return result.statistic, result.pvalue
 
 def paired_comparisons(table: pd.DataFrame, pairs: list[tuple[str, str]]) -> pd.DataFrame:
-    """"""
+    """Wilcoxon apparié bilatéral, IC bootstrap et correction de Holm pour chaque  paire (a, b). """
     rows = []
 
     for a, b in pairs:
         diff = table[a] - table[b]
+        low, high = paired_bootstrap_ci(diff)
         res = stats.wilcoxon(table[a], table[b])
         rows.append(
             {
                 "pair": f"{a}-{b}",
                 "mean_diff": np.mean(diff),
-                "p_value": res.pvalue
+                "p_value": res.pvalue,
+                "ci_low": low,
+                "ci_high": high
             }
         )
 
@@ -112,6 +116,42 @@ def paired_comparisons(table: pd.DataFrame, pairs: list[tuple[str, str]]) -> pd.
     result["p_holm"] = multipletests(result["p_value"], method="holm")[1]
 
     return result
+
+def paired_bootstrap_ci(diff, n_boot: int = 10_000, seed: int = 0) -> tuple[float, float]:
+    """IC à 95 % de la moyenne des différences appariées, par bootstrap (rééchantillonnage des graines)"""
+
+    rng = np.random.default_rng(seed)
+    samples = rng.choice(diff, size=(n_boot, len(diff)),
+        replace=True
+    )
+
+    means = np.mean(samples, axis=1)
+
+    low, high = np.percentile(means, [2.5, 97.5])
+
+    return float(low), float(high)
+
+def interaction_test(df, metric="productivity_tph"):
+    """Interaction politique × régime : modèle complet contre modèle sans interaction (test F)."""
+
+    data = df.copy()
+
+    data["y"] = data[metric] / data["truck_count"]
+    data["bloc"] = data["scenario"] + "_" + data["seed"].astype(str)
+
+    full = ols("y ~ C(bloc) + C(policy) + C(policy):C(scenario)", data=data).fit()
+    reduced = ols("y ~ C(bloc) + C(policy)", data=data).fit()
+
+    row = sm.stats.anova_lm(reduced, full).iloc[1]
+
+    return {
+        "F": float(row["F"]),
+        "df_num": int(row["df_diff"]),
+        "df_den": int(row["df_resid"]),
+        "p_value": float(row["Pr(>F)"]),
+        "eta_p2": float(row["ss_diff"] / (row["ss_diff"] + row["ssr"]))
+    }
+
 
 # ---------------------------------------------------------------------------
 # Statistiques descriptives
