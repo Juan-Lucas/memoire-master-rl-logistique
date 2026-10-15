@@ -147,6 +147,14 @@ class RoadGraph:
         mean_speed_kmh = max(5.0, base_speed_kmh * slope_factor * state_factor)
         return (edge.distance_km / mean_speed_kmh) * 60.0
 
+    def mean_route_time_minutes(self, src: str, dst: str, loaded: bool) -> float:
+        """Temps moyen (min) d'un trajet complet, le long du plus court chemin en distance,
+        celui que suit le simulateur (``MineEnv._find_route``). 0 si ``src == dst``."""
+        path = self.shortest_path(src, dst)
+        return sum(
+            self.mean_travel_time_minutes(a, b, loaded) for a, b in zip(path, path[1:])
+        )
+
     def sample_travel_time_minutes(
         self, src: str, dst: str, loaded: bool, rng: Random,
     ) -> float:

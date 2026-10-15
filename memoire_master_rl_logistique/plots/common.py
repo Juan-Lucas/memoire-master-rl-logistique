@@ -16,13 +16,16 @@ import matplotlib.pyplot as plt
 from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS
 
 # Ordre de lecture : heuristiques, puis RL tabulaire, puis RL profond.
-POLICY_ORDER = ["FIFO", "Fixed", "Nearest", "ShortestPath", "Q-Learning", "SARSA", "DQN", "PPO"]
+POLICY_ORDER = [
+    "FIFO", "Fixed", "Nearest", "ShortestPath", "MTWT", "Q-Learning", "SARSA", "DQN", "PPO",
+]
 
 POLICY_LABELS = {
     "FIFO": "FIFO",
     "Fixed": "Affectation fixe",
     "Nearest": "Pelle la plus proche",
     "ShortestPath": "Plus court chemin",
+    "MTWT": "Temps d'attente minimal",
     "Q-Learning": "Q-Learning",
     "SARSA": "SARSA",
     "DQN": "DQN",

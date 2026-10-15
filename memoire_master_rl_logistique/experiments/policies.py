@@ -15,6 +15,7 @@ from typing import Any
 from memoire_master_rl_logistique.baselines.base import BaselinePolicy
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
+from memoire_master_rl_logistique.baselines.mtwt_policy import MTWTPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
@@ -25,7 +26,7 @@ from memoire_master_rl_logistique.rl.model_paths import model_dir
 
 PolicyFn = Callable[[Any, dict, MineEnv], int]
 
-HEURISTICS = ("FIFO", "Fixed", "Nearest", "ShortestPath")
+HEURISTICS = ("FIFO", "Fixed", "Nearest", "ShortestPath", "MTWT")
 AGENTS = ("Q-Learning", "SARSA", "DQN", "PPO")
 
 
@@ -52,7 +53,7 @@ def _baseline_fn(policy: BaselinePolicy, needs_graph_sync: bool = False) -> Poli
 
 
 def heuristic_policies(scenario: Scenario) -> dict[str, PolicyFn]:
-    """Les quatre heuristiques, initialisées pour la géométrie du scénario."""
+    """Les heuristiques (4 de la v1, plus MTWT depuis T23), initialisées pour le scénario."""
     env = make_env(scenario)
     env.reset(seed=scenario.seeds[0])
     shovel_nodes = [s.node_id for s in env.shovels]
@@ -65,6 +66,8 @@ def heuristic_policies(scenario: Scenario) -> dict[str, PolicyFn]:
             NearestShovelPolicy(env.graph, shovel_nodes, dump_nodes), needs_graph_sync=True),
         "ShortestPath": _baseline_fn(
             ShortestPathPolicy(env.graph, shovel_nodes, dump_nodes), needs_graph_sync=True),
+        "MTWT": _baseline_fn(
+            MTWTPolicy(env.graph, shovel_nodes, dump_nodes), needs_graph_sync=True),
     }
 
 
