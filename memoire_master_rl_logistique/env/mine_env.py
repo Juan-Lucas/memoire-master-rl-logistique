@@ -108,6 +108,9 @@ class MineEnv(gym.Env):
         # Modèle de carburant (T14) : calibré par défaut, modifiable pour une étude de sensibilité.
         self.fuel = fuel
         self.cycle_log: list[CycleRecord] = []
+        # Décisions de l'épisode (T19), exposées dans ``info`` : toutes, et ATTENDRE seules.
+        self.decision_count: int = 0
+        self.wait_action_count: int = 0
 
         self.num_actions = self.shovel_count * self.dump_count + 1
         self.action_space = spaces.Discrete(self.num_actions)
@@ -196,6 +199,8 @@ class MineEnv(gym.Env):
         self.truck_statuses = [STATUS_IDLE] * self.truck_count
         self._prev_tonnage = 0.0
         self.cycle_log = []
+        self.decision_count = 0
+        self.wait_action_count = 0
 
         obs = self._get_obs()
         info = self._get_info()
@@ -223,8 +228,10 @@ class MineEnv(gym.Env):
         location = self.truck_locations[self.current_truck_idx]
         decision_time = self.current_time_min
         n_pair = self.shovel_count * self.dump_count
+        self.decision_count += 1
 
         if action == n_pair:
+            self.wait_action_count += 1
             reward = self._apply_wait_action(truck, time_min)
             self._advance_to_next_truck()
             truncated = self.current_time_min >= self.episode_minutes
@@ -371,7 +378,19 @@ class MineEnv(gym.Env):
         return max(0.0, min(duration_min, self.episode_minutes - start_min))
 
     def _apply_wait_action(self, truck: Truck, time_min: float) -> float:
-        """Applique l'action ATTENDRE sans effectuer de cycle de transport."""
+        """Applique l'action ATTENDRE sans effectuer de cycle de transport.
+
+        Le camion reste immobile jusqu'au prochain événement du système (au plus
+        ``wait_action_minutes``, au moins 0,2 min).
+
+        Pourquoi la récompense peut rendre ATTENDRE attrayante (T19, à corriger en T25) :
+        elle est calculée avec ``route_distance_km = 0``, donc sans coût de distance, et
+        avec un coût d'attente proportionnel à une durée souvent minuscule
+        (w4 × 0,2 / 30 ≈ 0,002 pour 0,2 min). Enchaîner de très courtes attentes coûte
+        donc presque rien et évite parfois une file : en forte charge, PPO choisit
+        ATTENDRE dans 87 % de ses décisions (T12 bis). ``info["wait_actions"]`` compte
+        ces décisions.
+        """
         future_events = [
             t.available_at_min
             for t in self.trucks
@@ -566,6 +585,8 @@ class MineEnv(gym.Env):
             "repair_min": sum(t.repair_min for t in self.trucks),
             "voluntary_wait_min": sum(t.voluntary_wait_min for t in self.trucks),
             "total_cycles": sum(t.cycles_completed for t in self.trucks),
+            "decisions": self.decision_count,
+            "wait_actions": self.wait_action_count,
             "shovel_available_at": [s.available_at_min for s in self.shovels],
             "dump_available_at": [d.available_at_min for d in self.dumps],
         }

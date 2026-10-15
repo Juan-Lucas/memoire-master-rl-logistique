@@ -67,6 +67,10 @@ def run_single_episode(
 
     kpis = fleet_kpis(env.trucks, env.shovels, env.episode_minutes)
     kpis["total_reward"] = total_reward
+    # Décisions et part d'ATTENDRE (T19), comptées par l'environnement.
+    kpis["decisions"] = float(info["decisions"])
+    kpis["wait_actions"] = float(info["wait_actions"])
+    kpis["wait_share_pct"] = 100.0 * info["wait_actions"] / max(info["decisions"], 1)
     for name, times in (("decision_time_ms", decision_times_ms), ("obs_time_ms", obs_times_ms)):
         kpis[f"{name}_mean"] = sum(times) / len(times) if times else 0.0
         kpis[f"{name}_max"] = max(times) if times else 0.0
