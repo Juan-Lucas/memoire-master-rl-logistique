@@ -30,11 +30,16 @@ def train_ppo(
     output_dir: str = str(model_dir(RESULTS_DIR, "PPO", "nominal")),
     log_freq: int = 1000,
     overwrite: bool = False,
+    learning_rate: float = 3e-4,
+    ent_coef: float = 0.02,
+    progress_bar: bool = True,
 ) -> PPO:
     """Entraîne un agent PPO et l'enregistre dans ``output_dir``.
 
     Pour un espace d'actions discret, la politique produit des logits passés
     dans une Softmax. Avec une même graine, l'entraînement est déterministe.
+    ``learning_rate`` et ``ent_coef`` sont réglables pour le balayage de T25 bis
+    (``experiments/tune_hyperparams``) ; les valeurs par défaut sont celles de la v1.
     """
     out_path = Path(output_dir)
     ensure_new_model(out_path / "ppo_mine_agent", overwrite)
@@ -57,14 +62,14 @@ def train_ppo(
     model = PPO(
         policy="MlpPolicy",
         env=env,
-        learning_rate=3e-4,
+        learning_rate=learning_rate,
         gamma=0.99,
         batch_size=64,
         gae_lambda=0.95,
         clip_range=0.2,
         n_steps=1024,
         n_epochs=10,
-        ent_coef=0.02,
+        ent_coef=ent_coef,
         policy_kwargs={"net_arch": [128, 128]},
         verbose=1,
         seed=seed,
@@ -84,7 +89,7 @@ def train_ppo(
     model.learn(
         total_timesteps=total_timesteps,
         callback=kpi_callback,
-        progress_bar=True,
+        progress_bar=progress_bar,
     )
 
     model_path = out_path / "ppo_mine_agent"
@@ -95,7 +100,8 @@ def train_ppo(
                   breakdown_probability, reward_weights),
         observation_size=env.observation_space.shape[0],
         seed=seed,
-        training={"total_timesteps": total_timesteps},
+        training={"total_timesteps": total_timesteps, "learning_rate": learning_rate,
+                  "ent_coef": ent_coef},
     ))
     print(f"Modèle sauvegardé : {model_path}")
 

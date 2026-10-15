@@ -34,10 +34,15 @@ def train_dqn(
     output_dir: str = str(model_dir(RESULTS_DIR, "DQN", "nominal")),
     log_freq: int = 1000,
     overwrite: bool = False,
+    learning_rate: float = 3e-4,
+    exploration_fraction: float = 0.3,
+    progress_bar: bool = True,
 ) -> DQN:
     """Entraîne un agent DQN et l'enregistre dans ``output_dir``.
 
-    ε décroît de 1,0 à 0,02 sur les 30 % premiers pas d'entraînement.
+    ε décroît de 1,0 à 0,02 sur les ``exploration_fraction`` premiers pas (30 % par défaut).
+    ``learning_rate`` et ``exploration_fraction`` sont réglables pour le balayage de T25 bis
+    (``experiments/tune_hyperparams``) ; les valeurs par défaut sont celles de la v1.
     """
     out_path = Path(output_dir)
     ensure_new_model(out_path / "dqn_mine_agent", overwrite)
@@ -60,13 +65,13 @@ def train_dqn(
     model = DQN(
         policy="MlpPolicy",
         env=env,
-        learning_rate=3e-4,
+        learning_rate=learning_rate,
         gamma=0.99,
         batch_size=64,
         buffer_size=200_000,
         learning_starts=1000,
         target_update_interval=1000,
-        exploration_fraction=0.3,
+        exploration_fraction=exploration_fraction,
         exploration_initial_eps=1.0,
         exploration_final_eps=0.02,
         policy_kwargs={"net_arch": [128, 128]},
@@ -88,7 +93,7 @@ def train_dqn(
     model.learn(
         total_timesteps=total_timesteps,
         callback=kpi_callback,
-        progress_bar=True,
+        progress_bar=progress_bar,
     )
 
     model_path = out_path / "dqn_mine_agent"
@@ -99,7 +104,8 @@ def train_dqn(
                   breakdown_probability, reward_weights),
         observation_size=env.observation_space.shape[0],
         seed=seed,
-        training={"total_timesteps": total_timesteps},
+        training={"total_timesteps": total_timesteps, "learning_rate": learning_rate,
+                  "exploration_fraction": exploration_fraction},
     ))
     print(f"Modèle DQN sauvegardé : {model_path}")
 
