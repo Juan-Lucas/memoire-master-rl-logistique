@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from memoire_master_rl_logistique.simulation.entities import Truck
+from memoire_master_rl_logistique.simulation.entities import Shovel, Truck
 
 
 def compute_kpis(
@@ -23,6 +23,8 @@ def compute_kpis(
     total_active_min: float,
     total_fuel_l: float,
     total_cycles: int = 0,
+    shovel_busy_min: float = 0.0,
+    shovel_count: int = 0,
 ) -> dict[str, float]:
     """Calcule les indicateurs d'un poste à partir des totaux de la flotte.
 
@@ -33,8 +35,10 @@ def compute_kpis(
     ``avg_wait_min_per_truck`` (file + réparation + ATTENDRE, par camion et par poste)
     est conservé pour comparer avec la v1.
 
-    ``utilization_pct`` compte aussi le temps actif du dernier cycle quand il
-    déborde après la fin du poste.
+    Utilisation (T11), sur le temps disponible du poste :
+    - ``utilization_pct`` : camions, temps actif (trajets, chargement, déchargement) ;
+    - ``shovel_utilization_pct`` : pelles, temps de chargement (0 si ``shovel_count`` = 0).
+    Les compteurs sont bornés à la fin du poste, donc les deux restent ≤ 100 %.
     """
     trucks = max(float(truck_count), 1.0)
     cycles = max(float(total_cycles), 1.0)
@@ -57,6 +61,9 @@ def compute_kpis(
         "voluntary_wait_min_per_truck": float(voluntary_wait_min / trucks),
         "queue_wait_min_per_cycle": float(queue_wait_min / cycles),
         "utilization_pct": float(total_active_min / max_available_minutes * 100.0),
+        "shovel_utilization_pct": float(
+            shovel_busy_min / max(float(shovel_count) * episode_minutes, 1e-9) * 100.0
+        ) if shovel_count else 0.0,
         "total_fuel_l": float(total_fuel_l),
         "specific_fuel_l_per_ton": float(total_fuel_l / max(total_tonnage_t, 1e-9)),
         "total_cycles": float(total_cycles),
@@ -64,9 +71,12 @@ def compute_kpis(
     }
 
 
-def fleet_kpis(trucks: Iterable[Truck], episode_minutes: float) -> dict[str, float]:
-    """Indicateurs d'un poste à partir des camions de la flotte (fin d'épisode)."""
+def fleet_kpis(
+    trucks: Iterable[Truck], shovels: Iterable[Shovel], episode_minutes: float
+) -> dict[str, float]:
+    """Indicateurs d'un poste à partir des camions et des pelles (fin d'épisode)."""
     trucks = list(trucks)
+    shovels = list(shovels)
     return compute_kpis(
         episode_minutes=episode_minutes,
         truck_count=len(trucks),
@@ -77,4 +87,6 @@ def fleet_kpis(trucks: Iterable[Truck], episode_minutes: float) -> dict[str, flo
         total_active_min=sum(t.total_active_min for t in trucks),
         total_fuel_l=sum(t.total_fuel_l for t in trucks),
         total_cycles=sum(t.cycles_completed for t in trucks),
+        shovel_busy_min=sum(s.busy_min for s in shovels),
+        shovel_count=len(shovels),
     )

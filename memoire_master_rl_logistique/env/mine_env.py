@@ -205,8 +205,8 @@ class MineEnv(gym.Env):
         self.truck_statuses[self.current_truck_idx] = STATUS_TO_SHOVEL
         if location != shovel.node_id:
             t, f = self._travel_route(location, shovel.node_id, False)
+            truck.total_active_min += self._in_shift(time_min, t)
             time_min += t
-            truck.total_active_min += t
             truck.total_fuel_l += f
             location = shovel.node_id
             self.truck_locations[self.current_truck_idx] = location
@@ -215,24 +215,25 @@ class MineEnv(gym.Env):
         self.truck_statuses[self.current_truck_idx] = STATUS_LOADING
         wait_load_min = max(0.0, shovel.available_at_min - time_min)
         if wait_load_min > 0:
+            truck.queue_wait_min += self._in_shift(time_min, wait_load_min)
             time_min += wait_load_min
-            truck.queue_wait_min += wait_load_min
             truck.total_fuel_l += estimate_idle_fuel_l(wait_load_min)
 
         # Chargement
         load_min = self._sample_duration(
             shovel.load_time_mean_min, shovel.load_time_std_min,
         )
+        truck.total_active_min += self._in_shift(time_min, load_min)
+        shovel.busy_min += self._in_shift(time_min, load_min)
         time_min += load_min
-        truck.total_active_min += load_min
         truck.total_fuel_l += estimate_idle_fuel_l(load_min)
         shovel.available_at_min = time_min
 
         # Trajet chargé vers dump
         self.truck_statuses[self.current_truck_idx] = STATUS_TO_DUMP
         t, f = self._travel_route(shovel.node_id, dump.node_id, True)
+        truck.total_active_min += self._in_shift(time_min, t)
         time_min += t
-        truck.total_active_min += t
         truck.total_fuel_l += f
         location = dump.node_id
         self.truck_locations[self.current_truck_idx] = location
@@ -241,16 +242,16 @@ class MineEnv(gym.Env):
         self.truck_statuses[self.current_truck_idx] = STATUS_UNLOADING
         wait_dump_min = max(0.0, dump.available_at_min - time_min)
         if wait_dump_min > 0:
+            truck.queue_wait_min += self._in_shift(time_min, wait_dump_min)
             time_min += wait_dump_min
-            truck.queue_wait_min += wait_dump_min
             truck.total_fuel_l += estimate_idle_fuel_l(wait_dump_min)
 
         # Déchargement
         unload_min = self._sample_duration(
             dump.unload_time_mean_min, dump.unload_time_std_min,
         )
+        truck.total_active_min += self._in_shift(time_min, unload_min)
         time_min += unload_min
-        truck.total_active_min += unload_min
         truck.total_fuel_l += estimate_idle_fuel_l(unload_min)
         dump.available_at_min = time_min
 
@@ -258,8 +259,8 @@ class MineEnv(gym.Env):
         # sa prochaine décision.
         self.truck_statuses[self.current_truck_idx] = STATUS_RETURNING
         t, f = self._travel_route(dump.node_id, shovel.node_id, False)
+        truck.total_active_min += self._in_shift(time_min, t)
         time_min += t
-        truck.total_active_min += t
         truck.total_fuel_l += f
         location = shovel.node_id
         self.truck_locations[self.current_truck_idx] = location
@@ -267,8 +268,8 @@ class MineEnv(gym.Env):
         # Panne éventuelle du camion ; la réparation a son propre compteur (T10).
         if self.rng.random() < self.breakdown_probability:
             repair_min = self.rng.uniform(10.0, 30.0)
+            truck.repair_min += self._in_shift(time_min, repair_min)
             time_min += repair_min
-            truck.repair_min += repair_min
             truck.total_fuel_l += estimate_idle_fuel_l(repair_min)
 
         # Le tonnage n'est compté que si le cycle se termine avant la fin du poste.
@@ -301,6 +302,15 @@ class MineEnv(gym.Env):
         info = self._get_info()
         return obs, reward, terminated, truncated, info
 
+    def _in_shift(self, start_min: float, duration_min: float) -> float:
+        """Part d'une activité [start, start + durée] située avant la fin du poste (T11).
+
+        Sert uniquement aux compteurs (temps actif, attentes, occupation des pelles) :
+        la simulation, elle, continue d'avancer de la durée complète. Sans cette borne,
+        le dernier cycle de chaque camion était compté jusqu'au bout, au-delà de 480 min.
+        """
+        return max(0.0, min(duration_min, self.episode_minutes - start_min))
+
     def _apply_wait_action(self, truck: Truck, time_min: float) -> float:
         """Applique l'action ATTENDRE sans effectuer de cycle de transport."""
         future_events = [
@@ -321,7 +331,7 @@ class MineEnv(gym.Env):
             wait_min = self.wait_action_minutes
         wait_min = max(0.2, wait_min)
 
-        truck.voluntary_wait_min += wait_min
+        truck.voluntary_wait_min += self._in_shift(time_min, wait_min)
         truck.total_fuel_l += estimate_idle_fuel_l(wait_min)
         truck.available_at_min = time_min + wait_min
         self.truck_statuses[self.current_truck_idx] = STATUS_IDLE

@@ -69,7 +69,7 @@ def run_single_episode(
     if debug_actions and actions_taken:
         print(f"    [{policy_name}] First 10 actions: {actions_taken}")
 
-    kpis = fleet_kpis(env.trucks, env.episode_minutes)
+    kpis = fleet_kpis(env.trucks, env.shovels, env.episode_minutes)
     kpis["total_reward"] = total_reward
     for name, times in (("decision_time_ms", decision_times_ms), ("obs_time_ms", obs_times_ms)):
         kpis[f"{name}_mean"] = sum(times) / len(times) if times else 0.0

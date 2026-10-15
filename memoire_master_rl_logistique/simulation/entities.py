@@ -16,6 +16,9 @@ class Truck:
     La position et le statut du camion sont gardés par ``MineEnv``
     (``truck_locations``, ``truck_statuses``). ``history`` n'est pas utilisé.
 
+    Tous les compteurs de temps sont bornés à la fin du poste (T11) : seule la part
+    d'une activité située avant 480 min est comptée.
+
     Le temps d'immobilisation est décomposé en trois compteurs (T10) :
     - ``queue_wait_min`` : file d'attente à la pelle ou à la verse ;
     - ``repair_min`` : réparation après une panne ;
@@ -43,13 +46,17 @@ class Truck:
 
 @dataclass(slots=True)
 class Shovel:
-    """Pelle : durée de chargement log-normale (moyenne et écart-type en min)."""
+    """Pelle : durée de chargement log-normale (moyenne et écart-type en min).
+
+    ``busy_min`` : temps passé à charger pendant le poste (borné à la fin du poste, T11).
+    """
 
     shovel_id: str
     node_id: str
     load_time_mean_min: float = 2.0
     load_time_std_min: float = 0.3
     available_at_min: float = 0.0
+    busy_min: float = 0.0
 
 
 @dataclass(slots=True)

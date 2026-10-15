@@ -43,7 +43,7 @@ def evaluate_policy(
             if terminated or truncated:
                 break
 
-        kpis = fleet_kpis(env.trucks, env.episode_minutes)
+        kpis = fleet_kpis(env.trucks, env.shovels, env.episode_minutes)
         kpis["total_reward"] = total_reward
         all_kpis.append(kpis)
 
