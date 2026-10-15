@@ -109,6 +109,32 @@ SCENARIOS["unseen_medium_breakdown"] = Scenario(
 MAIN_SCENARIOS: list[str] = ["nominal", "high_load", "high_breakdown"]
 PERTURBED_SCENARIOS: list[str] = [s for s in MAIN_SCENARIOS if s != "nominal"]
 
+# Mode d'évaluation d'un agent (T27, colonne ``mode`` du CSV) : entraîné dans le régime
+# évalué (spécialisé) ou entraîné en nominal puis évalué tel quel (transféré).
+SPECIALISED = "spécialisé"
+TRANSFERRED = "transféré"
+TRANSFER_SOURCE = "nominal"
+
+
+def training_regimes(scenario_name: str) -> list[str]:
+    """Régimes d'entraînement des agents évalués sur ``scenario_name`` (T27).
+
+    - régime perturbé principal : ses agents spécialisés **et** les agents nominaux
+      transférés, pour mesurer à la fois l'adaptation et la robustesse ;
+    - scénario non vu (``unseen_*``) : seulement les agents nominaux, par construction ;
+    - autres (nominal, ablations) : seulement leurs propres agents.
+    """
+    if scenario_name.startswith("unseen_"):
+        return [TRANSFER_SOURCE]
+    if scenario_name in PERTURBED_SCENARIOS:
+        return [scenario_name, TRANSFER_SOURCE]
+    return [scenario_name]
+
+
+def evaluation_mode(scenario_name: str, training_regime: str) -> str:
+    """« spécialisé » si l'agent est évalué dans son régime d'entraînement, sinon « transféré »."""
+    return SPECIALISED if training_regime == scenario_name else TRANSFERRED
+
 
 @dataclass(frozen=True)
 class ScenarioDisplay:

@@ -21,7 +21,7 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from statsmodels.stats.multitest import multipletests
 
-from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS
+from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS, SPECIALISED
 
 # Colonnes qui peuvent varier entre deux lancements identiques (temps réel, identifiant).
 # inference_time_* : CSV v1 ; decision_time_* et obs_time_* : depuis T9.
@@ -35,33 +35,48 @@ SCENARIOS = MAIN_SCENARIOS
 PAIRS = [("PPO", "Fixed"), ("DQN", "Fixed"), ("PPO", "DQN")]
 METRICS = ["productivity_tph", "specific_fuel_l_per_ton"]
 
-def load_results(csv_path: str | Path, n_expected: int = 30) -> pd.DataFrame:
+def select_mode(data: pd.DataFrame, mode: str | None = SPECIALISED) -> pd.DataFrame:
+    """Lignes d'un mode d'évaluation (T27) ; les heuristiques (mode vide) sont toujours gardées.
+
+    ``mode=None`` garde tout. Sans colonne ``mode`` (CSV d'avant T27), rien n'est retiré.
+    """
+    if mode is None or "mode" not in data.columns:
+        return data
+    return data[data["mode"].isna() | (data["mode"] == mode)]
+
+
+def load_results(
+    csv_path: str | Path, n_expected: int = 30, mode: str | None = SPECIALISED,
+) -> pd.DataFrame:
     """ Charger le CSV de résultats et vérifier qu'il est exploitable
         - Les doublons identiques sont retirés, en ignorant les colonnes de DYNAMIC_COLUMNS
         - Un doublon contradictoire lève ValueError
         - Un groupe (scenario, policy) dont l'effectif est différent de n_expected lève ValueError.
         - Depuis T26, la colonne train_seed (si elle existe) fait partie de la clé :
           un groupe est alors (scenario, policy, train_seed), vide pour les heuristiques.
+        - Depuis T27, seules les lignes du mode demandé sont gardées (``select_mode``) :
+          par défaut les agents spécialisés, ceux des tableaux principaux de l'article ;
+          ``mode=None`` garde aussi les agents transférés, et mode devient une clé.
     """
 
     #1. Charger les données
-    data = pd.read_csv(csv_path)
+    data = select_mode(pd.read_csv(csv_path), mode)
 
     #2. Retirer les doublons identiques (lignes)
     static_columns = [c for c in list(data.columns) if c not in DYNAMIC_COLUMNS]
     data_cleaned = data.drop_duplicates(subset=static_columns)
 
     #3. Détecter les doublons contradictoires
-    has_train_seed = "train_seed" in data_cleaned.columns
-    train_key = ["train_seed"] if has_train_seed else []
-    nb_duplicated = data_cleaned.duplicated(subset=["scenario", "policy", *train_key, "seed"]).sum()
+    # Colonnes qui distinguent deux modèles d'une même politique (T27 mode, T26 train_seed).
+    model_key = [c for c in ("mode", "train_seed") if c in data_cleaned.columns]
+    nb_duplicated = data_cleaned.duplicated(subset=["scenario", "policy", *model_key, "seed"]).sum()
 
     if nb_duplicated > 0:
         raise ValueError(f"{nb_duplicated} doublons contradictoires ont été détectés.")
 
     #4. Vérifier les effectifs
-    # dropna=False : les heuristiques (train_seed vide) forment un groupe, pas zéro.
-    nb_groups = data_cleaned.groupby(["scenario", "policy", *train_key], dropna=False).size()
+    # dropna=False : les heuristiques (mode et train_seed vides) forment un groupe, pas zéro.
+    nb_groups = data_cleaned.groupby(["scenario", "policy", *model_key], dropna=False).size()
 
     mask = nb_groups != n_expected
 
