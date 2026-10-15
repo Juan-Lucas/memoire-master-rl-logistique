@@ -20,6 +20,7 @@ import time
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.policies import agent_policy_fn, heuristic_policies
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
+from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS
 from memoire_master_rl_logistique.rl.model_loading import load_model, model_file
 from memoire_master_rl_logistique.rl.model_metadata import EnvConfig
 from memoire_master_rl_logistique.rl.model_paths import model_dir
@@ -44,6 +45,9 @@ def run_single_episode(
     - ``obs_time_ms`` : la construction de l'observation par l'environnement.
     La latence complète d'une décision est leur somme.
     """
+    tabular_agent = getattr(policy_fn, "tabular_agent", None)
+    if tabular_agent is not None:
+        tabular_agent.reset_coverage()
     obs, info = env.reset(seed=seed)
     total_reward = 0.0
     actions_taken = []
@@ -71,6 +75,8 @@ def run_single_episode(
     kpis["decisions"] = float(info["decisions"])
     kpis["wait_actions"] = float(info["wait_actions"])
     kpis["wait_share_pct"] = 100.0 * info["wait_actions"] / max(info["decisions"], 1)
+    if tabular_agent is not None:  # Q-Learning, SARSA : états connus et actions par défaut (T20)
+        kpis.update(tabular_agent.coverage())
     for name, times in (("decision_time_ms", decision_times_ms), ("obs_time_ms", obs_times_ms)):
         kpis[f"{name}_mean"] = sum(times) / len(times) if times else 0.0
         kpis[f"{name}_max"] = max(times) if times else 0.0
@@ -134,7 +140,7 @@ def run_benchmark(
         train_q_learning(
             n_episodes=30_000,
             alpha=0.2,
-            n_bins=8,
+            n_bins=DEFAULT_N_BINS,
             seed=scenario.seeds[0],
             truck_count=scenario.truck_count,
             shovel_count=scenario.shovel_count,
@@ -160,7 +166,7 @@ def run_benchmark(
         train_sarsa(
             n_episodes=30_000,
             alpha=0.2,
-            n_bins=8,
+            n_bins=DEFAULT_N_BINS,
             seed=scenario.seeds[0],
             truck_count=scenario.truck_count,
             shovel_count=scenario.shovel_count,

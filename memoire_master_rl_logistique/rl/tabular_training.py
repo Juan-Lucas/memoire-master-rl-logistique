@@ -13,16 +13,24 @@ import pickle
 import numpy as np
 
 from memoire_master_rl_logistique.env.mine_env import MineEnv
-from memoire_master_rl_logistique.rl.discretize import _discretize_obs
+from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS, _discretize_obs
+
+# Action choisie pour un état jamais rencontré pendant l'entraînement : 0 = (pelle 1, verse 1).
+# Sa fréquence est mesurée pendant l'évaluation (``TabularPolicy.coverage``).
+DEFAULT_ACTION = 0
 
 
 class TabularPolicy:
-    """Politique gloutonne basée sur une Q-table tabulaire entraînée."""
+    """Politique gloutonne basée sur une Q-table tabulaire entraînée.
+
+    Compte, depuis le dernier ``reset_coverage``, les décisions prises et celles où
+    l'état était inconnu (action par défaut) : voir ``coverage``.
+    """
 
     def __init__(
         self,
         q_table: dict[tuple[int, ...], np.ndarray],
-        n_bins: int = 8,
+        n_bins: int = DEFAULT_N_BINS,
         num_shovels: int = 3,
         num_dumps: int = 2,
     ) -> None:
@@ -30,6 +38,18 @@ class TabularPolicy:
         self.n_bins = n_bins
         self.num_shovels = num_shovels
         self.num_dumps = num_dumps
+        self.reset_coverage()
+
+    def reset_coverage(self) -> None:
+        """Remet à zéro le comptage des décisions (au début d'un épisode d'évaluation)."""
+        self.decisions = 0
+        self.unknown_states = 0
+
+    def coverage(self) -> dict[str, float]:
+        """Part des décisions prises sur un état déjà vu à l'entraînement, et sur un état
+        inconnu (donc avec l'action par défaut), en %."""
+        known = 100.0 * (self.decisions - self.unknown_states) / max(self.decisions, 1)
+        return {"known_state_pct": known, "default_action_pct": 100.0 - known if self.decisions else 0.0}
 
     @classmethod
     def load(cls, model_path: str | Path) -> TabularPolicy:
@@ -44,11 +64,13 @@ class TabularPolicy:
         )
 
     def predict(self, observation: np.ndarray) -> int:
-        """Action gloutonne ; action 0 (pelle 1, verse 1) si l'état est inconnu."""
+        """Action gloutonne ; ``DEFAULT_ACTION`` si l'état n'a jamais été vu."""
         state = _discretize_obs(observation, self.n_bins, self.num_shovels, self.num_dumps)
+        self.decisions += 1
         if state in self.q_table:
             return int(np.argmax(self.q_table[state]))
-        return 0
+        self.unknown_states += 1
+        return DEFAULT_ACTION
 
 
 def init_tabular_training(

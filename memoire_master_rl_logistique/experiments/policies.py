@@ -71,7 +71,11 @@ def heuristic_policies(scenario: Scenario) -> dict[str, PolicyFn]:
 def agent_policy_fn(agent: Any, algorithm: str) -> PolicyFn:
     """Politique d'un agent chargé : gloutonne (tabulaire) ou déterministe (SB3)."""
     if algorithm in ("Q-Learning", "SARSA"):
-        return lambda obs, info, env: agent.predict(obs)
+        def tabular_fn(obs, info, env):
+            return agent.predict(obs)
+        # Permet à run_single_episode de mesurer la couverture de la Q-table (T20).
+        tabular_fn.tabular_agent = agent
+        return tabular_fn
     return lambda obs, info, env: int(agent.predict(obs, deterministic=True)[0])
 
 
