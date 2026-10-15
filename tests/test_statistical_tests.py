@@ -1,11 +1,20 @@
 import itertools
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
-import numpy as np
 
-from memoire_master_rl_logistique.experiments.statistical_tests import load_results, paired_table, friedman_test, paired_comparisons, paired_bootstrap_ci,  interaction_test
+from memoire_master_rl_logistique.experiments.statistical_tests import (
+    format_p,
+    friedman_test,
+    interaction_test,
+    load_results,
+    main,
+    paired_bootstrap_ci,
+    paired_comparisons,
+    paired_table,
+)
 
 
 def make_rows() -> pd.DataFrame:
@@ -227,4 +236,23 @@ def test_pas_d_interaction():
 
     result = interaction_test(make_interaction_rows(False))
     assert result["p_value"] > 0.05
+
+def test_format_p():
+    """ Très petites valeurs → "p < 0,001" ; sinon 3 décimales avec une virgule."""
+
+    assert format_p(3e-41) == "p < 0,001"
+    assert format_p(0.0262) == "p = 0,026"
+    assert format_p(0.5) == "p = 0,500"
+
+REFERENCES_CSV = Path(__file__).parent.parent / "data" / "results_v1_article" / "benchmark_results.csv"
+
+@pytest.mark.skipif(not REFERENCES_CSV.exists(), reason="Données manquantes")
+def test_main_retrouve_article(capsys):
+    """Sur le CSV v1, main affiche les chiffres de l'article (Friedman, interaction)."""
+
+    main(REFERENCES_CSV)
+    out = capsys.readouterr().out
+
+    assert "χ²(7) = 207,6" in out
+    assert "F(14, 609) = 430,7" in out
 
