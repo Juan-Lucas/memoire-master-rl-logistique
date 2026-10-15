@@ -1,242 +1,136 @@
-"""Analyse de robustesse inter-scénarios.
+"""Robustesse : chaque régime perturbé comparé au régime nominal (tableau 13 et heatmap).
 
-Calcule le Robustness Ratio pour chaque politique et chaque scénario :
+- Ratio de robustesse = productivité **par camion** dans le régime / en nominal.
+  En forte charge (18 camions au lieu de 12), un ratio sur la productivité totale
+  mesurerait surtout l'ajout de 50 % de camions : une politique inchangée
+  afficherait déjà 1,5. En fortes pannes, le nombre de camions est le même et les
+  deux calculs coïncident.
+- Variation de l'attente moyenne par camion (en %) par rapport au nominal.
+  Il s'agit de l'attente totale ; l'attente en file seule viendra avec T10.
 
-    RR(p, s) = Performance(p, s) / Performance(p, nominal)
-
-Un ratio proche de 1.0 indique que la politique conserve ses performances
-nominales sous perturbation. Un ratio faible indique une dégradation.
-
-Produit :
-- Un tableau CSV `data/results/robustness_ratios.csv`
-- Un affichage console du tableau et du Δ_breakdown
-- Une heatmap de dégradation
+Lancement :
+    python -m memoire_master_rl_logistique.experiments.robustness_analysis CSV DOSSIER [--overwrite]
 """
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
-import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
-# ---------------------------------------------------------------------------
-# Calcul des ratios
-# ---------------------------------------------------------------------------
+from memoire_master_rl_logistique.experiments.reporting import (
+    PERTURBED_SCENARIOS,
+    SCENARIO_LABELS,
+    order_policies,
+    policy_label,
+    prepare_outputs,
+)
+from memoire_master_rl_logistique.experiments.statistical_tests import load_results
 
-def compute_robustness_ratios(
-    csv_path: str | Path,
-    metric: str = "productivity_tph",
-) -> pd.DataFrame:
-    """Calcule RR(p, s) = mean(p, s) / mean(p, nominal) pour chaque politique.
+PRODUCTIVITY = "productivity_tph"
+WAIT = "avg_wait_min_per_truck"
+OUTPUT_FILES = ("robustness_ratios.csv", "robustness_heatmap.png")
 
-    Paramètres
-    ----------
-    csv_path : chemin vers benchmark_results.csv
-    metric   : colonne KPI à utiliser (défaut : productivité)
 
-    Retour
-    ------
-    DataFrame avec colonnes [policy, scenario, mean, std, robustness_ratio,
-                              delta_pct, ic95_lo, ic95_hi]
+def _scenario_means(df: pd.DataFrame, values: pd.Series) -> pd.DataFrame:
+    """Moyenne de ``values`` par politique (lignes) et par régime (colonnes).
+
+    Lève ``ValueError`` si le régime nominal ou un régime perturbé manque.
     """
-    df = pd.read_csv(csv_path)
-    df = df[df["scenario"].isin(["nominal", "high_load", "high_breakdown"])]
-
-    # Moyenne et écart-type par politique × scénario
-    agg = (
-        df.groupby(["policy", "scenario"])[metric]
-        .agg(["mean", "std", "count"])
-        .reset_index()
-        .rename(columns={"mean": "mean_kpi", "std": "std_kpi", "count": "n"})
-    )
-
-    # IC 95 % par bootstrap
-    def _bootstrap_ci(series: pd.Series, n_boot: int = 10_000) -> tuple[float, float]:
-        rng = np.random.default_rng(42)
-        vals = series.values
-        means = [rng.choice(vals, size=len(vals), replace=True).mean() for _ in range(n_boot)]
-        return float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5))
-
-    ci_rows = []
-    for (policy, scenario), grp in df.groupby(["policy", "scenario"]):
-        lo, hi = _bootstrap_ci(grp[metric])
-        ci_rows.append({"policy": policy, "scenario": scenario, "ic95_lo": lo, "ic95_hi": hi})
-    ci_df = pd.DataFrame(ci_rows)
-
-    agg = agg.merge(ci_df, on=["policy", "scenario"])
-
-    # Robustness Ratio
-    nominal = agg[agg["scenario"] == "nominal"][["policy", "mean_kpi"]].rename(
-        columns={"mean_kpi": "mean_nominal"}
-    )
-    agg = agg.merge(nominal, on="policy")
-    agg["robustness_ratio"] = agg["mean_kpi"] / agg["mean_nominal"]
-
-    # Δ_breakdown = (nominal − s) / nominal × 100
-    agg["delta_pct"] = (1 - agg["robustness_ratio"]) * 100
-
-    return agg.sort_values(["scenario", "robustness_ratio"], ascending=[True, False])
+    means = values.groupby([df["policy"], df["scenario"]]).mean().unstack("scenario")
+    missing = [s for s in ["nominal", *PERTURBED_SCENARIOS] if s not in means.columns]
+    if missing:
+        raise ValueError(f"Régimes absents des données : {missing}")
+    return means
 
 
-# ---------------------------------------------------------------------------
-# Affichage
-# ---------------------------------------------------------------------------
+def robustness_ratios(df: pd.DataFrame) -> pd.DataFrame:
+    """Ratio de robustesse par politique : productivité par camion du régime / nominal.
 
-def print_robustness_table(df: pd.DataFrame) -> None:
-    """Affiche le tableau de robustesse dans la console."""
-    print("\n=== Robustness Ratio RR(p,s) = Performance(p,s) / Performance(p,nominal) ===\n")
-    cols = ["policy", "scenario", "mean_kpi", "std_kpi", "robustness_ratio", "delta_pct"]
-    fmt = {
-        "mean_kpi": "{:.1f}",
-        "std_kpi": "{:.1f}",
-        "robustness_ratio": "{:.4f}",
-        "delta_pct": "{:+.2f} %",
-    }
-    for sc in ["nominal", "high_load", "high_breakdown"]:
-        sub = df[df["scenario"] == sc][cols].reset_index(drop=True)
-        print(f"--- {sc.upper()} ---")
-        for _, row in sub.iterrows():
-            print(
-                f"  {row['policy']:14s}  mean={row['mean_kpi']:7.1f}  "
-                f"RR={row['robustness_ratio']:.4f}  Δ={row['delta_pct']:+.2f} %"
-            )
-        print()
-
-
-def plot_robustness_heatmap(
-    df: pd.DataFrame,
-    results_csv: str | Path | None = None,
-    output_path: str | Path | None = None,
-) -> None:
-    """Two-block degradation heatmap.
-
-    Top block  : productivity signed % change vs nominal = (RR-1)*100
-                 positive (blue) = improvement, negative (red) = degradation
-    Bottom block: waiting-time signed % change vs nominal = -Δ_wait
-                 positive (blue) = less waiting (improvement), negative (red) = more waiting
+    Renvoie un tableau politiques × régimes perturbés ; 1 = aucune perte.
     """
-    try:
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-    except ImportError:
-        print("matplotlib / seaborn required for the heatmap.")
-        return
+    per_truck = df[PRODUCTIVITY] / df["truck_count"]
+    means = _scenario_means(df, per_truck)
+    return means[PERTURBED_SCENARIOS].div(means["nominal"], axis=0)
 
-    POLICY_ORDER = [
-        "FIFO", "Fixed", "Nearest", "ShortestPath",
-        "Q-Learning", "SARSA", "DQN", "PPO",
+
+def wait_change_pct(df: pd.DataFrame, wait_col: str = WAIT) -> pd.DataFrame:
+    """Variation (%) de l'attente moyenne par camion par rapport au nominal.
+
+    Positive = l'attente augmente (dégradation). Tableau politiques × régimes perturbés.
+    """
+    means = _scenario_means(df, df[wait_col])
+    nominal = means["nominal"]
+    return means[PERTURBED_SCENARIOS].sub(nominal, axis=0).div(nominal, axis=0) * 100
+
+
+def robustness_table(ratios: pd.DataFrame, wait_pct: pd.DataFrame) -> pd.DataFrame:
+    """Assemble ratios et variations d'attente, dans l'ordre d'affichage des politiques."""
+    table = ratios.add_prefix("ratio_").join(wait_pct.add_prefix("wait_pct_"))
+    return table.loc[order_policies(table.index)]
+
+
+def plot_robustness_heatmap(ratios: pd.DataFrame, wait_pct: pd.DataFrame, out_path: Path) -> None:
+    """Deux heatmaps côte à côte, en % de variation par rapport au nominal.
+
+    Gauche : productivité, (ratio − 1) × 100. Droite : attente. Les nombres
+    affichés sont les vraies variations ; seules les couleurs sont orientées
+    pour que le bleu signifie toujours « mieux » (d'où ``RdBu_r`` pour l'attente).
+    """
+    order = order_policies(ratios.index)
+    labels = [policy_label(p) for p in order]
+    panels = [
+        ((ratios.loc[order] - 1) * 100, "Productivité (par camion en forte charge)", "RdBu"),
+        (wait_pct.loc[order], "Attente moyenne par camion", "RdBu_r"),
     ]
-    COL_ORDER = ["nominal", "high_load", "high_breakdown"]
-    COL_LABELS = {"nominal": "Nominal", "high_load": "High-load", "high_breakdown": "High-breakdown"}
 
-    # --- Top block: (RR - 1) * 100 = productivity % change vs nominal ---
-    pivot_prod = df.pivot_table(
-        index="policy", columns="scenario", values="robustness_ratio", aggfunc="mean",
-    )
-    col_order = [c for c in COL_ORDER if c in pivot_prod.columns]
-    pivot_prod = pivot_prod[col_order]
-    pivot_delta_prod = (pivot_prod - 1.0) * 100.0
+    fig, axes = plt.subplots(1, 2, figsize=(11, 5))
+    for ax, (data, title, cmap) in zip(axes, panels):
+        data = data[PERTURBED_SCENARIOS].rename(columns=SCENARIO_LABELS)
+        data.index = labels
+        limit = max(float(abs(data.to_numpy()).max()), 1.0)  # échelle symétrique autour de 0
+        sns.heatmap(data, annot=True, fmt=".1f", cmap=cmap, center=0, vmin=-limit, vmax=limit,
+                    linewidths=0.5, ax=ax, cbar_kws={"label": "%"})
+        ax.set_title(title)
+        ax.set_xlabel("")
+    axes[0].set_ylabel("Politique")
 
-    # --- Bottom block: waiting-time % change vs nominal (negated so blue = better) ---
-    if results_csv is not None:
-        raw = pd.read_csv(results_csv)
-        raw = raw[raw["scenario"].isin(COL_ORDER)]
-        wait_means = (
-            raw.groupby(["policy", "scenario"])["avg_wait_min_per_truck"]
-            .mean()
-            .unstack("scenario")
-        )
-        wait_nominal = wait_means["nominal"]
-        delta_wait_pct = wait_means.copy()
-        for sc in col_order:
-            delta_wait_pct[sc] = (wait_means[sc] - wait_nominal) / wait_nominal * 100.0
-        # Negate: positive = less waiting = improvement = blue
-        pivot_delta_wait = -delta_wait_pct[col_order]
-        has_wait = True
-    else:
-        has_wait = False
-
-    # Align row order
-    shared_policies = [p for p in POLICY_ORDER if p in pivot_delta_prod.index]
-    pivot_delta_prod = pivot_delta_prod.loc[shared_policies]
-
-    col_labels = [COL_LABELS.get(c, c) for c in col_order]
-
-    if has_wait:
-        pivot_delta_wait = pivot_delta_wait.loc[shared_policies]
-        fig, (ax_top, ax_bot) = plt.subplots(
-            2, 1, figsize=(7, 9),
-            gridspec_kw={"hspace": 0.35},
-        )
-    else:
-        fig, ax_top = plt.subplots(figsize=(7, 5))
-
-    # Shared vmin/vmax for symmetric diverging palette
-    vabs = max(abs(pivot_delta_prod.values).max(), 20)
-    sns.heatmap(
-        pivot_delta_prod,
-        annot=True, fmt=".1f",
-        cmap="RdBu", center=0, vmin=-vabs, vmax=vabs,
-        linewidths=0.5, ax=ax_top,
-        xticklabels=col_labels,
-        cbar_kws={"label": "Δ productivity (%)"},
-    )
-    ax_top.set_title("Top: Productivity change vs nominal (%)\n"
-                     "(blue = improvement, red = degradation)", fontsize=10)
-    ax_top.set_xlabel("")
-    ax_top.set_ylabel("Policy")
-
-    if has_wait:
-        vabs_w = max(abs(pivot_delta_wait.values).max(), 20)
-        sns.heatmap(
-            pivot_delta_wait,
-            annot=True, fmt=".1f",
-            cmap="RdBu", center=0, vmin=-vabs_w, vmax=vabs_w,
-            linewidths=0.5, ax=ax_bot,
-            xticklabels=col_labels,
-            cbar_kws={"label": "Δ waiting time (%, negated)"},
-        )
-        ax_bot.set_title("Bottom: Waiting-time change vs nominal (negated, %)\n"
-                         "(blue = less waiting, red = more waiting)", fontsize=10)
-        ax_bot.set_xlabel("Scenario")
-        ax_bot.set_ylabel("Policy")
-
-    plt.suptitle("Two-dimensional robustness heatmap — all eight policies",
-                 fontsize=12, fontweight="bold", y=1.01)
-    plt.tight_layout()
-
-    if output_path:
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(output_path, dpi=150, bbox_inches="tight")
-        print(f"Heatmap saved: {output_path}")
-    else:
-        plt.show()
-    plt.close()
+    fig.suptitle("Variation par rapport aux conditions nominales (%)")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
 
-# ---------------------------------------------------------------------------
-# Point d'entrée
-# ---------------------------------------------------------------------------
+def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False) -> pd.DataFrame:
+    """Calcule, affiche et enregistre le tableau de robustesse et la heatmap.
 
-def main(
-    results_csv: str = "data/results/benchmark_results.csv",
-    output_csv: str = "data/results/robustness_ratios.csv",
-    heatmap_path: str = "reports/figures/robustness_heatmap.png",
-) -> None:
-    csv_path = Path(results_csv)
-    if not csv_path.exists():
-        print(f"ERREUR : {csv_path} introuvable.")
-        return
+    Refuse d'écraser des fichiers existants sauf si ``overwrite`` est vrai.
+    Renvoie le tableau, pour pouvoir le réutiliser ou le tester.
+    """
+    csv_out, png_out = prepare_outputs(out_dir, OUTPUT_FILES, overwrite)
+    df = load_results(csv_path)
+    ratios = robustness_ratios(df)
+    wait_pct = wait_change_pct(df)
+    table = robustness_table(ratios, wait_pct)
 
-    df = compute_robustness_ratios(csv_path)
-    print_robustness_table(df)
+    print(table.round(3).to_string())
+    table.to_csv(csv_out)
+    plot_robustness_heatmap(ratios, wait_pct, png_out)
+    print(f"Écrits : {csv_out}, {png_out}")
+    return table
 
-    df.to_csv(output_csv, index=False)
-    print(f"Ratios sauvegardés : {output_csv}")
 
-    plot_robustness_heatmap(df, results_csv=results_csv, output_path=heatmap_path)
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("csv_path", type=Path, help="CSV de résultats de benchmark")
+    parser.add_argument("out_dir", type=Path, help="dossier de sortie (créé si besoin)")
+    parser.add_argument("--overwrite", action="store_true", help="autoriser l'écrasement")
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    main()
+    args = _parse_args()
+    main(args.csv_path, args.out_dir, args.overwrite)

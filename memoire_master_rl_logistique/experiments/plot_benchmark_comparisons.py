@@ -1,195 +1,161 @@
-"""Benchmark comparison plots (productivity and waiting time).
+"""Figures de comparaison des politiques (productivité, attente, front de Pareto).
 
-Source : data/results/benchmark_results.csv
-Output :
-- reports/figures/barplot_productivite_scenarios.png  (productivity bar chart)
-- reports/figures/wait_time_comparison.png            (waiting-time bar chart)
+- ``barplot_productivite_scenarios.png`` : productivité moyenne par politique et par
+  régime, avec l'IC bootstrap à 95 % sur les 30 réplications uniques.
+- ``wait_time_comparison.png`` : attente moyenne par camion, même présentation.
+  Pas de « seuil cible » : aucune source ne justifiait la ligne des 30 min de la v1.
+- ``pareto_productivity_waiting.png`` : productivité en fonction de l'attente,
+  **un panneau par régime** (les régimes n'ont pas la même échelle) ; les politiques
+  non dominées sont en gras et reliées par le front de Pareto.
+
+L'attente utilisée est l'attente totale par camion ; l'attente en file viendra avec T10.
+
+Lancement :
+    python -m memoire_master_rl_logistique.experiments.plot_benchmark_comparisons CSV DOSSIER [--overwrite]
 """
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-SCENARIO_COLORS = {
-    "high_breakdown": "#64B5F6",
-    "high_load": "#1A237E",
-    "nominal": "#FF7043",
-}
-SCENARIO_LABELS = {
-    "high_breakdown": "High-breakdown",
-    "high_load": "High-load",
-    "nominal": "Nominal",
-}
+from memoire_master_rl_logistique.experiments.reporting import (
+    SCENARIO_COLORS,
+    SCENARIO_LABELS,
+    SCENARIO_ORDER,
+    order_policies,
+    policy_label,
+    prepare_outputs,
+)
+from memoire_master_rl_logistique.experiments.statistical_tests import (
+    load_results,
+    paired_bootstrap_ci,
+)
 
-ALGO_ORDER = ["DQN", "Fixed", "PPO", "Q-Learning", "ShortestPath", "Nearest", "FIFO", "SARSA"]
-
-WAIT_POLICY_COLORS = {
-    "DQN": "#2196F3",
-    "Fixed": "#1A237E",
-    "PPO": "#FF5722",
-}
-
-
-def _bootstrap_ci(series: pd.Series, n_boot: int = 5_000, seed: int = 42) -> tuple[float, float]:
-    """95 % bootstrap confidence interval for the mean."""
-    rng = np.random.default_rng(seed)
-    vals = series.to_numpy()
-    boot_means = [rng.choice(vals, size=len(vals), replace=True).mean() for _ in range(n_boot)]
-    return float(np.percentile(boot_means, 2.5)), float(np.percentile(boot_means, 97.5))
+PRODUCTIVITY = "productivity_tph"
+WAIT = "avg_wait_min_per_truck"
+OUTPUT_FILES = (
+    "barplot_productivite_scenarios.png",
+    "wait_time_comparison.png",
+    "pareto_productivity_waiting.png",
+)
 
 
-def plot_productivity(df: pd.DataFrame, out_dir: Path) -> None:
-    means = (
-        df.groupby(["policy", "scenario"])["productivity_tph"]
-        .mean()
-        .unstack("scenario")
-        .loc[ALGO_ORDER, list(SCENARIO_COLORS)]
-    )
+def summarise(df: pd.DataFrame, metric: str) -> pd.DataFrame:
+    """Moyenne et IC bootstrap à 95 % de ``metric`` pour chaque (politique, régime).
 
-    # Bootstrap 95 % CI per (policy, scenario)
-    ci_lo = (
-        df.groupby(["policy", "scenario"])["productivity_tph"]
-        .apply(lambda s: _bootstrap_ci(s)[0])
-        .unstack("scenario")
-        .loc[ALGO_ORDER, list(SCENARIO_COLORS)]
-    )
-    ci_hi = (
-        df.groupby(["policy", "scenario"])["productivity_tph"]
-        .apply(lambda s: _bootstrap_ci(s)[1])
-        .unstack("scenario")
-        .loc[ALGO_ORDER, list(SCENARIO_COLORS)]
-    )
-
-    n_algos = len(ALGO_ORDER)
-    n_scenarios = len(SCENARIO_COLORS)
-    x = np.arange(n_algos)
-    width = 0.8 / n_scenarios
-
-    fig, ax = plt.subplots(figsize=(12, 6))
-    for i, scenario in enumerate(SCENARIO_COLORS):
-        offsets = x + (i - (n_scenarios - 1) / 2) * width
-        values = means[scenario].to_numpy()
-        lo = ci_lo[scenario].to_numpy()
-        hi = ci_hi[scenario].to_numpy()
-        yerr = np.array([values - lo, hi - values])
-        bars = ax.bar(
-            offsets, values, width,
-            label=SCENARIO_LABELS[scenario],
-            color=SCENARIO_COLORS[scenario],
+    L'IC est celui de la moyenne d'un groupe : même calcul que ``paired_bootstrap_ci``
+    appliqué aux valeurs du groupe (10 000 tirages, graine 0, donc reproductible).
+    Renvoie un tableau long : policy, scenario, mean, ci_low, ci_high.
+    """
+    rows = []
+    for (policy, scenario), values in df.groupby(["policy", "scenario"])[metric]:
+        low, high = paired_bootstrap_ci(values.to_numpy())
+        rows.append(
+            {"policy": policy, "scenario": scenario, "mean": values.mean(),
+             "ci_low": low, "ci_high": high}
         )
-        ax.errorbar(
-            offsets, values, yerr=yerr,
-            fmt="none", ecolor="black", capsize=3, linewidth=0.8,
-        )
-        for bar, val in zip(bars, values):
-            label = f"{val / 1000:.1f}K".replace(".", ",")
-            ax.text(
-                bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + 80,
-                label,
-                ha="center", va="bottom", fontsize=7,
-            )
+    return pd.DataFrame(rows)
+
+
+def pareto_front(cost: np.ndarray, gain: np.ndarray) -> np.ndarray:
+    """Masque des points non dominés quand on minimise ``cost`` et maximise ``gain``.
+
+    Un point est dominé s'il existe un autre point au moins aussi bon sur les deux
+    critères et strictement meilleur sur l'un d'eux.
+    """
+    cost = np.asarray(cost, dtype=float)
+    gain = np.asarray(gain, dtype=float)
+    at_least_as_good = (cost[None, :] <= cost[:, None]) & (gain[None, :] >= gain[:, None])
+    strictly_better = (cost[None, :] < cost[:, None]) | (gain[None, :] > gain[:, None])
+    dominated = (at_least_as_good & strictly_better).any(axis=1)
+    return ~dominated
+
+
+def plot_grouped_bars(summary: pd.DataFrame, ylabel: str, title: str, out_path: Path) -> None:
+    """Barres groupées : une famille par politique, une barre par régime, avec IC 95 %."""
+    policies = order_policies(summary["policy"].unique())
+    scenarios = [s for s in SCENARIO_ORDER if s in set(summary["scenario"])]
+    table = summary.set_index(["policy", "scenario"])
+    x = np.arange(len(policies))
+    width = 0.8 / len(scenarios)
+
+    fig, ax = plt.subplots(figsize=(12, 5.5))
+    for i, scenario in enumerate(scenarios):
+        rows = table.xs(scenario, level="scenario").loc[policies]
+        offsets = x + (i - (len(scenarios) - 1) / 2) * width
+        yerr = np.vstack([rows["mean"] - rows["ci_low"], rows["ci_high"] - rows["mean"]])
+        ax.bar(offsets, rows["mean"], width, yerr=yerr, capsize=3,
+               color=SCENARIO_COLORS.get(scenario), label=SCENARIO_LABELS.get(scenario, scenario),
+               error_kw={"linewidth": 0.8})
 
     ax.set_xticks(x)
-    ax.set_xticklabels(ALGO_ORDER)
-    ax.set_xlabel("Policy")
-    ax.set_ylabel("Productivity (t/h)")
-    ax.set_title("Mean productivity (t/h) per policy and scenario — 3 scenarios")
-    ax.legend(title="Scenario")
+    ax.set_xticklabels([policy_label(p) for p in policies], rotation=20, ha="right")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend(title="Régime")
     ax.grid(True, axis="y", alpha=0.3)
-    plt.tight_layout()
-
-    out_path = out_dir / "barplot_productivite_scenarios.png"
-    plt.savefig(out_path, dpi=150)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150)
     plt.close(fig)
-    print(f"Figure saved: {out_path}")
 
 
-def plot_wait_time(df: pd.DataFrame, out_dir: Path) -> None:
-    scenarios = list(SCENARIO_COLORS)
-    policies = list(WAIT_POLICY_COLORS)
+def plot_pareto(prod: pd.DataFrame, wait: pd.DataFrame, out_path: Path) -> None:
+    """Productivité en fonction de l'attente, un panneau par régime, front de Pareto en pointillés."""
+    points = prod.merge(wait, on=["policy", "scenario"], suffixes=("_prod", "_wait"))
+    scenarios = [s for s in SCENARIO_ORDER if s in set(points["scenario"])]
 
-    means = (
-        df.groupby(["policy", "scenario"])["avg_wait_min_per_truck"]
-        .mean()
-        .unstack("scenario")
-        .loc[policies, scenarios]
-    )
+    fig, axes = plt.subplots(1, len(scenarios), figsize=(5 * len(scenarios), 4.5), squeeze=False)
+    for ax, scenario in zip(axes[0], scenarios):
+        sub = points[points["scenario"] == scenario].reset_index(drop=True)
+        front = pareto_front(sub["mean_wait"], sub["mean_prod"])
+        ax.scatter(sub["mean_wait"], sub["mean_prod"], color=SCENARIO_COLORS.get(scenario))
+        for row, on_front in zip(sub.itertuples(), front):
+            ax.annotate(policy_label(row.policy), (row.mean_wait, row.mean_prod),
+                        xytext=(4, 4), textcoords="offset points", fontsize=8,
+                        fontweight="bold" if on_front else "normal")
+        frontier = sub[front].sort_values("mean_wait")
+        ax.plot(frontier["mean_wait"], frontier["mean_prod"], linestyle="--", color="grey")
+        ax.set_title(SCENARIO_LABELS.get(scenario, scenario))
+        ax.set_xlabel("Attente moyenne par camion (min)")
+        ax.grid(True, alpha=0.3)
+    axes[0][0].set_ylabel("Productivité (t/h)")
 
-    # Bootstrap 95 % CI per (policy, scenario)
-    ci_lo_df = (
-        df.groupby(["policy", "scenario"])["avg_wait_min_per_truck"]
-        .apply(lambda s: _bootstrap_ci(s)[0])
-        .unstack("scenario")
-        .loc[policies, scenarios]
-    )
-    ci_hi_df = (
-        df.groupby(["policy", "scenario"])["avg_wait_min_per_truck"]
-        .apply(lambda s: _bootstrap_ci(s)[1])
-        .unstack("scenario")
-        .loc[policies, scenarios]
-    )
-
-    n_scenarios = len(scenarios)
-    n_policies = len(policies)
-    x = np.arange(n_scenarios)
-    width = 0.8 / n_policies
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    for i, policy in enumerate(policies):
-        offsets = x + (i - (n_policies - 1) / 2) * width
-        values = means.loc[policy].to_numpy()
-        lo = ci_lo_df.loc[policy].to_numpy()
-        hi = ci_hi_df.loc[policy].to_numpy()
-        yerr = np.array([values - lo, hi - values])
-        bars = ax.bar(
-            offsets, values, width,
-            label=policy,
-            color=WAIT_POLICY_COLORS[policy],
-        )
-        ax.errorbar(
-            offsets, values, yerr=yerr,
-            fmt="none", ecolor="black", capsize=3, linewidth=0.8,
-        )
-        for bar, val in zip(bars, values):
-            ax.text(
-                bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + 1,
-                f"{val:.0f}",
-                ha="center", va="bottom", fontsize=9,
-            )
-
-    ax.axhline(30, color="#42A5F5", linestyle="--", linewidth=1.5)
-    ax.text(-0.45, 31, "Target threshold: 30 min", color="#1565C0",
-            ha="left", va="bottom", fontsize=9)
-
-    ax.set_xticks(x)
-    ax.set_xticklabels([SCENARIO_LABELS[s] for s in scenarios])
-    ax.set_xlabel("Scenario")
-    ax.set_ylabel("Mean waiting time (min)")
-    ax.set_title("Mean waiting time (min) — Fixed Assignment, DQN and PPO")
-    ax.legend(title="Policy")
-    ax.grid(True, axis="y", alpha=0.3)
-    plt.tight_layout()
-
-    out_path = out_dir / "wait_time_comparison.png"
-    plt.savefig(out_path, dpi=150)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150)
     plt.close(fig)
-    print(f"Figure saved: {out_path}")
 
 
-def main() -> None:
-    df = pd.read_csv("data/results/benchmark_results.csv")
-    df = df[df["scenario"].isin(SCENARIO_COLORS)]
-    out_dir = Path("reports/figures")
+def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False) -> list[Path]:
+    """Produit les trois figures dans ``out_dir`` ; refuse d'écraser sans ``overwrite``."""
+    bars_prod, bars_wait, pareto = prepare_outputs(out_dir, OUTPUT_FILES, overwrite)
+    df = load_results(csv_path)
+    prod = summarise(df, PRODUCTIVITY)
+    wait = summarise(df, WAIT)
 
-    plot_productivity(df, out_dir)
-    plot_wait_time(df, out_dir)
+    plot_grouped_bars(prod, "Productivité (t/h)",
+                      "Productivité moyenne par politique et par régime (IC 95 %)", bars_prod)
+    plot_grouped_bars(wait, "Attente moyenne par camion (min)",
+                      "Attente moyenne par politique et par régime (IC 95 %)", bars_wait)
+    plot_pareto(prod, wait, pareto)
+
+    outputs = [bars_prod, bars_wait, pareto]
+    print("Écrits : " + ", ".join(str(p) for p in outputs))
+    return outputs
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("csv_path", type=Path, help="CSV de résultats de benchmark")
+    parser.add_argument("out_dir", type=Path, help="dossier de sortie (créé si besoin)")
+    parser.add_argument("--overwrite", action="store_true", help="autoriser l'écrasement")
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    main()
+    args = _parse_args()
+    main(args.csv_path, args.out_dir, args.overwrite)
