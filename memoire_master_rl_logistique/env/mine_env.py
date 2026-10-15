@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from math import log
 from random import Random
+import time
 from typing import Any
 
 import gymnasium as gym
@@ -96,6 +97,9 @@ class MineEnv(gym.Env):
         self.truck_locations: list[str] = []
         self.truck_statuses: list[int] = []
         self._prev_tonnage: float = 0.0
+        # Durée (ms) de la dernière construction d'observation : mesure seulement,
+        # n'influence pas la simulation (voir run_single_episode).
+        self.last_obs_time_ms: float = 0.0
 
     def reset(
         self,
@@ -460,8 +464,9 @@ class MineEnv(gym.Env):
         return max(0.2, self.rng.lognormvariate(mu, sigma))
 
     def _get_obs(self) -> np.ndarray:
-        """Construit l'observation courante."""
-        return build_observation(
+        """Construit l'observation courante et mémorise sa durée dans ``last_obs_time_ms``."""
+        t0 = time.perf_counter()
+        obs = build_observation(
             trucks=self.trucks,
             shovels=self.shovels,
             dumps=self.dumps,
@@ -472,6 +477,8 @@ class MineEnv(gym.Env):
             truck_statuses=self.truck_statuses,
             current_truck_idx=self.current_truck_idx,
         )
+        self.last_obs_time_ms = (time.perf_counter() - t0) * 1_000
+        return obs
 
     def _get_info(self) -> dict[str, Any]:
         """Dictionnaire d'informations de debug."""

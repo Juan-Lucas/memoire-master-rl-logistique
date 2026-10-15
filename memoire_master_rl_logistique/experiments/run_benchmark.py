@@ -24,8 +24,9 @@ from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelP
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
-from memoire_master_rl_logistique.rl.model_loading import load_model
+from memoire_master_rl_logistique.rl.model_loading import load_model, model_file
 from memoire_master_rl_logistique.rl.model_metadata import EnvConfig
+from memoire_master_rl_logistique.rl.model_paths import model_dir
 from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
@@ -40,19 +41,27 @@ def run_single_episode(
     policy_name: str = "",
     debug_actions: bool = False,
 ) -> dict[str, float]:
-    """Lance un épisode et retourne les KPIs."""
+    """Lance un épisode et retourne les KPIs.
+
+    Deux durées sont mesurées séparément (T9, m20) :
+    - ``decision_time_ms`` : l'appel de la politique seul (observation déjà construite) ;
+    - ``obs_time_ms`` : la construction de l'observation par l'environnement.
+    La latence complète d'une décision est leur somme.
+    """
     obs, info = env.reset(seed=seed)
     total_reward = 0.0
     actions_taken = []
-    inference_times_ms: list[float] = []
+    decision_times_ms: list[float] = []
+    obs_times_ms: list[float] = [env.last_obs_time_ms]
 
     while True:
         t0 = time.perf_counter()
         action = policy_fn(obs, info, env)
-        inference_times_ms.append((time.perf_counter() - t0) * 1_000)
+        decision_times_ms.append((time.perf_counter() - t0) * 1_000)
         if debug_actions and len(actions_taken) < 10:  # Log first 10 actions
             actions_taken.append(action)
         obs, reward, terminated, truncated, info = env.step(action)
+        obs_times_ms.append(env.last_obs_time_ms)
         total_reward += reward
         if terminated or truncated:
             break
@@ -77,10 +86,9 @@ def run_single_episode(
         total_cycles=total_cycles,
     )
     kpis["total_reward"] = total_reward
-    kpis["inference_time_ms_mean"] = (
-        sum(inference_times_ms) / len(inference_times_ms) if inference_times_ms else 0.0
-    )
-    kpis["inference_time_ms_max"] = max(inference_times_ms) if inference_times_ms else 0.0
+    for name, times in (("decision_time_ms", decision_times_ms), ("obs_time_ms", obs_times_ms)):
+        kpis[f"{name}_mean"] = sum(times) / len(times) if times else 0.0
+        kpis[f"{name}_max"] = max(times) if times else 0.0
     return kpis
 
 
@@ -169,7 +177,7 @@ def run_benchmark(
     }
 
     # --- Q-Learning ---
-    ql_dir = output_dir / f"q_learning_{model_key}"
+    ql_dir = model_dir(output_dir, "Q-Learning", model_key)
     ql_path = ql_dir / "q_table.pkl"
 
     if ql_path.exists():
@@ -198,7 +206,7 @@ def run_benchmark(
     policies["Q-Learning"] = q_learning_policy
 
     # --- SARSA ---
-    sarsa_dir = output_dir / f"sarsa_{model_key}"
+    sarsa_dir = model_dir(output_dir, "SARSA", model_key)
     sarsa_path = sarsa_dir / "sarsa_table.pkl"
 
     if sarsa_path.exists():
@@ -228,7 +236,7 @@ def run_benchmark(
 
     # --- DQN ---
     if train_ppo_flag:
-        dqn_path_scenario = output_dir / f"dqn_{model_key}" / "dqn_mine_agent.zip"
+        dqn_path_scenario = model_file(model_dir(output_dir, "DQN", model_key), "DQN")
 
         if dqn_path_scenario.exists():
             print(f"  Chargement DQN ({model_key}): {dqn_path_scenario}")
@@ -244,7 +252,7 @@ def run_benchmark(
                 episode_minutes=scenario.episode_minutes,
                 breakdown_probability=scenario.breakdown_probability,
                 reward_weights=scenario.reward_weights,
-                output_dir=str(output_dir / f"dqn_{model_key}"),
+                output_dir=str(dqn_path_scenario.parent),
             )
 
         def dqn_policy(obs, info, env, _model=dqn_model):
@@ -256,7 +264,7 @@ def run_benchmark(
     # --- PPO ---
     ppo_model = None
     if train_ppo_flag:
-        ppo_path_scenario = output_dir / f"ppo_{model_key}" / "ppo_mine_agent.zip"
+        ppo_path_scenario = model_file(model_dir(output_dir, "PPO", model_key), "PPO")
 
         if ppo_path_scenario.exists():
             print(f"  Chargement PPO ({model_key}): {ppo_path_scenario}")
@@ -272,7 +280,7 @@ def run_benchmark(
                 episode_minutes=scenario.episode_minutes,
                 breakdown_probability=scenario.breakdown_probability,
                 reward_weights=scenario.reward_weights,
-                output_dir=str(output_dir / f"ppo_{model_key}"),
+                output_dir=str(ppo_path_scenario.parent),
             )
 
         def ppo_policy(obs, info, env, _model=ppo_model):

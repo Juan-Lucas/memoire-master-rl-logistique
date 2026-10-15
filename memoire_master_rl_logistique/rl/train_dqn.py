@@ -19,6 +19,7 @@ from memoire_master_rl_logistique.rl.model_metadata import (
     build_metadata,
     write_metadata,
 )
+from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
 
 
 def train_dqn(
@@ -30,14 +31,16 @@ def train_dqn(
     episode_minutes: float = 480.0,
     breakdown_probability: float = 0.02,
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
-    output_dir: str = "models/dqn_mine",
+    output_dir: str = str(model_dir(RESULTS_DIR, "DQN", "nominal")),
     log_freq: int = 1000,
+    overwrite: bool = False,
 ) -> DQN:
     """Entraîne un agent DQN et l'enregistre dans ``output_dir``.
 
     ε décroît de 1,0 à 0,02 sur les 30 % premiers pas d'entraînement.
     """
     out_path = Path(output_dir)
+    ensure_new_model(out_path / "dqn_mine_agent", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
 
     env = make_vec_env(

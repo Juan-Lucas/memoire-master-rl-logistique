@@ -15,6 +15,7 @@ from memoire_master_rl_logistique.rl.model_metadata import (
     build_metadata,
     write_metadata,
 )
+from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
 
 
 def train_ppo(
@@ -26,8 +27,9 @@ def train_ppo(
     episode_minutes: float = 480.0,
     breakdown_probability: float = 0.02,
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
-    output_dir: str = "models/ppo_mine",
+    output_dir: str = str(model_dir(RESULTS_DIR, "PPO", "nominal")),
     log_freq: int = 1000,
+    overwrite: bool = False,
 ) -> PPO:
     """Entraîne un agent PPO et l'enregistre dans ``output_dir``.
 
@@ -35,6 +37,7 @@ def train_ppo(
     dans une Softmax. Avec une même graine, l'entraînement est déterministe.
     """
     out_path = Path(output_dir)
+    ensure_new_model(out_path / "ppo_mine_agent", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
 
     env = make_vec_env(

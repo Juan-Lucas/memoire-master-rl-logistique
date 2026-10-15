@@ -35,9 +35,9 @@ def main() -> None:
     )
 
     if algo == "q_learning":
-        train_q_learning(output_dir=f"data/results/q_learning_{scenario_name}_diag", **common)
+        train_q_learning(output_dir=f"data/results/q_learning_{scenario_name}_diag", overwrite=True, **common)
     elif algo == "sarsa":
-        train_sarsa(output_dir=f"data/results/sarsa_{scenario_name}_diag", **common)
+        train_sarsa(output_dir=f"data/results/sarsa_{scenario_name}_diag", overwrite=True, **common)
     else:
         raise ValueError(f"Algo inconnu : {algo}")
 

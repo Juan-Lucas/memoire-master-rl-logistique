@@ -22,6 +22,7 @@ import pandas as pd
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS, SCENARIOS
 from memoire_master_rl_logistique.rl.model_loading import load_model
+from memoire_master_rl_logistique.rl.model_paths import model_dir
 
 ACTION_LABELS = {
     0: "Pelle1->Dump1",
@@ -70,14 +71,14 @@ def main(results_dir: str | Path = "data/results", allow_legacy_models: bool = F
         scenario = SCENARIOS[scenario_name]
         env = make_env(scenario)
 
-        def load(prefix: str, algorithm: str, _env=env, _name=scenario_name):
-            return load_model(base / f"{prefix}_{_name}", algorithm, _env,
+        def load(algorithm: str, _env=env, _name=scenario_name):
+            return load_model(model_dir(base, algorithm, _name), algorithm, _env,
                               allow_legacy=allow_legacy_models)
 
-        ql = load("q_learning", "Q-Learning")
-        sarsa = load("sarsa", "SARSA")
-        dqn = load("dqn", "DQN")
-        ppo = load("ppo", "PPO")
+        ql = load("Q-Learning")
+        sarsa = load("SARSA")
+        dqn = load("DQN")
+        ppo = load("PPO")
 
         policies = {
             "Q-Learning": lambda obs, ql=ql: ql.predict(obs),

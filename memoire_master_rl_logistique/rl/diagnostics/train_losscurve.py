@@ -32,9 +32,9 @@ def main() -> None:
     )
 
     if algo == "dqn":
-        train_dqn(output_dir=f"data/results/dqn_{scenario_name}_losscurve", **common)
+        train_dqn(output_dir=f"data/results/dqn_{scenario_name}_losscurve", overwrite=True, **common)
     elif algo == "ppo":
-        train_ppo(output_dir=f"data/results/ppo_{scenario_name}_losscurve", **common)
+        train_ppo(output_dir=f"data/results/ppo_{scenario_name}_losscurve", overwrite=True, **common)
     else:
         raise ValueError(f"Algo inconnu : {algo}")
 

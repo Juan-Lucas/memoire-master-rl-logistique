@@ -11,7 +11,6 @@ Ce module n'est pas utilisé pour les résultats de l'article (voir
 from __future__ import annotations
 
 from pathlib import Path
-import time
 
 import numpy as np
 
@@ -67,38 +66,11 @@ def evaluate_policy(
     for key in all_kpis[0]:
         values = [k[key] for k in all_kpis]
         avg_kpis[f"{key}_mean"] = float(np.mean(values))
-        avg_kpis[f"{key}_std"] = float(np.std(values))
+        # Écart-type d'échantillon (ddof=1) : les épisodes sont un échantillon, pas la population.
+        avg_kpis[f"{key}_std"] = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
 
     avg_kpis["policy_name"] = policy_name
     return avg_kpis
-
-
-def benchmark_policy_inference(
-    policy_fn,
-    n_calls: int = 1000,
-    warmup_calls: int = 100,
-) -> dict[str, float]:
-    """Mesure la latence d'une politique sur plusieurs appels.
-
-    Attention : la politique est appelée avec ``(None, None)``, sans observation.
-    """
-    for _ in range(warmup_calls):
-        policy_fn(None, None)
-
-    latencies_ms = []
-    for _ in range(n_calls):
-        t0 = time.perf_counter()
-        policy_fn(None, None)
-        latencies_ms.append((time.perf_counter() - t0) * 1_000)
-
-    arr = np.array(latencies_ms, dtype=float)
-    return {
-        "n_calls": int(n_calls),
-        "mean_ms": float(np.mean(arr)),
-        "std_ms": float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0,
-        "min_ms": float(np.min(arr)),
-        "max_ms": float(np.max(arr)),
-    }
 
 
 def evaluate_ppo(
@@ -270,16 +242,6 @@ def main() -> None:
             f"\nModèle PPO non trouvé ({model_path}). "
             "Lancez d'abord l'entraînement."
         )
-
-    print("\n=== Benchmark d'inférence (latence) ===")
-    def dummy_policy(obs, info):
-        return 0
-
-    inference_metrics = benchmark_policy_inference(dummy_policy, n_calls=1000)
-    print(
-        f"  Latence moyenne: {inference_metrics['mean_ms']:.3f} ms "
-        f"± {inference_metrics['std_ms']:.3f} ms"
-    )
 
 
 if __name__ == "__main__":

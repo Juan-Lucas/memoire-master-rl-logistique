@@ -16,6 +16,7 @@ from memoire_master_rl_logistique.rl.model_metadata import (
     build_metadata,
     write_metadata,
 )
+from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
 from memoire_master_rl_logistique.rl.tabular_training import (
     TabularPolicy,
     init_tabular_training,
@@ -37,7 +38,8 @@ def train_sarsa(
     episode_minutes: float = 480.0,
     breakdown_probability: float = 0.02,
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
-    output_dir: str = "models/sarsa",
+    output_dir: str = str(model_dir(RESULTS_DIR, "SARSA", "nominal")),
+    overwrite: bool = False,
 ) -> dict[tuple[int, ...], np.ndarray]:
     """Entraîne un agent SARSA tabulaire sur l'environnement minier.
 
@@ -46,6 +48,7 @@ def train_sarsa(
     q_table : dict mapping discretized state -> Q-values array
     """
     out_path = Path(output_dir)
+    ensure_new_model(out_path / "sarsa_table.pkl", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
 
     env, q_table, rng, epsilon, epsilon_decay, n_actions = init_tabular_training(

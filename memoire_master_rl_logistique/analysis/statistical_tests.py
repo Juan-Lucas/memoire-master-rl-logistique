@@ -23,7 +23,14 @@ from statsmodels.stats.multitest import multipletests
 
 from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS
 
-DYNAMIC_COLUMNS = ["run_id", "inference_time_ms_mean", "inference_time_ms_max"]
+# Colonnes qui peuvent varier entre deux lancements identiques (temps réel, identifiant).
+# inference_time_* : CSV v1 ; decision_time_* et obs_time_* : depuis T9.
+DYNAMIC_COLUMNS = [
+    "run_id",
+    "inference_time_ms_mean", "inference_time_ms_max",
+    "decision_time_ms_mean", "decision_time_ms_max",
+    "obs_time_ms_mean", "obs_time_ms_max",
+]
 SCENARIOS = MAIN_SCENARIOS
 PAIRS = [("PPO", "Fixed"), ("DQN", "Fixed"), ("PPO", "DQN")]
 METRICS = ["productivity_tph", "specific_fuel_l_per_ton"]
