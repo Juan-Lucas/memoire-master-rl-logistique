@@ -14,7 +14,10 @@ Lancement :
 Figure à 3 panneaux :
   (A) Queue backlog (min) par pelle — Nearest Shovel
   (B) Queue backlog (min) par pelle — PPO
-  (C) Entropie d'affectation : Nearest (hot spot) vs PPO (équilibrage)
+  (C) Entropie de Shannon normalisée des affectations (fenêtre de 50 décisions) :
+      H = −Σ p_s log2 p_s / log2(S), p_s = part des affectations à la pelle s ;
+      1 = répartition uniforme. Sans légende interprétative (T12 bis) : un seul
+      épisode ne montre pas une stratégie ; voir analysis/behavior.py (30 graines).
 """
 
 from __future__ import annotations
@@ -202,16 +205,15 @@ def main(
     ent_ppo      = np.array([_entropy(dist_ppo[i])     for i in range(len(dist_ppo))])
 
     ax.plot(data_nearest["times"], ent_nearest, color="#37474F", linewidth=1.3,
-            alpha=0.9, label="Nearest Shovel (greedy → hot spot, H≈0)")
+            alpha=0.9, label="Nearest Shovel")
     ax.plot(data_ppo["times"],     ent_ppo,     color="#AD1457", linewidth=1.3,
-            alpha=0.9, label="PPO (adaptive load balancing, H>0)")
+            alpha=0.9, label="PPO")
     ax.axhline(y=1.0, color="#2E7D32", linestyle=":", linewidth=1.0, alpha=0.7,
                label="Uniform assignment (H = 1)")
     ax.set_xlabel("Simulation time (min)", fontsize=9)
     ax.set_ylabel("Assignment entropy\n(normalised, 50-step window)", fontsize=9)
     ax.set_title(
-        "(C) Assignment entropy: Nearest Shovel concentrates flow (hot spot); "
-        "PPO distributes across shovels",
+        "(C) Normalised assignment entropy (one episode, 50-decision window)",
         fontsize=9.5, fontweight="bold")
     ax.legend(fontsize=8, loc="lower right")
     ax.grid(True, alpha=0.25, linestyle="--")

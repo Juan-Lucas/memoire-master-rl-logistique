@@ -1,5 +1,6 @@
 """Distribution des actions choisies par chaque politique RL
-sur les scénarios nominal, high_load et high_breakdown (10 épisodes, seeds 42-51).
+sur les scénarios nominal, high_load et high_breakdown (30 graines du scénario depuis T12 bis ;
+10 graines, 42 à 51, dans la v1).
 
 Les modèles sont chargés avec contrôle de leurs métadonnées (``rl.model_loading``).
 
@@ -47,8 +48,9 @@ def make_env(scenario) -> MineEnv:
     )
 
 
-def count_actions(policy_fn, scenario, n_episodes: int = 10) -> Counter:
-    """Nombre de fois où chaque action est choisie sur ``n_episodes`` épisodes."""
+def count_actions(policy_fn, scenario, n_episodes: int | None = None) -> Counter:
+    """Nombre de fois où chaque action est choisie, sur les ``n_episodes`` premières graines
+    du scénario (toutes, soit 30, par défaut)."""
     counts: Counter = Counter()
     for seed in scenario.seeds[:n_episodes]:
         env = make_env(scenario)

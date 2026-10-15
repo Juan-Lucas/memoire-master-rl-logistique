@@ -17,12 +17,8 @@ import datetime as dt
 from pathlib import Path
 import time
 
-from memoire_master_rl_logistique.baselines.base import BaselinePolicy
-from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
-from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
-from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
-from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
+from memoire_master_rl_logistique.experiments.policies import agent_policy_fn, heuristic_policies
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
 from memoire_master_rl_logistique.rl.model_loading import load_model, model_file
 from memoire_master_rl_logistique.rl.model_metadata import EnvConfig
@@ -119,47 +115,8 @@ def run_benchmark(
             trained_on=trained_on, allow_legacy=allow_legacy_models,
         )
 
-    # Initialiser les politiques heuristiques (créées une seule fois)
-    fixed_policy_obj = FixedAssignmentPolicy(
-        num_shovels=scenario.shovel_count,
-        num_dumps=scenario.dump_count,
-    )
-
-    fifo_policy_obj = FIFOPolicy(
-        num_shovels=scenario.shovel_count,
-        num_dumps=scenario.dump_count,
-    )
-
-    nearest_policy_obj = NearestShovelPolicy(
-        graph=temp_env.graph,
-        shovel_node_ids=[s.node_id for s in temp_env.shovels],
-        dump_node_ids=[d.node_id for d in temp_env.dumps],
-    )
-
-    shortest_path_policy_obj = ShortestPathPolicy(
-        graph=temp_env.graph,
-        shovel_node_ids=[s.node_id for s in temp_env.shovels],
-        dump_node_ids=[d.node_id for d in temp_env.dumps],
-    )
-
-    def _make_policy_fn(policy_obj: BaselinePolicy, needs_graph_sync: bool = False):
-        """Adapte une BaselinePolicy à la signature policy_fn(obs, info, env)."""
-        def policy_fn(obs, info, env):
-            if needs_graph_sync:
-                policy_obj.graph = env.graph
-            return policy_obj.predict(
-                obs,
-                info,
-                truck_location=env.truck_locations[env.current_truck_idx],
-            )
-        return policy_fn
-
-    policies = {
-        "FIFO": _make_policy_fn(fifo_policy_obj),
-        "Fixed": _make_policy_fn(fixed_policy_obj),
-        "Nearest": _make_policy_fn(nearest_policy_obj, needs_graph_sync=True),
-        "ShortestPath": _make_policy_fn(shortest_path_policy_obj, needs_graph_sync=True),
-    }
+    # Heuristiques : même construction que l'analyse du comportement (experiments.policies).
+    policies = heuristic_policies(scenario)
 
     # --- Q-Learning ---
     ql_dir = model_dir(output_dir, "Q-Learning", model_key)
@@ -185,10 +142,7 @@ def run_benchmark(
         )
         ql_agent = _load(ql_dir, "Q-Learning")
 
-    def q_learning_policy(obs, info, env, _agent=ql_agent):
-        return _agent.predict(obs)
-
-    policies["Q-Learning"] = q_learning_policy
+    policies["Q-Learning"] = agent_policy_fn(ql_agent, "Q-Learning")
 
     # --- SARSA ---
     sarsa_dir = model_dir(output_dir, "SARSA", model_key)
@@ -214,10 +168,7 @@ def run_benchmark(
         )
         sarsa_agent = _load(sarsa_dir, "SARSA")
 
-    def sarsa_policy_fn(obs, info, env, _agent=sarsa_agent):
-        return _agent.predict(obs)
-
-    policies["SARSA"] = sarsa_policy_fn
+    policies["SARSA"] = agent_policy_fn(sarsa_agent, "SARSA")
 
     # --- DQN ---
     if train_ppo_flag:
@@ -240,11 +191,7 @@ def run_benchmark(
                 output_dir=str(dqn_path_scenario.parent),
             )
 
-        def dqn_policy(obs, info, env, _model=dqn_model):
-            action, _ = _model.predict(obs, deterministic=True)
-            return int(action)
-
-        policies["DQN"] = dqn_policy
+        policies["DQN"] = agent_policy_fn(dqn_model, "DQN")
 
     # --- PPO ---
     ppo_model = None
@@ -268,11 +215,7 @@ def run_benchmark(
                 output_dir=str(ppo_path_scenario.parent),
             )
 
-        def ppo_policy(obs, info, env, _model=ppo_model):
-            action, _ = _model.predict(obs, deterministic=True)
-            return int(action)
-
-        policies["PPO"] = ppo_policy
+        policies["PPO"] = agent_policy_fn(ppo_model, "PPO")
 
     for policy_name, policy_fn in policies.items():
         for seed in scenario.seeds:
