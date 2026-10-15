@@ -5,6 +5,13 @@ simule alors d'un seul tenant tout le cycle de ce camion (trajet, file,
 chargement, trajet chargé, file, déversement, retour à vide, panne éventuelle)
 en réservant les pelles et les verses (``available_at_min``), puis avance
 l'horloge jusqu'au prochain camion disponible.
+
+Aléas (T13) : la graine d'un épisode engendre des flux aléatoires indépendants
+(``numpy.random.SeedSequence``), un par processus : trajets, chargements et
+déversements, dégradation des pistes, et un flux de pannes **par camion**. Deux
+politiques jouées avec la même graine partagent donc les mêmes aléas
+(nombres aléatoires communs) ; en particulier, le k-ième cycle d'un camion donné a
+la même panne, de même durée, quelle que soit la politique.
 """
 
 from __future__ import annotations
@@ -17,6 +24,7 @@ from typing import Any
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+from numpy.random import SeedSequence
 
 from memoire_master_rl_logistique.simulation.entities import (
     CycleRecord,
@@ -41,6 +49,14 @@ STATUS_LOADING = 2
 STATUS_TO_DUMP = 3
 STATUS_UNLOADING = 4
 STATUS_RETURNING = 5
+
+# Flux aléatoires communs à tous les camions ; viennent ensuite les flux de pannes, un par camion.
+SHARED_STREAMS = ("travel", "service", "road")
+
+
+def _stream(seed_sequence: SeedSequence) -> Random:
+    """Générateur ``random.Random`` initialisé par un enfant d'une ``SeedSequence``."""
+    return Random(int.from_bytes(seed_sequence.generate_state(4).tobytes(), "little"))
 
 
 class MineEnv(gym.Env):
@@ -100,7 +116,11 @@ class MineEnv(gym.Env):
         self.trucks: list[Truck] = []
         self.shovels: list[Shovel] = []
         self.dumps: list[DumpSite] = []
-        self.rng: Random | None = None
+        # Flux aléatoires indépendants (T13), créés à chaque reset à partir de la graine.
+        self.rng_travel: Random | None = None
+        self.rng_service: Random | None = None
+        self.rng_road: Random | None = None
+        self.rng_breakdowns: list[Random] = []
         self.current_time_min: float = 0.0
         self.current_truck_idx: int = 0
         self.truck_locations: list[str] = []
@@ -126,7 +146,11 @@ class MineEnv(gym.Env):
             effective_seed = self._episode_counter
         else:
             effective_seed = seed
-        self.rng = Random(effective_seed)
+        streams = SeedSequence(effective_seed).spawn(len(SHARED_STREAMS) + self.truck_count)
+        self.rng_travel, self.rng_service, self.rng_road = (
+            _stream(s) for s in streams[: len(SHARED_STREAMS)]
+        )
+        self.rng_breakdowns = [_stream(s) for s in streams[len(SHARED_STREAMS):]]
 
         self.graph = build_mine_graph(
             shovel_count=self.shovel_count,
@@ -182,7 +206,7 @@ class MineEnv(gym.Env):
           dump_idx   = action %  dump_count
         Si action == shovel_count * dump_count → ATTENDRE.
         """
-        assert self.graph is not None and self.rng is not None
+        assert self.graph is not None and self.rng_travel is not None
         action = int(action)
         if not self.action_space.contains(action):
             msg = f"Invalid action {action}; expected 0..{self.num_actions - 1}."
@@ -280,9 +304,13 @@ class MineEnv(gym.Env):
         self.truck_locations[self.current_truck_idx] = location
 
         # Panne éventuelle du camion ; la réparation a son propre compteur (T10).
-        repair_min = 0.0
-        if self.rng.random() < self.breakdown_probability:
-            repair_min = self.rng.uniform(10.0, 30.0)
+        # Flux propre au camion, avec deux tirages à chaque cycle, même sans panne :
+        # le k-ième cycle de ce camion reçoit ainsi la même panne quelle que soit la politique.
+        breakdown_rng = self.rng_breakdowns[self.current_truck_idx]
+        breaks_down = breakdown_rng.random() < self.breakdown_probability
+        drawn_repair_min = breakdown_rng.uniform(10.0, 30.0)
+        repair_min = drawn_repair_min if breaks_down else 0.0
+        if breaks_down:
             truck.repair_min += self._in_shift(time_min, repair_min)
             time_min += repair_min
             truck.total_fuel_l += estimate_idle_fuel_l(repair_min)
@@ -465,7 +493,7 @@ class MineEnv(gym.Env):
         self, src: str, dst: str, loaded: bool,
     ) -> tuple[float, float]:
         """Trajet sur le plus court chemin → (durée en min, carburant en L)."""
-        assert self.graph is not None and self.rng is not None
+        assert self.graph is not None and self.rng_travel is not None
         route = self._find_route(src, dst)
         if len(route) < 2:
             return 0.0, 0.0
@@ -482,9 +510,9 @@ class MineEnv(gym.Env):
     ) -> tuple[float, float]:
         """Parcourt une arête : durée aléatoire, carburant, et 5 % de chances
         de dégrader la piste de 0,02 (plancher 0,6)."""
-        assert self.graph is not None and self.rng is not None
+        assert self.graph is not None and self.rng_travel is not None
         travel_min = self.graph.sample_travel_time_minutes(
-            src=src, dst=dst, loaded=loaded, rng=self.rng,
+            src=src, dst=dst, loaded=loaded, rng=self.rng_travel,
         )
         edge = self.graph.get_edge(src, dst)
         travel_fuel_l = estimate_travel_fuel_l(
@@ -493,16 +521,16 @@ class MineEnv(gym.Env):
             road_state=edge.road_state,
             loaded=loaded,
         )
-        if self.rng.random() < 0.05:
+        if self.rng_road.random() < 0.05:
             edge.road_state = max(0.6, edge.road_state - 0.02)
         return travel_min, travel_fuel_l
 
     def _sample_duration(self, mean_min: float, std_min: float) -> float:
         """Durée log-normale de moyenne ``mean_min`` (minimum 0,2 min)."""
-        assert self.rng is not None
+        assert self.rng_service is not None
         sigma = std_min / max(mean_min, 0.1)
         mu = log(max(0.2, mean_min)) - 0.5 * sigma * sigma
-        return max(0.2, self.rng.lognormvariate(mu, sigma))
+        return max(0.2, self.rng_service.lognormvariate(mu, sigma))
 
     def _get_obs(self) -> np.ndarray:
         """Construit l'observation courante et mémorise sa durée dans ``last_obs_time_ms``."""

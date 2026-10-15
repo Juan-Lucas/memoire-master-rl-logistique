@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from reference_values import reference
 
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
@@ -83,12 +84,14 @@ def test_attendre_est_journalise():
 
 
 def test_le_journal_ne_change_pas_la_simulation():
-    """Avec ou sans journal, mêmes résultats (références v1 de T4)."""
+    """Avec ou sans journal, mêmes résultats, égaux à la référence de non-régression."""
     _, with_log, _ = logged_episode()
     without_log = run_single_episode(MineEnv(), fixed_fn(), seed=42)
+    expected = reference("Fixed", 42)
 
-    assert with_log["productivity_tph"] == without_log["productivity_tph"] == pytest.approx(4077.5)
-    assert with_log["total_reward"] == pytest.approx(without_log["total_reward"])
+    for key in ("productivity_tph", "total_reward"):
+        assert with_log[key] == pytest.approx(without_log[key])
+        assert with_log[key] == pytest.approx(expected[key], abs=1e-6)
 
 
 def test_reset_vide_le_journal():

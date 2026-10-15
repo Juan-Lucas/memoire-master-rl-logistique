@@ -4,6 +4,7 @@ import inspect
 import math
 
 import pytest
+from reference_values import reference
 
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
@@ -103,10 +104,10 @@ def test_temps_de_decision_et_d_observation_separes():
 
 
 def test_la_mesure_ne_change_pas_les_resultats():
-    """Chronométrer l'observation ne modifie pas la simulation (référence v1 de T4)."""
+    """Chronométrer l'observation ne modifie pas la simulation (référence de non-régression)."""
     kpis = run_single_episode(MineEnv(), fixed_policy_fn(), seed=42)
 
-    assert kpis["productivity_tph"] == pytest.approx(4077.5)
+    assert kpis["productivity_tph"] == pytest.approx(reference("Fixed", 42)["productivity_tph"])
 
 
 # --- Scénarios non vus ------------------------------------------------------------------

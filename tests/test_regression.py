@@ -1,63 +1,35 @@
-import csv
-from pathlib import Path
+"""Test de non-régression (T4).
+
+Rejoue Fixed et FIFO en nominal (graines 42 à 46) et compare aux références figées.
+
+- Jusqu'à T12 bis, la référence était le CSV de l'article v1 : le code reproduisait
+  exactement la v1.
+- Depuis T13 (un flux aléatoire par processus), l'ordre des tirages change et tous
+  les chiffres bougent, comme le plan l'annonçait. La référence est désormais
+  ``fixtures/regression_reference.csv`` (script ``fixtures/generate_regression_reference.py``).
+
+Si ce test échoue, soit une modification a changé la simulation sans le vouloir
+(à corriger), soit le changement est voulu : régénérer la référence et le noter
+dans le journal.
+"""
+
 import pytest
-from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
-from memoire_master_rl_logistique.env import  MineEnv
-from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
-from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
+from reference_values import reference
+
+from memoire_master_rl_logistique.experiments.policies import heuristic_policies, make_env
 from memoire_master_rl_logistique.experiments.run_benchmark import run_single_episode
+from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
 
-REFERENCES_CSV = Path(__file__).parent.parent / "data" / "results_v1_article" / "benchmark_results.csv"
 
-POLICIES = {"Fixed": FixedAssignmentPolicy, "FIFO": FIFOPolicy}
-
-def make_policy_fn(policy):
-    """Adapte une politique heuristique à la signature de run_single_episode."""
-
-    def policy_fn(obs, info, env_):
-        """Retourne l'action recommandée par la politique."""
-
-        position = env_.truck_locations[env_.current_truck_idx]
-        return policy.predict(obs, info, truck_location=position)
-    return policy_fn
-
-def load_reference(scenario_name, policy_name, seed):
-    """Charge les données de référence pour une politique et une graine données."""
-
-    with open(REFERENCES_CSV, newline="") as f:
-        for row in csv.DictReader(f):
-            if row["scenario"] == scenario_name and row["policy"] == policy_name and int(row["seed"]) == seed:
-                return float(row["productivity_tph"]), float(row["total_reward"])
-    raise ValueError(f"Aucune référence pour {scenario_name}, {policy_name}, {seed}")
-
-@pytest.mark.skipif(not REFERENCES_CSV.exists(), reason="Résultats v1 absents")
 @pytest.mark.parametrize("policy_name", ["Fixed", "FIFO"])
 @pytest.mark.parametrize("seed", [42, 43, 44, 45, 46])
-def test_reproduit_v1(policy_name, seed):
-    """Teste la reproduction des résultats attendus pour les politiques Fixed et FIFO."""
-
+def test_non_regression(policy_name, seed):
+    """Productivité, récompense et immobilisation identiques à la référence, à 1e-6 près."""
     scenario = SCENARIOS["nominal"]
+    policy_fn = heuristic_policies(scenario)[policy_name]
 
-    env = MineEnv(
-        truck_count=scenario.truck_count,
-        shovel_count=scenario.shovel_count,
-        dump_count=scenario.dump_count,
-        episode_minutes=scenario.episode_minutes,
-        breakdown_probability=scenario.breakdown_probability,
-        reward_weights=scenario.reward_weights,
-    )
+    kpis = run_single_episode(make_env(scenario), policy_fn, seed)
+    expected = reference(policy_name, seed)
 
-    policy = POLICIES[policy_name](
-        num_shovels=scenario.shovel_count,
-        num_dumps=scenario.dump_count
-    )
-
-    kpis = run_single_episode(env, make_policy_fn(policy), seed)
-
-    ref_prod, ref_reward = load_reference("nominal", policy_name, seed)
-
-    assert kpis["productivity_tph"] == pytest.approx(ref_prod, abs=1e-6)
-    assert kpis["total_reward"] == pytest.approx(ref_reward, abs=1e-6)
-
-
-
+    for key, value in expected.items():
+        assert kpis[key] == pytest.approx(value, abs=1e-6), key
