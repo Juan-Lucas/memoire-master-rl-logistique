@@ -21,8 +21,10 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from statsmodels.stats.multitest import multipletests
 
+from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS
+
 DYNAMIC_COLUMNS = ["run_id", "inference_time_ms_mean", "inference_time_ms_max"]
-SCENARIOS = ["nominal", "high_load", "high_breakdown"]
+SCENARIOS = MAIN_SCENARIOS
 PAIRS = [("PPO", "Fixed"), ("DQN", "Fixed"), ("PPO", "DQN")]
 METRICS = ["productivity_tph", "specific_fuel_l_per_ton"]
 

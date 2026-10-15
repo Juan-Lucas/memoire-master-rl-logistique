@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from memoire_master_rl_logistique.experiments.plot_benchmark_comparisons import (
+from memoire_master_rl_logistique.plots.benchmark_comparisons import (
     main,
     pareto_front,
     summarise,

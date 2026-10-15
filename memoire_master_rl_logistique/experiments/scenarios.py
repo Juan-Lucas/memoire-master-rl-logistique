@@ -102,6 +102,11 @@ SCENARIOS["unseen_medium_breakdown"] = Scenario(
     breakdown_probability=0.05,
 )
 
+# Les trois régimes comparés dans l'article (les autres entrées servent aux
+# expériences annexes : ablation, généralisation).
+MAIN_SCENARIOS: list[str] = ["nominal", "high_load", "high_breakdown"]
+PERTURBED_SCENARIOS: list[str] = [s for s in MAIN_SCENARIOS if s != "nominal"]
+
 
 @dataclass(frozen=True)
 class ScenarioDisplay:

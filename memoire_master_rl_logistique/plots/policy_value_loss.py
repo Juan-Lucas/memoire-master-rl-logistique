@@ -17,8 +17,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from memoire_master_rl_logistique.experiments.plot_utils import save_figure
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
+from memoire_master_rl_logistique.plots.common import save_figure
 
 WINDOW = 30
 

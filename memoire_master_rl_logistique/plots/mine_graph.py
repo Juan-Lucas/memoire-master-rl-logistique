@@ -4,8 +4,8 @@ Génère une figure du graphe G = (V, E) représentant le réseau routier
 de la mine : yard, jonctions, pelles, dumps et les routes avec distances.
 
 Usage :
-    python -m memoire_master_rl_logistique.experiments.visualize_mine_graph
-    python -m memoire_master_rl_logistique.experiments.visualize_mine_graph --shovels 5 --dumps 3
+    python -m memoire_master_rl_logistique.plots.mine_graph
+    python -m memoire_master_rl_logistique.plots.mine_graph --shovels 5 --dumps 3
 """
 
 from __future__ import annotations

@@ -3,13 +3,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from memoire_master_rl_logistique.experiments.reporting import order_policies, prepare_outputs
-from memoire_master_rl_logistique.experiments.robustness_analysis import (
-    main,
-    plot_robustness_heatmap,
-    robustness_ratios,
-    wait_change_pct,
-)
+from memoire_master_rl_logistique.analysis.robustness import robustness_ratios, wait_change_pct
+from memoire_master_rl_logistique.plots.common import order_policies, prepare_outputs
+from memoire_master_rl_logistique.plots.robustness import main, plot_robustness_heatmap
 
 REFERENCES_CSV = (
     Path(__file__).parent.parent / "data" / "results_v1_article" / "benchmark_results.csv"

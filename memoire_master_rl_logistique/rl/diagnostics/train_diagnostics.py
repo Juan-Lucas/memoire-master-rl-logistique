@@ -3,7 +3,7 @@ l'erreur TD par épisode (figures de diagnostic), pour un scénario donné
 (nominal, high_load, high_breakdown). Les tables produites sont distinctes de
 celles évaluées par run_benchmark.
 
-Usage : python -m memoire_master_rl_logistique.experiments.train_diagnostics {q_learning,sarsa} {nominal,high_load,high_breakdown}
+Usage : python -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics {q_learning,sarsa} {nominal,high_load,high_breakdown}
 """
 
 from __future__ import annotations

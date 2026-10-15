@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from memoire_master_rl_logistique.experiments.statistical_tests import (
+from memoire_master_rl_logistique.analysis.statistical_tests import (
     format_p,
     friedman_test,
     interaction_test,

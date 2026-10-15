@@ -11,7 +11,7 @@
 L'attente utilisée est l'attente totale par camion ; l'attente en file viendra avec T10.
 
 Lancement :
-    python -m memoire_master_rl_logistique.experiments.plot_benchmark_comparisons CSV DOSSIER [--overwrite]
+    python -m memoire_master_rl_logistique.plots.benchmark_comparisons CSV DOSSIER [--overwrite]
 """
 
 from __future__ import annotations
@@ -23,17 +23,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from memoire_master_rl_logistique.experiments.reporting import (
+from memoire_master_rl_logistique.analysis.statistical_tests import (
+    load_results,
+    paired_bootstrap_ci,
+)
+from memoire_master_rl_logistique.plots.common import (
     SCENARIO_COLORS,
     SCENARIO_LABELS,
     SCENARIO_ORDER,
     order_policies,
     policy_label,
     prepare_outputs,
-)
-from memoire_master_rl_logistique.experiments.statistical_tests import (
-    load_results,
-    paired_bootstrap_ci,
 )
 
 PRODUCTIVITY = "productivity_tph"

@@ -109,7 +109,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.visualize_graph:
-        from memoire_master_rl_logistique.experiments.visualize_mine_graph import (
+        from memoire_master_rl_logistique.plots.mine_graph import (
             generate_mine_graph_figure,
         )
 

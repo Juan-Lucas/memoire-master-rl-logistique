@@ -69,35 +69,35 @@ create_environment:
 
 .PHONY: train-ql-highload
 train-ql-highload:
-	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.train_diagnostics q_learning high_load > data/results/qlearning_diag_highload.log 2>&1
+	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics q_learning high_load > data/results/qlearning_diag_highload.log 2>&1
 
 .PHONY: train-sarsa-highload
 train-sarsa-highload:
-	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.train_diagnostics sarsa high_load > data/results/sarsa_diag_highload.log 2>&1
+	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics sarsa high_load > data/results/sarsa_diag_highload.log 2>&1
 
 .PHONY: train-ql-highbreakdown
 train-ql-highbreakdown:
-	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.train_diagnostics q_learning high_breakdown > data/results/qlearning_diag_highbreakdown.log 2>&1
+	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics q_learning high_breakdown > data/results/qlearning_diag_highbreakdown.log 2>&1
 
 .PHONY: train-sarsa-highbreakdown
 train-sarsa-highbreakdown:
-	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.train_diagnostics sarsa high_breakdown > data/results/sarsa_diag_highbreakdown.log 2>&1
+	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics sarsa high_breakdown > data/results/sarsa_diag_highbreakdown.log 2>&1
 
 .PHONY: train-dqn-highload
 train-dqn-highload:
-	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.train_losscurve dqn high_load > data/results/dqn_losscurve_highload.log 2>&1
+	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve dqn high_load > data/results/dqn_losscurve_highload.log 2>&1
 
 .PHONY: train-ppo-highload
 train-ppo-highload:
-	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.train_losscurve ppo high_load > data/results/ppo_losscurve_highload.log 2>&1
+	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve ppo high_load > data/results/ppo_losscurve_highload.log 2>&1
 
 .PHONY: train-dqn-highbreakdown
 train-dqn-highbreakdown:
-	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.train_losscurve dqn high_breakdown > data/results/dqn_losscurve_highbreakdown.log 2>&1
+	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve dqn high_breakdown > data/results/dqn_losscurve_highbreakdown.log 2>&1
 
 .PHONY: train-ppo-highbreakdown
 train-ppo-highbreakdown:
-	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.train_losscurve ppo high_breakdown > data/results/ppo_losscurve_highbreakdown.log 2>&1
+	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve ppo high_breakdown > data/results/ppo_losscurve_highbreakdown.log 2>&1
 
 ## Lancer les 8 reentrainements diagnostics RL en parallele (high_load + high_breakdown)
 .PHONY: train-diagnostics-all
@@ -107,9 +107,9 @@ train-diagnostics-all:
 ## Generer les figures TD-error / Policy-Value Loss / Exploration (3 scenarios)
 .PHONY: plot-diagnostics
 plot-diagnostics:
-	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.plot_td_error
-	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.plot_policy_value_loss
-	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.experiments.plot_exploration_exploitation
+	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.td_error
+	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.policy_value_loss
+	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.exploration_exploitation
 
 
 #################################################################################

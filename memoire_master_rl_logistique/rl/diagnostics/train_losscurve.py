@@ -3,7 +3,7 @@
 Exploitation, pour un scénario donné (nominal, high_load, high_breakdown).
 Ces modèles sont distincts de ceux évalués par run_benchmark.
 
-Usage : python -m memoire_master_rl_logistique.experiments.train_losscurve {dqn,ppo} {nominal,high_load,high_breakdown}
+Usage : python -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve {dqn,ppo} {nominal,high_load,high_breakdown}
 """
 
 from __future__ import annotations

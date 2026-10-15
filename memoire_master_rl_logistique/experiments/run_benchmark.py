@@ -13,9 +13,9 @@ un doublon (scénario, politique, graine) lève ``ValueError`` (voir ``write_res
 from __future__ import annotations
 
 import csv
+import datetime as dt
 from pathlib import Path
 import time
-import datetime as dt
 
 from stable_baselines3 import DQN, PPO
 

@@ -1,7 +1,7 @@
-"""Courbes de convergence DQN/PPO (productivité lissée par épisode).
+"""Courbes de convergence Q-Learning/SARSA (récompense lissée par épisode).
 
-Source : data/results/convergence_deeprl_powerbi.csv
-Sortie : reports/figures/learning_curves_deeprl_{nominal,highload,highbreakdown}.png
+Source : data/results/convergence_qlearning_sarsa_powerbi.csv
+Sortie : reports/figures/learning_curves_{nominal,highload,highbreakdown}.png
 """
 
 from __future__ import annotations
@@ -11,19 +11,19 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from memoire_master_rl_logistique.experiments.plot_utils import save_figure
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
+from memoire_master_rl_logistique.plots.common import save_figure
 
 SCENARIOS = [(s.label, s.suffix, s.label) for s in SCENARIO_DISPLAYS]
 
 ALGO_STYLE = {
-    "DQN": "#2196F3",
-    "PPO": "#FF5722",
+    "Q-Learning": "#4CAF50",
+    "SARSA": "#9C27B0",
 }
 
 
 def main() -> None:
-    df = pd.read_csv("data/results/convergence_deeprl_powerbi.csv")
+    df = pd.read_csv("data/results/convergence_qlearning_sarsa_powerbi.csv")
     out_dir = Path("reports/figures")
 
     for scenario_value, suffix, scenario_label in SCENARIOS:
@@ -31,16 +31,16 @@ def main() -> None:
 
         for algo, color in ALGO_STYLE.items():
             sub = df[(df["algorithm"] == algo) & (df["scenario"] == scenario_value)]
-            ax.plot(sub["episode"], sub["productivity_smooth"], color=color, label=algo, linewidth=1.5)
+            ax.plot(sub["episode"], sub["reward_smooth"], color=color, label=algo, linewidth=1.5)
 
         ax.set_xlabel("Episode")
-        ax.set_ylabel("Productivity (t/h) — smoothed")
-        ax.set_title(f"DQN and PPO convergence — {scenario_label} scenario")
+        ax.set_ylabel("Cumulative reward — 100-episode moving average")
+        ax.set_title(f"Q-Learning and SARSA convergence — {scenario_label} scenario")
         ax.legend()
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
 
-        out_path = out_dir / f"learning_curves_deeprl_{suffix}.png"
+        out_path = out_dir / f"learning_curves_{suffix}.png"
         save_figure(fig, out_path)
 
 

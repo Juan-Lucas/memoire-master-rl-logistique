@@ -1,1 +1,1 @@
-"""Scénarios, benchmark, analyses statistiques et figures."""
+"""Définition des scénarios et lancement des expériences (benchmark, ablation)."""

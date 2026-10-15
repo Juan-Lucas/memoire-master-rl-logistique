@@ -1,4 +1,4 @@
-"""Conventions communes aux tableaux et figures de l'article.
+"""Conventions communes aux figures de l'article.
 
 - Ordre, libellés français et couleurs des politiques et des régimes, pour que
   toutes les figures restent cohérentes entre elles.
@@ -11,7 +11,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 from pathlib import Path
 
-from memoire_master_rl_logistique.experiments.statistical_tests import SCENARIOS
+import matplotlib.pyplot as plt
+
+from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS
 
 # Ordre de lecture : heuristiques, puis RL tabulaire, puis RL profond.
 POLICY_ORDER = ["FIFO", "Fixed", "Nearest", "ShortestPath", "Q-Learning", "SARSA", "DQN", "PPO"]
@@ -27,8 +29,7 @@ POLICY_LABELS = {
     "PPO": "PPO",
 }
 
-SCENARIO_ORDER = SCENARIOS
-PERTURBED_SCENARIOS = [s for s in SCENARIOS if s != "nominal"]
+SCENARIO_ORDER = MAIN_SCENARIOS
 SCENARIO_LABELS = {
     "nominal": "Nominal",
     "high_load": "Forte charge",
@@ -71,3 +72,10 @@ def prepare_outputs(out_dir: str | Path, filenames: Iterable[str], overwrite: bo
         raise FileExistsError(f"Fichiers déjà présents (utiliser --overwrite) : {names}")
     out_dir.mkdir(parents=True, exist_ok=True)
     return paths
+
+
+def save_figure(fig: plt.Figure, out_path: Path, dpi: int = 150) -> None:
+    """Sauvegarde une figure, la ferme et affiche le chemin de sortie."""
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+    print(f"Figure sauvegardée : {out_path}")

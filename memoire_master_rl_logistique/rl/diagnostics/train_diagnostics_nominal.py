@@ -6,7 +6,7 @@ le résultat (q_table / sarsa_table) est donc identique, seul un fichier
 supplémentaire `training_diagnostics.csv` (episode, total_reward, epsilon,
 mean_abs_td_error) est ajouté.
 
-Usage : python -m memoire_master_rl_logistique.experiments.train_diagnostics_nominal {q_learning,sarsa}
+Usage : python -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics_nominal {q_learning,sarsa}
 """
 
 from __future__ import annotations
