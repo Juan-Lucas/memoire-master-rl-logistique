@@ -1,5 +1,7 @@
+# Hyperparamètres de DQN (Stable-Baselines3), lus par rl/train_dqn.py (T28).
+# La graine n'est pas ici : un agent par graine d'entraînement (experiment_config.yaml).
+# Le budget (total_timesteps) dépend du scénario (experiment_config.yaml).
 algorithm: DQN
-seed: 42
 learning_rate: 0.0003
 gamma: 0.99
 batch_size: 64

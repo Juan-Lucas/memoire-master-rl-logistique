@@ -28,6 +28,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from memoire_master_rl_logistique.config import experiment_config, snapshot_configs
 from memoire_master_rl_logistique.experiments.policies import agent_policy_fn, make_env
 from memoire_master_rl_logistique.experiments.run_benchmark import run_single_episode
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
@@ -37,13 +38,15 @@ from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.seeds import TRAIN_SEEDS, TUNING_SEEDS
 
 TRAINING_SEED = TRAIN_SEEDS[0]
-DEFAULT_TIMESTEPS = 200_000
 
-# Grilles : même nombre de configurations par algorithme. Les valeurs de la v1
+# Budget et grilles : rubrique ``tuning`` de configs/experiment_config.yaml (T28).
+# Même nombre de configurations par algorithme ; les valeurs de la v1
 # (PPO : ent_coef 0,02, lr 3e-4 ; DQN : lr 3e-4, exploration 0,3) en font partie.
+_TUNING = experiment_config()["tuning"]
+DEFAULT_TIMESTEPS: int = _TUNING["timesteps"]
 GRIDS: dict[str, dict[str, tuple[float, ...]]] = {
-    "PPO": {"ent_coef": (0.0, 0.02), "learning_rate": (1e-4, 3e-4)},
-    "DQN": {"exploration_fraction": (0.1, 0.3), "learning_rate": (1e-4, 3e-4)},
+    algorithm: {name: tuple(values) for name, values in grid.items()}
+    for algorithm, grid in _TUNING["grids"].items()
 }
 TRAINERS = {"PPO": train_ppo, "DQN": train_dqn}
 
@@ -77,8 +80,13 @@ def tune(
     grids: dict[str, dict[str, Sequence[float]]] | None = None,
     seeds: Sequence[int] = TUNING_SEEDS,
 ) -> pd.DataFrame:
-    """Entraîne et évalue chaque configuration ; reprend sans réentraîner celles déjà faites."""
+    """Entraîne et évalue chaque configuration ; reprend sans réentraîner celles déjà faites.
+
+    La configuration est archivée dans ``out_dir/configs`` ; une reprise avec une
+    configuration modifiée est refusée (T28).
+    """
     out_dir = Path(out_dir)
+    snapshot_configs(out_dir / "configs")
     rows = []
     for algorithm in algorithms:
         for params in configurations(algorithm, (grids or {}).get(algorithm)):

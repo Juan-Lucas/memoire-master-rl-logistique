@@ -15,12 +15,14 @@ d'entraînement, graine d'évaluation) lève ``ValueError`` (voir ``write_result
 
 from __future__ import annotations
 
+import argparse
 from collections.abc import Sequence
 import csv
 import datetime as dt
 from pathlib import Path
 import time
 
+from memoire_master_rl_logistique.config import snapshot_configs
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.policies import (
     PolicyFn,
@@ -29,12 +31,12 @@ from memoire_master_rl_logistique.experiments.policies import (
     make_env,
 )
 from memoire_master_rl_logistique.experiments.scenarios import (
+    MAIN_SCENARIOS,
     SCENARIOS,
     Scenario,
     evaluation_mode,
     training_regimes,
 )
-from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS
 from memoire_master_rl_logistique.rl.model_loading import load_model, model_file
 from memoire_master_rl_logistique.rl.model_metadata import EnvConfig
 from memoire_master_rl_logistique.rl.model_paths import model_dir
@@ -177,7 +179,7 @@ def run_benchmark(
 
 
 def _train(algorithm: str, scenario: Scenario, train_seed: int, output_dir: Path) -> None:
-    """Entraîne un agent avec les réglages de la campagne (budgets de l'article)."""
+    """Entraîne un agent : régime et budget du scénario, hyperparamètres de ``configs/``."""
     env_kwargs = dict(
         seed=train_seed,
         truck_count=scenario.truck_count,
@@ -188,9 +190,10 @@ def _train(algorithm: str, scenario: Scenario, train_seed: int, output_dir: Path
         reward_weights=scenario.reward_weights,
         output_dir=str(output_dir),
     )
+    # Hyperparamètres : configs/*_hyperparameters.yaml, lus par chaque entraîneur (T28).
     if algorithm in ("Q-Learning", "SARSA"):
         trainer = train_q_learning if algorithm == "Q-Learning" else train_sarsa
-        trainer(n_episodes=30_000, alpha=0.2, n_bins=DEFAULT_N_BINS, **env_kwargs)
+        trainer(**env_kwargs)
     else:
         trainer = train_dqn if algorithm == "DQN" else train_ppo
         trainer(total_timesteps=scenario.total_timesteps, **env_kwargs)
@@ -237,46 +240,58 @@ def write_results(
 def run_all_benchmarks(
     output_dir: str = "data/results",
     train_ppo_flag: bool = True,
-    scenario_names: list[str] | None = None,
+    scenario_names: Sequence[str] | None = None,
     allow_legacy_models: bool = False,
     train_seeds: Sequence[int] = TRAIN_SEEDS,
-) -> None:
-    """Lance les benchmarks sur tous les scénarios (voir ``run_benchmark`` pour les modèles)."""
+    run_id: str | None = None,
+) -> Path:
+    """Lance les benchmarks sur les scénarios demandés (tous si ``None``) et renvoie le CSV.
+
+    La configuration utilisée est archivée **avant** le calcul dans
+    ``<output_dir>/configs_<run_id>/`` (T28) : même un lancement interrompu garde la
+    trace de ses réglages, et ``MINE_RL_CONFIG_DIR`` permet de le rejouer à l'identique.
+    """
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
+    if run_id is None:
+        run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    print(f"Configuration archivée : {snapshot_configs(out_path / f'configs_{run_id}')}")
 
-    scenarios_to_run = SCENARIOS
-    if scenario_names is not None:
-        scenarios_to_run = {
-            k: v for k, v in SCENARIOS.items() if k in scenario_names
-        }
+    unknown = set(scenario_names or ()) - set(SCENARIOS)
+    if unknown:
+        raise ValueError(f"Scénarios inconnus : {sorted(unknown)}")
+    names = list(SCENARIOS) if scenario_names is None else list(scenario_names)
 
     all_results: list[dict] = []
-
-    for name, scenario in scenarios_to_run.items():
+    for name in names:
+        scenario = SCENARIOS[name]
         print(f"\n{'='*60}")
         print(f"Scénario: {name} — {scenario.description}")
         print(f"{'='*60}")
         # Agents spécialisés et/ou nominaux transférés : voir scenarios.training_regimes (T27).
-        results = run_benchmark(
+        all_results.extend(run_benchmark(
             scenario, out_path, train_ppo_flag,
             allow_legacy_models=allow_legacy_models, train_seeds=train_seeds,
-        )
-        all_results.extend(results)
+        ))
 
-    if all_results:
-        csv_path = write_results(all_results, out_path)
-        print(f"\nRésultats sauvegardés : {csv_path}  ({len(all_results)} nouvelles lignes)")
-    else:
-        raise ValueError("Aucun résultat n'a été obtenu.")
+    csv_path = write_results(all_results, out_path, run_id)
+    print(f"\nRésultats sauvegardés : {csv_path}  ({len(all_results)} nouvelles lignes)")
+    return csv_path
 
-def main() -> None:
-    """Point d'entrée pour le benchmark complet."""
-    run_all_benchmarks(
-        output_dir="data/results",
-        train_ppo_flag=True,
-        scenario_names=["nominal", "high_load", "high_breakdown"],
-    )
+
+def main(argv: Sequence[str] | None = None) -> Path:
+    """Campagne en une commande, avec la configuration de ``configs/`` (ou ``MINE_RL_CONFIG_DIR``).
+
+    python -m memoire_master_rl_logistique.experiments.run_benchmark DOSSIER [--scenarios ...]
+    """
+    parser = argparse.ArgumentParser(description="Benchmark des politiques de dispatching.")
+    parser.add_argument("output_dir", type=Path, help="dossier des modèles et des résultats")
+    parser.add_argument("--scenarios", nargs="+", default=MAIN_SCENARIOS, choices=list(SCENARIOS),
+                        help="scénarios à évaluer (défaut : main_scenarios de la configuration)")
+    parser.add_argument("--allow-legacy-models", action="store_true")
+    args = parser.parse_args(argv)
+    return run_all_benchmarks(str(args.output_dir), scenario_names=args.scenarios,
+                              allow_legacy_models=args.allow_legacy_models)
 
 
 if __name__ == "__main__":

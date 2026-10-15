@@ -10,6 +10,7 @@ from pathlib import Path
 
 import numpy as np
 
+from memoire_master_rl_logistique.config import hyperparameters
 from memoire_master_rl_logistique.rl.discretize import _discretize_obs
 from memoire_master_rl_logistique.rl.model_metadata import (
     EnvConfig,
@@ -26,12 +27,12 @@ from memoire_master_rl_logistique.seeds import TRAIN_SEEDS, training_episode_see
 
 
 def train_sarsa(
-    n_episodes: int = 10_000,
-    alpha: float = 0.1,
-    gamma: float = 0.99,
-    epsilon_start: float = 1.0,
-    epsilon_min: float = 0.01,
-    n_bins: int = 8,
+    n_episodes: int | None = None,
+    alpha: float | None = None,
+    gamma: float | None = None,
+    epsilon_start: float | None = None,
+    epsilon_min: float | None = None,
+    n_bins: int | None = None,
     seed: int = TRAIN_SEEDS[0],
     truck_count: int = 12,
     shovel_count: int = 3,
@@ -48,6 +49,15 @@ def train_sarsa(
     -------
     q_table : dict mapping discretized state -> Q-values array
     """
+    # Hyperparamètres de configs/tabular_hyperparameters.yaml ; un argument donné les remplace (T28).
+    params = hyperparameters(
+        "SARSA", n_episodes=n_episodes, alpha=alpha, gamma=gamma,
+        epsilon_start=epsilon_start, epsilon_min=epsilon_min, n_bins=n_bins,
+    )
+    n_episodes, alpha, gamma = params["n_episodes"], params["alpha"], params["gamma"]
+    epsilon_start, epsilon_min, n_bins = (
+        params["epsilon_start"], params["epsilon_min"], params["n_bins"])
+
     out_path = Path(output_dir)
     ensure_new_model(out_path / "sarsa_table.pkl", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -135,8 +145,7 @@ def train_sarsa(
                   breakdown_probability, reward_weights),
         observation_size=env.observation_space.shape[0],
         seed=seed,
-        training={"n_episodes": n_episodes, "alpha": alpha, "gamma": gamma,
-                  "epsilon_start": epsilon_start, "epsilon_min": epsilon_min, "n_bins": n_bins},
+        training=params,
     ))
 
     return q_table
@@ -148,12 +157,8 @@ class SarsaPolicy(TabularPolicy):
 
 def main() -> None:
     """Point d'entrée pour l'entraînement SARSA."""
-    train_sarsa(
-        n_episodes=30_000,
-        alpha=0.2,
-        gamma=0.99,
-        seed=TRAIN_SEEDS[0],
-    )
+    # Régime nominal ; hyperparamètres de configs/ (T28).
+    train_sarsa(seed=TRAIN_SEEDS[0])
 
 
 if __name__ == "__main__":

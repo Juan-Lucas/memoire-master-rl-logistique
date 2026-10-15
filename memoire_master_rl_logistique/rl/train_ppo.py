@@ -8,6 +8,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.logger import configure
 
+from memoire_master_rl_logistique.config import hyperparameters
 from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
 from memoire_master_rl_logistique.rl.env_factory import create_env
 from memoire_master_rl_logistique.rl.model_metadata import (
@@ -31,17 +32,20 @@ def train_ppo(
     output_dir: str = str(model_dir(RESULTS_DIR, "PPO", "nominal", TRAIN_SEEDS[0])),
     log_freq: int = 1000,
     overwrite: bool = False,
-    learning_rate: float = 3e-4,
-    ent_coef: float = 0.02,
+    learning_rate: float | None = None,
+    ent_coef: float | None = None,
     progress_bar: bool = True,
 ) -> PPO:
     """Entraîne un agent PPO et l'enregistre dans ``output_dir``.
 
     Pour un espace d'actions discret, la politique produit des logits passés
     dans une Softmax. Avec une même graine, l'entraînement est déterministe.
-    ``learning_rate`` et ``ent_coef`` sont réglables pour le balayage de T25 bis
-    (``experiments/tune_hyperparams``) ; les valeurs par défaut sont celles de la v1.
+    Hyperparamètres lus dans ``configs/ppo_hyperparameters.yaml`` (T28) ;
+    ``learning_rate`` et ``ent_coef``, s'ils sont donnés, remplacent ceux du fichier
+    (balayage de T25 bis, ``experiments/tune_hyperparams``). Les valeurs utilisées sont
+    écrites dans ``metadata.json``.
     """
+    params = hyperparameters("PPO", learning_rate=learning_rate, ent_coef=ent_coef)
     out_path = Path(output_dir)
     ensure_new_model(out_path / "ppo_mine_agent", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -63,15 +67,8 @@ def train_ppo(
     model = PPO(
         policy="MlpPolicy",
         env=env,
-        learning_rate=learning_rate,
-        gamma=0.99,
-        batch_size=64,
-        gae_lambda=0.95,
-        clip_range=0.2,
-        n_steps=1024,
-        n_epochs=10,
-        ent_coef=ent_coef,
-        policy_kwargs={"net_arch": [128, 128]},
+        policy_kwargs={"net_arch": params["net_arch"]},
+        **{k: v for k, v in params.items() if k != "net_arch"},
         verbose=1,
         seed=seed,
         tensorboard_log=None,  # métriques écrites en CSV dans sb3_logs/
@@ -106,8 +103,7 @@ def train_ppo(
                   breakdown_probability, reward_weights),
         observation_size=env.observation_space.shape[0],
         seed=seed,
-        training={"total_timesteps": total_timesteps, "learning_rate": learning_rate,
-                  "ent_coef": ent_coef},
+        training={"total_timesteps": total_timesteps, **params},
     ))
     print(f"Modèle sauvegardé : {model_path}")
 
@@ -117,14 +113,8 @@ def train_ppo(
 
 def main() -> None:
     """Point d'entrée pour l'entraînement."""
-    train_ppo(
-        total_timesteps=2_000_000,
-        seed=TRAIN_SEEDS[0],
-        truck_count=12,
-        shovel_count=3,
-        dump_count=2,
-        episode_minutes=480.0,
-    )
+    # Régime nominal ; hyperparamètres de configs/ (T28).
+    train_ppo(seed=TRAIN_SEEDS[0])
 
 
 if __name__ == "__main__":

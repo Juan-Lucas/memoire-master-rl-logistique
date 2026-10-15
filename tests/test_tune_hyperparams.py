@@ -62,6 +62,10 @@ def test_hyperparametres_enregistres_et_reprise(tmp_path):
 
     tune(tmp_path, ["PPO"], TINY, ONE_CONFIG, seeds)
 
-    assert metadata["training"] == pytest.approx(
-        {"total_timesteps": TINY, "learning_rate": 3e-4, "ent_coef": 0.02})
+    # Depuis T28, tous les hyperparamètres utilisés sont écrits, pas seulement ceux réglés.
+    assert metadata["training"]["total_timesteps"] == TINY
+    assert metadata["training"]["learning_rate"] == pytest.approx(3e-4)
+    assert metadata["training"]["ent_coef"] == pytest.approx(0.02)
+    assert metadata["training"]["net_arch"] == [128, 128]
+    assert (tmp_path / "configs" / "ppo_hyperparameters.yaml").exists()  # configuration archivée
     assert (run_dir / "ppo_mine_agent.zip").stat().st_mtime == trained_at

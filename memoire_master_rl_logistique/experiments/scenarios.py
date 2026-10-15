@@ -1,6 +1,7 @@
 """Scénarios expérimentaux (régimes, ablation, scénarios non vus).
 
-Valeurs par défaut inspirées de la littérature :
+Décrits dans ``configs/experiment_config.yaml`` depuis T28. Valeurs inspirées de la
+littérature :
 - 12 camions Cat 785C (Kangwa 2021, Kansanshi)
 - 3 pelles Hitachi 2500 (Mohtasham 2023)
 - 2 verses, poste de 8 heures
@@ -12,108 +13,59 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from memoire_master_rl_logistique.config import experiment_config
 from memoire_master_rl_logistique.seeds import EVAL_SEEDS
 
 
 @dataclass
 class Scenario:
-    """Configuration d'un scénario expérimental."""
+    """Configuration d'un scénario expérimental.
+
+    Pas de valeur par défaut (sauf les graines) : toutes viennent de
+    ``configs/experiment_config.yaml`` (``scenario_defaults`` puis le scénario, T28).
+    """
 
     name: str
     description: str
-    truck_count: int = 12
-    shovel_count: int = 3
-    dump_count: int = 2
-    episode_minutes: float = 480.0
-    breakdown_probability: float = 0.02
-    reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3)
+    truck_count: int
+    shovel_count: int
+    dump_count: int
+    episode_minutes: float
+    breakdown_probability: float
+    reward_weights: tuple[float, ...]
+    total_timesteps: int
     seeds: list[int] = field(default_factory=lambda: list(EVAL_SEEDS))  # 30 réplications d'évaluation
-    total_timesteps: int = 2_000_000
 
 
-SCENARIOS: dict[str, Scenario] = {
-    "nominal": Scenario(
-        name="nominal",
-        description="Conditions nominales : 12 camions, 3 pelles, 2 dumps.",
-        truck_count=12,
-        shovel_count=3,
-        dump_count=2,
-        episode_minutes=480.0,
-        breakdown_probability=0.02,
-        total_timesteps=2_000_000,
-    ),
-    "nominal_asymétrique": Scenario(
-        name="nominal_asymétrique",
-        description="Configuration asymétrique : 13 camions, 3 pelles, 2 dumps (MF=4.33, désavantage Fixed Assignment).",
-        truck_count=13,
-        shovel_count=3,
-        dump_count=2,
-        episode_minutes=480.0,
-        breakdown_probability=0.02,
-        total_timesteps=2_000_000,
-    ),
-    "high_load": Scenario(
-        name="high_load",
-        description="Charge élevée : 18 camions pour 3 pelles (surcharge).",
-        truck_count=18,
-        shovel_count=3,
-        dump_count=2,
-        episode_minutes=480.0,
-        breakdown_probability=0.02,
-        total_timesteps=2_000_000,
-    ),
-    "high_breakdown": Scenario(
-        name="high_breakdown",
-        description="Taux de pannes élevé : 10% par cycle (robustesse).",
-        truck_count=12,
-        shovel_count=3,
-        dump_count=2,
-        episode_minutes=480.0,
-        breakdown_probability=0.10,
-        total_timesteps=2_000_000,
-    ),
-}
+def _build_scenarios(config: dict) -> dict[str, Scenario]:
+    """Un ``Scenario`` par entrée de ``scenarios`` : valeurs communes, puis ce qui change."""
+    scenarios = {}
+    for name, overrides in config["scenarios"].items():
+        values = {**config["scenario_defaults"], **overrides}
+        values["reward_weights"] = tuple(values["reward_weights"])
+        try:
+            scenarios[name] = Scenario(name=name, **values)
+        except TypeError as error:  # clé inconnue (faute de frappe dans le YAML)
+            raise ValueError(f"Scénario {name!r} mal décrit dans la configuration : {error}") from None
+    return scenarios
 
 
-# ---------------------------------------------------------------------------
-# Ablation sur w4 (poids de la pénalité d'attente), régime nominal sinon.
-# w4 = 0,3 correspond au scénario "nominal" lui-même.
-# ---------------------------------------------------------------------------
-_ABLATION_W4 = [0.0, 0.1, 0.5]  # w4=0.3 déjà dans nominal
-for _w4 in _ABLATION_W4:
-    _key = f"ablation_w4_{str(_w4).replace('.', '')}"
-    SCENARIOS[_key] = Scenario(
-        name=_key,
-        description=f"Ablation reward : w4={_w4} (nominal sinon).",
-        reward_weights=(1.0, 0.1, 0.05, _w4),
-    )
+_CONFIG = experiment_config()
 
-# ---------------------------------------------------------------------------
-# Scénarios non vus, évalués avec les modèles nominaux (voir run_all_benchmarks).
-# unseen_medium_load (15 camions), retiré en T9, est réintroduit depuis T18 :
-# l'observation a la même taille pour 12 et 15 camions.
-# ---------------------------------------------------------------------------
-SCENARIOS["unseen_medium_load"] = Scenario(
-    name="unseen_medium_load",
-    description="Non vu : 15 camions, pb=2 % (entre nominal et high_load).",
-    truck_count=15,
-)
-SCENARIOS["unseen_medium_breakdown"] = Scenario(
-    name="unseen_medium_breakdown",
-    description="Non vu : 12 camions, pb=5 % (entre nominal et high_breakdown).",
-    breakdown_probability=0.05,
-)
+# Régimes lus dans configs/experiment_config.yaml (T28) : régimes principaux,
+# configuration asymétrique, ablation sur w4, scénarios non vus.
+SCENARIOS: dict[str, Scenario] = _build_scenarios(_CONFIG)
 
 # Les trois régimes comparés dans l'article (les autres entrées servent aux
-# expériences annexes : ablation, généralisation).
-MAIN_SCENARIOS: list[str] = ["nominal", "high_load", "high_breakdown"]
-PERTURBED_SCENARIOS: list[str] = [s for s in MAIN_SCENARIOS if s != "nominal"]
+# expériences annexes : ablation, généralisation). Le premier est la référence.
+MAIN_SCENARIOS: list[str] = list(_CONFIG["main_scenarios"])
+PERTURBED_SCENARIOS: list[str] = MAIN_SCENARIOS[1:]
 
 # Mode d'évaluation d'un agent (T27, colonne ``mode`` du CSV) : entraîné dans le régime
 # évalué (spécialisé) ou entraîné en nominal puis évalué tel quel (transféré).
 SPECIALISED = "spécialisé"
 TRANSFERRED = "transféré"
-TRANSFER_SOURCE = "nominal"
+TRANSFER_SOURCE = MAIN_SCENARIOS[0]
 
 
 def training_regimes(scenario_name: str) -> list[str]:

@@ -11,7 +11,6 @@ from __future__ import annotations
 import sys
 
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
-from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
 from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
@@ -23,10 +22,7 @@ def main() -> None:
     scenario = SCENARIOS[scenario_name]
 
     common = dict(
-        n_episodes=30_000,
-        alpha=0.2,
-        gamma=0.99,
-        n_bins=DEFAULT_N_BINS,
+        # n_episodes, alpha, gamma, n_bins : configs/tabular_hyperparameters.yaml (T28)
         seed=TRAIN_SEEDS[0],  # T26 : jamais une graine d'évaluation
         truck_count=scenario.truck_count,
         shovel_count=scenario.shovel_count,

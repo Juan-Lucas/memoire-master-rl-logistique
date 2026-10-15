@@ -94,8 +94,8 @@ def main() -> None:
         help="Entraîner l'agent DQN",
     )
     parser.add_argument(
-        "--episodes", type=int, default=30_000,
-        help="Nombre d'épisodes pour Q-Learning/SARSA (défaut: 30000)",
+        "--episodes", type=int, default=None,
+        help="Nombre d'épisodes pour Q-Learning/SARSA (défaut : configs/tabular_hyperparameters.yaml)",
     )
     parser.add_argument(
         "--benchmark-only", action="store_true",
@@ -118,8 +118,8 @@ def main() -> None:
         help="Nombre de dumps (défaut: 2)",
     )
     parser.add_argument(
-        "--timesteps", type=int, default=2_000_000,
-        help="Nombre de steps d'entraînement PPO/DQN (défaut: 2000000)",
+        "--timesteps", type=int, default=SCENARIOS[MAIN_SCENARIOS[0]].total_timesteps,
+        help="Nombre de steps d'entraînement PPO/DQN (défaut : budget du nominal dans configs/)",
     )
     parser.add_argument(
         "--overwrite", action="store_true",

@@ -15,17 +15,28 @@ d'entraînement, et une seule graine d'entraînement existait.
 10 029 : c'est l'entraînement qui est déplacé. Le résultat est le même (ensembles
 disjoints, vérifié par les tests), sans changer les graines d'évaluation des tâches
 précédentes.
+
+Valeurs lues dans ``configs/experiment_config.yaml`` (rubrique ``seeds``, T28).
 """
 
 from __future__ import annotations
 
-EVAL_SEEDS = tuple(range(42, 72))
-TUNING_SEEDS = tuple(range(20_000, 20_010))
-TRAIN_SEEDS = (1, 2, 3, 4, 5)
+from memoire_master_rl_logistique.config import experiment_config
+
+_SEEDS = experiment_config()["seeds"]
+
+
+def _seed_range(block: dict) -> tuple[int, ...]:
+    return tuple(range(block["start"], block["start"] + block["count"]))
+
+
+EVAL_SEEDS = _seed_range(_SEEDS["evaluation"])
+TUNING_SEEDS = _seed_range(_SEEDS["tuning"])
+TRAIN_SEEDS = tuple(_SEEDS["training"])
 
 # Écart entre les graines d'épisode de deux graines d'entraînement : bien plus que le
 # nombre d'épisodes d'un entraînement (30 000 au plus, pour Q-Learning et SARSA).
-TRAINING_SEED_STRIDE = 1_000_000
+TRAINING_SEED_STRIDE = _SEEDS["training_episode_stride"]
 
 
 def training_episode_seed(train_seed: int, episode: int = 0) -> int:
