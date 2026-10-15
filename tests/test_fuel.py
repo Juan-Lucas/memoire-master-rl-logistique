@@ -1,11 +1,9 @@
 """Tests de T14 : carburant paramétrable et calibré sur une référence publiée."""
 
-import numpy as np
 import pandas as pd
 import pytest
 
 from memoire_master_rl_logistique.baselines import shortest_path_policy as sp
-from memoire_master_rl_logistique.env import observation_builder
 from memoire_master_rl_logistique.experiments.policies import (
     _baseline_fn,
     heuristic_policies,
@@ -55,30 +53,9 @@ def test_calibration_sur_le_cat_785d():
     assert runs["cost_per_cycle"].mean() == pytest.approx(39.3, abs=0.1)  # L par cycle
 
 
-def observations(env, policy_fn, seed):
-    """Toutes les observations d'un épisode."""
-    obs, info = env.reset(seed=seed)
-    seen = [obs]
-    while True:
-        obs, _, terminated, truncated, info = env.step(policy_fn(obs, info, env))
-        seen.append(obs)
-        if terminated or truncated:
-            return np.array(seen)
-
-
-@pytest.mark.parametrize("scenario", MAIN_SCENARIOS)
-def test_l_agent_voit_les_memes_observations(scenario, monkeypatch):
-    """Calibration + normalisation multipliées par le même facteur : chaque observation est
-    identique à celle d'avant T14 (carburant non calibré, divisé par 500). Les modèles déjà
-    entraînés restent donc valables (la récompense n'utilise pas le carburant)."""
-    s = SCENARIOS[scenario]
-    policy = heuristic_policies(s)["Fixed"]
-    calibrated = observations(make_env(s), policy, seed=42)
-
-    monkeypatch.setattr(observation_builder, "_MAX_FUEL_L", 500.0)  # normalisation d'avant T14
-    before_t14 = observations(make_env(s, fuel=UNCALIBRATED), policy, seed=42)
-
-    np.testing.assert_allclose(calibrated, before_t14, rtol=1e-5, atol=1e-7)
+# Le test « l'agent voit les mêmes observations qu'avant T14 » a été retiré en T18 :
+# l'observation a changé (variables agrégées), donc tous les agents profonds seront
+# réentraînés de toute façon. Le carburant de l'observation est testé dans test_observation.py.
 
 
 @pytest.mark.parametrize("scenario", MAIN_SCENARIOS)

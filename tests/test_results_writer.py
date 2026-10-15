@@ -1,4 +1,5 @@
 import csv
+
 import pytest
 
 from memoire_master_rl_logistique.experiments.run_benchmark import write_results

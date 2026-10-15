@@ -1,7 +1,26 @@
-"""Construction du vecteur d'observation, normalisé dans [0, 1].
+"""Construction du vecteur d'observation, normalisé dans [0, 1] (T18 : variables agrégées).
 
-Taille 15 + 11N avec 3 pelles, 2 verses et 7 nœuds : 147 pour N = 12 camions,
-213 pour N = 18. Un réseau entraîné sur une taille ne peut pas recevoir l'autre.
+La taille ne dépend plus du nombre de camions : 4S + D + 4 composantes, soit 18 avec
+3 pelles et 2 verses, pour 12 comme pour 18 camions. Un agent entraîné dans un régime
+peut donc être évalué dans un autre sans réentraînement.
+
+Avant T18, l'observation contenait un bloc par camion (statut, disponibilité, tonnage,
+carburant, position one-hot : 11 valeurs × N) et les distances pelle–verse : 147
+composantes pour 12 camions, 213 pour 18, dont 54 constantes (T17).
+
+Disposition (voir ``observation_layout``), dans cet ordre :
+- ``shovel_wait`` (S) : temps avant que chaque pelle soit libre ;
+- ``dump_wait`` (D) : temps avant que chaque verse soit libre ;
+- ``shovel_trucks`` (S) : camions rattachés à chaque pelle (en route, en file ou en
+  service : le camion revient toujours à la pelle de son cycle), divisé par 24 ;
+- ``distance_to_shovel`` (S) : distance du camion qui décide à chaque pelle ;
+- ``position`` (S + 1) : codage one-hot du lieu du camion qui décide (parc ou pelle,
+  les seuls lieux où une décision est prise) ;
+- ``tonnage``, ``fuel`` : cumul du camion qui décide sur le poste ;
+- ``time`` : progression du poste.
+
+Les deux premiers blocs et les distances sont les mêmes qu'avant T18 : l'état discret
+de Q-Learning et SARSA (``rl/discretize.py``) est donc inchangé.
 """
 
 from __future__ import annotations
@@ -15,8 +34,11 @@ from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 # Constantes de normalisation
 _MAX_DISTANCE_KM = 10.0
 _MAX_TIME_MIN = 480.0  # 8 heures
-_MAX_TONNAGE_T = 2000.0
-_MAX_FUEL_L = FUEL_OBS_MAX_L  # T14 : suit la calibration, l'agent voit les mêmes valeurs
+MAX_TRUCKS = 24  # plafond du nombre de camions (forte charge : 18)
+# 25 cycles de 140 t : au-delà du maximum observé (23 cycles, 3 220 t). L'ancien plafond
+# de 2 000 t saturait avant la fin du poste (T17).
+_MAX_TONNAGE_T = 25 * 140.0
+_MAX_FUEL_L = FUEL_OBS_MAX_L
 
 
 def _normalize_distance(distance_km: float) -> float:
@@ -24,6 +46,30 @@ def _normalize_distance(distance_km: float) -> float:
     if distance_km == float("inf"):
         return 1.0
     return min(distance_km / _MAX_DISTANCE_KM, 1.0)
+
+
+def observation_layout(num_shovels: int, num_dumps: int) -> dict[str, slice]:
+    """Position de chaque bloc dans le vecteur d'observation."""
+    sizes = [
+        ("shovel_wait", num_shovels),
+        ("dump_wait", num_dumps),
+        ("shovel_trucks", num_shovels),
+        ("distance_to_shovel", num_shovels),
+        ("position", num_shovels + 1),
+        ("tonnage", 1),
+        ("fuel", 1),
+        ("time", 1),
+    ]
+    layout, start = {}, 0
+    for name, size in sizes:
+        layout[name] = slice(start, start + size)
+        start += size
+    return layout
+
+
+def observation_size(num_shovels: int, num_dumps: int) -> int:
+    """Taille du vecteur d'observation : 4S + D + 4, indépendante du nombre de camions."""
+    return observation_layout(num_shovels, num_dumps)["time"].stop
 
 
 def build_observation(
@@ -34,95 +80,29 @@ def build_observation(
     current_time_min: float,
     episode_minutes: float,
     truck_locations: list[str],
-    truck_statuses: list[int],
     current_truck_idx: int = 0,
 ) -> np.ndarray:
-    """Construit le vecteur d'observation normalisé.
+    """Construit le vecteur d'observation normalisé (voir la docstring du module)."""
+    obs: list[float] = []
+    shovel_nodes = [s.node_id for s in shovels]
 
-    Composantes :
-    - Disponibilité des pelles : temps estimé avant disponibilité (proxy de la file)
-    - Disponibilité des dumps : temps estimé avant disponibilité
-    - Statut des camions : libre, en route vers pelle, en chargement,
-      en route vers dump, en déchargement, en retour
-    - Disponibilité temporelle des camions : temps avant disponibilité
-    - Tonnage accumulé des camions : normalisé
-    - Carburant consommé des camions : normalisé
-    - Position des camions : one-hot encoding par rapport aux nœuds du graphe
-    - Temps courant : progression de l'épisode normalisée
+    for resource in (*shovels, *dumps):
+        wait = max(0.0, resource.available_at_min - current_time_min)
+        obs.append(min(wait / _MAX_TIME_MIN, 1.0))
 
-    Les temps sont divisés par 480 min, les distances par 10 km, le tonnage
-    par 2 000 t et le carburant par 500 L, puis bornés à 1.
-    """
-    obs_parts: list[float] = []
+    for node in shovel_nodes:
+        obs.append(min(sum(loc == node for loc in truck_locations) / MAX_TRUCKS, 1.0))
 
-    # Obtenir tous les nœuds du graphe pour l'encodage one-hot de la position
-    all_nodes = list(graph.nodes)
+    location = truck_locations[current_truck_idx]
+    for node in shovel_nodes:
+        obs.append(_normalize_distance(graph.shortest_distance(location, node)))
 
-    # --- Files d'attente aux pelles (q_p) ---
-    for shovel in shovels:
-        wait_until = max(0.0, shovel.available_at_min - current_time_min)
-        obs_parts.append(min(wait_until / _MAX_TIME_MIN, 1.0))
+    obs.append(1.0 if location not in shovel_nodes else 0.0)  # au parc (début de poste)
+    obs.extend(1.0 if location == node else 0.0 for node in shovel_nodes)
 
-    # --- Disponibilité des dumps (z_r) ---
-    for dump in dumps:
-        wait_until = max(0.0, dump.available_at_min - current_time_min)
-        obs_parts.append(min(wait_until / _MAX_TIME_MIN, 1.0))
+    truck = trucks[current_truck_idx]
+    obs.append(min(truck.total_tonnage_t / _MAX_TONNAGE_T, 1.0))
+    obs.append(min(truck.total_fuel_l / _MAX_FUEL_L, 1.0))
+    obs.append(min(current_time_min / max(episode_minutes, 1.0), 1.0))
 
-    # --- État des camions (x_c) ---
-    for i, truck in enumerate(trucks):
-        # Statut : 0=libre, 1=en_route_pelle, 2=chargement, 3=en_route_dump,
-        #          4=déchargement, 5=en_route_retour
-        status_norm = truck_statuses[i] / 5.0
-        obs_parts.append(status_norm)
-
-        # Disponibilité temporelle normalisée
-        avail = max(0.0, truck.available_at_min - current_time_min)
-        obs_parts.append(min(avail / _MAX_TIME_MIN, 1.0))
-
-        # Tonnage accumulé normalisé
-        obs_parts.append(min(truck.total_tonnage_t / _MAX_TONNAGE_T, 1.0))
-
-        # Carburant consommé normalisé
-        obs_parts.append(min(truck.total_fuel_l / _MAX_FUEL_L, 1.0))
-
-        # Position du camion : one-hot encoding par rapport aux nœuds
-        loc = truck_locations[i]
-        for node in all_nodes:
-            obs_parts.append(1.0 if loc == node else 0.0)
-
-    # --- Distance du camion courant vers chaque pelle ---
-    cur_loc = truck_locations[current_truck_idx]
-    for shovel in shovels:
-        d = graph.shortest_distance(cur_loc, shovel.node_id)
-        obs_parts.append(_normalize_distance(d))
-
-    # --- Distance de chaque pelle vers chaque dump ---
-    for shovel in shovels:
-        for dump in dumps:
-            d = graph.shortest_distance(shovel.node_id, dump.node_id)
-            obs_parts.append(_normalize_distance(d))
-
-    # --- Temps courant normalisé ---
-    obs_parts.append(min(current_time_min / max(episode_minutes, 1.0), 1.0))
-
-    return np.array(obs_parts, dtype=np.float32)
-
-
-def observation_size(num_trucks: int, num_shovels: int, num_dumps: int, num_nodes: int | None = None) -> int:
-    """Retourne la taille du vecteur d'observation.
-    
-    Si num_nodes n'est pas fourni, calcule le nombre de nœuds du graphe :
-    1 yard + 1 junction + num_shovels pelles + num_dumps dumps
-    """
-    if num_nodes is None:
-        num_nodes = 2 + num_shovels + num_dumps  # yard + junction + pelles + dumps
-    
-    shovel_feats = num_shovels  # 1 feature par pelle
-    dump_feats = num_dumps  # 1 feature par dump
-    truck_feats = num_trucks * 4  # 4 features par camion
-    truck_location_feats = num_trucks * num_nodes  # one-hot position par camion
-    cur_truck_to_shovel_feats = num_shovels  # distance camion courant → chaque pelle
-    shovel_to_dump_feats = num_shovels * num_dumps  # distance chaque pelle → chaque dump
-    time_feat = 1
-    return (shovel_feats + dump_feats + truck_feats + truck_location_feats
-            + cur_truck_to_shovel_feats + shovel_to_dump_feats + time_feat)
+    return np.array(obs, dtype=np.float32)

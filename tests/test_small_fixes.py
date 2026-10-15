@@ -114,11 +114,11 @@ def test_la_mesure_ne_change_pas_les_resultats():
 
 def test_scenarios_non_vus_lisibles_par_les_modeles_nominaux():
     """Chaque scénario « unseen_* » (évalué avec les modèles nominaux) a la même observation
-    que le nominal ; unseen_medium_load (15 camions) est retiré jusqu'à T18."""
+    que le nominal. unseen_medium_load (15 camions), retiré en T9, est revenu avec T18."""
     nominal_size = MineEnv(truck_count=SCENARIOS["nominal"].truck_count).observation_space.shape
     unseen = [s for name, s in SCENARIOS.items() if name.startswith("unseen_")]
 
-    assert "unseen_medium_load" not in SCENARIOS
+    assert "unseen_medium_load" in SCENARIOS
     assert unseen
     for scenario in unseen:
         assert MineEnv(truck_count=scenario.truck_count).observation_space.shape == nominal_size

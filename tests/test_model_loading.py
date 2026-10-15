@@ -68,13 +68,14 @@ def test_regime_d_entrainement_explicite(trained_q_learning):
                       QLearningPolicy)
 
 
-def test_observation_de_taille_differente_toujours_refusee(trained_q_learning):
-    """15 camions donnent une observation de 180 au lieu de 147 : même en déclarant le régime
-    d'entraînement, le modèle ne peut pas lire cette observation (défaut corrigé par T18)."""
-    env = MineEnv(truck_count=15)
+def test_modele_nominal_lisible_avec_15_camions(trained_q_learning):
+    """Depuis T18, l'observation a la même taille pour 12 et 15 camions : un modèle nominal
+    se charge dans un environnement à 15 camions, en déclarant son régime d'entraînement.
+    (Avant T18 : 147 contre 180 entrées, refus « observation_size ».)"""
+    agent = load_model(trained_q_learning, "Q-Learning", MineEnv(truck_count=15),
+                       trained_on=NOMINAL)
 
-    with pytest.raises(ModelCompatibilityError, match="observation_size"):
-        load_model(trained_q_learning, "Q-Learning", env, trained_on=NOMINAL)
+    assert isinstance(agent, QLearningPolicy)
 
 
 def test_algorithme_inconnu():

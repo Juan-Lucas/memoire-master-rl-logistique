@@ -41,7 +41,10 @@ FUEL_IDLE_L_PER_H = 10.0 * FUEL_CALIBRATION_FACTOR  # ≈ 64,9 L/h (file, charge
 # non calibrée (aucune source trouvée) : à signaler comme hypothèse.
 FUEL_ROAD_STATE_PENALTY = 0.5
 
-# Normalisation du carburant dans l'observation de l'agent (``observation_builder``).
-# Multipliée par le même facteur que les consommations : l'agent voit exactement les
-# mêmes valeurs qu'avant la calibration, donc les modèles déjà entraînés restent valables.
-FUEL_OBS_MAX_L = 500.0 * FUEL_CALIBRATION_FACTOR
+# Normalisation du carburant du camion qui décide, dans l'observation (T18) : la
+# consommation maximale publiée pour le Cat 785D (usage intensif, 135,6 L/h) sur un
+# poste de 8 h, soit ≈ 1 085 L. Maximum observé dans le simulateur : ≈ 813 L.
+# (En T14, ce plafond valait 500 × FUEL_CALIBRATION_FACTOR, pour que l'observation de
+# l'époque reste identique ; T18 change de toute façon l'observation.)
+FUEL_MAX_L_PER_H = 135.6
+FUEL_OBS_MAX_L = FUEL_MAX_L_PER_H * 8.0

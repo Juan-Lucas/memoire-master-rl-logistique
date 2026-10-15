@@ -112,7 +112,7 @@ class MineEnv(gym.Env):
         self.num_actions = self.shovel_count * self.dump_count + 1
         self.action_space = spaces.Discrete(self.num_actions)
 
-        obs_dim = observation_size(truck_count, self.shovel_count, dump_count)
+        obs_dim = observation_size(self.shovel_count, self.dump_count)  # indépendant de N (T18)
         self.observation_space = spaces.Box(
             low=0.0, high=1.0, shape=(obs_dim,), dtype=np.float32,
         )
@@ -549,7 +549,6 @@ class MineEnv(gym.Env):
             current_time_min=self.current_time_min,
             episode_minutes=self.episode_minutes,
             truck_locations=self.truck_locations,
-            truck_statuses=self.truck_statuses,
             current_truck_idx=self.current_truck_idx,
         )
         self.last_obs_time_ms = (time.perf_counter() - t0) * 1_000

@@ -1,6 +1,5 @@
 """Tests de T12 bis : comportement des politiques à partir du journal des cycles."""
 
-import os
 from pathlib import Path
 
 import pandas as pd
@@ -76,11 +75,15 @@ def test_figure(tmp_path):
     assert out.exists()
 
 
-@pytest.mark.skipif(not V1_MODELS.exists() or os.environ.get("RUN_SLOW") != "1",
-                    reason="modèles v1 absents, ou test lent (plusieurs minutes) : RUN_SLOW=1")
+@pytest.mark.skip(reason="historique : réussi le 15 octobre 2026 (commit d1cec48, 3 min 30). "
+                         "Depuis T18, l'observation a 18 entrées : les DQN et PPO v1 (147 entrées) "
+                         "ne peuvent plus être rejoués.")
 def test_modeles_v1_attendre_en_forte_charge():
     """Test du plan (agents) : avec les modèles v1, en forte charge, sur 30 graines,
     PPO choisit ATTENDRE dans ≈ 87 % de ses décisions et DQN dans ≈ 64 %.
+
+    Historique : valable jusqu'à T18 (observation de taille fixe), qui rend les modèles
+    DQN et PPO v1 illisibles. Le résultat est consigné dans le journal (T12 bis).
 
     Lent : PPO prend environ 4 800 décisions par épisode. Lancer avec
     ``RUN_SLOW=1 pytest tests/test_behavior.py``.

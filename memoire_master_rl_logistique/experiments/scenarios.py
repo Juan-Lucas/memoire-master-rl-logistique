@@ -88,12 +88,14 @@ for _w4 in _ABLATION_W4:
 
 # ---------------------------------------------------------------------------
 # Scénarios non vus, évalués avec les modèles nominaux (voir run_all_benchmarks).
-# unseen_medium_load (15 camions) est retiré depuis T9 : la taille de l'observation
-# dépend du nombre de camions (147 entrées à 12 camions, 180 à 15), donc les modèles
-# nominaux ne peuvent pas le lire. À réintroduire avec T18 (observation de taille fixe) :
-#   Scenario(name="unseen_medium_load", truck_count=15,
-#            description="Non vu : 15 camions, pb=2 % (entre nominal et high_load).")
+# unseen_medium_load (15 camions), retiré en T9, est réintroduit depuis T18 :
+# l'observation a la même taille pour 12 et 15 camions.
 # ---------------------------------------------------------------------------
+SCENARIOS["unseen_medium_load"] = Scenario(
+    name="unseen_medium_load",
+    description="Non vu : 15 camions, pb=2 % (entre nominal et high_load).",
+    truck_count=15,
+)
 SCENARIOS["unseen_medium_breakdown"] = Scenario(
     name="unseen_medium_breakdown",
     description="Non vu : 12 camions, pb=5 % (entre nominal et high_breakdown).",
