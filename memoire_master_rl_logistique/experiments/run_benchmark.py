@@ -71,6 +71,9 @@ def run_single_episode(
 
     kpis = fleet_kpis(env.trucks, env.shovels, env.episode_minutes)
     kpis["total_reward"] = total_reward
+    # Décomposition de la récompense cumulée (T25) : reward_production + … = total_reward.
+    for name, value in info["episode_reward_terms"].items():
+        kpis[f"reward_{name}"] = value
     # Décisions et part d'ATTENDRE (T19), comptées par l'environnement.
     kpis["decisions"] = float(info["decisions"])
     kpis["wait_actions"] = float(info["wait_actions"])

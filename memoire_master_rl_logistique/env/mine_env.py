@@ -42,6 +42,12 @@ from memoire_master_rl_logistique.simulation.graph_model import (
     RoadGraph,
     build_mine_graph,
 )
+from memoire_master_rl_logistique.simulation.reward import (
+    RewardTerms,
+    RewardWeights,
+    compute_reward,
+    reward_terms,
+)
 
 from .observation_builder import build_observation, observation_size
 
@@ -51,6 +57,8 @@ STATUS_LOADING = 2
 STATUS_TO_DUMP = 3
 STATUS_UNLOADING = 4
 STATUS_RETURNING = 5
+
+REWARD_TERM_NAMES = tuple(RewardTerms.__dataclass_fields__)
 
 # Flux aléatoires communs à tous les camions ; viennent ensuite les flux de pannes, un par camion.
 SHARED_STREAMS = ("travel", "service", "road")
@@ -98,8 +106,12 @@ class MineEnv(gym.Env):
         self.episode_minutes = episode_minutes
         self._seed = seed
         self.breakdown_probability = breakdown_probability
-        self.w1, self.w2, self.w3 = reward_weights[:3]
-        self.w4 = reward_weights[3] if len(reward_weights) > 3 else 0.3  # w4 par défaut si 3 poids
+        self.reward_weights = RewardWeights.from_tuple(reward_weights)
+        # w1 à w4 gardés comme attributs (lus par EnvConfig.from_env et par les tests).
+        self.w1, self.w2, self.w3, self.w4 = (
+            self.reward_weights.production, self.reward_weights.balance,
+            self.reward_weights.distance, self.reward_weights.wait,
+        )
         self.capacity_tonnes = capacity_tonnes
         self.wait_action_minutes = wait_action_minutes
         self.render_mode = render_mode
@@ -111,6 +123,9 @@ class MineEnv(gym.Env):
         # Décisions de l'épisode (T19), exposées dans ``info`` : toutes, et ATTENDRE seules.
         self.decision_count: int = 0
         self.wait_action_count: int = 0
+        # Contributions pondérées des termes de la récompense (T25), remises à zéro au reset.
+        self.last_reward_terms: dict[str, float] = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
+        self.episode_reward_terms: dict[str, float] = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
 
         self.num_actions = self.shovel_count * self.dump_count + 1
         self.action_space = spaces.Discrete(self.num_actions)
@@ -201,6 +216,8 @@ class MineEnv(gym.Env):
         self.cycle_log = []
         self.decision_count = 0
         self.wait_action_count = 0
+        self.last_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
+        self.episode_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
 
         obs = self._get_obs()
         info = self._get_info()
@@ -445,33 +462,19 @@ class MineEnv(gym.Env):
         resource_waits_min: list[float],
         operational_wait_min: float,
     ) -> float:
-        """Récompense d'une décision.
+        """Récompense d'une décision, calculée par ``simulation.reward`` (T25).
 
-        R = w1 · tonnage / capacité
-            − w2 · variance des attentes aux pelles / 100
-            − w3 · distance du cycle (km) / 5
-            − w4 · min(attente / 30 min, 1)   (files pelle + verse, ou ATTENDRE)
+        Mémorise aussi les contributions pondérées des quatre termes : celles de la
+        dernière décision et leur cumul sur le poste, exposés dans ``info``.
         """
-        r_rendement = delivered_tonnage_t / max(self.capacity_tonnes, 1e-9)
-
-        if len(resource_waits_min) >= 2:
-            mean_wait = sum(resource_waits_min) / len(resource_waits_min)
-            variance = sum(
-                (w - mean_wait) ** 2 for w in resource_waits_min
-            ) / len(resource_waits_min)
-            r_equite = -variance / 100.0
-        else:
-            r_equite = 0.0
-
-        r_cout = -route_distance_km / 5.0
-        r_attente = -min(operational_wait_min / 30.0, 1.0)
-
-        return (
-            self.w1 * r_rendement
-            + self.w2 * r_equite
-            + self.w3 * r_cout
-            + self.w4 * r_attente
+        terms = reward_terms(
+            delivered_tonnage_t, self.capacity_tonnes, route_distance_km,
+            resource_waits_min, operational_wait_min,
         )
+        self.last_reward_terms = terms.weighted(self.reward_weights)
+        for name, value in self.last_reward_terms.items():
+            self.episode_reward_terms[name] += value
+        return compute_reward(terms, self.reward_weights)
 
     def _decode_action(self, action: int) -> tuple[Shovel, DumpSite]:
         """Décode l'action en paire (pelle, dump).
@@ -587,6 +590,10 @@ class MineEnv(gym.Env):
             "total_cycles": sum(t.cycles_completed for t in self.trucks),
             "decisions": self.decision_count,
             "wait_actions": self.wait_action_count,
+            # Contributions pondérées des termes de la récompense (T25) : dernière décision
+            # et cumul du poste. Leur somme égale la récompense (resp. la récompense cumulée).
+            "reward_terms": dict(self.last_reward_terms),
+            "episode_reward_terms": dict(self.episode_reward_terms),
             "shovel_available_at": [s.available_at_min for s in self.shovels],
             "dump_available_at": [d.available_at_min for d in self.dumps],
         }
