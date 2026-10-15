@@ -102,6 +102,10 @@ def main() -> None:
         help="Nombre de steps d'entraînement PPO/DQN (défaut: 2000000)",
     )
     parser.add_argument(
+        "--allow-legacy-models", action="store_true",
+        help="Benchmark : accepter des modèles sans metadata.json (antérieurs à T8), sans contrôle",
+    )
+    parser.add_argument(
         "--visualize-graph", action="store_true",
         help="Générer la figure du réseau routier minier",
     )
@@ -168,6 +172,7 @@ def main() -> None:
             output_dir="data/results",
             train_ppo_flag=True,
             scenario_names=None,
+            allow_legacy_models=args.allow_legacy_models,
         )
         return
 
@@ -189,6 +194,7 @@ def main() -> None:
         output_dir="data/results",
         train_ppo_flag=True,
         scenario_names=["nominal", "high_load", "high_breakdown"],
+        allow_legacy_models=args.allow_legacy_models,
     )
 
 

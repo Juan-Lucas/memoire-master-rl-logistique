@@ -14,6 +14,11 @@ from stable_baselines3.common.logger import configure
 
 from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
 from memoire_master_rl_logistique.rl.env_factory import create_env
+from memoire_master_rl_logistique.rl.model_metadata import (
+    EnvConfig,
+    build_metadata,
+    write_metadata,
+)
 
 
 def train_dqn(
@@ -85,6 +90,14 @@ def train_dqn(
 
     model_path = out_path / "dqn_mine_agent"
     model.save(str(model_path))
+    write_metadata(out_path, build_metadata(
+        "DQN",
+        EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
+                  breakdown_probability, reward_weights),
+        observation_size=env.observation_space.shape[0],
+        seed=seed,
+        training={"total_timesteps": total_timesteps},
+    ))
     print(f"Modèle DQN sauvegardé : {model_path}")
 
     env.close()

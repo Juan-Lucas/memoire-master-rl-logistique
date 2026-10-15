@@ -11,6 +11,11 @@ from pathlib import Path
 import numpy as np
 
 from memoire_master_rl_logistique.rl.discretize import _discretize_obs
+from memoire_master_rl_logistique.rl.model_metadata import (
+    EnvConfig,
+    build_metadata,
+    write_metadata,
+)
 from memoire_master_rl_logistique.rl.tabular_training import (
     TabularPolicy,
     init_tabular_training,
@@ -116,6 +121,15 @@ def train_q_learning(
         q_table, n_bins, shovel_count, dump_count,
         rewards_per_episode, epsilons_per_episode, td_errors_per_episode,
     )
+    write_metadata(out_path, build_metadata(
+        "Q-Learning",
+        EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
+                  breakdown_probability, reward_weights),
+        observation_size=env.observation_space.shape[0],
+        seed=seed,
+        training={"n_episodes": n_episodes, "alpha": alpha, "gamma": gamma,
+                  "epsilon_start": epsilon_start, "epsilon_min": epsilon_min, "n_bins": n_bins},
+    ))
 
     return q_table
 

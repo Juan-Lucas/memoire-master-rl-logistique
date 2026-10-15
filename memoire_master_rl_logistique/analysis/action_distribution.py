@@ -1,22 +1,27 @@
 """Distribution des actions choisies par chaque politique RL
 sur les scénarios nominal, high_load et high_breakdown (10 épisodes, seeds 42-51).
 
-Sortie : data/results/action_distribution.csv
+Les modèles sont chargés avec contrôle de leurs métadonnées (``rl.model_loading``).
+
+Sortie : <results_dir>/action_distribution.csv
 Colonnes : scenario, algorithm, action_id, action_label, count, percentage
+
+Lancement :
+    python -m memoire_master_rl_logistique.analysis.action_distribution [--results-dir DIR]
+        [--allow-legacy-models]
 """
 
 from __future__ import annotations
 
+import argparse
 from collections import Counter
 from pathlib import Path
 
 import pandas as pd
-from stable_baselines3 import DQN, PPO
 
 from memoire_master_rl_logistique.env.mine_env import MineEnv
-from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
-from memoire_master_rl_logistique.rl.train_q_learning import QLearningPolicy
-from memoire_master_rl_logistique.rl.train_sarsa import SarsaPolicy
+from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS, SCENARIOS
+from memoire_master_rl_logistique.rl.model_loading import load_model
 
 ACTION_LABELS = {
     0: "Pelle1->Dump1",
@@ -29,17 +34,23 @@ ACTION_LABELS = {
 }
 
 
+def make_env(scenario) -> MineEnv:
+    """Environnement d'évaluation d'un scénario."""
+    return MineEnv(
+        truck_count=scenario.truck_count,
+        shovel_count=scenario.shovel_count,
+        dump_count=scenario.dump_count,
+        episode_minutes=scenario.episode_minutes,
+        breakdown_probability=scenario.breakdown_probability,
+        reward_weights=scenario.reward_weights,
+    )
+
+
 def count_actions(policy_fn, scenario, n_episodes: int = 10) -> Counter:
+    """Nombre de fois où chaque action est choisie sur ``n_episodes`` épisodes."""
     counts: Counter = Counter()
     for seed in scenario.seeds[:n_episodes]:
-        env = MineEnv(
-            truck_count=scenario.truck_count,
-            shovel_count=scenario.shovel_count,
-            dump_count=scenario.dump_count,
-            episode_minutes=scenario.episode_minutes,
-            breakdown_probability=scenario.breakdown_probability,
-            reward_weights=scenario.reward_weights,
-        )
+        env = make_env(scenario)
         obs, info = env.reset(seed=seed)
         while True:
             action = policy_fn(obs)
@@ -50,17 +61,23 @@ def count_actions(policy_fn, scenario, n_episodes: int = 10) -> Counter:
     return counts
 
 
-def main() -> None:
-    base = Path("data/results")
+def main(results_dir: str | Path = "data/results", allow_legacy_models: bool = False) -> None:
+    """Compte les actions des 4 agents RL dans chaque régime et écrit le CSV."""
+    base = Path(results_dir)
     rows = []
 
-    for scenario_name in ["nominal", "high_load", "high_breakdown"]:
+    for scenario_name in MAIN_SCENARIOS:
         scenario = SCENARIOS[scenario_name]
+        env = make_env(scenario)
 
-        ql = QLearningPolicy.load(base / f"q_learning_{scenario_name}" / "q_table.pkl")
-        sarsa = SarsaPolicy.load(base / f"sarsa_{scenario_name}" / "sarsa_table.pkl")
-        dqn = DQN.load(str(base / f"dqn_{scenario_name}" / "dqn_mine_agent.zip"))
-        ppo = PPO.load(str(base / f"ppo_{scenario_name}" / "ppo_mine_agent.zip"))
+        def load(prefix: str, algorithm: str, _env=env, _name=scenario_name):
+            return load_model(base / f"{prefix}_{_name}", algorithm, _env,
+                              allow_legacy=allow_legacy_models)
+
+        ql = load("q_learning", "Q-Learning")
+        sarsa = load("sarsa", "SARSA")
+        dqn = load("dqn", "DQN")
+        ppo = load("ppo", "PPO")
 
         policies = {
             "Q-Learning": lambda obs, ql=ql: ql.predict(obs),
@@ -86,10 +103,15 @@ def main() -> None:
     out = base / "action_distribution.csv"
     df.to_csv(out, index=False)
     print(f"Sauvegardé : {out}")
-    for scenario_name in ["nominal", "high_load", "high_breakdown"]:
+    for scenario_name in MAIN_SCENARIOS:
         print(f"\n=== {scenario_name} ===")
         print(df[df["scenario"] == scenario_name].pivot(index="algorithm", columns="action_label", values="percentage"))
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Distribution des actions des agents RL.")
+    parser.add_argument("--results-dir", default="data/results", help="dossier des modèles")
+    parser.add_argument("--allow-legacy-models", action="store_true",
+                        help="accepter des modèles sans metadata.json (antérieurs à T8)")
+    args = parser.parse_args()
+    main(args.results_dir, args.allow_legacy_models)

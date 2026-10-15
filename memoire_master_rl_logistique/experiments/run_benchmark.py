@@ -17,8 +17,6 @@ import datetime as dt
 from pathlib import Path
 import time
 
-from stable_baselines3 import DQN, PPO
-
 from memoire_master_rl_logistique.baselines.base import BaselinePolicy
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
@@ -26,10 +24,12 @@ from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelP
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
+from memoire_master_rl_logistique.rl.model_loading import load_model
+from memoire_master_rl_logistique.rl.model_metadata import EnvConfig
 from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
-from memoire_master_rl_logistique.rl.train_q_learning import QLearningPolicy, train_q_learning
-from memoire_master_rl_logistique.rl.train_sarsa import SarsaPolicy, train_sarsa
+from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
+from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
 from memoire_master_rl_logistique.simulation.kpi import compute_kpis
 
 
@@ -89,8 +89,14 @@ def run_benchmark(
     output_dir: Path,
     train_ppo_flag: bool = True,
     model_scenario: str | None = None,
+    allow_legacy_models: bool = False,
 ) -> list[dict]:
     """Exécute le benchmark pour un scénario donné.
+
+    Avant de réutiliser un modèle déjà entraîné, ses métadonnées sont comparées à la
+    configuration du scénario d'entraînement (``model_scenario``) : un modèle périmé
+    lève ``ModelCompatibilityError``. ``allow_legacy_models`` permet de réévaluer, en
+    connaissance de cause, des modèles antérieurs à T8 (sans ``metadata.json``).
 
     model_scenario : nom du scénario dont les modèles entraînés sont réutilisés.
         Si None, utilise scenario.name (comportement normal).
@@ -110,6 +116,15 @@ def run_benchmark(
         reward_weights=scenario.reward_weights,
     )
     temp_env.reset(seed=scenario.seeds[0])
+
+    # Configuration avec laquelle les modèles réutilisés doivent avoir été entraînés.
+    trained_on = EnvConfig.from_scenario(SCENARIOS.get(model_key, scenario))
+
+    def _load(model_dir: Path, algorithm: str):
+        return load_model(
+            model_dir, algorithm, temp_env,
+            trained_on=trained_on, allow_legacy=allow_legacy_models,
+        )
 
     # Initialiser les politiques heuristiques (créées une seule fois)
     fixed_policy_obj = FixedAssignmentPolicy(
@@ -159,7 +174,7 @@ def run_benchmark(
 
     if ql_path.exists():
         print(f"  Chargement Q-Learning existant: {ql_path}")
-        ql_agent = QLearningPolicy.load(ql_path)
+        ql_agent = _load(ql_dir, "Q-Learning")
     else:
         print(f"  Entraînement Q-Learning pour '{scenario.name}'...")
         train_q_learning(
@@ -175,7 +190,7 @@ def run_benchmark(
             reward_weights=scenario.reward_weights,
             output_dir=str(ql_dir),
         )
-        ql_agent = QLearningPolicy.load(ql_path)
+        ql_agent = _load(ql_dir, "Q-Learning")
 
     def q_learning_policy(obs, info, env, _agent=ql_agent):
         return _agent.predict(obs)
@@ -188,7 +203,7 @@ def run_benchmark(
 
     if sarsa_path.exists():
         print(f"  Chargement SARSA existant: {sarsa_path}")
-        sarsa_agent = SarsaPolicy.load(sarsa_path)
+        sarsa_agent = _load(sarsa_dir, "SARSA")
     else:
         print(f"  Entraînement SARSA pour '{scenario.name}'...")
         train_sarsa(
@@ -204,7 +219,7 @@ def run_benchmark(
             reward_weights=scenario.reward_weights,
             output_dir=str(sarsa_dir),
         )
-        sarsa_agent = SarsaPolicy.load(sarsa_path)
+        sarsa_agent = _load(sarsa_dir, "SARSA")
 
     def sarsa_policy_fn(obs, info, env, _agent=sarsa_agent):
         return _agent.predict(obs)
@@ -217,7 +232,7 @@ def run_benchmark(
 
         if dqn_path_scenario.exists():
             print(f"  Chargement DQN ({model_key}): {dqn_path_scenario}")
-            dqn_model = DQN.load(str(dqn_path_scenario))
+            dqn_model = _load(dqn_path_scenario.parent, "DQN")
         else:
             print(f"  Entraînement DQN pour scénario '{model_key}'...")
             dqn_model = train_dqn(
@@ -245,7 +260,7 @@ def run_benchmark(
 
         if ppo_path_scenario.exists():
             print(f"  Chargement PPO ({model_key}): {ppo_path_scenario}")
-            ppo_model = PPO.load(str(ppo_path_scenario))
+            ppo_model = _load(ppo_path_scenario.parent, "PPO")
         else:
             print(f"  Entraînement PPO pour scénario '{model_key}'...")
             ppo_model = train_ppo(
@@ -332,8 +347,9 @@ def run_all_benchmarks(
     output_dir: str = "data/results",
     train_ppo_flag: bool = True,
     scenario_names: list[str] | None = None,
+    allow_legacy_models: bool = False,
 ) -> None:
-    """Lance les benchmarks sur tous les scénarios."""
+    """Lance les benchmarks sur tous les scénarios (voir ``run_benchmark`` pour les modèles)."""
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
@@ -351,7 +367,10 @@ def run_all_benchmarks(
         print(f"{'='*60}")
         # Scénarios "non vus" : réutiliser les modèles nominal (test de généralisation)
         model_src = "nominal" if name.startswith("unseen_") else None
-        results = run_benchmark(scenario, out_path, train_ppo_flag, model_scenario=model_src)
+        results = run_benchmark(
+            scenario, out_path, train_ppo_flag,
+            model_scenario=model_src, allow_legacy_models=allow_legacy_models,
+        )
         all_results.extend(results)
 
     if all_results:

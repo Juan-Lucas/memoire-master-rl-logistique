@@ -4,8 +4,12 @@ Compare Nearest Shovel et PPO sur un seul épisode de 480 min (forte charge,
 graine unique). Nearest Shovel envoie toute la flotte à la pelle 1 dans tous
 les régimes, car le camion reste à la pelle qu'il vient de servir : la file
 observée n'est donc pas un effet propre à la forte charge.
-Génère :
-  - reports/figures/behavioral_analysis.png
+Génère ``behavioral_analysis.png`` dans le dossier de sortie demandé. Le modèle PPO
+est chargé avec contrôle de ses métadonnées (``rl.model_loading``).
+
+Lancement :
+    python -m memoire_master_rl_logistique.plots.behavioral_analysis DOSSIER
+        [--ppo-dir data/results/ppo_high_load] [--allow-legacy-models] [--overwrite]
 
 Figure à 3 panneaux :
   (A) Queue backlog (min) par pelle — Nearest Shovel
@@ -15,6 +19,7 @@ Figure à 3 panneaux :
 
 from __future__ import annotations
 
+import argparse
 from math import log2
 from pathlib import Path
 
@@ -24,6 +29,8 @@ from stable_baselines3 import PPO
 
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
+from memoire_master_rl_logistique.plots.common import prepare_outputs
+from memoire_master_rl_logistique.rl.model_loading import load_model
 
 SEED = 42
 SHOVEL_COUNT = 3
@@ -118,9 +125,14 @@ def _entropy(dist_row: np.ndarray) -> float:
     return h / log2(SHOVEL_COUNT)
 
 
-def main() -> None:
-    ppo_path = "data/results/ppo_high_load/ppo_mine_agent.zip"
-    ppo_model = PPO.load(ppo_path)
+def main(
+    out_dir: str | Path,
+    ppo_dir: str | Path = "data/results/ppo_high_load",
+    allow_legacy_models: bool = False,
+    overwrite: bool = False,
+) -> Path:
+    """Produit la figure dans ``out_dir`` et renvoie son chemin."""
+    (out_path,) = prepare_outputs(out_dir, ["behavioral_analysis.png"], overwrite)
 
     env_kwargs = dict(
         truck_count=TRUCK_COUNT,
@@ -144,6 +156,7 @@ def main() -> None:
     )
 
     env_ppo = MineEnv(**env_kwargs)
+    ppo_model = load_model(ppo_dir, "PPO", env_ppo, allow_legacy=allow_legacy_models)
 
     print("Running Nearest Shovel episode...")
     data_nearest = _run_episode(nearest, env_nearest, is_nearest=True)
@@ -157,7 +170,6 @@ def main() -> None:
     ax_a = fig.add_subplot(gs[0])
     ax_b = fig.add_subplot(gs[1], sharex=ax_a, sharey=ax_a)
     ax_c = fig.add_subplot(gs[2], sharex=ax_a)
-    axes = [ax_a, ax_b, ax_c]
 
     # Shared y-limits for panels A and B (direct comparison)
     all_backlogs = np.concatenate([data_nearest["backlogs"], data_ppo["backlogs"]])
@@ -217,12 +229,18 @@ def main() -> None:
     for ax in [ax_a, ax_b, ax_c]:
         ax.set_xlim(0, EPISODE_MIN)
 
-    out_dir = Path("reports/figures")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "behavioral_analysis.png"
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
     print(f"Figure sauvegardée : {out_path}")
+    return out_path
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Analyse comportementale Nearest vs PPO.")
+    parser.add_argument("out_dir", type=Path, help="dossier de sortie (créé si besoin)")
+    parser.add_argument("--ppo-dir", type=Path, default=Path("data/results/ppo_high_load"))
+    parser.add_argument("--allow-legacy-models", action="store_true",
+                        help="accepter un modèle sans metadata.json (antérieur à T8)")
+    parser.add_argument("--overwrite", action="store_true", help="autoriser l'écrasement")
+    args = parser.parse_args()
+    main(args.out_dir, args.ppo_dir, args.allow_legacy_models, args.overwrite)

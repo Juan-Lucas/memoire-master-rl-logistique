@@ -14,13 +14,13 @@ from pathlib import Path
 import time
 
 import numpy as np
-from stable_baselines3 import PPO
 
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
+from memoire_master_rl_logistique.rl.model_loading import load_model
 from memoire_master_rl_logistique.simulation.kpi import compute_kpis
 
 
@@ -108,15 +108,23 @@ def evaluate_ppo(
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
+    allow_legacy: bool = False,
 ) -> dict[str, float]:
-    """Évalue l'agent PPO entraîné."""
+    """Évalue l'agent PPO entraîné (``model_path`` : le .zip ou son dossier).
+
+    Le modèle est refusé si ses métadonnées ne correspondent pas à l'environnement.
+    """
     env = MineEnv(
         truck_count=truck_count,
         shovel_count=shovel_count,
         dump_count=dump_count,
         episode_minutes=episode_minutes,
     )
-    model = PPO.load(model_path)
+    model_dir = Path(model_path)
+    model = load_model(
+        model_dir if model_dir.is_dir() else model_dir.parent, "PPO", env,
+        allow_legacy=allow_legacy,
+    )
 
     def ppo_policy(obs, info):
         action, _ = model.predict(obs, deterministic=True)
@@ -264,7 +272,9 @@ def main() -> None:
         )
 
     print("\n=== Benchmark d'inférence (latence) ===")
-    dummy_policy = lambda obs, info: 0
+    def dummy_policy(obs, info):
+        return 0
+
     inference_metrics = benchmark_policy_inference(dummy_policy, n_calls=1000)
     print(
         f"  Latence moyenne: {inference_metrics['mean_ms']:.3f} ms "
