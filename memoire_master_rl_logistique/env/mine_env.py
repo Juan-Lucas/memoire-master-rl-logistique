@@ -18,7 +18,12 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 
-from memoire_master_rl_logistique.simulation.entities import DumpSite, Shovel, Truck
+from memoire_master_rl_logistique.simulation.entities import (
+    CycleRecord,
+    DumpSite,
+    Shovel,
+    Truck,
+)
 from memoire_master_rl_logistique.simulation.fuel_model import (
     estimate_idle_fuel_l,
     estimate_travel_fuel_l,
@@ -64,6 +69,7 @@ class MineEnv(gym.Env):
         capacity_tonnes: float = 140.0,
         wait_action_minutes: float = 5.0,
         render_mode: str | None = None,
+        log_cycles: bool = False,
     ) -> None:
         super().__init__()
 
@@ -78,6 +84,9 @@ class MineEnv(gym.Env):
         self.capacity_tonnes = capacity_tonnes
         self.wait_action_minutes = wait_action_minutes
         self.render_mode = render_mode
+        # Journal des cycles (T12) : désactivé par défaut, sans effet sur la simulation.
+        self.log_cycles = log_cycles
+        self.cycle_log: list[CycleRecord] = []
 
         self.num_actions = self.shovel_count * self.dump_count + 1
         self.action_space = spaces.Discrete(self.num_actions)
@@ -157,6 +166,7 @@ class MineEnv(gym.Env):
         self.truck_locations = ["yard"] * self.truck_count
         self.truck_statuses = [STATUS_IDLE] * self.truck_count
         self._prev_tonnage = 0.0
+        self.cycle_log = []
 
         obs = self._get_obs()
         info = self._get_info()
@@ -203,8 +213,10 @@ class MineEnv(gym.Env):
 
         # Trajet vers la pelle
         self.truck_statuses[self.current_truck_idx] = STATUS_TO_SHOVEL
+        travel_to_shovel_min = 0.0
         if location != shovel.node_id:
             t, f = self._travel_route(location, shovel.node_id, False)
+            travel_to_shovel_min = t
             truck.total_active_min += self._in_shift(time_min, t)
             time_min += t
             truck.total_fuel_l += f
@@ -232,6 +244,7 @@ class MineEnv(gym.Env):
         # Trajet chargé vers dump
         self.truck_statuses[self.current_truck_idx] = STATUS_TO_DUMP
         t, f = self._travel_route(shovel.node_id, dump.node_id, True)
+        travel_to_dump_min = t
         truck.total_active_min += self._in_shift(time_min, t)
         time_min += t
         truck.total_fuel_l += f
@@ -259,6 +272,7 @@ class MineEnv(gym.Env):
         # sa prochaine décision.
         self.truck_statuses[self.current_truck_idx] = STATUS_RETURNING
         t, f = self._travel_route(dump.node_id, shovel.node_id, False)
+        travel_back_min = t
         truck.total_active_min += self._in_shift(time_min, t)
         time_min += t
         truck.total_fuel_l += f
@@ -266,6 +280,7 @@ class MineEnv(gym.Env):
         self.truck_locations[self.current_truck_idx] = location
 
         # Panne éventuelle du camion ; la réparation a son propre compteur (T10).
+        repair_min = 0.0
         if self.rng.random() < self.breakdown_probability:
             repair_min = self.rng.uniform(10.0, 30.0)
             truck.repair_min += self._in_shift(time_min, repair_min)
@@ -282,6 +297,17 @@ class MineEnv(gym.Env):
         truck.available_at_min = time_min
         self.truck_locations[self.current_truck_idx] = location
         self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
+
+        if self.log_cycles:
+            self.cycle_log.append(CycleRecord(
+                kind="cycle", truck_id=truck.truck_id, start_min=start_time, end_min=time_min,
+                shovel_id=shovel.shovel_id, dump_id=dump.dump_id,
+                travel_to_shovel_min=travel_to_shovel_min, shovel_wait_min=wait_load_min,
+                load_min=load_min, travel_to_dump_min=travel_to_dump_min,
+                dump_wait_min=wait_dump_min, unload_min=unload_min,
+                travel_back_min=travel_back_min, repair_min=repair_min,
+                delivered_t=delivered_tonnage,
+            ))
 
         # Récompense
         reward = self._compute_reward(
@@ -332,6 +358,11 @@ class MineEnv(gym.Env):
         wait_min = max(0.2, wait_min)
 
         truck.voluntary_wait_min += self._in_shift(time_min, wait_min)
+        if self.log_cycles:
+            self.cycle_log.append(CycleRecord(
+                kind="wait", truck_id=truck.truck_id, start_min=time_min,
+                end_min=time_min + wait_min, voluntary_wait_min=wait_min,
+            ))
         truck.total_fuel_l += estimate_idle_fuel_l(wait_min)
         truck.available_at_min = time_min + wait_min
         self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
