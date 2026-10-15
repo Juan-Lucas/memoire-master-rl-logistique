@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from memoire_master_rl_logistique.simulation.constants import FUEL_OBS_MAX_L
 from memoire_master_rl_logistique.simulation.entities import DumpSite, Shovel, Truck
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
@@ -15,7 +16,7 @@ from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 _MAX_DISTANCE_KM = 10.0
 _MAX_TIME_MIN = 480.0  # 8 heures
 _MAX_TONNAGE_T = 2000.0
-_MAX_FUEL_L = 500.0
+_MAX_FUEL_L = FUEL_OBS_MAX_L  # T14 : suit la calibration, l'agent voit les mêmes valeurs
 
 
 def _normalize_distance(distance_km: float) -> float:

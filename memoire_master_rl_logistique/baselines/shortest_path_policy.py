@@ -5,7 +5,13 @@ coût du cycle complet, sur les trois segments
   camion → pelle (à vide) + pelle → verse (chargé) + verse → pelle (à vide) :
 
   C_cycle = α · T_cycle (min) + β · D_cycle (km) + γ · E_cycle (L)
-  avec α = 0,5, β = 0,3, γ = 0,2. Les temps sont les temps moyens, sans aléa.
+  avec α = 0,5, β = 0,3, γ = 0,2 / FUEL_CALIBRATION_FACTOR. Les temps sont les temps
+  moyens, sans aléa.
+
+  γ valait 0,2 avant la calibration du carburant (T14), qui multiplie toutes les
+  consommations par FUEL_CALIBRATION_FACTOR (≈ 6,49). Diviser γ par ce facteur garde
+  γ · E exactement identique : la calibration change la mesure du carburant, pas les
+  décisions de l'heuristique.
 
 Différence avec Nearest Shovel :
   Nearest minimise uniquement d(camion→pelle).
@@ -21,8 +27,12 @@ from typing import Any
 import numpy as np
 
 from memoire_master_rl_logistique.baselines.base import encode_action
+from memoire_master_rl_logistique.simulation.constants import FUEL_CALIBRATION_FACTOR
 from memoire_master_rl_logistique.simulation.fuel_model import estimate_travel_fuel_l
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
+
+# Poids du carburant, par litre calibré (0,2 par litre avant T14) : voir la docstring du module.
+DEFAULT_GAMMA = 0.2 / FUEL_CALIBRATION_FACTOR
 
 
 class ShortestPathPolicy:
@@ -35,7 +45,7 @@ class ShortestPathPolicy:
         dump_node_ids: list[str],
         alpha: float = 0.5,
         beta: float = 0.3,
-        gamma: float = 0.2,
+        gamma: float = DEFAULT_GAMMA,
     ) -> None:
         self.graph = graph
         self.shovel_node_ids = shovel_node_ids

@@ -33,6 +33,8 @@ from memoire_master_rl_logistique.simulation.entities import (
     Truck,
 )
 from memoire_master_rl_logistique.simulation.fuel_model import (
+    DEFAULT_FUEL,
+    FuelParams,
     estimate_idle_fuel_l,
     estimate_travel_fuel_l,
 )
@@ -86,6 +88,7 @@ class MineEnv(gym.Env):
         wait_action_minutes: float = 5.0,
         render_mode: str | None = None,
         log_cycles: bool = False,
+        fuel: FuelParams = DEFAULT_FUEL,
     ) -> None:
         super().__init__()
 
@@ -102,6 +105,8 @@ class MineEnv(gym.Env):
         self.render_mode = render_mode
         # Journal des cycles (T12) : désactivé par défaut, sans effet sur la simulation.
         self.log_cycles = log_cycles
+        # Modèle de carburant (T14) : calibré par défaut, modifiable pour une étude de sensibilité.
+        self.fuel = fuel
         self.cycle_log: list[CycleRecord] = []
 
         self.num_actions = self.shovel_count * self.dump_count + 1
@@ -253,7 +258,7 @@ class MineEnv(gym.Env):
         if wait_load_min > 0:
             truck.queue_wait_min += self._in_shift(time_min, wait_load_min)
             time_min += wait_load_min
-            truck.total_fuel_l += estimate_idle_fuel_l(wait_load_min)
+            truck.total_fuel_l += estimate_idle_fuel_l(wait_load_min, self.fuel)
 
         # Chargement
         load_min = self._sample_duration(
@@ -262,7 +267,7 @@ class MineEnv(gym.Env):
         truck.total_active_min += self._in_shift(time_min, load_min)
         shovel.busy_min += self._in_shift(time_min, load_min)
         time_min += load_min
-        truck.total_fuel_l += estimate_idle_fuel_l(load_min)
+        truck.total_fuel_l += estimate_idle_fuel_l(load_min, self.fuel)
         shovel.available_at_min = time_min
 
         # Trajet chargé vers dump
@@ -281,7 +286,7 @@ class MineEnv(gym.Env):
         if wait_dump_min > 0:
             truck.queue_wait_min += self._in_shift(time_min, wait_dump_min)
             time_min += wait_dump_min
-            truck.total_fuel_l += estimate_idle_fuel_l(wait_dump_min)
+            truck.total_fuel_l += estimate_idle_fuel_l(wait_dump_min, self.fuel)
 
         # Déchargement
         unload_min = self._sample_duration(
@@ -289,7 +294,7 @@ class MineEnv(gym.Env):
         )
         truck.total_active_min += self._in_shift(time_min, unload_min)
         time_min += unload_min
-        truck.total_fuel_l += estimate_idle_fuel_l(unload_min)
+        truck.total_fuel_l += estimate_idle_fuel_l(unload_min, self.fuel)
         dump.available_at_min = time_min
 
         # Retour à vide vers la même pelle : c'est là que le camion attendra
@@ -313,7 +318,7 @@ class MineEnv(gym.Env):
         if breaks_down:
             truck.repair_min += self._in_shift(time_min, repair_min)
             time_min += repair_min
-            truck.total_fuel_l += estimate_idle_fuel_l(repair_min)
+            truck.total_fuel_l += estimate_idle_fuel_l(repair_min, self.fuel)
 
         # Le tonnage n'est compté que si le cycle se termine avant la fin du poste.
         delivered_tonnage = 0.0
@@ -391,7 +396,7 @@ class MineEnv(gym.Env):
                 kind="wait", truck_id=truck.truck_id, start_min=time_min,
                 end_min=time_min + wait_min, voluntary_wait_min=wait_min,
             ))
-        truck.total_fuel_l += estimate_idle_fuel_l(wait_min)
+        truck.total_fuel_l += estimate_idle_fuel_l(wait_min, self.fuel)
         truck.available_at_min = time_min + wait_min
         self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
         self._prev_tonnage = sum(t.total_tonnage_t for t in self.trucks)
@@ -520,6 +525,7 @@ class MineEnv(gym.Env):
             slope_pct=edge.slope_pct,
             road_state=edge.road_state,
             loaded=loaded,
+            params=self.fuel,
         )
         if self.rng_road.random() < 0.05:
             edge.road_state = max(0.6, edge.road_state - 0.02)
