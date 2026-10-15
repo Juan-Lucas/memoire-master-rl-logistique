@@ -40,6 +40,8 @@ def load_results(csv_path: str | Path, n_expected: int = 30) -> pd.DataFrame:
         - Les doublons identiques sont retirés, en ignorant les colonnes de DYNAMIC_COLUMNS
         - Un doublon contradictoire lève ValueError
         - Un groupe (scenario, policy) dont l'effectif est différent de n_expected lève ValueError.
+        - Depuis T26, la colonne train_seed (si elle existe) fait partie de la clé :
+          un groupe est alors (scenario, policy, train_seed), vide pour les heuristiques.
     """
 
     #1. Charger les données
@@ -50,13 +52,16 @@ def load_results(csv_path: str | Path, n_expected: int = 30) -> pd.DataFrame:
     data_cleaned = data.drop_duplicates(subset=static_columns)
 
     #3. Détecter les doublons contradictoires
-    nb_duplicated = data_cleaned.duplicated(subset=["scenario", "policy", "seed"]).sum()
+    has_train_seed = "train_seed" in data_cleaned.columns
+    train_key = ["train_seed"] if has_train_seed else []
+    nb_duplicated = data_cleaned.duplicated(subset=["scenario", "policy", *train_key, "seed"]).sum()
 
     if nb_duplicated > 0:
         raise ValueError(f"{nb_duplicated} doublons contradictoires ont été détectés.")
 
     #4. Vérifier les effectifs
-    nb_groups = data_cleaned.groupby(["scenario", "policy"]).size()
+    # dropna=False : les heuristiques (train_seed vide) forment un groupe, pas zéro.
+    nb_groups = data_cleaned.groupby(["scenario", "policy", *train_key], dropna=False).size()
 
     mask = nb_groups != n_expected
 
@@ -72,6 +77,15 @@ def paired_table(data: pd.DataFrame, scenario: str, metric: str) -> pd.DataFrame
     """
 
     data = data[data["scenario"] == scenario]
+
+    if "train_seed" in data.columns:
+        n_models = data.groupby("policy")["train_seed"].nunique()
+        several = n_models[n_models > 1].index.tolist()
+        if several:
+            raise ValueError(
+                f"Plusieurs graines d'entraînement pour {several} : un tableau apparié par graine "
+                "d'évaluation ne sait pas les combiner (agrégation prévue en T30)."
+            )
 
     data_pivot = pd.pivot(data, index="seed", columns="policy", values=metric)
 

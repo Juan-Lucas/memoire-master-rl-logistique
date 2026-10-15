@@ -22,6 +22,7 @@ from memoire_master_rl_logistique.rl.tabular_training import (
     init_tabular_training,
     save_tabular_artifacts,
 )
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS, training_episode_seed
 
 
 def train_sarsa(
@@ -31,14 +32,14 @@ def train_sarsa(
     epsilon_start: float = 1.0,
     epsilon_min: float = 0.01,
     n_bins: int = 8,
-    seed: int = 42,
+    seed: int = TRAIN_SEEDS[0],
     truck_count: int = 12,
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
     breakdown_probability: float = 0.02,
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
-    output_dir: str = str(model_dir(RESULTS_DIR, "SARSA", "nominal")),
+    output_dir: str = str(model_dir(RESULTS_DIR, "SARSA", "nominal", TRAIN_SEEDS[0])),
     overwrite: bool = False,
 ) -> dict[tuple[int, ...], np.ndarray]:
     """Entraîne un agent SARSA tabulaire sur l'environnement minier.
@@ -78,7 +79,7 @@ def train_sarsa(
     print(f"Début de l'entraînement SARSA ({n_episodes} épisodes)...")
 
     for ep in range(n_episodes):
-        obs, _info = env.reset(seed=seed + ep)
+        obs, _info = env.reset(seed=training_episode_seed(seed, ep))  # disjointes de l'évaluation (T26)
         state = _discretize_obs(obs, n_bins, shovel_count, dump_count)
         action = _select_action(state, epsilon)
         total_reward = 0.0
@@ -151,7 +152,7 @@ def main() -> None:
         n_episodes=30_000,
         alpha=0.2,
         gamma=0.99,
-        seed=42,
+        seed=TRAIN_SEEDS[0],
     )
 
 

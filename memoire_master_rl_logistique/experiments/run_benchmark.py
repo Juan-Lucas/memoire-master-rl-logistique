@@ -4,21 +4,29 @@
 - RL tabulaire : Q-Learning, SARSA
 - RL profond : DQN, PPO
 
-Les agents sont chargés depuis ``output_dir`` s'ils existent, sinon entraînés
-(un agent par scénario, graine ``seeds[0]``). Chaque lancement écrit ses résultats
-dans un nouveau fichier ``benchmark_<AAAAMMJJ_HHMMSS>.csv`` (colonne ``run_id``) ;
-un doublon (scénario, politique, graine) lève ``ValueError`` (voir ``write_results``).
+Les agents sont chargés depuis ``output_dir`` s'ils existent, sinon entraînés : un
+agent par (algorithme, scénario, graine d'entraînement de ``seeds.TRAIN_SEEDS``), jamais
+sur une graine d'évaluation (T26). Chaque lancement écrit ses résultats dans un nouveau
+fichier ``benchmark_<AAAAMMJJ_HHMMSS>.csv`` (colonnes ``run_id`` et ``train_seed``) ; un
+doublon (scénario, politique, graine d'entraînement, graine d'évaluation) lève
+``ValueError`` (voir ``write_results``).
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import csv
 import datetime as dt
 from pathlib import Path
 import time
 
 from memoire_master_rl_logistique.env.mine_env import MineEnv
-from memoire_master_rl_logistique.experiments.policies import agent_policy_fn, heuristic_policies
+from memoire_master_rl_logistique.experiments.policies import (
+    PolicyFn,
+    agent_policy_fn,
+    heuristic_policies,
+    make_env,
+)
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
 from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS
 from memoire_master_rl_logistique.rl.model_loading import load_model, model_file
@@ -28,6 +36,7 @@ from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 from memoire_master_rl_logistique.simulation.kpi import fleet_kpis
 
 
@@ -92,6 +101,7 @@ def run_benchmark(
     train_ppo_flag: bool = True,
     model_scenario: str | None = None,
     allow_legacy_models: bool = False,
+    train_seeds: Sequence[int] = TRAIN_SEEDS,
 ) -> list[dict]:
     """Exécute le benchmark pour un scénario donné.
 
@@ -99,6 +109,9 @@ def run_benchmark(
     configuration du scénario d'entraînement (``model_scenario``) : un modèle périmé
     lève ``ModelCompatibilityError``. ``allow_legacy_models`` permet de réévaluer, en
     connaissance de cause, des modèles antérieurs à T8 (sans ``metadata.json``).
+
+    train_seeds : graines d'entraînement (T26) : un modèle par algorithme et par graine,
+        évalué sur toutes les graines d'évaluation ; colonne ``train_seed`` du CSV.
 
     model_scenario : nom du scénario dont les modèles entraînés sont réutilisés.
         Si None, utilise scenario.name (comportement normal).
@@ -131,133 +144,61 @@ def run_benchmark(
     # Heuristiques : même construction que l'analyse du comportement (experiments.policies).
     policies = heuristic_policies(scenario)
 
-    # --- Q-Learning ---
-    ql_dir = model_dir(output_dir, "Q-Learning", model_key)
-    ql_path = ql_dir / "q_table.pkl"
+    # Agents : un modèle par (algorithme, graine d'entraînement), entraîné s'il manque (T26).
+    # Les modèles réutilisés pour un scénario non vu sont entraînés dans leur propre régime.
+    training_scenario = SCENARIOS.get(model_key, scenario)
+    algorithms = ("Q-Learning", "SARSA") + (("DQN", "PPO") if train_ppo_flag else ())
+    agents: list[tuple[str, int | None, PolicyFn]] = []
+    for train_seed in train_seeds:
+        for algorithm in algorithms:
+            mdir = model_dir(output_dir, algorithm, model_key, train_seed)
+            if not model_file(mdir, algorithm).exists():
+                print(f"  Entraînement {algorithm} ({model_key}, graine {train_seed})...")
+                _train(algorithm, training_scenario, train_seed, mdir)
+            policy_fn = agent_policy_fn(_load(mdir, algorithm), algorithm)
+            agents.append((algorithm, train_seed, policy_fn))
 
-    if ql_path.exists():
-        print(f"  Chargement Q-Learning existant: {ql_path}")
-        ql_agent = _load(ql_dir, "Q-Learning")
-    else:
-        print(f"  Entraînement Q-Learning pour '{scenario.name}'...")
-        train_q_learning(
-            n_episodes=30_000,
-            alpha=0.2,
-            n_bins=DEFAULT_N_BINS,
-            seed=scenario.seeds[0],
-            truck_count=scenario.truck_count,
-            shovel_count=scenario.shovel_count,
-            dump_count=scenario.dump_count,
-            episode_minutes=scenario.episode_minutes,
-            breakdown_probability=scenario.breakdown_probability,
-            reward_weights=scenario.reward_weights,
-            output_dir=str(ql_dir),
-        )
-        ql_agent = _load(ql_dir, "Q-Learning")
-
-    policies["Q-Learning"] = agent_policy_fn(ql_agent, "Q-Learning")
-
-    # --- SARSA ---
-    sarsa_dir = model_dir(output_dir, "SARSA", model_key)
-    sarsa_path = sarsa_dir / "sarsa_table.pkl"
-
-    if sarsa_path.exists():
-        print(f"  Chargement SARSA existant: {sarsa_path}")
-        sarsa_agent = _load(sarsa_dir, "SARSA")
-    else:
-        print(f"  Entraînement SARSA pour '{scenario.name}'...")
-        train_sarsa(
-            n_episodes=30_000,
-            alpha=0.2,
-            n_bins=DEFAULT_N_BINS,
-            seed=scenario.seeds[0],
-            truck_count=scenario.truck_count,
-            shovel_count=scenario.shovel_count,
-            dump_count=scenario.dump_count,
-            episode_minutes=scenario.episode_minutes,
-            breakdown_probability=scenario.breakdown_probability,
-            reward_weights=scenario.reward_weights,
-            output_dir=str(sarsa_dir),
-        )
-        sarsa_agent = _load(sarsa_dir, "SARSA")
-
-    policies["SARSA"] = agent_policy_fn(sarsa_agent, "SARSA")
-
-    # --- DQN ---
-    if train_ppo_flag:
-        dqn_path_scenario = model_file(model_dir(output_dir, "DQN", model_key), "DQN")
-
-        if dqn_path_scenario.exists():
-            print(f"  Chargement DQN ({model_key}): {dqn_path_scenario}")
-            dqn_model = _load(dqn_path_scenario.parent, "DQN")
-        else:
-            print(f"  Entraînement DQN pour scénario '{model_key}'...")
-            dqn_model = train_dqn(
-                total_timesteps=scenario.total_timesteps,
-                seed=scenario.seeds[0],
-                truck_count=scenario.truck_count,
-                shovel_count=scenario.shovel_count,
-                dump_count=scenario.dump_count,
-                episode_minutes=scenario.episode_minutes,
-                breakdown_probability=scenario.breakdown_probability,
-                reward_weights=scenario.reward_weights,
-                output_dir=str(dqn_path_scenario.parent),
-            )
-
-        policies["DQN"] = agent_policy_fn(dqn_model, "DQN")
-
-    # --- PPO ---
-    ppo_model = None
-    if train_ppo_flag:
-        ppo_path_scenario = model_file(model_dir(output_dir, "PPO", model_key), "PPO")
-
-        if ppo_path_scenario.exists():
-            print(f"  Chargement PPO ({model_key}): {ppo_path_scenario}")
-            ppo_model = _load(ppo_path_scenario.parent, "PPO")
-        else:
-            print(f"  Entraînement PPO pour scénario '{model_key}'...")
-            ppo_model = train_ppo(
-                total_timesteps=scenario.total_timesteps,
-                seed=scenario.seeds[0],
-                truck_count=scenario.truck_count,
-                shovel_count=scenario.shovel_count,
-                dump_count=scenario.dump_count,
-                episode_minutes=scenario.episode_minutes,
-                breakdown_probability=scenario.breakdown_probability,
-                reward_weights=scenario.reward_weights,
-                output_dir=str(ppo_path_scenario.parent),
-            )
-
-        policies["PPO"] = agent_policy_fn(ppo_model, "PPO")
-
-    for policy_name, policy_fn in policies.items():
+    runs = [(name, None, fn) for name, fn in policies.items()] + agents
+    for policy_name, train_seed, policy_fn in runs:
         for seed in scenario.seeds:
-            env = MineEnv(
-                truck_count=scenario.truck_count,
-                shovel_count=scenario.shovel_count,
-                dump_count=scenario.dump_count,
-                episode_minutes=scenario.episode_minutes,
-                breakdown_probability=scenario.breakdown_probability,
-                reward_weights=scenario.reward_weights,
-            )
-            # Debug actions pour DQN, Nearest, ShortestPath (première seed seulement)
-            debug = (policy_name in ["DQN", "Nearest", "ShortestPath"] and seed == scenario.seeds[0])
-            kpis = run_single_episode(env, policy_fn, seed, policy_name, debug)
-            row = {
+            env = make_env(scenario)
+            kpis = run_single_episode(env, policy_fn, seed, policy_name)
+            results.append({
                 "scenario": scenario.name,
                 "policy": policy_name,
+                "train_seed": train_seed,  # None pour les heuristiques (rien à entraîner)
                 "seed": seed,
                 **kpis,
-            }
-            results.append(row)
+            })
             print(
-                f"  [{scenario.name}] {policy_name} seed={seed}: "
+                f"  [{scenario.name}] {policy_name} entraînement={train_seed} seed={seed}: "
                 f"prod={kpis['productivity_tph']:.1f} t/h, "
-                f"wait={kpis['avg_wait_min_per_truck']:.1f} min, "
+                f"file={kpis['queue_wait_min_per_truck']:.1f} min, "
                 f"fuel={kpis['specific_fuel_l_per_ton']:.4f} L/t"
             )
 
     return results
+
+
+def _train(algorithm: str, scenario: Scenario, train_seed: int, output_dir: Path) -> None:
+    """Entraîne un agent avec les réglages de la campagne (budgets de l'article)."""
+    env_kwargs = dict(
+        seed=train_seed,
+        truck_count=scenario.truck_count,
+        shovel_count=scenario.shovel_count,
+        dump_count=scenario.dump_count,
+        episode_minutes=scenario.episode_minutes,
+        breakdown_probability=scenario.breakdown_probability,
+        reward_weights=scenario.reward_weights,
+        output_dir=str(output_dir),
+    )
+    if algorithm in ("Q-Learning", "SARSA"):
+        trainer = train_q_learning if algorithm == "Q-Learning" else train_sarsa
+        trainer(n_episodes=30_000, alpha=0.2, n_bins=DEFAULT_N_BINS, **env_kwargs)
+    else:
+        trainer = train_dqn if algorithm == "DQN" else train_ppo
+        trainer(total_timesteps=scenario.total_timesteps, **env_kwargs)
+
 
 def write_results(
         rows: list[dict],
@@ -272,7 +213,9 @@ def write_results(
     seen = set()
 
     for row in rows:
-        triplet = (row["scenario"], row["policy"], row["seed"])
+        # (régime, politique, graine d'entraînement, graine d'évaluation) : T26 ajoute
+        # la graine d'entraînement, absente des lignes d'avant T26 et des heuristiques.
+        triplet = (row["scenario"], row["policy"], row.get("train_seed"), row["seed"])
         if triplet not in seen:
             seen.add(triplet)
         else:
@@ -284,7 +227,9 @@ def write_results(
     csv_path = output_dir / f"benchmark_{run_id}.csv"
 
     with open(csv_path, "x", newline="", encoding="utf-8") as f:
-        fieldnames = ["run_id"] + list(rows[0].keys())
+        # Union des colonnes, dans l'ordre d'apparition : les agents tabulaires ont des
+        # colonnes (known_state_pct…) que les heuristiques, écrites d'abord, n'ont pas.
+        fieldnames = ["run_id"] + list(dict.fromkeys(k for row in rows for k in row))
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
@@ -297,6 +242,7 @@ def run_all_benchmarks(
     train_ppo_flag: bool = True,
     scenario_names: list[str] | None = None,
     allow_legacy_models: bool = False,
+    train_seeds: Sequence[int] = TRAIN_SEEDS,
 ) -> None:
     """Lance les benchmarks sur tous les scénarios (voir ``run_benchmark`` pour les modèles)."""
     out_path = Path(output_dir)
@@ -319,6 +265,7 @@ def run_all_benchmarks(
         results = run_benchmark(
             scenario, out_path, train_ppo_flag,
             model_scenario=model_src, allow_legacy_models=allow_legacy_models,
+            train_seeds=train_seeds,
         )
         all_results.extend(results)
 

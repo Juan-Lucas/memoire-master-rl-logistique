@@ -51,3 +51,28 @@ def test_liste_vide(tmp_path):
         write_results(ROWS_EMPTY, tmp_path, "a")
 
     assert list(tmp_path.iterdir()) == []
+
+
+def test_colonnes_absentes_de_la_premiere_ligne(tmp_path):
+    """Les colonnes propres aux agents tabulaires (T20) sont écrites même si la première
+    ligne (une heuristique) ne les a pas ; les cases manquantes restent vides."""
+    rows = [
+        {"scenario": "nominal", "policy": "Fixed", "train_seed": None, "seed": 42},
+        {"scenario": "nominal", "policy": "SARSA", "train_seed": 1, "seed": 42,
+         "known_state_pct": 100.0},
+    ]
+    path = write_results(rows, tmp_path, run_id="mix")
+
+    with open(path, newline="", encoding="utf-8") as f:
+        written = list(csv.DictReader(f))
+    assert written[0]["known_state_pct"] == ""
+    assert written[1]["known_state_pct"] == "100.0"
+
+
+def test_meme_politique_deux_graines_d_entrainement(tmp_path):
+    """T26 : deux modèles (graines d'entraînement 1 et 2) sur la même graine d'évaluation
+    ne sont pas un doublon ; le même modèle deux fois en est un."""
+    row = {"scenario": "nominal", "policy": "PPO", "seed": 42}
+    write_results([{**row, "train_seed": 1}, {**row, "train_seed": 2}], tmp_path, run_id="a")
+    with pytest.raises(ValueError, match="Doublon"):
+        write_results([{**row, "train_seed": 1}, {**row, "train_seed": 1}], tmp_path, run_id="b")

@@ -26,6 +26,7 @@ from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 
 def run_check_env(
@@ -68,7 +69,7 @@ def training_dir(algorithm: str, truck_count: int, shovel_count: int, dump_count
         name = "nominal"
     else:
         name = f"custom_{truck_count}t_{shovel_count}s_{dump_count}d"
-    return str(model_dir(RESULTS_DIR, algorithm, name))
+    return str(model_dir(RESULTS_DIR, algorithm, name, TRAIN_SEEDS[0]))
 
 
 def main() -> None:

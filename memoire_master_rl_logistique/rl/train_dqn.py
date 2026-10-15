@@ -20,18 +20,19 @@ from memoire_master_rl_logistique.rl.model_metadata import (
     write_metadata,
 )
 from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS, training_episode_seed
 
 
 def train_dqn(
     total_timesteps: int = 2_000_000,
-    seed: int = 42,
+    seed: int = TRAIN_SEEDS[0],
     truck_count: int = 12,
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
     breakdown_probability: float = 0.02,
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
-    output_dir: str = str(model_dir(RESULTS_DIR, "DQN", "nominal")),
+    output_dir: str = str(model_dir(RESULTS_DIR, "DQN", "nominal", TRAIN_SEEDS[0])),
     log_freq: int = 1000,
     overwrite: bool = False,
     learning_rate: float = 3e-4,
@@ -54,12 +55,12 @@ def train_dqn(
             shovel_count=shovel_count,
             dump_count=dump_count,
             episode_minutes=episode_minutes,
-            seed=seed,
+            seed=training_episode_seed(seed),  # épisodes : seed × 10⁶, + 1, + 2… (T26)
             breakdown_probability=breakdown_probability,
             reward_weights=reward_weights,
         ),
         n_envs=1,
-        seed=seed,
+        seed=training_episode_seed(seed),
     )
 
     model = DQN(
@@ -79,6 +80,11 @@ def train_dqn(
         seed=seed,
         tensorboard_log=None,  # métriques écrites en CSV dans sb3_logs/
     )
+
+    # Stable-Baselines3 ré-ensemence l'environnement avec la graine du modèle
+    # (set_random_seed → env.seed(seed)) : sans cette ligne, le premier épisode
+    # utiliserait la graine ``seed`` elle-même, et non seed × 10⁶ (T26, vu par test_seeds).
+    env.seed(training_episode_seed(seed))
 
     kpi_callback = KPILoggerCallback(
         log_path=out_path / "training_kpis.csv",
@@ -117,7 +123,7 @@ def main() -> None:
     """Point d'entrée pour l'entraînement DQN."""
     train_dqn(
         total_timesteps=2_000_000,
-        seed=42,
+        seed=TRAIN_SEEDS[0],
         truck_count=12,
         shovel_count=3,
         dump_count=2,

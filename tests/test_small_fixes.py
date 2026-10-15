@@ -17,6 +17,7 @@ from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 
 def fixed_policy_fn():
@@ -45,13 +46,13 @@ def test_model_dir():
 def test_entrainement_par_defaut_la_ou_le_benchmark_relit(train, algorithm):
     """Par défaut, un entraînement écrit dans le dossier nominal que le benchmark relit."""
     default = inspect.signature(train).parameters["output_dir"].default
-    assert default == str(model_dir(RESULTS_DIR, algorithm, "nominal"))
+    assert default == str(model_dir(RESULTS_DIR, algorithm, "nominal", TRAIN_SEEDS[0]))
 
 
 def test_training_dir_de_la_ligne_de_commande():
     """Flotte nominale → dossier du benchmark ; autre flotte → dossier séparé, jamais mélangé."""
-    assert training_dir("PPO", 12, 3, 2) == str(model_dir(RESULTS_DIR, "PPO", "nominal"))
-    assert training_dir("PPO", 15, 3, 2) == str(model_dir(RESULTS_DIR, "PPO", "custom_15t_3s_2d"))
+    assert training_dir("PPO", 12, 3, 2) == str(model_dir(RESULTS_DIR, "PPO", "nominal", 1))
+    assert training_dir("PPO", 15, 3, 2) == str(model_dir(RESULTS_DIR, "PPO", "custom_15t_3s_2d", 1))
 
 
 def test_ensure_new_model(tmp_path):

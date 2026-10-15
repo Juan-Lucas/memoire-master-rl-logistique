@@ -13,6 +13,7 @@ import sys
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
 from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 
 def main() -> None:
@@ -22,7 +23,7 @@ def main() -> None:
 
     common = dict(
         total_timesteps=scenario.total_timesteps,
-        seed=scenario.seeds[0],
+        seed=TRAIN_SEEDS[0],  # T26 : jamais une graine d'évaluation
         truck_count=scenario.truck_count,
         shovel_count=scenario.shovel_count,
         dump_count=scenario.dump_count,

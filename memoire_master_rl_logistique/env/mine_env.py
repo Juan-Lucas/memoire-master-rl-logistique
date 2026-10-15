@@ -152,6 +152,7 @@ class MineEnv(gym.Env):
         # Durée (ms) de la dernière construction d'observation : mesure seulement,
         # n'influence pas la simulation (voir run_single_episode).
         self.last_obs_time_ms: float = 0.0
+        self.last_episode_seed: int | None = None
 
     def reset(
         self,
@@ -169,6 +170,9 @@ class MineEnv(gym.Env):
             effective_seed = self._episode_counter
         else:
             effective_seed = seed
+        # Graine réellement utilisée par cet épisode (T26 : vérifier qu'aucune graine
+        # d'évaluation ne sert pendant un entraînement, compteur interne compris).
+        self.last_episode_seed = effective_seed
         streams = SeedSequence(effective_seed).spawn(len(SHARED_STREAMS) + self.truck_count)
         self.rng_travel, self.rng_service, self.rng_road = (
             _stream(s) for s in streams[: len(SHARED_STREAMS)]

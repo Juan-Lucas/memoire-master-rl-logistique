@@ -37,11 +37,16 @@ def ensure_new_model(model_path: str | Path, overwrite: bool) -> None:
         )
 
 
-def model_dir(results_dir: str | Path, algorithm: str, scenario_name: str) -> Path:
-    """Dossier du modèle ``algorithm`` entraîné sur ``scenario_name``.
+def model_dir(
+    results_dir: str | Path, algorithm: str, scenario_name: str, train_seed: int | None = None,
+) -> Path:
+    """Dossier du modèle ``algorithm`` entraîné sur ``scenario_name`` avec ``train_seed`` (T26).
 
-    Exemple : ``model_dir("data/results", "PPO", "nominal")`` → ``data/results/ppo_nominal``.
+    Exemples : ``model_dir("data/results", "PPO", "nominal", 3)`` →
+    ``data/results/ppo_nominal_seed3`` ; sans graine (modèles d'avant T26, dont ceux de
+    l'article v1) → ``data/results/ppo_nominal``.
     """
     if algorithm not in MODEL_DIR_PREFIX:
         raise ValueError(f"Algorithme inconnu : {algorithm!r} (attendu : {tuple(MODEL_DIR_PREFIX)})")
-    return Path(results_dir) / f"{MODEL_DIR_PREFIX[algorithm]}_{scenario_name}"
+    suffix = "" if train_seed is None else f"_seed{train_seed}"
+    return Path(results_dir) / f"{MODEL_DIR_PREFIX[algorithm]}_{scenario_name}{suffix}"

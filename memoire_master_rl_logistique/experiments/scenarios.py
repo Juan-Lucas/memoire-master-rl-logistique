@@ -4,13 +4,15 @@ Valeurs par défaut inspirées de la littérature :
 - 12 camions Cat 785C (Kangwa 2021, Kansanshi)
 - 3 pelles Hitachi 2500 (Mohtasham 2023)
 - 2 verses, poste de 8 heures
-- 30 réplications par scénario (graines 42 à 71). Attention : ``seeds[0]``
-  sert aussi de graine d'entraînement dans ``run_benchmark``.
+- 30 réplications par scénario (graines d'évaluation 42 à 71, ``seeds.EVAL_SEEDS``).
+  Depuis T26, aucune n'est utilisée pour entraîner (voir ``seeds.py``).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+
+from memoire_master_rl_logistique.seeds import EVAL_SEEDS
 
 
 @dataclass
@@ -25,7 +27,7 @@ class Scenario:
     episode_minutes: float = 480.0
     breakdown_probability: float = 0.02
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3)
-    seeds: list[int] = field(default_factory=lambda: list(range(42, 72)))  # 30 réplications
+    seeds: list[int] = field(default_factory=lambda: list(EVAL_SEEDS))  # 30 réplications d'évaluation
     total_timesteps: int = 2_000_000
 
 

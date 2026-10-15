@@ -2,7 +2,7 @@
 
 Principes, pour que la comparaison PPO / DQN reste équitable :
 - **même budget** : autant de configurations pour PPO que pour DQN (2 × 2 chacun par
-  défaut), même nombre de pas d'entraînement, même graine d'entraînement ;
+  défaut), même nombre de pas d'entraînement, même graine d'entraînement (``TRAIN_SEEDS[0]``) ;
 - **graines de sélection distinctes de l'évaluation finale** : le critère est la
   productivité moyenne sur les graines 20 000 à 20 009, jamais sur les graines 42 à 71
   de l'évaluation. Régler sur les graines d'évaluation reviendrait à choisir la
@@ -34,9 +34,9 @@ from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
 from memoire_master_rl_logistique.rl.model_loading import load_model
 from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS, TUNING_SEEDS
 
-TUNING_SEEDS = tuple(range(20_000, 20_010))  # disjointes des graines d'évaluation (42 à 71)
-TRAINING_SEED = 42
+TRAINING_SEED = TRAIN_SEEDS[0]
 DEFAULT_TIMESTEPS = 200_000
 
 # Grilles : même nombre de configurations par algorithme. Les valeurs de la v1

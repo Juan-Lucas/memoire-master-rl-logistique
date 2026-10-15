@@ -1,7 +1,7 @@
 """Ré-entraînement Q-Learning / SARSA (scénario nominal) avec journalisation
 de l'epsilon et de l'erreur TD par épisode (figures de diagnostic).
 
-Hyperparamètres identiques à run_benchmark.py (scénario nominal, seed=42) :
+Hyperparamètres identiques à run_benchmark.py (scénario nominal, graine ``TRAIN_SEEDS[0]``) :
 le résultat (q_table / sarsa_table) est donc identique, seul un fichier
 supplémentaire `training_diagnostics.csv` (episode, total_reward, epsilon,
 mean_abs_td_error) est ajouté.
@@ -17,6 +17,7 @@ from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
 from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 
 def main() -> None:
@@ -28,7 +29,7 @@ def main() -> None:
         alpha=0.2,
         gamma=0.99,
         n_bins=DEFAULT_N_BINS,
-        seed=scenario.seeds[0],
+        seed=TRAIN_SEEDS[0],  # T26 : jamais une graine d'évaluation
         truck_count=scenario.truck_count,
         shovel_count=scenario.shovel_count,
         dump_count=scenario.dump_count,
