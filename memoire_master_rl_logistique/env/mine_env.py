@@ -216,7 +216,7 @@ class MineEnv(gym.Env):
         wait_load_min = max(0.0, shovel.available_at_min - time_min)
         if wait_load_min > 0:
             time_min += wait_load_min
-            truck.total_wait_min += wait_load_min
+            truck.queue_wait_min += wait_load_min
             truck.total_fuel_l += estimate_idle_fuel_l(wait_load_min)
 
         # Chargement
@@ -242,7 +242,7 @@ class MineEnv(gym.Env):
         wait_dump_min = max(0.0, dump.available_at_min - time_min)
         if wait_dump_min > 0:
             time_min += wait_dump_min
-            truck.total_wait_min += wait_dump_min
+            truck.queue_wait_min += wait_dump_min
             truck.total_fuel_l += estimate_idle_fuel_l(wait_dump_min)
 
         # Déchargement
@@ -264,11 +264,11 @@ class MineEnv(gym.Env):
         location = shovel.node_id
         self.truck_locations[self.current_truck_idx] = location
 
-        # Panne éventuelle du camion ; la réparation est comptée comme attente.
+        # Panne éventuelle du camion ; la réparation a son propre compteur (T10).
         if self.rng.random() < self.breakdown_probability:
             repair_min = self.rng.uniform(10.0, 30.0)
             time_min += repair_min
-            truck.total_wait_min += repair_min
+            truck.repair_min += repair_min
             truck.total_fuel_l += estimate_idle_fuel_l(repair_min)
 
         # Le tonnage n'est compté que si le cycle se termine avant la fin du poste.
@@ -321,7 +321,7 @@ class MineEnv(gym.Env):
             wait_min = self.wait_action_minutes
         wait_min = max(0.2, wait_min)
 
-        truck.total_wait_min += wait_min
+        truck.voluntary_wait_min += wait_min
         truck.total_fuel_l += estimate_idle_fuel_l(wait_min)
         truck.available_at_min = time_min + wait_min
         self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
@@ -488,6 +488,9 @@ class MineEnv(gym.Env):
             "total_tonnage_t": sum(t.total_tonnage_t for t in self.trucks),
             "total_fuel_l": sum(t.total_fuel_l for t in self.trucks),
             "total_wait_min": sum(t.total_wait_min for t in self.trucks),
+            "queue_wait_min": sum(t.queue_wait_min for t in self.trucks),
+            "repair_min": sum(t.repair_min for t in self.trucks),
+            "voluntary_wait_min": sum(t.voluntary_wait_min for t in self.trucks),
             "total_cycles": sum(t.cycles_completed for t in self.trucks),
             "shovel_available_at": [s.available_at_min for s in self.shovels],
             "dump_available_at": [d.available_at_min for d in self.dumps],

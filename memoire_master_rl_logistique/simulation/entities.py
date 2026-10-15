@@ -15,17 +15,30 @@ class Truck:
 
     La position et le statut du camion sont gardés par ``MineEnv``
     (``truck_locations``, ``truck_statuses``). ``history`` n'est pas utilisé.
+
+    Le temps d'immobilisation est décomposé en trois compteurs (T10) :
+    - ``queue_wait_min`` : file d'attente à la pelle ou à la verse ;
+    - ``repair_min`` : réparation après une panne ;
+    - ``voluntary_wait_min`` : action ATTENDRE choisie par la politique.
+    ``total_wait_min`` est leur somme (l'ancien compteur unique).
     """
 
     truck_id: str
     capacity_tonnes: float = 140.0
     available_at_min: float = 0.0
-    total_wait_min: float = 0.0
+    queue_wait_min: float = 0.0
+    repair_min: float = 0.0
+    voluntary_wait_min: float = 0.0
     total_active_min: float = 0.0
     cycles_completed: int = 0
     total_tonnage_t: float = 0.0
     total_fuel_l: float = 0.0
     history: list[dict] = field(default_factory=list)
+
+    @property
+    def total_wait_min(self) -> float:
+        """Immobilisation totale : file + réparation + ATTENDRE."""
+        return self.queue_wait_min + self.repair_min + self.voluntary_wait_min
 
 
 @dataclass(slots=True)

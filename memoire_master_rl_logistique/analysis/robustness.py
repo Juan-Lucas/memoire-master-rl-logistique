@@ -5,8 +5,10 @@
   mesurerait surtout l'ajout de 50 % de camions : une politique inchangée
   afficherait déjà 1,5. En fortes pannes, le nombre de camions est le même et les
   deux calculs coïncident.
-- Variation de l'attente moyenne par camion (en %) par rapport au nominal.
-  Il s'agit de l'attente totale ; l'attente en file seule viendra avec T10.
+- Variation de l'attente par camion (en %) par rapport au nominal. Depuis T10, c'est
+  l'**attente en file** (``queue_wait_min_per_truck``) ; pour un CSV antérieur à T10
+  (comme celui de l'article v1), seule l'immobilisation totale existe
+  (``avg_wait_min_per_truck`` : file + réparations + ATTENDRE) : voir ``wait_column``.
 
 Calculs seulement : la figure et la ligne de commande sont dans ``plots/robustness``.
 """
@@ -18,7 +20,13 @@ import pandas as pd
 from memoire_master_rl_logistique.experiments.scenarios import PERTURBED_SCENARIOS
 
 PRODUCTIVITY = "productivity_tph"
-WAIT = "avg_wait_min_per_truck"
+QUEUE_WAIT = "queue_wait_min_per_truck"  # depuis T10
+TOTAL_WAIT = "avg_wait_min_per_truck"  # file + réparations + ATTENDRE (seule colonne en v1)
+
+
+def wait_column(df: pd.DataFrame) -> str:
+    """Colonne d'attente à utiliser : l'attente en file si elle existe, sinon l'immobilisation totale."""
+    return QUEUE_WAIT if QUEUE_WAIT in df.columns else TOTAL_WAIT
 
 
 def _scenario_means(df: pd.DataFrame, values: pd.Series) -> pd.DataFrame:
@@ -43,11 +51,13 @@ def robustness_ratios(df: pd.DataFrame) -> pd.DataFrame:
     return means[PERTURBED_SCENARIOS].div(means["nominal"], axis=0)
 
 
-def wait_change_pct(df: pd.DataFrame, wait_col: str = WAIT) -> pd.DataFrame:
-    """Variation (%) de l'attente moyenne par camion par rapport au nominal.
+def wait_change_pct(df: pd.DataFrame, wait_col: str | None = None) -> pd.DataFrame:
+    """Variation (%) de l'attente par camion par rapport au nominal.
 
-    Positive = l'attente augmente (dégradation). Tableau politiques × régimes perturbés.
+    ``wait_col`` : par défaut ``wait_column(df)``. Positive = l'attente augmente
+    (dégradation). Tableau politiques × régimes perturbés.
     """
+    wait_col = wait_col or wait_column(df)
     means = _scenario_means(df, df[wait_col])
     nominal = means["nominal"]
     return means[PERTURBED_SCENARIOS].sub(nominal, axis=0).div(nominal, axis=0) * 100

@@ -31,7 +31,7 @@ from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
-from memoire_master_rl_logistique.simulation.kpi import compute_kpis
+from memoire_master_rl_logistique.simulation.kpi import fleet_kpis
 
 
 def run_single_episode(
@@ -69,22 +69,7 @@ def run_single_episode(
     if debug_actions and actions_taken:
         print(f"    [{policy_name}] First 10 actions: {actions_taken}")
 
-    total_tonnage = sum(t.total_tonnage_t for t in env.trucks)
-    total_wait = sum(t.total_wait_min for t in env.trucks)
-    total_active = sum(t.total_active_min for t in env.trucks)
-    total_fuel = sum(t.total_fuel_l for t in env.trucks)
-
-    total_cycles = sum(t.cycles_completed for t in env.trucks)
-
-    kpis = compute_kpis(
-        episode_minutes=env.episode_minutes,
-        truck_count=env.truck_count,
-        total_tonnage_t=total_tonnage,
-        total_wait_min=total_wait,
-        total_active_min=total_active,
-        total_fuel_l=total_fuel,
-        total_cycles=total_cycles,
-    )
+    kpis = fleet_kpis(env.trucks, env.episode_minutes)
     kpis["total_reward"] = total_reward
     for name, times in (("decision_time_ms", decision_times_ms), ("obs_time_ms", obs_times_ms)):
         kpis[f"{name}_mean"] = sum(times) / len(times) if times else 0.0

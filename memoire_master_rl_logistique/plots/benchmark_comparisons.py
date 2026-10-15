@@ -2,13 +2,15 @@
 
 - ``barplot_productivite_scenarios.png`` : productivité moyenne par politique et par
   régime, avec l'IC bootstrap à 95 % sur les 30 réplications uniques.
-- ``wait_time_comparison.png`` : attente moyenne par camion, même présentation.
+- ``wait_time_comparison.png`` : attente en file par camion (depuis T10 ; immobilisation
+  totale pour un CSV antérieur), même présentation.
   Pas de « seuil cible » : aucune source ne justifiait la ligne des 30 min de la v1.
 - ``pareto_productivity_waiting.png`` : productivité en fonction de l'attente,
   **un panneau par régime** (les régimes n'ont pas la même échelle) ; les politiques
   non dominées sont en gras et reliées par le front de Pareto.
 
-L'attente utilisée est l'attente totale par camion ; l'attente en file viendra avec T10.
+L'attente est choisie par ``analysis.robustness.wait_column`` : l'attente en file si le CSV
+la contient (depuis T10), sinon l'immobilisation totale (CSV v1).
 
 Lancement :
     python -m memoire_master_rl_logistique.plots.benchmark_comparisons CSV DOSSIER [--overwrite]
@@ -23,6 +25,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from memoire_master_rl_logistique.analysis.robustness import wait_column
 from memoire_master_rl_logistique.analysis.statistical_tests import (
     load_results,
     paired_bootstrap_ci,
@@ -31,13 +34,13 @@ from memoire_master_rl_logistique.plots.common import (
     SCENARIO_COLORS,
     SCENARIO_LABELS,
     SCENARIO_ORDER,
+    WAIT_LABELS,
     order_policies,
     policy_label,
     prepare_outputs,
 )
 
 PRODUCTIVITY = "productivity_tph"
-WAIT = "avg_wait_min_per_truck"
 OUTPUT_FILES = (
     "barplot_productivite_scenarios.png",
     "wait_time_comparison.png",
@@ -104,7 +107,12 @@ def plot_grouped_bars(summary: pd.DataFrame, ylabel: str, title: str, out_path: 
     plt.close(fig)
 
 
-def plot_pareto(prod: pd.DataFrame, wait: pd.DataFrame, out_path: Path) -> None:
+def plot_pareto(
+    prod: pd.DataFrame,
+    wait: pd.DataFrame,
+    out_path: Path,
+    wait_label: str = WAIT_LABELS["queue_wait_min_per_truck"],
+) -> None:
     """Productivité en fonction de l'attente, un panneau par régime, front de Pareto en pointillés."""
     points = prod.merge(wait, on=["policy", "scenario"], suffixes=("_prod", "_wait"))
     scenarios = [s for s in SCENARIO_ORDER if s in set(points["scenario"])]
@@ -121,7 +129,7 @@ def plot_pareto(prod: pd.DataFrame, wait: pd.DataFrame, out_path: Path) -> None:
         frontier = sub[front].sort_values("mean_wait")
         ax.plot(frontier["mean_wait"], frontier["mean_prod"], linestyle="--", color="grey")
         ax.set_title(SCENARIO_LABELS.get(scenario, scenario))
-        ax.set_xlabel("Attente moyenne par camion (min)")
+        ax.set_xlabel(wait_label)
         ax.grid(True, alpha=0.3)
     axes[0][0].set_ylabel("Productivité (t/h)")
 
@@ -135,13 +143,15 @@ def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False) -> 
     bars_prod, bars_wait, pareto = prepare_outputs(out_dir, OUTPUT_FILES, overwrite)
     df = load_results(csv_path)
     prod = summarise(df, PRODUCTIVITY)
-    wait = summarise(df, WAIT)
+    wait_col = wait_column(df)
+    wait_label = WAIT_LABELS[wait_col]
+    wait = summarise(df, wait_col)
 
     plot_grouped_bars(prod, "Productivité (t/h)",
                       "Productivité moyenne par politique et par régime (IC 95 %)", bars_prod)
-    plot_grouped_bars(wait, "Attente moyenne par camion (min)",
-                      "Attente moyenne par politique et par régime (IC 95 %)", bars_wait)
-    plot_pareto(prod, wait, pareto)
+    plot_grouped_bars(wait, wait_label,
+                      "Attente par politique et par régime (IC 95 %)", bars_wait)
+    plot_pareto(prod, wait, pareto, wait_label)
 
     outputs = [bars_prod, bars_wait, pareto]
     print("Écrits : " + ", ".join(str(p) for p in outputs))

@@ -17,11 +17,13 @@ from memoire_master_rl_logistique.analysis.robustness import (
     robustness_ratios,
     robustness_table,
     wait_change_pct,
+    wait_column,
 )
 from memoire_master_rl_logistique.analysis.statistical_tests import load_results
 from memoire_master_rl_logistique.experiments.scenarios import PERTURBED_SCENARIOS
 from memoire_master_rl_logistique.plots.common import (
     SCENARIO_LABELS,
+    WAIT_LABELS,
     order_policies,
     policy_label,
     prepare_outputs,
@@ -30,7 +32,12 @@ from memoire_master_rl_logistique.plots.common import (
 OUTPUT_FILES = ("robustness_ratios.csv", "robustness_heatmap.png")
 
 
-def plot_robustness_heatmap(ratios: pd.DataFrame, wait_pct: pd.DataFrame, out_path: Path) -> None:
+def plot_robustness_heatmap(
+    ratios: pd.DataFrame,
+    wait_pct: pd.DataFrame,
+    out_path: Path,
+    wait_label: str = WAIT_LABELS["queue_wait_min_per_truck"],
+) -> None:
     """Deux heatmaps côte à côte, en % de variation par rapport au nominal.
 
     Gauche : productivité, (ratio − 1) × 100. Droite : attente. Les nombres
@@ -41,7 +48,7 @@ def plot_robustness_heatmap(ratios: pd.DataFrame, wait_pct: pd.DataFrame, out_pa
     labels = [policy_label(p) for p in order]
     panels = [
         ((ratios.loc[order] - 1) * 100, "Productivité (par camion en forte charge)", "RdBu"),
-        (wait_pct.loc[order], "Attente moyenne par camion", "RdBu_r"),
+        (wait_pct.loc[order], wait_label, "RdBu_r"),
     ]
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 5))
@@ -70,13 +77,14 @@ def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False) -> 
     csv_out, png_out = prepare_outputs(out_dir, OUTPUT_FILES, overwrite)
     df = load_results(csv_path)
     ratios = robustness_ratios(df)
-    wait_pct = wait_change_pct(df)
+    wait_col = wait_column(df)
+    wait_pct = wait_change_pct(df, wait_col)
     table = robustness_table(ratios, wait_pct)
     table = table.loc[order_policies(table.index)]
 
     print(table.round(3).to_string())
     table.to_csv(csv_out)
-    plot_robustness_heatmap(ratios, wait_pct, png_out)
+    plot_robustness_heatmap(ratios, wait_pct, png_out, WAIT_LABELS[wait_col])
     print(f"Écrits : {csv_out}, {png_out}")
     return table
 

@@ -20,7 +20,7 @@ from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelP
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.rl.model_loading import load_model
-from memoire_master_rl_logistique.simulation.kpi import compute_kpis
+from memoire_master_rl_logistique.simulation.kpi import fleet_kpis
 
 
 def evaluate_policy(
@@ -43,22 +43,7 @@ def evaluate_policy(
             if terminated or truncated:
                 break
 
-        total_tonnage = sum(t.total_tonnage_t for t in env.trucks)
-        total_wait = sum(t.total_wait_min for t in env.trucks)
-        total_active = sum(t.total_active_min for t in env.trucks)
-        total_fuel = sum(t.total_fuel_l for t in env.trucks)
-
-        total_cycles = sum(t.cycles_completed for t in env.trucks)
-
-        kpis = compute_kpis(
-            episode_minutes=env.episode_minutes,
-            truck_count=env.truck_count,
-            total_tonnage_t=total_tonnage,
-            total_wait_min=total_wait,
-            total_active_min=total_active,
-            total_fuel_l=total_fuel,
-            total_cycles=total_cycles,
-        )
+        kpis = fleet_kpis(env.trucks, env.episode_minutes)
         kpis["total_reward"] = total_reward
         all_kpis.append(kpis)
 

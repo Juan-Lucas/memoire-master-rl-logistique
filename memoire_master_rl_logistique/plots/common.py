@@ -35,6 +35,12 @@ SCENARIO_LABELS = {
     "high_load": "Forte charge",
     "high_breakdown": "Fortes pannes",
 }
+# Libellé de l'attente selon la colonne utilisée (voir analysis.robustness.wait_column).
+WAIT_LABELS = {
+    "queue_wait_min_per_truck": "Attente en file par camion (min par poste)",
+    "avg_wait_min_per_truck": "Immobilisation totale par camion (min par poste)",
+}
+
 SCENARIO_COLORS = {
     "nominal": "#FF7043",
     "high_load": "#1A237E",
