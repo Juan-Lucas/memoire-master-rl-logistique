@@ -413,13 +413,12 @@ class MineEnv(gym.Env):
         Le camion reste immobile jusqu'au prochain événement du système (au plus
         ``wait_action_minutes``, au moins 0,2 min).
 
-        Pourquoi la récompense peut rendre ATTENDRE attrayante (T19, à corriger en T25) :
-        elle est calculée avec ``route_distance_km = 0``, donc sans coût de distance, et
-        avec un coût d'attente proportionnel à une durée souvent minuscule
-        (w4 × 0,2 / 30 ≈ 0,002 pour 0,2 min). Enchaîner de très courtes attentes coûte
-        donc presque rien et évite parfois une file : en forte charge, PPO choisit
-        ATTENDRE dans 87 % de ses décisions (T12 bis). ``info["wait_actions"]`` compte
-        ces décisions.
+        Dans la v1, ATTENDRE ne coûtait presque rien (T19) : pas de coût de distance et
+        un coût d'attente proportionnel à une durée souvent minuscule (w4 × 0,2 / 30 ≈ 0,002
+        pour 0,2 min). En forte charge, PPO choisissait ATTENDRE dans 87 % de ses décisions
+        (T12 bis). Depuis la v2, la récompense ajoute le coût d'opportunité de l'immobilité
+        (``idle_min``, voir ``simulation.reward``). ``info["wait_actions"]`` compte ces
+        décisions.
         """
         future_events = [
             t.available_at_min
@@ -456,6 +455,8 @@ class MineEnv(gym.Env):
             route_distance_km=0.0,
             resource_waits_min=resource_waits,
             operational_wait_min=wait_min,
+            # Production perdue pendant l'attente, seulement la part comprise dans le poste.
+            idle_min=self._in_shift(time_min, wait_min),
         )
 
     def _shovel_waits(self, at_time: float) -> list[float]:
@@ -474,6 +475,7 @@ class MineEnv(gym.Env):
         route_distance_km: float,
         resource_waits_min: list[float],
         operational_wait_min: float,
+        idle_min: float = 0.0,
     ) -> float:
         """Récompense d'une décision, calculée par ``simulation.reward`` (T25).
 
@@ -482,7 +484,7 @@ class MineEnv(gym.Env):
         """
         terms = reward_terms(
             delivered_tonnage_t, self.capacity_tonnes, route_distance_km,
-            resource_waits_min, operational_wait_min,
+            resource_waits_min, operational_wait_min, idle_min,
         )
         self.last_reward_terms = terms.weighted(self.reward_weights)
         for name, value in self.last_reward_terms.items():

@@ -1,14 +1,21 @@
-"""Tests de T25 : module de récompense séparé, termes exposés, valeurs inchangées."""
+"""Tests de T25 : module de récompense séparé, termes exposés, valeurs inchangées.
+
+Et de la correction du coût d'ATTENDRE (T19, v2) : terme de coût d'opportunité."""
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from memoire_master_rl_logistique.env.mine_env import MineEnv
-from memoire_master_rl_logistique.experiments.policies import heuristic_policies, make_env
+from memoire_master_rl_logistique.experiments.policies import (
+    HEURISTICS,
+    heuristic_policies,
+    make_env,
+)
 from memoire_master_rl_logistique.experiments.run_benchmark import run_single_episode
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
 from memoire_master_rl_logistique.simulation.reward import (
+    OPPORTUNITY_CYCLE_MIN,
     RewardWeights,
     compute_reward,
     reward_terms,
@@ -84,9 +91,11 @@ def test_decomposition_d_un_poste_affectation_fixe():
     scenario = SCENARIOS["nominal"]
     policy = heuristic_policies(scenario)["Fixed"]
     runs = pd.DataFrame([run_single_episode(make_env(scenario), policy, s) for s in scenario.seeds])
-    terms = runs[["reward_production", "reward_balance", "reward_distance", "reward_wait"]]
+    terms = runs[["reward_production", "reward_balance", "reward_distance", "reward_wait",
+                  "reward_opportunity"]]
 
     assert np.allclose(terms.sum(axis=1), runs["total_reward"])
+    assert (runs["reward_opportunity"] == 0).all()  # l'Affectation fixe n'attend jamais
     assert (runs["reward_production"] == runs["total_cycles"]).all()
     assert runs["reward_distance"].mean() == pytest.approx(-19.1, abs=0.05)
     assert runs["reward_wait"].mean() == pytest.approx(-2.71, abs=0.05)
@@ -103,3 +112,63 @@ def test_intervalle_entre_decisions(scenario, minutes):
                          for seed in s.seeds])
 
     assert s.episode_minutes / decisions == pytest.approx(minutes, abs=0.01)
+
+
+# --- Coût d'opportunité d'ATTENDRE (v2) ----------------------------------------------
+
+def test_cout_d_opportunite_d_une_attente():
+    """Attendre 0,2 min coûte 0,2/24 de cycle en plus (pondéré par w1) ; un cycle, rien.
+    Attendre la durée d'un cycle de référence coûte exactement un cycle."""
+    cycle = reward_terms(140.0, 140.0, 15.0, [2.0, 2.0, 2.0], 0.0)
+    wait = reward_terms(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.2, idle_min=0.2)
+    full = reward_terms(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.0, idle_min=OPPORTUNITY_CYCLE_MIN)
+
+    assert cycle.opportunity == 0.0
+    assert wait.opportunity == pytest.approx(-0.2 / 24)
+    assert full.opportunity == -1.0
+    assert compute_reward(wait, WEIGHTS) == pytest.approx(
+        v1_formula(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.2) - 0.2 / 24)
+    # Même unité que la production : son poids est w1, sans nouveau poids à régler.
+    weights = RewardWeights.from_tuple((2.0, 0.1, 0.05, 0.3))
+    assert wait.weighted(weights)["opportunity"] == pytest.approx(-2.0 * 0.2 / 24)
+
+
+def test_cycle_de_reference():
+    """La durée de référence est celle d'un cycle de l'Affectation fixe en nominal."""
+    scenario = SCENARIOS["nominal"]
+    env = make_env(scenario, log_cycles=True)
+    policy = heuristic_policies(scenario)["Fixed"]
+    durations = []
+    for seed in scenario.seeds[:10]:
+        run_single_episode(env, policy, seed)
+        durations += [c.end_min - c.start_min for c in env.cycle_log if c.kind == "cycle"]
+    assert np.mean(durations) == pytest.approx(OPPORTUNITY_CYCLE_MIN, abs=0.5)
+
+
+def test_attendre_dans_l_environnement():
+    """Une ATTENDRE dans MineEnv : récompense v1 moins la production perdue pendant
+    l'attente, comptée seulement dans le poste."""
+    env = MineEnv(seed=42)
+    env.reset(seed=42)
+    _, reward, _, _, info = env.step(env.action_space.n - 1)  # ATTENDRE
+    idle = env.trucks[0].voluntary_wait_min
+    assert info["wait_actions"] == 1 and idle >= 0.2
+    assert info["reward_terms"]["opportunity"] == pytest.approx(-idle / OPPORTUNITY_CYCLE_MIN)
+
+    # En fin de poste, seule la part de l'attente avant 480 min est perdue.
+    env.reset(seed=42)
+    env.current_time_min = env.episode_minutes - 0.1
+    for truck in env.trucks:
+        truck.available_at_min = env.current_time_min
+    _, _, _, _, info = env.step(env.action_space.n - 1)
+    assert info["reward_terms"]["opportunity"] == pytest.approx(-0.1 / OPPORTUNITY_CYCLE_MIN)
+
+
+@pytest.mark.parametrize("scenario", ["nominal", "high_load", "high_breakdown"])
+def test_heuristiques_inchangees(scenario):
+    """Les cinq heuristiques n'attendent jamais : leur récompense est celle de la v1."""
+    s = SCENARIOS[scenario]
+    policies = heuristic_policies(s)
+    for name in HEURISTICS:
+        kpis = run_single_episode(make_env(s), policies[name], s.seeds[0])
+        assert kpis["wait_actions"] == 0 and kpis["reward_opportunity"] == 0, name

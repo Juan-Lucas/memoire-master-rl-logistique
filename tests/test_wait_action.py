@@ -49,17 +49,22 @@ def test_compteurs_remis_a_zero_au_reset():
     assert info["decisions"] == info["wait_actions"] == 0
 
 
-def test_attendre_ne_paie_aucun_cout_de_distance():
-    """« Savoir expliquer » de T19 : une décision ATTENDRE est récompensée sans coût de
-    distance. Au début du poste (pelles libres, variance nulle), sa récompense se réduit à
-    −w4 × min(durée / 30, 1) : ici 5 min, soit −0,05, et seulement −0,002 pour 0,2 min."""
+def test_cout_d_attendre():
+    """« Savoir expliquer » de T19, et sa correction en v2. ATTENDRE ne paie toujours aucun
+    coût de distance. Dans la v1, au début du poste (pelles libres, variance nulle), sa
+    récompense se réduisait à −w4 × min(durée / 30, 1) : −0,05 pour 5 min, et seulement
+    −0,002 pour 0,2 min. La v2 ajoute la production perdue, −w1 × durée / 24 min :
+    −0,208 de plus pour 5 min, soit environ le cinquième d'un cycle."""
     env = MineEnv()
     env.reset(seed=42)
     _, reward, *_ = env.step(env.action_space.n - 1)
     wait_min = env.trucks[0].voluntary_wait_min
 
     assert wait_min == pytest.approx(5.0)
-    assert reward == pytest.approx(-env.w4 * min(wait_min / 30.0, 1.0))
+    v1 = -env.w4 * min(wait_min / 30.0, 1.0)
+    assert v1 == pytest.approx(-0.05)
+    assert reward == pytest.approx(v1 - env.w1 * wait_min / 24.0)
+    assert reward == pytest.approx(-0.2583, abs=1e-4)
     assert -env.w4 * 0.2 / 30.0 == pytest.approx(-0.002)
 
 
