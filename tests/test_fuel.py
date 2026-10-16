@@ -42,15 +42,19 @@ def test_parametres_modifiables():
 
 def test_calibration_sur_le_cat_785d():
     """Affectation fixe, nominal, 30 graines : ≈ 95 L/h par camion, dans la plage
-    « usage moyen » publiée pour le Cat 785D (81,4 à 108,5 L/h)."""
+    « usage moyen » publiée pour le Cat 785D (81,4 à 108,5 L/h).
+
+    Le facteur a été calibré sur le moteur de T13 (95,0 L/h). Avec le moteur à événements
+    (T15, T16 bis), la même flotte consomme 95,7 L/h : le facteur, propriété du camion
+    (L/km, L/h au ralenti), n'est pas recalé à chaque changement du simulateur."""
     scenario = SCENARIOS["nominal"]
     policy = heuristic_policies(scenario)["Fixed"]
     runs = pd.DataFrame([run_single_episode(make_env(scenario), policy, s) for s in scenario.seeds])
     l_per_h = (runs["total_fuel_l"] / runs["truck_count"] / (scenario.episode_minutes / 60)).mean()
 
-    assert l_per_h == pytest.approx(95.0, abs=0.05)
+    assert l_per_h == pytest.approx(95.72, abs=0.05)
     assert CAT_785D_MEDIUM_L_PER_H[0] <= l_per_h <= CAT_785D_MEDIUM_L_PER_H[1]
-    assert runs["cost_per_cycle"].mean() == pytest.approx(39.3, abs=0.1)  # L par cycle
+    assert runs["cost_per_cycle"].mean() == pytest.approx(37.9, abs=0.1)  # L par cycle
 
 
 # Le test « l'agent voit les mêmes observations qu'avant T14 » a été retiré en T18 :

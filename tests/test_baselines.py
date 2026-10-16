@@ -79,13 +79,14 @@ def test_fixe_sans_reaffectation_pendant_tout_le_poste(trucks):
         len(range(k, trucks, 3)) for k in range(3)]
 
 
-def test_fixe_jamais_de_trajet_entre_pelles():
-    """Après le premier cycle, un camion de l'Affectation fixe repart toujours de sa pelle :
-    aucun trajet vers la pelle (c'est pourquoi ses cycles sont courts)."""
+def test_fixe_toujours_le_meme_couple():
+    """Un camion de l'Affectation fixe fait tous ses cycles sur le même couple pelle–verse.
+    Depuis T16 bis, chaque cycle commence par le trajet à vide verse → pelle (le premier
+    depuis le parc) : plus aucun cycle sans trajet vers la pelle."""
     env = make_env(SCENARIOS["nominal"], log_cycles=True)
     run_single_episode(env, heuristic_policies(SCENARIOS["nominal"])["Fixed"], seed=42)
 
     for truck in {r.truck_id for r in env.cycle_log}:
         cycles = [r for r in env.cycle_log if r.truck_id == truck]
-        assert cycles[0].travel_to_shovel_min > 0  # premier cycle : depuis le parc
-        assert all(r.travel_to_shovel_min == 0 for r in cycles[1:])
+        assert len({(r.shovel_id, r.dump_id) for r in cycles}) == 1
+        assert all(r.travel_to_shovel_min > 0 for r in cycles)

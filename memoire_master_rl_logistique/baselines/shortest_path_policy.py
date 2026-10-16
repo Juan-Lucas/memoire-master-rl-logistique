@@ -1,8 +1,8 @@
 """Politique Shortest Path (Chemin le plus court).
 
 Heuristique de référence : choisir la paire (pelle, verse) qui minimise le
-coût du cycle complet, sur les trois segments
-  camion → pelle (à vide) + pelle → verse (chargé) + verse → pelle (à vide) :
+coût du cycle complet, sur les deux segments (T16 bis : le cycle finit à la verse)
+  camion → pelle (à vide) + pelle → verse (chargé) :
 
   C_cycle = α · T_cycle (min) + β · D_cycle (km) + γ · E_cycle (L)
   avec α = 0,5, β = 0,3, γ = 0,2 / FUEL_CALIBRATION_FACTOR. Les temps sont les temps
@@ -87,14 +87,17 @@ class ShortestPathPolicy:
         return total_time, total_dist, total_fuel
 
     def _cycle_cost(self, truck_loc: str, shovel_node: str, dump_node: str) -> float:
-        """Coût total du cycle camion → pelle → verse → pelle."""
+        """Coût total du cycle camion → pelle → verse.
+
+        Depuis T16 bis, le cycle se termine à la verse : le retour à vide appartient au
+        cycle suivant, dont il est le premier trajet.
+        """
         t1, d1, e1 = self._segment_cost(truck_loc, shovel_node, loaded=False)
         t2, d2, e2 = self._segment_cost(shovel_node, dump_node, loaded=True)
-        t3, d3, e3 = self._segment_cost(dump_node, shovel_node, loaded=False)
 
-        T = t1 + t2 + t3
-        D = d1 + d2 + d3
-        E = e1 + e2 + e3
+        T = t1 + t2
+        D = d1 + d2
+        E = e1 + e2
 
         return self.alpha * T + self.beta * D + self.gamma * E
 

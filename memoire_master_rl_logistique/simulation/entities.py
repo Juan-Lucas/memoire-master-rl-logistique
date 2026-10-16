@@ -78,6 +78,10 @@ class CycleRecord:
     ATTENDRE, seule ``voluntary_wait_min`` est alors non nulle). Les durées sont les
     durées simulées complètes, sans borne au poste : ``end_min − start_min`` est
     exactement la somme des composantes (``components_min``).
+
+    Depuis T16 bis, un cycle se termine à la verse : ``travel_to_shovel_min`` est le
+    trajet à vide depuis le lieu de la décision (parc ou verse du cycle précédent), et il
+    n'y a plus de retour vers la pelle (l'ancienne composante ``travel_back_min``).
     """
 
     kind: str
@@ -92,14 +96,13 @@ class CycleRecord:
     travel_to_dump_min: float = 0.0
     dump_wait_min: float = 0.0
     unload_min: float = 0.0
-    travel_back_min: float = 0.0
     repair_min: float = 0.0
     voluntary_wait_min: float = 0.0
     delivered_t: float = 0.0  # 0 si le cycle se termine après la fin du poste
 
     COMPONENTS = (
         "travel_to_shovel_min", "shovel_wait_min", "load_min", "travel_to_dump_min",
-        "dump_wait_min", "unload_min", "travel_back_min", "repair_min", "voluntary_wait_min",
+        "dump_wait_min", "unload_min", "repair_min", "voluntary_wait_min",
     )
 
     @property

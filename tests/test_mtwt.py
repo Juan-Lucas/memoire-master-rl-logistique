@@ -88,9 +88,14 @@ def test_sans_information():
     assert policy.predict(None, None) == encode_action(0, 0, 1)
 
 
-def test_moins_de_file_que_fifo_et_fixe():
-    """Sur 5 graines par régime, MTWT n'utilise jamais ATTENDRE et a la plus petite file par
-    camion des trois règles ; elle produit plus que FIFO, mais moins que l'Affectation fixe."""
+def test_produit_plus_que_fifo_et_fixe():
+    """Sur 5 graines par régime, MTWT n'utilise jamais ATTENDRE et produit plus que FIFO et
+    que l'Affectation fixe. Sa file n'est plus la plus petite des trois : en forte charge,
+    elle égale celle de FIFO (21,4 contre 21,5 min sur 30 graines).
+
+    Avant le moteur à événements (T15, T16 bis), MTWT produisait moins que l'Affectation
+    fixe : changer de pelle coûtait un détour verse → ancienne pelle → nouvelle pelle, que
+    l'Affectation fixe ne payait jamais."""
     rows = []
     for name in ("nominal", "high_load", "high_breakdown"):
         scenario = SCENARIOS[name]
@@ -104,7 +109,5 @@ def test_moins_de_file_que_fifo_et_fixe():
     for name in ("nominal", "high_load", "high_breakdown"):
         m = means.loc[name]
         assert m.loc["MTWT", "wait_actions"] == 0
-        assert m.loc["MTWT", "queue_wait_min_per_truck"] < min(
-            m.loc["FIFO", "queue_wait_min_per_truck"], m.loc["Fixed", "queue_wait_min_per_truck"])
-        assert m.loc["FIFO", "productivity_tph"] < m.loc["MTWT", "productivity_tph"] < (
-            m.loc["Fixed", "productivity_tph"])
+        assert m.loc["MTWT", "productivity_tph"] > max(m.loc["FIFO", "productivity_tph"],
+                                                       m.loc["Fixed", "productivity_tph"])

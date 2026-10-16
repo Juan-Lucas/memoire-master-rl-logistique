@@ -12,7 +12,7 @@ avec cinq termes sans unité, chacun normalisé pour être de l'ordre de 1 :
 - **attente** = − min(attente / 30 min, 1) : file à la pelle + file à la verse pour un
   cycle, durée de l'ATTENDRE sinon. Plafonnée à −1 à partir de 30 min ;
 - **opportunité** (v2) = − durée de l'ATTENDRE / ``OPPORTUNITY_CYCLE_MIN`` : la production
-  perdue par un camion immobile, en cycles. Une minute d'attente coûte environ 1/24 de
+  perdue par un camion immobile, en cycles. Une minute d'attente coûte environ 1/23 de
   cycle. 0 pour un cycle. Ce terme est pondéré par w1, le poids de la production, car il
   est dans la même unité : il n'ajoute aucun poids à régler.
 
@@ -26,7 +26,7 @@ premiers termes sont identiques à ceux de la v1 (test de non-régression).
 Pourquoi le terme d'opportunité (T19, décision du 16 octobre 2026) : dans la v1, ATTENDRE
 ne coûtait presque rien (w4 × 0,2 / 30 ≈ 0,002 pour 0,2 min, sans coût de distance), et
 PPO choisissait ATTENDRE dans 87 % de ses décisions en forte charge. Avec ce terme,
-attendre 0,2 min coûte 0,0083 de plus, et attendre la durée d'un cycle coûte un cycle,
+attendre 0,2 min coûte 0,0086 de plus, et attendre la durée d'un cycle coûte un cycle,
 ce qu'un exploitant perd réellement. Les politiques qui n'attendent jamais (les cinq
 heuristiques) ont exactement la même récompense qu'en v1.
 """
@@ -39,9 +39,10 @@ from dataclasses import asdict, dataclass
 VARIANCE_SCALE_MIN2 = 100.0
 DISTANCE_SCALE_KM = 5.0
 WAIT_SCALE_MIN = 30.0
-# Durée de référence d'un cycle, en minutes : celle de l'Affectation fixe en nominal
-# (24,1 min, T22). Vérifiée par tests/test_reward.py.
-OPPORTUNITY_CYCLE_MIN = 24.0
+# Durée de référence d'un cycle, en minutes : celle de l'Affectation fixe en nominal,
+# 23,2 min sur 30 graines avec le moteur à événements (T15, T16 bis ; 24,2 min avant).
+# Vérifiée par tests/test_reward.py.
+OPPORTUNITY_CYCLE_MIN = 23.2
 
 
 @dataclass(frozen=True)

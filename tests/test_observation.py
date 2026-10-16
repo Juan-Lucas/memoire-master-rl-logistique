@@ -1,5 +1,6 @@
 """Tests de T18 (observation de taille fixe, variables agrégées) et de T17 (aucune
-composante constante ni saturée)."""
+composante constante ni saturée). Depuis T16 bis, 17 composantes : la décision se prend
+au parc ou à une verse."""
 
 import numpy as np
 import pytest
@@ -53,17 +54,17 @@ def test_meme_taille_quel_que_soit_le_nombre_de_camions():
     """Test du plan : ``observation_space.shape`` identique pour 12 et 18 camions (et 15)."""
     shapes = {MineEnv(truck_count=n).observation_space.shape for n in (12, 15, 18, MAX_TRUCKS)}
 
-    assert shapes == {(observation_size(3, 2),)} == {(18,)}
+    assert shapes == {(observation_size(3, 2),)} == {(17,)}
 
 
 def test_disposition_couvre_tout_le_vecteur():
-    """Les blocs se suivent sans trou ni chevauchement : 4S + D + 4 composantes."""
+    """Les blocs se suivent sans trou ni chevauchement : 3S + 2D + 4 composantes."""
     blocks = sorted(LAYOUT.values(), key=lambda b: b.start)
 
     assert blocks[0].start == 0
     assert all(a.stop == b.start for a, b in zip(blocks, blocks[1:]))
-    assert blocks[-1].stop == 4 * 3 + 2 + 4
-    assert observation_size(5, 3) == 4 * 5 + 3 + 4
+    assert blocks[-1].stop == 3 * 3 + 2 * 2 + 4
+    assert observation_size(5, 3) == 3 * 5 + 2 * 3 + 4
 
 
 def test_contenu_des_blocs():
@@ -73,18 +74,35 @@ def test_contenu_des_blocs():
 
     assert (obs[LAYOUT["shovel_wait"]] == 0).all() and (obs[LAYOUT["dump_wait"]] == 0).all()
     assert (obs[LAYOUT["shovel_trucks"]] == 0).all()  # aucun camion encore rattaché à une pelle
-    assert list(obs[LAYOUT["position"]]) == [1.0, 0.0, 0.0, 0.0]  # au parc
+    assert list(obs[LAYOUT["position"]]) == [1.0, 0.0, 0.0]  # au parc (parc, verse 1, verse 2)
     assert obs[LAYOUT["tonnage"]][0] == obs[LAYOUT["fuel"]][0] == obs[LAYOUT["time"]][0] == 0
 
 
 def test_camions_par_pelle():
-    """Après un cycle, le camion est rattaché à sa pelle : 1/24 sur la pelle choisie."""
+    """Un camion envoyé vers la pelle 2 y est engagé (1/24) tant qu'il n'a pas fini de
+    charger ; la pelle prévue n'est plus libre pour le suivant (T15)."""
     env = MineEnv()
     env.reset(seed=42)
-    obs, *_ = env.step(2)  # pelle 2, verse 1
+    obs, _, _, _, info = env.step(2)  # pelle 2, verse 1 ; le camion 2 décide, au parc
 
     assert obs[LAYOUT["shovel_trucks"]][1] == pytest.approx(1 / MAX_TRUCKS)
     assert obs[LAYOUT["shovel_trucks"]].sum() == pytest.approx(1 / MAX_TRUCKS)
+    arrival = env.trucks[0].available_at_min
+    assert info["shovel_available_at"][1] == pytest.approx(arrival + 2.0)  # chargement moyen
+    assert obs[LAYOUT["shovel_wait"]][1] > 0 == obs[LAYOUT["shovel_wait"]][0]
+
+
+def test_position_a_la_verse():
+    """Après son premier cycle, un camion décide à la verse où il a déversé (T16 bis)."""
+    env = MineEnv(truck_count=1, breakdown_probability=0.0)
+    env.reset(seed=42)
+    obs, *_ = env.step(3)  # pelle 2, verse 2
+
+    assert env.truck_locations[0] == "dump_2"
+    assert list(obs[LAYOUT["position"]]) == [0.0, 0.0, 1.0]
+    g = env.graph
+    assert obs[LAYOUT["distance_to_shovel"]][0] == pytest.approx(
+        g.shortest_distance("dump_2", "shovel_1") / 10)
 
 
 def test_etat_tabulaire_inchange():

@@ -5,6 +5,9 @@ Historique :
 - T13 (flux aléatoires par processus) change l'ordre des tirages : tous les chiffres
   bougent, comme prévu par le plan. La référence est alors figée ici, à partir du code
   de T13, et ce fichier est suivi par Git.
+- T15 et T16 bis (moteur à événements, décision à la verse) : changement voulu de la
+  simulation, référence régénérée. Fixed et FIFO en nominal, graines 42 à 46 :
+  productivité moyenne 4 084,5 → 4 273,5 t/h (Fixed) et 3 293,5 → 4 263,0 t/h (FIFO).
 
 À relancer seulement quand un changement **voulu** de la simulation modifie les
 résultats, en notant pourquoi dans le journal :

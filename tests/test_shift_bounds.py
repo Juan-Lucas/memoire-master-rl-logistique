@@ -55,7 +55,8 @@ def test_temps_de_chaque_camion_borne_au_poste(scenario, policy):
 
 def test_la_borne_ne_change_pas_la_simulation():
     """Borner les compteurs ne change ni la production ni la récompense : mêmes valeurs
-    que la référence de non-régression (avant T13, les valeurs v1 : 4077,5 et 210,97)."""
+    que la référence de non-régression (avant T13, les valeurs v1 : 4077,5 et 210,97 ;
+    régénérée en T15 et T16 bis)."""
     kpis = run_single_episode(MineEnv(), fixed_fn(), seed=42)
     expected = reference("Fixed", 42)
 
@@ -64,10 +65,13 @@ def test_la_borne_ne_change_pas_la_simulation():
 
 
 def test_utilisation_affectation_fixe():
-    """Affectation fixe, 30 graines : camions ≈ 93,8 % en nominal (96,4 % en v1, compteurs
-    non bornés) ; pelles ≈ 34 % en nominal et ≈ 49 % en forte charge, toujours < 50 %.
+    """Affectation fixe, 30 graines : camions ≈ 96,1 % en nominal ; pelles ≈ 35 % en
+    nominal et ≈ 51 % en forte charge.
 
-    Valeurs depuis T13 (T11 : 94,06 / 33,92 / 49,00 avec l'ancien tirage aléatoire).
+    Valeurs depuis le moteur à événements (T15, T16 bis). Avant : 93,83 / 33,79 / 48,81
+    (T13), 94,06 / 33,92 / 49,00 (T11), 96,4 % pour les camions en v1 (compteurs non
+    bornés). Les camions sont plus utiles depuis que les verses ne les font plus attendre
+    dans le désordre des arrivées.
     """
     means = pd.DataFrame([
         dict(run_single_episode(make_env(scenario), fixed_fn(), seed), scenario=scenario)
@@ -75,7 +79,6 @@ def test_utilisation_affectation_fixe():
         for seed in SCENARIOS[scenario].seeds
     ]).groupby("scenario")[["utilization_pct", "shovel_utilization_pct"]].mean()
 
-    assert means.loc["nominal", "utilization_pct"] == pytest.approx(93.83, abs=0.01)
-    assert means.loc["nominal", "shovel_utilization_pct"] == pytest.approx(33.79, abs=0.01)
-    assert means.loc["high_load", "shovel_utilization_pct"] == pytest.approx(48.81, abs=0.01)
-    assert (means["shovel_utilization_pct"] < 50).all()
+    assert means.loc["nominal", "utilization_pct"] == pytest.approx(96.05, abs=0.01)
+    assert means.loc["nominal", "shovel_utilization_pct"] == pytest.approx(34.63, abs=0.01)
+    assert means.loc["high_load", "shovel_utilization_pct"] == pytest.approx(50.67, abs=0.01)

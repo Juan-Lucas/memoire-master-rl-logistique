@@ -39,14 +39,18 @@ def test_episode_behaviour():
 
 
 def test_heuristiques_sur_les_trois_regimes():
-    """Test du plan (heuristiques) : Pelle la plus proche et Plus court chemin font 100 % de
-    leurs cycles à la pelle 1 dans les trois régimes ; aucune heuristique n'utilise ATTENDRE."""
+    """Test du plan (heuristiques), avec le moteur de T15 et T16 bis : Pelle la plus proche
+    fait toujours 100 % de ses cycles à la pelle 1 dans les trois régimes. Ce n'est pas
+    le retour à la pelle (supprimé par T16 bis) : la pelle 1 est la plus proche du parc et
+    des deux verses, et la règle ignore les files. Plus court chemin, qui compte aussi le
+    trajet pelle → verse, va encore à la pelle 1 dans plus de 60 % des cycles (100 %
+    avant). Aucune heuristique n'utilise ATTENDRE."""
     summary = behaviour_summary(behaviour_runs(heuristic_policies, MAIN_SCENARIOS, seeds=[42, 43]))
     table = summary.set_index(["policy", "scenario"])
 
     for scenario in MAIN_SCENARIOS:
-        for policy in ("Nearest", "ShortestPath"):
-            assert table.loc[(policy, scenario), "share_S1_pct"] == 100
+        assert table.loc[("Nearest", scenario), "share_S1_pct"] == 100
+        assert 60 < table.loc[("ShortestPath", scenario), "share_S1_pct"] < 100
         for policy in ("FIFO", "Fixed"):
             assert max(table.loc[(policy, scenario), [f"share_{s}_pct" for s in SHOVELS]]) < 40
     assert (summary["wait_share_pct"] == 0).all()

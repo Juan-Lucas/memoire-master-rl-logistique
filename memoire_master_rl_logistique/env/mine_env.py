@@ -1,10 +1,17 @@
 """Environnement Gymnasium pour le dispatching camions–pelles.
 
-Une décision est prise chaque fois qu'un camion devient disponible. ``step``
-simule alors d'un seul tenant tout le cycle de ce camion (trajet, file,
-chargement, trajet chargé, file, déversement, retour à vide, panne éventuelle)
-en réservant les pelles et les verses (``available_at_min``), puis avance
-l'horloge jusqu'au prochain camion disponible.
+Une décision est prise chaque fois qu'un camion devient disponible : au parc au début
+du poste, puis à la verse où il vient de déverser (T16 bis). Le cycle décidé (trajet à
+vide, file et chargement à la pelle, trajet chargé, file et déversement à la verse, panne
+éventuelle) est simulé par **événements** (T15) : arrivée à la pelle, arrivée à la verse,
+traités dans l'ordre chronologique de toute la flotte. Pelles et verses servent donc les
+camions dans leur ordre d'arrivée (``available_at_min`` : heure où la ressource se libère).
+
+Avant T15 et T16 bis, ``step`` simulait tout le cycle d'un seul tenant au moment de la
+décision, et le camion revenait à sa pelle avant de décider. Deux biais en découlaient :
+un détour verse → ancienne pelle → nouvelle pelle pour toute politique qui change de
+pelle (≈ 3,5 km ; FIFO y perdait 28 % de productivité), et des verses servies dans
+l'ordre des décisions plutôt que des arrivées.
 
 Aléas (T13) : la graine d'un épisode engendre des flux aléatoires indépendants
 (``numpy.random.SeedSequence``), un par processus : trajets, chargements et
@@ -16,6 +23,7 @@ la même panne, de même durée, quelle que soit la politique.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from math import log
 from random import Random
 import time
@@ -51,17 +59,32 @@ from memoire_master_rl_logistique.simulation.reward import (
 
 from .observation_builder import build_observation, observation_size
 
+# État d'un camion (``truck_statuses``) : en attente de décision, en route vers la pelle
+# (prochain événement : l'arrivée à la pelle), ou engagé vers la verse (file, chargement,
+# trajet chargé ; prochain événement : l'arrivée à la verse).
 STATUS_IDLE = 0
 STATUS_TO_SHOVEL = 1
-STATUS_LOADING = 2
-STATUS_TO_DUMP = 3
-STATUS_UNLOADING = 4
-STATUS_RETURNING = 5
+STATUS_TO_DUMP = 2
 
 REWARD_TERM_NAMES = tuple(RewardTerms.__dataclass_fields__)
 
 # Flux aléatoires communs à tous les camions ; viennent ensuite les flux de pannes, un par camion.
 SHARED_STREAMS = ("travel", "service", "road")
+
+
+@dataclass
+class _CycleInProgress:
+    """Ce qu'il faut garder d'un cycle entre sa décision et sa fin (moteur à événements)."""
+
+    shovel_idx: int
+    dump_idx: int
+    start_min: float
+    route_km: float
+    shovel_waits_at_decision: list[float]
+    travel_to_shovel_min: float
+    shovel_wait_min: float = 0.0
+    load_min: float = 0.0
+    travel_to_dump_min: float = 0.0
 
 
 def _stream(seed_sequence: SeedSequence) -> Random:
@@ -154,7 +177,11 @@ class MineEnv(gym.Env):
         self.current_truck_idx: int = 0
         self.truck_locations: list[str] = []
         self.truck_statuses: list[int] = []
-        self._prev_tonnage: float = 0.0
+        # Pelle du dernier cycle de chaque camion et fin de son chargement (T16 bis) :
+        # un camion compte pour une pelle tant qu'il n'y a pas fini de charger.
+        self.truck_shovels: list[int | None] = []
+        self.truck_load_end_min: list[float] = []
+        self._cycles: list[_CycleInProgress | None] = []
         # Durée (ms) de la dernière construction d'observation : mesure seulement,
         # n'influence pas la simulation (voir run_single_episode).
         self.last_obs_time_ms: float = 0.0
@@ -225,7 +252,9 @@ class MineEnv(gym.Env):
         self.current_truck_idx = 0
         self.truck_locations = ["yard"] * self.truck_count
         self.truck_statuses = [STATUS_IDLE] * self.truck_count
-        self._prev_tonnage = 0.0
+        self.truck_shovels = [None] * self.truck_count
+        self.truck_load_end_min = [0.0] * self.truck_count
+        self._cycles = [None] * self.truck_count
         self.cycle_log = []
         self.decision_count = 0
         self.wait_action_count = 0
@@ -239,12 +268,28 @@ class MineEnv(gym.Env):
     def step(
         self, action: int,
     ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
-        """Exécute un cycle complet pour le camion courant.
+        """Applique la décision du camion courant, puis simule jusqu'à la décision suivante.
 
-        L'action encode une paire (pelle, dump) :
+        L'action encode une paire (pelle, verse) :
           shovel_idx = action // dump_count
           dump_idx   = action %  dump_count
         Si action == shovel_count * dump_count → ATTENDRE.
+
+        Un cycle va du lieu du camion (parc au début du poste, verse ensuite) à la pelle
+        choisie, puis à la verse choisie, et **se termine à la verse**, après le
+        déversement : c'est là que le camion reçoit sa décision suivante (T16 bis).
+
+        Moteur à événements (T15) : la décision lance seulement le trajet vers la pelle.
+        File et chargement sont simulés à l'**arrivée** du camion à la pelle, file et
+        déversement à son arrivée à la verse, dans l'ordre chronologique de toute la
+        flotte : pelles et verses servent les camions dans leur ordre d'arrivée.
+
+        Récompense (option 1a) : celle d'un cycle est connue à sa fin (files réelles,
+        tonnage livré) ; elle est versée au ``step`` pendant lequel le cycle se termine.
+        La récompense d'un ``step`` est donc la somme des récompenses des cycles terminés
+        depuis la décision précédente (de n'importe quel camion), plus celle d'ATTENDRE
+        si c'est l'action choisie. La somme sur un poste est la somme des récompenses de
+        tous ses cycles : à la fin du poste, les cycles en cours sont menés à terme.
         """
         assert self.graph is not None and self.rng_travel is not None
         action = int(action)
@@ -252,151 +297,191 @@ class MineEnv(gym.Env):
             msg = f"Invalid action {action}; expected 0..{self.num_actions - 1}."
             raise ValueError(msg)
 
-        truck = self.trucks[self.current_truck_idx]
-        start_time = max(truck.available_at_min, self.current_time_min)
-        time_min = start_time
-        location = self.truck_locations[self.current_truck_idx]
-        decision_time = self.current_time_min
-        n_pair = self.shovel_count * self.dump_count
+        idx = self.current_truck_idx
+        time_min = self.current_time_min
         self.decision_count += 1
+        self.last_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
 
-        if action == n_pair:
+        reward = 0.0
+        if action == self.shovel_count * self.dump_count:
             self.wait_action_count += 1
-            reward = self._apply_wait_action(truck, time_min)
-            self._advance_to_next_truck()
-            truncated = self.current_time_min >= self.episode_minutes
-            obs = self._get_obs()
-            info = self._get_info()
-            return obs, reward, False, truncated, info
+            reward += self._apply_wait_action(self.trucks[idx], time_min)
+        else:
+            self._start_cycle(idx, action, time_min)
 
+        reward += self._run_until_decision()
+        truncated = self.current_time_min >= self.episode_minutes
+        if truncated:
+            reward += self._finish_cycles()
+
+        obs = self._get_obs()
+        info = self._get_info()
+        return obs, reward, False, truncated, info
+
+    # --- Moteur à événements (T15, T16 bis) ------------------------------------------
+
+    def _start_cycle(self, idx: int, action: int, time_min: float) -> None:
+        """Décision d'un cycle : le camion part vers la pelle choisie."""
+        truck = self.trucks[idx]
         shovel, dump = self._decode_action(action)
-        pre_action_route_km = (
-            self._route_distance(location, shovel.node_id)
-            + self._route_distance(shovel.node_id, dump.node_id)
-            + self._route_distance(dump.node_id, shovel.node_id)
-        )
-        resource_waits = self._shovel_waits(decision_time)
+        location = self.truck_locations[idx]
 
-        # Trajet vers la pelle
-        self.truck_statuses[self.current_truck_idx] = STATUS_TO_SHOVEL
-        travel_to_shovel_min = 0.0
+        travel_min = 0.0
         if location != shovel.node_id:
-            t, f = self._travel_route(location, shovel.node_id, False)
-            travel_to_shovel_min = t
-            truck.total_active_min += self._in_shift(time_min, t)
-            time_min += t
-            truck.total_fuel_l += f
-            location = shovel.node_id
-            self.truck_locations[self.current_truck_idx] = location
+            travel_min, fuel_l = self._travel_route(location, shovel.node_id, False)
+            truck.total_active_min += self._in_shift(time_min, travel_min)
+            truck.total_fuel_l += fuel_l
 
-        # Attente pelle
-        self.truck_statuses[self.current_truck_idx] = STATUS_LOADING
-        wait_load_min = max(0.0, shovel.available_at_min - time_min)
-        if wait_load_min > 0:
-            truck.queue_wait_min += self._in_shift(time_min, wait_load_min)
-            time_min += wait_load_min
-            truck.total_fuel_l += estimate_idle_fuel_l(wait_load_min, self.fuel)
+        self._cycles[idx] = _CycleInProgress(
+            shovel_idx=self.shovels.index(shovel),
+            dump_idx=self.dumps.index(dump),
+            start_min=time_min,
+            # Distance du cycle : lieu → pelle (à vide) → verse (chargé). Le retour à vide
+            # est le premier trajet du cycle suivant (T16 bis).
+            route_km=(self._route_distance(location, shovel.node_id)
+                      + self._route_distance(shovel.node_id, dump.node_id)),
+            shovel_waits_at_decision=self._shovel_waits(time_min),
+            travel_to_shovel_min=travel_min,
+        )
+        self.truck_shovels[idx] = self._cycles[idx].shovel_idx
+        self.truck_load_end_min[idx] = float("inf")  # en route : pas encore chargé
+        self.truck_statuses[idx] = STATUS_TO_SHOVEL
+        truck.available_at_min = time_min + travel_min  # prochain événement : l'arrivée
 
-        # Chargement
-        load_min = self._sample_duration(
+    def _next_event(self, include_decisions: bool = True) -> int | None:
+        """Camion du prochain événement : le plus tôt ; à égalité, les arrivées passent
+        avant les décisions (l'état d'une décision tient compte de tout ce qui se passe à
+        cet instant), puis le plus petit indice."""
+        candidates = [
+            i for i in range(self.truck_count)
+            if include_decisions or self.truck_statuses[i] != STATUS_IDLE
+        ]
+        if not candidates:
+            return None
+        return min(candidates, key=lambda i: (self.trucks[i].available_at_min,
+                                              self.truck_statuses[i] == STATUS_IDLE, i))
+
+    def _run_until_decision(self) -> float:
+        """Traite les arrivées dans l'ordre chronologique jusqu'au prochain camion qui doit
+        décider ; renvoie la récompense des cycles terminés entre-temps."""
+        reward = 0.0
+        while True:
+            idx = self._next_event()
+            if self.truck_statuses[idx] == STATUS_IDLE:
+                self.current_time_min = self.trucks[idx].available_at_min
+                self.current_truck_idx = idx
+                return reward
+            reward += self._process_arrival(idx)
+
+    def _finish_cycles(self) -> float:
+        """Fin du poste : mène à terme les cycles en cours, sans nouvelle décision.
+
+        Comme dans la v1, tout cycle décidé est simulé en entier (carburant et récompense
+        compris) ; son tonnage ne compte que s'il est livré avant la fin du poste.
+        """
+        reward = 0.0
+        while (idx := self._next_event(include_decisions=False)) is not None:
+            reward += self._process_arrival(idx)
+        return reward
+
+    def _process_arrival(self, idx: int) -> float:
+        if self.truck_statuses[idx] == STATUS_TO_SHOVEL:
+            self._arrive_at_shovel(idx)
+            return 0.0
+        return self._arrive_at_dump(idx)
+
+    def _arrive_at_shovel(self, idx: int) -> None:
+        """Arrivée à la pelle : file (premier arrivé, premier servi), chargement, puis
+        départ chargé vers la verse."""
+        truck, cycle = self.trucks[idx], self._cycles[idx]
+        shovel, dump = self.shovels[cycle.shovel_idx], self.dumps[cycle.dump_idx]
+        time_min = truck.available_at_min
+        self.truck_locations[idx] = shovel.node_id
+
+        cycle.shovel_wait_min = max(0.0, shovel.available_at_min - time_min)
+        if cycle.shovel_wait_min > 0:
+            truck.queue_wait_min += self._in_shift(time_min, cycle.shovel_wait_min)
+            truck.total_fuel_l += estimate_idle_fuel_l(cycle.shovel_wait_min, self.fuel)
+            time_min += cycle.shovel_wait_min
+
+        cycle.load_min = self._sample_duration(
             shovel.load_time_mean_min, shovel.load_time_std_min,
         )
-        truck.total_active_min += self._in_shift(time_min, load_min)
-        shovel.busy_min += self._in_shift(time_min, load_min)
-        time_min += load_min
-        truck.total_fuel_l += estimate_idle_fuel_l(load_min, self.fuel)
+        truck.total_active_min += self._in_shift(time_min, cycle.load_min)
+        shovel.busy_min += self._in_shift(time_min, cycle.load_min)
+        truck.total_fuel_l += estimate_idle_fuel_l(cycle.load_min, self.fuel)
+        time_min += cycle.load_min
         shovel.available_at_min = time_min
+        self.truck_load_end_min[idx] = time_min
 
-        # Trajet chargé vers dump
-        self.truck_statuses[self.current_truck_idx] = STATUS_TO_DUMP
-        t, f = self._travel_route(shovel.node_id, dump.node_id, True)
-        travel_to_dump_min = t
-        truck.total_active_min += self._in_shift(time_min, t)
-        time_min += t
-        truck.total_fuel_l += f
-        location = dump.node_id
-        self.truck_locations[self.current_truck_idx] = location
+        cycle.travel_to_dump_min, fuel_l = self._travel_route(shovel.node_id, dump.node_id,
+                                                              True)
+        truck.total_active_min += self._in_shift(time_min, cycle.travel_to_dump_min)
+        truck.total_fuel_l += fuel_l
+        self.truck_statuses[idx] = STATUS_TO_DUMP
+        truck.available_at_min = time_min + cycle.travel_to_dump_min
 
-        # Attente dump
-        self.truck_statuses[self.current_truck_idx] = STATUS_UNLOADING
-        wait_dump_min = max(0.0, dump.available_at_min - time_min)
-        if wait_dump_min > 0:
-            truck.queue_wait_min += self._in_shift(time_min, wait_dump_min)
-            time_min += wait_dump_min
-            truck.total_fuel_l += estimate_idle_fuel_l(wait_dump_min, self.fuel)
+    def _arrive_at_dump(self, idx: int) -> float:
+        """Arrivée à la verse : file, déversement, panne éventuelle ; fin du cycle et
+        calcul de sa récompense. Le camion reste à la verse pour sa prochaine décision."""
+        truck, cycle = self.trucks[idx], self._cycles[idx]
+        dump = self.dumps[cycle.dump_idx]
+        time_min = truck.available_at_min
+        self.truck_locations[idx] = dump.node_id
 
-        # Déchargement
+        dump_wait_min = max(0.0, dump.available_at_min - time_min)
+        if dump_wait_min > 0:
+            truck.queue_wait_min += self._in_shift(time_min, dump_wait_min)
+            truck.total_fuel_l += estimate_idle_fuel_l(dump_wait_min, self.fuel)
+            time_min += dump_wait_min
+
         unload_min = self._sample_duration(
             dump.unload_time_mean_min, dump.unload_time_std_min,
         )
         truck.total_active_min += self._in_shift(time_min, unload_min)
-        time_min += unload_min
         truck.total_fuel_l += estimate_idle_fuel_l(unload_min, self.fuel)
+        time_min += unload_min
         dump.available_at_min = time_min
 
-        # Retour à vide vers la même pelle : c'est là que le camion attendra
-        # sa prochaine décision.
-        self.truck_statuses[self.current_truck_idx] = STATUS_RETURNING
-        t, f = self._travel_route(dump.node_id, shovel.node_id, False)
-        travel_back_min = t
-        truck.total_active_min += self._in_shift(time_min, t)
-        time_min += t
-        truck.total_fuel_l += f
-        location = shovel.node_id
-        self.truck_locations[self.current_truck_idx] = location
-
-        # Panne éventuelle du camion ; la réparation a son propre compteur (T10).
-        # Flux propre au camion, avec deux tirages à chaque cycle, même sans panne :
-        # le k-ième cycle de ce camion reçoit ainsi la même panne quelle que soit la politique.
-        breakdown_rng = self.rng_breakdowns[self.current_truck_idx]
-        breaks_down = breakdown_rng.random() < self.breakdown_probability
-        drawn_repair_min = breakdown_rng.uniform(10.0, 30.0)
-        repair_min = drawn_repair_min if breaks_down else 0.0
-        if breaks_down:
-            truck.repair_min += self._in_shift(time_min, repair_min)
-            time_min += repair_min
-            truck.total_fuel_l += estimate_idle_fuel_l(repair_min, self.fuel)
-
-        # Le tonnage n'est compté que si le cycle se termine avant la fin du poste.
+        # Tonnage livré au déversement : compté s'il se termine avant la fin du poste.
         delivered_tonnage = 0.0
         if time_min < self.episode_minutes:
             truck.cycles_completed += 1
             truck.total_tonnage_t += truck.capacity_tonnes
             delivered_tonnage = truck.capacity_tonnes
 
+        # Panne éventuelle du camion, à la verse ; la réparation a son propre compteur (T10).
+        # Flux propre au camion, avec deux tirages à chaque cycle, même sans panne :
+        # le k-ième cycle de ce camion reçoit ainsi la même panne quelle que soit la politique.
+        breakdown_rng = self.rng_breakdowns[idx]
+        breaks_down = breakdown_rng.random() < self.breakdown_probability
+        drawn_repair_min = breakdown_rng.uniform(10.0, 30.0)
+        repair_min = drawn_repair_min if breaks_down else 0.0
+        if breaks_down:
+            truck.repair_min += self._in_shift(time_min, repair_min)
+            truck.total_fuel_l += estimate_idle_fuel_l(repair_min, self.fuel)
+            time_min += repair_min
+
         truck.available_at_min = time_min
-        self.truck_locations[self.current_truck_idx] = location
-        self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
+        self.truck_statuses[idx] = STATUS_IDLE
+        self._cycles[idx] = None
 
         if self.log_cycles:
             self.cycle_log.append(CycleRecord(
-                kind="cycle", truck_id=truck.truck_id, start_min=start_time, end_min=time_min,
-                shovel_id=shovel.shovel_id, dump_id=dump.dump_id,
-                travel_to_shovel_min=travel_to_shovel_min, shovel_wait_min=wait_load_min,
-                load_min=load_min, travel_to_dump_min=travel_to_dump_min,
-                dump_wait_min=wait_dump_min, unload_min=unload_min,
-                travel_back_min=travel_back_min, repair_min=repair_min,
-                delivered_t=delivered_tonnage,
+                kind="cycle", truck_id=truck.truck_id, start_min=cycle.start_min,
+                end_min=time_min, shovel_id=self.shovels[cycle.shovel_idx].shovel_id,
+                dump_id=dump.dump_id, travel_to_shovel_min=cycle.travel_to_shovel_min,
+                shovel_wait_min=cycle.shovel_wait_min, load_min=cycle.load_min,
+                travel_to_dump_min=cycle.travel_to_dump_min, dump_wait_min=dump_wait_min,
+                unload_min=unload_min, repair_min=repair_min, delivered_t=delivered_tonnage,
             ))
 
-        # Récompense
-        reward = self._compute_reward(
+        return self._compute_reward(
             delivered_tonnage_t=delivered_tonnage,
-            route_distance_km=pre_action_route_km,
-            resource_waits_min=resource_waits,
-            operational_wait_min=wait_load_min + wait_dump_min,
+            route_distance_km=cycle.route_km,
+            resource_waits_min=cycle.shovel_waits_at_decision,
+            operational_wait_min=cycle.shovel_wait_min + dump_wait_min,
         )
-        self._prev_tonnage = sum(t.total_tonnage_t for t in self.trucks)
-
-        # Avancer le temps global et passer au camion suivant
-        self._advance_to_next_truck()
-
-        terminated = False
-        truncated = self.current_time_min >= self.episode_minutes
-
-        obs = self._get_obs()
-        info = self._get_info()
-        return obs, reward, terminated, truncated, info
 
     def _in_shift(self, start_min: float, duration_min: float) -> float:
         """Part d'une activité [start, start + durée] située avant la fin du poste (T11).
@@ -446,8 +531,6 @@ class MineEnv(gym.Env):
             ))
         truck.total_fuel_l += estimate_idle_fuel_l(wait_min, self.fuel)
         truck.available_at_min = time_min + wait_min
-        self.truck_statuses[self.current_truck_idx] = STATUS_IDLE
-        self._prev_tonnage = sum(t.total_tonnage_t for t in self.trucks)
 
         resource_waits = self._shovel_waits(self.current_time_min)
         return self._compute_reward(
@@ -459,15 +542,48 @@ class MineEnv(gym.Env):
             idle_min=self._in_shift(time_min, wait_min),
         )
 
-    def _shovel_waits(self, at_time: float) -> list[float]:
-        """Temps d'attente estimés à chaque pelle à l'instant donné."""
-        return [max(0.0, s.available_at_min - at_time) for s in self.shovels]
+    def _trucks_per_shovel(self) -> list[int]:
+        """Camions engagés vers chaque pelle : en route, en file ou en chargement (T16 bis).
 
-    def _advance_to_next_truck(self) -> None:
-        """Avance l'horloge globale vers le prochain camion disponible."""
-        availability = [t.available_at_min for t in self.trucks]
-        self.current_time_min = min(availability)
-        self.current_truck_idx = int(np.argmin(availability))
+        Avant T16 bis, l'observation comptait les camions situés à chaque pelle, puisque
+        tout camion y revenait en fin de cycle. Il finit maintenant son cycle à la verse :
+        on compte donc ceux qui n'ont pas encore fini de charger à la pelle de leur cycle.
+        """
+        counts = [0] * self.shovel_count
+        for shovel_idx, load_end in zip(self.truck_shovels, self.truck_load_end_min,
+                                        strict=True):
+            if shovel_idx is not None and load_end > self.current_time_min:
+                counts[shovel_idx] += 1
+        return counts
+
+    def forecast_free_at(self) -> tuple[list[float], list[float]]:
+        """Heure prévue de libération de chaque pelle et de chaque verse (T15).
+
+        ``available_at_min`` ne tient compte que des camions déjà arrivés. La prévision
+        ajoute les camions engagés, comme le ferait un système de dispatching qui connaît
+        les camions en route : chacun, dans l'ordre de son arrivée, occupe la ressource
+        pendant une durée **moyenne** de chargement (ou de déversement). Avant T15, la
+        réservation faite à la décision jouait ce rôle.
+
+        Sert à l'observation, à ``info`` (FIFO, MTWT) et au terme d'équilibre ; les
+        files réelles, elles, sont simulées à l'arrivée.
+        """
+        shovels = [s.available_at_min for s in self.shovels]
+        dumps = [d.available_at_min for d in self.dumps]
+        for status, free, resources, attr, mean in (
+            (STATUS_TO_SHOVEL, shovels, self.shovels, "shovel_idx", "load_time_mean_min"),
+            (STATUS_TO_DUMP, dumps, self.dumps, "dump_idx", "unload_time_mean_min"),
+        ):
+            heading = sorted((self.trucks[i].available_at_min, i)
+                             for i in range(self.truck_count) if self.truck_statuses[i] == status)
+            for arrival, i in heading:
+                k = getattr(self._cycles[i], attr)
+                free[k] = max(free[k], arrival) + getattr(resources[k], mean)
+        return shovels, dumps
+
+    def _shovel_waits(self, at_time: float) -> list[float]:
+        """Attente prévue à chaque pelle à l'instant donné (``forecast_free_at``)."""
+        return [max(0.0, free - at_time) for free in self.forecast_free_at()[0]]
 
     def _compute_reward(
         self,
@@ -479,15 +595,16 @@ class MineEnv(gym.Env):
     ) -> float:
         """Récompense d'une décision, calculée par ``simulation.reward`` (T25).
 
-        Mémorise aussi les contributions pondérées des quatre termes : celles de la
-        dernière décision et leur cumul sur le poste, exposés dans ``info``.
+        Mémorise aussi les contributions pondérées des termes, exposées dans ``info`` :
+        leur somme sur le ``step`` en cours (``reward_terms``, plusieurs cycles peuvent s'y
+        terminer) et leur cumul sur le poste (``episode_reward_terms``).
         """
         terms = reward_terms(
             delivered_tonnage_t, self.capacity_tonnes, route_distance_km,
             resource_waits_min, operational_wait_min, idle_min,
         )
-        self.last_reward_terms = terms.weighted(self.reward_weights)
-        for name, value in self.last_reward_terms.items():
+        for name, value in terms.weighted(self.reward_weights).items():
+            self.last_reward_terms[name] += value
             self.episode_reward_terms[name] += value
         return compute_reward(terms, self.reward_weights)
 
@@ -587,12 +704,15 @@ class MineEnv(gym.Env):
             episode_minutes=self.episode_minutes,
             truck_locations=self.truck_locations,
             current_truck_idx=self.current_truck_idx,
+            trucks_per_shovel=self._trucks_per_shovel(),
+            free_at=self.forecast_free_at(),
         )
         self.last_obs_time_ms = (time.perf_counter() - t0) * 1_000
         return obs
 
     def _get_info(self) -> dict[str, Any]:
         """Dictionnaire d'informations de debug."""
+        shovel_free, dump_free = self.forecast_free_at()
         return {
             "current_time_min": self.current_time_min,
             "current_truck_idx": self.current_truck_idx,
@@ -609,8 +729,9 @@ class MineEnv(gym.Env):
             # et cumul du poste. Leur somme égale la récompense (resp. la récompense cumulée).
             "reward_terms": dict(self.last_reward_terms),
             "episode_reward_terms": dict(self.episode_reward_terms),
-            "shovel_available_at": [s.available_at_min for s in self.shovels],
-            "dump_available_at": [d.available_at_min for d in self.dumps],
+            # Libération prévue, camions en route compris (T15) : lue par FIFO et MTWT.
+            "shovel_available_at": shovel_free,
+            "dump_available_at": dump_free,
         }
 
     def render(self) -> str | None:

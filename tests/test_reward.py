@@ -87,7 +87,11 @@ def test_somme_ponderee_egale_la_recompense_de_step():
 
 def test_decomposition_d_un_poste_affectation_fixe():
     """Test du plan, Affectation fixe en nominal sur 30 graines : terme de distance ≈ −19 ;
-    le terme de production égale le nombre de cycles, d'où « récompense ≈ nombre de cycles »."""
+    le terme de production égale le nombre de cycles, d'où « récompense ≈ nombre de cycles ».
+
+    Valeurs depuis le moteur à événements (T15, T16 bis) : distance −19,4 (−19,1 avant :
+    un cycle va maintenant du lieu de décision à la verse, sans retour), attente −1,38
+    (−2,71 avant : les verses ne servent plus les camions dans le désordre des arrivées)."""
     scenario = SCENARIOS["nominal"]
     policy = heuristic_policies(scenario)["Fixed"]
     runs = pd.DataFrame([run_single_episode(make_env(scenario), policy, s) for s in scenario.seeds])
@@ -97,15 +101,16 @@ def test_decomposition_d_un_poste_affectation_fixe():
     assert np.allclose(terms.sum(axis=1), runs["total_reward"])
     assert (runs["reward_opportunity"] == 0).all()  # l'Affectation fixe n'attend jamais
     assert (runs["reward_production"] == runs["total_cycles"]).all()
-    assert runs["reward_distance"].mean() == pytest.approx(-19.1, abs=0.05)
-    assert runs["reward_wait"].mean() == pytest.approx(-2.71, abs=0.05)
+    assert runs["reward_distance"].mean() == pytest.approx(-19.42, abs=0.05)
+    assert runs["reward_wait"].mean() == pytest.approx(-1.38, abs=0.05)
 
 
-@pytest.mark.parametrize(("scenario", "minutes"), [("nominal", 1.97), ("high_load", 1.36)])
+@pytest.mark.parametrize(("scenario", "minutes"), [("nominal", 1.89), ("high_load", 1.29)])
 def test_intervalle_entre_decisions(scenario, minutes):
     """« Savoir expliquer » : γ = 0,99 par décision, horizon 1/(1 − γ) = 100 décisions.
-    Avec l'Affectation fixe : ≈ 1,97 min par décision avec 12 camions (≈ 197 min d'horizon),
-    ≈ 1,36 min avec 18 camions (≈ 136 min)."""
+    Avec l'Affectation fixe : ≈ 1,89 min par décision avec 12 camions (≈ 189 min d'horizon),
+    ≈ 1,29 min avec 18 camions (≈ 129 min). Avant T15 et T16 bis : 1,97 et 1,36 min
+    (cycles plus longs, à cause des files dans le désordre des arrivées)."""
     s = SCENARIOS[scenario]
     policy = heuristic_policies(s)["Fixed"]
     decisions = np.mean([run_single_episode(make_env(s), policy, seed)["decisions"]
@@ -117,20 +122,21 @@ def test_intervalle_entre_decisions(scenario, minutes):
 # --- Coût d'opportunité d'ATTENDRE (v2) ----------------------------------------------
 
 def test_cout_d_opportunite_d_une_attente():
-    """Attendre 0,2 min coûte 0,2/24 de cycle en plus (pondéré par w1) ; un cycle, rien.
+    """Attendre 0,2 min coûte 0,2/23,2 de cycle en plus (pondéré par w1) ; un cycle, rien.
     Attendre la durée d'un cycle de référence coûte exactement un cycle."""
     cycle = reward_terms(140.0, 140.0, 15.0, [2.0, 2.0, 2.0], 0.0)
     wait = reward_terms(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.2, idle_min=0.2)
     full = reward_terms(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.0, idle_min=OPPORTUNITY_CYCLE_MIN)
 
     assert cycle.opportunity == 0.0
-    assert wait.opportunity == pytest.approx(-0.2 / 24)
+    assert wait.opportunity == pytest.approx(-0.2 / OPPORTUNITY_CYCLE_MIN)
     assert full.opportunity == -1.0
     assert compute_reward(wait, WEIGHTS) == pytest.approx(
-        v1_formula(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.2) - 0.2 / 24)
+        v1_formula(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.2) - 0.2 / OPPORTUNITY_CYCLE_MIN)
     # Même unité que la production : son poids est w1, sans nouveau poids à régler.
     weights = RewardWeights.from_tuple((2.0, 0.1, 0.05, 0.3))
-    assert wait.weighted(weights)["opportunity"] == pytest.approx(-2.0 * 0.2 / 24)
+    assert wait.weighted(weights)["opportunity"] == pytest.approx(
+        -2.0 * 0.2 / OPPORTUNITY_CYCLE_MIN)
 
 
 def test_cycle_de_reference():
@@ -142,7 +148,7 @@ def test_cycle_de_reference():
     for seed in scenario.seeds[:10]:
         run_single_episode(env, policy, seed)
         durations += [c.end_min - c.start_min for c in env.cycle_log if c.kind == "cycle"]
-    assert np.mean(durations) == pytest.approx(OPPORTUNITY_CYCLE_MIN, abs=0.5)
+    assert np.mean(durations) == pytest.approx(OPPORTUNITY_CYCLE_MIN, abs=0.3)
 
 
 def test_attendre_dans_l_environnement():
