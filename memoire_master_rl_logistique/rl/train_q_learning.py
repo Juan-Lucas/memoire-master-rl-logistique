@@ -80,6 +80,7 @@ def train_q_learning(
     rewards_per_episode: list[float] = []
     epsilons_per_episode: list[float] = []
     td_errors_per_episode: list[float] = []
+    tonnages_per_episode: list[float] = []  # productivité d'entraînement (T30)
 
     print(f"Début de l'entraînement Q-Learning ({n_episodes} épisodes)...")
 
@@ -121,6 +122,7 @@ def train_q_learning(
         rewards_per_episode.append(total_reward)
         epsilons_per_episode.append(epsilon)
         td_errors_per_episode.append(float(np.mean(td_errors)))
+        tonnages_per_episode.append(float(_info["total_tonnage_t"]))
         epsilon = max(epsilon_min, epsilon - epsilon_decay)
 
         if (ep + 1) % 1000 == 0 or ep == 0:
@@ -136,6 +138,7 @@ def train_q_learning(
         out_path, "q_table.pkl", "Q-table",
         q_table, n_bins, shovel_count, dump_count,
         rewards_per_episode, epsilons_per_episode, td_errors_per_episode,
+        tonnages_per_episode,
     )
     write_metadata(out_path, build_metadata(
         "Q-Learning",

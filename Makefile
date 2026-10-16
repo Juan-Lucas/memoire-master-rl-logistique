@@ -62,54 +62,20 @@ create_environment:
 # PROJECT RULES                                                                 #
 #################################################################################
 
-# Réentraînement diagnostics RL (§6.3.2) -- scénarios high_load / high_breakdown
-# 1 thread/job (OMP_NUM_THREADS=1 MKL_NUM_THREADS=1) pour que les 8 jobs
-# tiennent sur 8 coeurs sans sur-sollicitation. PYTHONIOENCODING=utf-8 est
-# necessaire pour Q-Learning/SARSA (caractere "epsilon" dans les print()).
+# Figures d'entraînement (T30) : courbes moyennes ± IC 95 % sur les graines d'entraînement,
+# lues dans les journaux des modèles évalués par la campagne (plus de réentraînement séparé).
+# Les scripts refusent d'écraser une figure existante (jamais reports/figures, article v1).
+RESULTS ?= data/results_v2
+FIGURES ?= reports/figures_v2
 
-.PHONY: train-ql-highload
-train-ql-highload:
-	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics q_learning high_load > data/results/qlearning_diag_highload.log 2>&1
-
-.PHONY: train-sarsa-highload
-train-sarsa-highload:
-	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics sarsa high_load > data/results/sarsa_diag_highload.log 2>&1
-
-.PHONY: train-ql-highbreakdown
-train-ql-highbreakdown:
-	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics q_learning high_breakdown > data/results/qlearning_diag_highbreakdown.log 2>&1
-
-.PHONY: train-sarsa-highbreakdown
-train-sarsa-highbreakdown:
-	set "PYTHONIOENCODING=utf-8" && set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_diagnostics sarsa high_breakdown > data/results/sarsa_diag_highbreakdown.log 2>&1
-
-.PHONY: train-dqn-highload
-train-dqn-highload:
-	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve dqn high_load > data/results/dqn_losscurve_highload.log 2>&1
-
-.PHONY: train-ppo-highload
-train-ppo-highload:
-	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve ppo high_load > data/results/ppo_losscurve_highload.log 2>&1
-
-.PHONY: train-dqn-highbreakdown
-train-dqn-highbreakdown:
-	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve dqn high_breakdown > data/results/dqn_losscurve_highbreakdown.log 2>&1
-
-.PHONY: train-ppo-highbreakdown
-train-ppo-highbreakdown:
-	set "OMP_NUM_THREADS=1" && set "MKL_NUM_THREADS=1" && $(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.rl.diagnostics.train_losscurve ppo high_breakdown > data/results/ppo_losscurve_highbreakdown.log 2>&1
-
-## Lancer les 8 reentrainements diagnostics RL en parallele (high_load + high_breakdown)
-.PHONY: train-diagnostics-all
-train-diagnostics-all:
-	$(MAKE) -j8 train-ql-highload train-sarsa-highload train-ql-highbreakdown train-sarsa-highbreakdown train-dqn-highload train-ppo-highload train-dqn-highbreakdown train-ppo-highbreakdown
-
-## Generer les figures TD-error / Policy-Value Loss / Exploration (3 scenarios)
-.PHONY: plot-diagnostics
-plot-diagnostics:
-	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.td_error
-	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.policy_value_loss
-	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.exploration_exploitation
+## Courbes de convergence, pertes, erreur TD et exploration des modèles de la campagne
+.PHONY: training-figures
+training-figures:
+	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.convergence_qlearning_sarsa $(RESULTS) $(FIGURES)
+	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.convergence_deeprl $(RESULTS) $(FIGURES)
+	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.td_error $(RESULTS) $(FIGURES)
+	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.policy_value_loss $(RESULTS) $(FIGURES)
+	$(PYTHON_INTERPRETER) -m memoire_master_rl_logistique.plots.exploration_exploitation $(RESULTS) $(FIGURES)
 
 
 #################################################################################

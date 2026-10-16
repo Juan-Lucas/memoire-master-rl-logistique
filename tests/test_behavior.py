@@ -85,8 +85,9 @@ def test_modeles_v1_attendre_en_forte_charge():
     Historique : valable jusqu'à T18 (observation de taille fixe), qui rend les modèles
     DQN et PPO v1 illisibles. Le résultat est consigné dans le journal (T12 bis).
 
-    Lent : PPO prend environ 4 800 décisions par épisode. Lancer avec
-    ``RUN_SLOW=1 pytest tests/test_behavior.py``.
+    Toujours ignoré, même avec ``RUN_SLOW=1`` : gardé comme trace du test du plan. Pour le
+    rejouer, revenir au commit d1cec48. Le même contrôle sur les modèles de la campagne v2
+    est prévu en T31.
     """
     def deep_agents(scenario):
         return agent_policies(scenario, V1_MODELS, allow_legacy=True, algorithms=("DQN", "PPO"))

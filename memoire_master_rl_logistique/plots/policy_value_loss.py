@@ -1,81 +1,78 @@
-"""Courbes de perte (Policy Loss / Value Loss) pour DQN et PPO -- les 3
-scenarios (nominal, high_load, high_breakdown).
+"""Courbes de perte de DQN (réseau Q) et de PPO (politique, valeur), moyenne ± IC 95 % sur
+les graines d'entraînement (T30).
 
-Source :
-- data/results/dqn_{scenario}_losscurve/sb3_logs/progress.csv
-- data/results/ppo_{scenario}_losscurve/sb3_logs/progress.csv
+Source : ``sb3_logs/progress.csv`` des modèles **évalués** (N7 : plus de réentraînement
+séparé ``*_losscurve``).
+Sortie : ``<out_dir>/loss_dqn_<régime>.png`` et ``<out_dir>/loss_ppo_<régime>.png``
 
-Sortie :
-- reports/figures/loss_dqn_{nominal,highload,highbreakdown}.png
-- reports/figures/loss_ppo_{nominal,highload,highbreakdown}.png
+Lancement :
+    python -m memoire_master_rl_logistique.plots.policy_value_loss DOSSIER_MODELES DOSSIER_FIGURES
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import pandas as pd
 
-from memoire_master_rl_logistique.experiments.scenarios import SCENARIO_DISPLAYS
-from memoire_master_rl_logistique.plots.common import save_figure
+from memoire_master_rl_logistique.analysis.learning_curves import learning_curve
+from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS
+from memoire_master_rl_logistique.plots.common import (
+    AGENT_COLORS,
+    SCENARIO_LABELS,
+    plot_band,
+    prepare_outputs,
+    save_figure,
+    scenario_suffix,
+    training_figures_parser,
+)
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
-WINDOW = 30
 
-SCENARIOS = [(s.key, s.suffix, f"scénario {s.key}") for s in SCENARIO_DISPLAYS]
-
-
-def plot_dqn(out_dir: Path, scenario_dir: str, suffix: str, scenario_label: str) -> None:
-    df = pd.read_csv(f"data/results/dqn_{scenario_dir}_losscurve/sb3_logs/progress.csv").dropna(subset=["train/loss"])
-    steps = df["time/total_timesteps"] / 1e6
-    loss = df["train/loss"]
-    loss_smooth = loss.rolling(WINDOW, min_periods=1).mean()
-
+def plot_dqn(results_dir, scenario: str, train_seeds: Sequence[int], out_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(9, 4.5))
-    ax.plot(steps, loss, color="#90CAF9", linewidth=0.6, label="Perte (brute)")
-    ax.plot(steps, loss_smooth, color="#2196F3", linewidth=2, label=f"Moyenne mobile ({WINDOW} points)")
-    ax.set_xlabel("Steps d'entraînement (millions)")
+    curve = learning_curve(results_dir, "DQN", scenario, "loss", train_seeds)
+    plot_band(ax, curve, AGENT_COLORS["DQN"], "DQN", scale=1e6)
+    ax.set_xlabel("Pas d'entraînement (millions)")
     ax.set_ylabel("Perte du réseau Q (train/loss)")
-    ax.set_title(f"DQN — Perte du réseau Q au cours de l'entraînement ({scenario_label})")
+    ax.set_title(f"DQN — perte du réseau Q ({SCENARIO_LABELS.get(scenario, scenario)})")
     ax.legend()
     ax.grid(True, alpha=0.3)
-    plt.tight_layout()
-
-    out_path = out_dir / f"loss_dqn_{suffix}.png"
+    fig.tight_layout()
     save_figure(fig, out_path)
 
 
-def plot_ppo(out_dir: Path, scenario_dir: str, suffix: str, scenario_label: str) -> None:
-    df = pd.read_csv(f"data/results/ppo_{scenario_dir}_losscurve/sb3_logs/progress.csv").dropna(subset=["train/policy_gradient_loss"])
-    steps = df["time/total_timesteps"] / 1e6
-    policy_loss = df["train/policy_gradient_loss"].rolling(WINDOW, min_periods=1).mean()
-    value_loss = df["train/value_loss"].rolling(WINDOW, min_periods=1).mean()
-
+def plot_ppo(results_dir, scenario: str, train_seeds: Sequence[int], out_path: Path) -> None:
     fig, axes = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
-
-    axes[0].plot(steps, policy_loss, color="#FF5722", linewidth=1.5)
-    axes[0].set_ylabel("Policy Loss\n(moy. mobile)")
-    axes[0].set_title(f"PPO — Policy Loss et Value Loss au cours de l'entraînement ({scenario_label})")
-    axes[0].grid(True, alpha=0.3)
-
-    axes[1].plot(steps, value_loss, color="#FF9800", linewidth=1.5)
+    for ax, curve_name, ylabel in [(axes[0], "policy_loss", "Perte de la politique"),
+                                   (axes[1], "value_loss", "Perte de la valeur")]:
+        curve = learning_curve(results_dir, "PPO", scenario, curve_name, train_seeds)
+        plot_band(ax, curve, AGENT_COLORS["PPO"], "PPO", scale=1e6)
+        ax.set_ylabel(ylabel)
+        ax.grid(True, alpha=0.3, which="both")
     axes[1].set_yscale("log")
-    axes[1].set_ylabel("Value Loss\n(moy. mobile, échelle log)")
-    axes[1].set_xlabel("Steps d'entraînement (millions)")
-    axes[1].grid(True, alpha=0.3, which="both")
-
-    plt.tight_layout()
-
-    out_path = out_dir / f"loss_ppo_{suffix}.png"
+    axes[1].set_ylabel("Perte de la valeur (échelle log)")
+    axes[1].set_xlabel("Pas d'entraînement (millions)")
+    axes[0].legend()
+    axes[0].set_title("PPO — pertes de la politique et de la valeur "
+                      f"({SCENARIO_LABELS.get(scenario, scenario)})")
+    fig.tight_layout()
     save_figure(fig, out_path)
 
 
-def main() -> None:
-    out_dir = Path("reports/figures")
-    for scenario_dir, suffix, scenario_label in SCENARIOS:
-        plot_dqn(out_dir, scenario_dir, suffix, scenario_label)
-        plot_ppo(out_dir, scenario_dir, suffix, scenario_label)
+def main(
+    results_dir: str | Path, out_dir: str | Path, overwrite: bool = False,
+    scenarios: Sequence[str] = MAIN_SCENARIOS, train_seeds: Sequence[int] = TRAIN_SEEDS,
+) -> list[Path]:
+    names = [f"loss_{algo}_{scenario_suffix(s)}.png" for s in scenarios for algo in ("dqn", "ppo")]
+    paths = prepare_outputs(out_dir, names, overwrite)
+    for i, scenario in enumerate(scenarios):
+        plot_dqn(results_dir, scenario, train_seeds, paths[2 * i])
+        plot_ppo(results_dir, scenario, train_seeds, paths[2 * i + 1])
+    return paths
 
 
 if __name__ == "__main__":
-    main()
+    args = training_figures_parser(__doc__.splitlines()[0]).parse_args()
+    main(args.results_dir, args.out_dir, args.overwrite, args.scenarios, args.train_seeds)

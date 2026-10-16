@@ -104,8 +104,10 @@ def test_q_tables_v1_transferees_en_fortes_pannes():
     fortes pannes sans réentraînement. (PPO et DQN v1 ne peuvent plus être rejoués
     depuis T18 ; leur vérification historique est dans le journal de T27.)"""
     scenario = dataclasses.replace(SCENARIOS["high_breakdown"], seeds=[42, 43])
-    rows = rb.run_benchmark(scenario, V1_MODELS, train_ppo_flag=False,
-                            train_seeds=(None,), allow_legacy_models=True)
+    # Les Q-tables v1 n'ont pas de metadata.json : le chargeur doit avertir (T8).
+    with pytest.warns(UserWarning, match="allow_legacy"):
+        rows = rb.run_benchmark(scenario, V1_MODELS, train_ppo_flag=False,
+                                train_seeds=(None,), allow_legacy_models=True)
     agents = pd.DataFrame([r for r in rows if r["policy"] not in HEURISTICS])
     assert set(agents["mode"]) == {SPECIALISED, TRANSFERRED}
     assert (agents["productivity_tph"] > 0).all()

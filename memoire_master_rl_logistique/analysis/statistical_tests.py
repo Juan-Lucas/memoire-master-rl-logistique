@@ -86,6 +86,34 @@ def load_results(
 
     return data_cleaned.reset_index(drop=True)
 
+def average_over_training_seeds(data: pd.DataFrame) -> pd.DataFrame:
+    """Une ligne par (régime, politique, mode, graine d'évaluation) : pour un agent, la
+    moyenne de ses modèles (graines d'entraînement) sur cet épisode (T30).
+
+    Les tests appariés comparent alors la performance **attendue** de chaque algorithme sur
+    un même épisode ; l'appariement par graine d'évaluation est conservé. La variabilité
+    entre graines d'entraînement est résumée à part (``analysis.aggregate_seeds``).
+    Chaque agent doit avoir toutes ses graines d'entraînement sur chaque graine d'évaluation.
+    Sans colonne ``train_seed`` (CSV d'avant T26), les données sont rendues telles quelles.
+    """
+    if "train_seed" not in data.columns:
+        return data
+    keys = ["scenario", "policy", *[c for c in ("mode",) if c in data.columns], "seed"]
+    runs = data.groupby(keys, dropna=False)["train_seed"].nunique()
+    expected = runs.groupby(level=keys[:-1], dropna=False).transform("max")
+    incomplete = runs[runs != expected]
+    if not incomplete.empty:
+        raise ValueError(f"Graines d'entraînement manquantes pour : {incomplete.index.tolist()}")
+
+    numeric = [c for c in data.select_dtypes("number").columns
+               if c not in (*keys, "train_seed")]
+    others = [c for c in data.columns if c not in (*keys, "train_seed", *numeric)]
+    grouped = data.groupby(keys, dropna=False, sort=False)
+    averaged = grouped[numeric].mean().join(grouped[others].first())
+    averaged["n_train_seeds"] = grouped["train_seed"].nunique()
+    return averaged.reset_index()
+
+
 def paired_table(data: pd.DataFrame, scenario: str, metric: str) -> pd.DataFrame:
     """ Tableau apparié graine × politique pour un régime et une métrique.
     - Graines en lignes, politiques en colonnes, valeurs de metric, pour le régime demandé
@@ -99,8 +127,8 @@ def paired_table(data: pd.DataFrame, scenario: str, metric: str) -> pd.DataFrame
         several = n_models[n_models > 1].index.tolist()
         if several:
             raise ValueError(
-                f"Plusieurs graines d'entraînement pour {several} : un tableau apparié par graine "
-                "d'évaluation ne sait pas les combiner (agrégation prévue en T30)."
+                f"Plusieurs graines d'entraînement pour {several} : moyenner d'abord par graine "
+                "d'évaluation (average_over_training_seeds, T30)."
             )
 
     data_pivot = pd.pivot(data, index="seed", columns="policy", values=metric)
@@ -200,7 +228,8 @@ def cohens_d(x: np.ndarray, y: np.ndarray) -> float:
 def main(csv_path: str | Path) -> None:
     """Analyse appariée complète : Friedman, Wilcoxon + Holm, IC bootstrap, d, puis interaction."""
 
-    df = load_results(csv_path)
+    # T30 : avec plusieurs graines d'entraînement, chaque agent est moyenné sur ses modèles.
+    df = average_over_training_seeds(load_results(csv_path))
 
     for metric in METRICS:
         print(f"\n===== {metric} =====")

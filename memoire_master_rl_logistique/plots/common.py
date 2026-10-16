@@ -8,12 +8,15 @@
 
 from __future__ import annotations
 
+import argparse
 from collections.abc import Iterable
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 # Ordre de lecture : heuristiques, puis RL tabulaire, puis RL profond.
 POLICY_ORDER = [
@@ -88,3 +91,51 @@ def save_figure(fig: plt.Figure, out_path: Path, dpi: int = 150) -> None:
     fig.savefig(out_path, dpi=dpi)
     plt.close(fig)
     print(f"Figure sauvegardée : {out_path}")
+
+
+# --- Courbes d'entraînement multi-graines (T30) ---------------------------------------
+
+# Couleurs des agents, celles des figures v1.
+AGENT_COLORS = {
+    "Q-Learning": "#4CAF50",
+    "SARSA": "#9C27B0",
+    "DQN": "#2196F3",
+    "PPO": "#FF5722",
+}
+
+# Suffixe des noms de fichiers de figures par régime (ex. learning_curves_highload.png).
+SCENARIO_SUFFIXES = {"nominal": "nominal", "high_load": "highload",
+                     "high_breakdown": "highbreakdown"}
+
+
+def scenario_suffix(scenario: str) -> str:
+    return SCENARIO_SUFFIXES.get(scenario, scenario)
+
+
+def plot_band(ax: plt.Axes, curve: pd.DataFrame, color: str, label: str,
+              x: str = "x", scale: float = 1.0, linestyle: str = "-") -> None:
+    """Moyenne des graines d'entraînement (trait) et son IC à 95 % (bande).
+
+    ``curve`` vient de ``analysis.learning_curves.learning_curve``. Les intervalles sans
+    aucune valeur (pas d'épisode terminé, pas de ligne de journal) sont sautés : le trait
+    relie les points voisins au lieu de s'interrompre.
+    """
+    curve = curve[curve["mean"].notna()]
+    xs = curve[x] / scale
+    n_runs = int(curve["n_runs"].max())
+    ax.plot(xs, curve["mean"], color=color, linewidth=1.8, linestyle=linestyle,
+            label=f"{label} (moyenne de {n_runs} graines, IC 95 %)")
+    band = curve["ci_low"].notna()
+    ax.fill_between(xs[band], curve["ci_low"][band], curve["ci_high"][band], color=color,
+                    alpha=0.2, linewidth=0)
+
+
+def training_figures_parser(description: str) -> argparse.ArgumentParser:
+    """Arguments communs des figures d'entraînement : modèles, sortie, régimes, graines."""
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("results_dir", type=Path, help="dossier des modèles (campagne)")
+    parser.add_argument("out_dir", type=Path, help="dossier de sortie (créé si besoin)")
+    parser.add_argument("--overwrite", action="store_true", help="autoriser l'écrasement")
+    parser.add_argument("--scenarios", nargs="+", default=list(SCENARIO_ORDER))
+    parser.add_argument("--train-seeds", nargs="+", type=int, default=list(TRAIN_SEEDS))
+    return parser

@@ -121,8 +121,13 @@ def save_tabular_artifacts(
     rewards_per_episode: list[float],
     epsilons_per_episode: list[float],
     td_errors_per_episode: list[float],
+    tonnages_per_episode: list[float],
 ) -> None:
-    """Sauvegarde la Q-table, les récompenses et les diagnostics d'entraînement."""
+    """Sauvegarde la Q-table, les récompenses et les diagnostics d'entraînement.
+
+    ``training_diagnostics.csv`` est la source des courbes d'apprentissage et de diagnostic
+    (T30) : elles viennent donc du modèle évalué, pas d'un réentraînement séparé.
+    """
     model_path = out_path / model_filename
     with model_path.open("wb") as f:
         pickle.dump({
@@ -142,7 +147,9 @@ def save_tabular_artifacts(
 
     diagnostics_path = out_path / "training_diagnostics.csv"
     with diagnostics_path.open("w", encoding="utf-8") as f:
-        f.write("episode,total_reward,epsilon,mean_abs_td_error\n")
-        for i, (r, eps, td) in enumerate(zip(rewards_per_episode, epsilons_per_episode, td_errors_per_episode)):
-            f.write(f"{i},{r:.4f},{eps:.6f},{td:.6f}\n")
+        f.write("episode,total_reward,epsilon,mean_abs_td_error,tonnage_t\n")
+        rows = zip(rewards_per_episode, epsilons_per_episode, td_errors_per_episode,
+                   tonnages_per_episode, strict=True)
+        for i, (r, eps, td, ton) in enumerate(rows):
+            f.write(f"{i},{r:.4f},{eps:.6f},{td:.6f},{ton:.2f}\n")
     print(f"Diagnostics d'entraînement : {diagnostics_path}")

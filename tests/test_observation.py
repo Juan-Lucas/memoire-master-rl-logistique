@@ -99,7 +99,8 @@ def test_etat_tabulaire_inchange():
 def test_ppo_nominal_s_execute_en_forte_charge(tmp_path):
     """Test du plan : un PPO entraîné brièvement avec 12 camions s'exécute sans erreur dans
     un environnement à 18 camions (régime d'entraînement déclaré : nominal)."""
-    train_ppo(total_timesteps=1024, output_dir=str(tmp_path), log_freq=10_000)
+    train_ppo(total_timesteps=1024, output_dir=str(tmp_path), log_freq=10_000,
+              progress_bar=False)
     high_load = SCENARIOS["high_load"]
     env = make_env(high_load)
     model = load_model(tmp_path, "PPO", env, trained_on=EnvConfig.from_scenario(SCENARIOS["nominal"]))

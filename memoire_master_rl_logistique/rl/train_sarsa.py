@@ -80,6 +80,7 @@ def train_sarsa(
     rewards_per_episode: list[float] = []
     epsilons_per_episode: list[float] = []
     td_errors_per_episode: list[float] = []
+    tonnages_per_episode: list[float] = []  # productivité d'entraînement (T30)
 
     def _select_action(state: tuple[int, ...], eps: float) -> int:
         if state not in q_table:
@@ -125,6 +126,7 @@ def train_sarsa(
         rewards_per_episode.append(total_reward)
         epsilons_per_episode.append(epsilon)
         td_errors_per_episode.append(float(np.mean(td_errors)))
+        tonnages_per_episode.append(float(_info["total_tonnage_t"]))
         epsilon = max(epsilon_min, epsilon - epsilon_decay)
 
         if (ep + 1) % 1000 == 0 or ep == 0:
@@ -140,6 +142,7 @@ def train_sarsa(
         out_path, "sarsa_table.pkl", "SARSA table",
         q_table, n_bins, shovel_count, dump_count,
         rewards_per_episode, epsilons_per_episode, td_errors_per_episode,
+        tonnages_per_episode,
     )
     write_metadata(out_path, build_metadata(
         "SARSA",
