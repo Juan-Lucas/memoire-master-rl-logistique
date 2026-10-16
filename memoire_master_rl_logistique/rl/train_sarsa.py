@@ -7,6 +7,7 @@ choisie par la politique ε-greedy, et non le maximum sur les actions.
 from __future__ import annotations
 
 from pathlib import Path
+import time
 
 import numpy as np
 
@@ -62,6 +63,7 @@ def train_sarsa(
     ensure_new_model(out_path / "sarsa_table.pkl", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
 
+    start = time.perf_counter()
     env, q_table, rng, epsilon, epsilon_decay, n_actions = init_tabular_training(
         seed=seed,
         truck_count=truck_count,
@@ -144,6 +146,7 @@ def train_sarsa(
         EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
                   breakdown_probability, reward_weights),
         observation_size=env.observation_space.shape[0],
+        training_time_s=time.perf_counter() - start,
         seed=seed,
         training=params,
     ))

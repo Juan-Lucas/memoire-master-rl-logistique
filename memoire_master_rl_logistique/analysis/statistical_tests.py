@@ -30,6 +30,7 @@ DYNAMIC_COLUMNS = [
     "inference_time_ms_mean", "inference_time_ms_max",
     "decision_time_ms_mean", "decision_time_ms_max",
     "obs_time_ms_mean", "obs_time_ms_max",
+    "episode_time_s",  # T29
 ]
 SCENARIOS = MAIN_SCENARIOS
 PAIRS = [("PPO", "Fixed"), ("DQN", "Fixed"), ("PPO", "DQN")]

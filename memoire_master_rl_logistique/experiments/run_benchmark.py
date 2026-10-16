@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Sequence
+from concurrent.futures import ProcessPoolExecutor
 import csv
+from dataclasses import dataclass
 import datetime as dt
 from pathlib import Path
 import time
@@ -25,6 +27,7 @@ import time
 from memoire_master_rl_logistique.config import snapshot_configs
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.policies import (
+    HEURISTICS,
     PolicyFn,
     agent_policy_fn,
     heuristic_policies,
@@ -110,8 +113,14 @@ def run_benchmark(
     model_scenarios: Sequence[str] | None = None,
     allow_legacy_models: bool = False,
     train_seeds: Sequence[int | None] = TRAIN_SEEDS,
+    n_workers: int = 1,
 ) -> list[dict]:
     """Exécute le benchmark pour un scénario donné.
+
+    n_workers : nombre de processus pour les épisodes d'évaluation (T29). Les résultats
+        sont identiques graine par graine quel que soit ce nombre ; seules les durées
+        mesurées (``decision_time_ms``, ``episode_time_s``) changent. Pour mesurer la
+        latence, garder 1 (voir ``experiments/timing``).
 
     model_scenarios : régimes d'entraînement des agents évalués (T27). Par défaut
         ``training_regimes(scenario.name)`` : en régime perturbé, les agents spécialisés
@@ -131,18 +140,14 @@ def run_benchmark(
     """
     if model_scenarios is None:
         model_scenarios = training_regimes(scenario.name)
-    eval_env = make_env(scenario)  # sert à vérifier que chaque modèle accepte l'observation
 
     # Heuristiques : même construction que l'analyse du comportement (experiments.policies).
-    runs: list[tuple[str, str | None, int | None, PolicyFn]] = [
-        (name, None, None, fn) for name, fn in heuristic_policies(scenario).items()
-    ]
+    specs = [PolicySpec(name) for name in HEURISTICS]
 
     # Agents : un modèle par (régime d'entraînement, graine, algorithme), entraîné s'il manque.
     algorithms = ("Q-Learning", "SARSA") + (("DQN", "PPO") if train_ppo_flag else ())
     for regime in model_scenarios:
         training_scenario = SCENARIOS.get(regime, scenario)
-        trained_on = EnvConfig.from_scenario(training_scenario)
         mode = evaluation_mode(scenario.name, regime)
         for train_seed in train_seeds:
             for algorithm in algorithms:
@@ -152,30 +157,103 @@ def run_benchmark(
                         raise FileNotFoundError(f"Modèle d'avant T26 introuvable : {mdir}")
                     print(f"  Entraînement {algorithm} ({regime}, graine {train_seed})...")
                     _train(algorithm, training_scenario, train_seed, mdir)
-                model = load_model(mdir, algorithm, eval_env, trained_on=trained_on,
-                                   allow_legacy=allow_legacy_models)
-                runs.append((algorithm, mode, train_seed, agent_policy_fn(model, algorithm)))
+                specs.append(PolicySpec(
+                    algorithm, mode, train_seed, str(mdir),
+                    model_file(mdir, algorithm).stat().st_mtime_ns,
+                    EnvConfig.from_scenario(training_scenario), allow_legacy_models,
+                ))
 
-    results = []
-    for policy_name, mode, train_seed, policy_fn in runs:
-        for seed in scenario.seeds:
-            kpis = run_single_episode(make_env(scenario), policy_fn, seed, policy_name)
-            results.append({
-                "scenario": scenario.name,
-                "policy": policy_name,
-                "mode": mode,  # None pour les heuristiques (rien à entraîner ni transférer)
-                "train_seed": train_seed,
-                "seed": seed,
-                **kpis,
-            })
-            print(
-                f"  [{scenario.name}] {policy_name} {mode or ''} entraînement={train_seed} "
-                f"seed={seed}: prod={kpis['productivity_tph']:.1f} t/h, "
-                f"file={kpis['queue_wait_min_per_truck']:.1f} min, "
-                f"fuel={kpis['specific_fuel_l_per_ton']:.4f} L/t"
-            )
+    # Chargement de chaque modèle avant de lancer les épisodes : un modèle incompatible
+    # arrête tout de suite, et non au milieu d'un calcul parallèle.
+    for spec in specs:
+        _policy_fn(spec, scenario)
 
+    tasks = [(scenario, spec, seed) for spec in specs for seed in scenario.seeds]
+    start = time.perf_counter()
+    results = _run_tasks(tasks, n_workers)
+    for row in results:
+        print(
+            f"  [{row['scenario']}] {row['policy']} {row['mode'] or ''} "
+            f"entraînement={row['train_seed']} seed={row['seed']}: "
+            f"prod={row['productivity_tph']:.1f} t/h, "
+            f"file={row['queue_wait_min_per_truck']:.1f} min, "
+            f"fuel={row['specific_fuel_l_per_ton']:.4f} L/t"
+        )
+    print(f"  [{scenario.name}] {len(tasks)} épisodes évalués en "
+          f"{time.perf_counter() - start:.1f} s ({n_workers} processus)")
     return results
+
+
+@dataclass(frozen=True)
+class PolicySpec:
+    """Ce qu'il faut pour reconstruire une politique dans un autre processus (T29).
+
+    Une fonction ``policy_fn`` (fermeture sur un modèle chargé) ne se transmet pas d'un
+    processus à l'autre ; sa description, si. ``model_dir`` est vide pour une heuristique.
+    ``model_mtime_ns`` distingue deux versions d'un même fichier de modèle (cache).
+    """
+
+    name: str
+    mode: str | None = None
+    train_seed: int | None = None
+    model_dir: str | None = None
+    model_mtime_ns: int | None = None
+    trained_on: EnvConfig | None = None
+    allow_legacy: bool = False
+
+
+# Politiques déjà construites dans ce processus : chaque processus charge un modèle une
+# seule fois, quel que soit le nombre d'épisodes qu'il évalue.
+_POLICY_CACHE: dict[tuple[PolicySpec, str], PolicyFn] = {}
+
+
+def _policy_fn(spec: PolicySpec, scenario: Scenario) -> PolicyFn:
+    key = (spec, repr(scenario))
+    if key not in _POLICY_CACHE:
+        if spec.model_dir is None:
+            _POLICY_CACHE[key] = heuristic_policies(scenario)[spec.name]
+        else:
+            model = load_model(Path(spec.model_dir), spec.name, make_env(scenario),
+                               trained_on=spec.trained_on, allow_legacy=spec.allow_legacy)
+            _POLICY_CACHE[key] = agent_policy_fn(model, spec.name)
+    return _POLICY_CACHE[key]
+
+
+def _evaluate(task: tuple[Scenario, PolicySpec, int]) -> dict:
+    """Un épisode (politique, graine d'évaluation) : une ligne du CSV.
+
+    Sans effet de bord, donc identique quel que soit le processus qui l'exécute.
+    """
+    scenario, spec, seed = task
+    start = time.perf_counter()
+    kpis = run_single_episode(make_env(scenario), _policy_fn(spec, scenario), seed, spec.name)
+    return {
+        "scenario": scenario.name,
+        "policy": spec.name,
+        "mode": spec.mode,  # None pour les heuristiques (rien à entraîner ni transférer)
+        "train_seed": spec.train_seed,
+        "seed": seed,
+        **kpis,
+        # Durée réelle de l'épisode : varie d'un lancement à l'autre (colonne dynamique).
+        "episode_time_s": time.perf_counter() - start,
+    }
+
+
+def _run_tasks(tasks: list[tuple[Scenario, PolicySpec, int]], n_workers: int) -> list[dict]:
+    """Évalue les épisodes, en séquence ou en parallèle ; l'ordre des lignes est conservé.
+
+    Chaque épisode ne dépend que de sa politique et de sa graine (flux aléatoires propres,
+    T13 ; politiques sans état d'un épisode à l'autre) : le parallélisme ne change aucun
+    résultat, seulement les durées mesurées (processus concurrents).
+    """
+    if n_workers < 1:
+        raise ValueError(f"n_workers doit être ≥ 1 : {n_workers}")
+    if n_workers == 1:
+        return [_evaluate(task) for task in tasks]
+    # Paquets de plusieurs épisodes d'une même politique : moins de chargements de modèle.
+    chunksize = max(1, len(tasks) // (4 * n_workers))
+    with ProcessPoolExecutor(max_workers=n_workers) as pool:
+        return list(pool.map(_evaluate, tasks, chunksize=chunksize))
 
 
 def _train(algorithm: str, scenario: Scenario, train_seed: int, output_dir: Path) -> None:
@@ -244,6 +322,7 @@ def run_all_benchmarks(
     allow_legacy_models: bool = False,
     train_seeds: Sequence[int] = TRAIN_SEEDS,
     run_id: str | None = None,
+    n_workers: int = 1,
 ) -> Path:
     """Lance les benchmarks sur les scénarios demandés (tous si ``None``) et renvoie le CSV.
 
@@ -272,6 +351,7 @@ def run_all_benchmarks(
         all_results.extend(run_benchmark(
             scenario, out_path, train_ppo_flag,
             allow_legacy_models=allow_legacy_models, train_seeds=train_seeds,
+            n_workers=n_workers,
         ))
 
     csv_path = write_results(all_results, out_path, run_id)
@@ -289,9 +369,12 @@ def main(argv: Sequence[str] | None = None) -> Path:
     parser.add_argument("--scenarios", nargs="+", default=MAIN_SCENARIOS, choices=list(SCENARIOS),
                         help="scénarios à évaluer (défaut : main_scenarios de la configuration)")
     parser.add_argument("--allow-legacy-models", action="store_true")
+    parser.add_argument("--workers", type=int, default=1,
+                        help="processus d'évaluation (résultats identiques, durées non comparables)")
     args = parser.parse_args(argv)
     return run_all_benchmarks(str(args.output_dir), scenario_names=args.scenarios,
-                              allow_legacy_models=args.allow_legacy_models)
+                              allow_legacy_models=args.allow_legacy_models,
+                              n_workers=args.workers)
 
 
 if __name__ == "__main__":

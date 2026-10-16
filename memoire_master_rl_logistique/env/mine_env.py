@@ -97,14 +97,20 @@ class MineEnv(gym.Env):
         render_mode: str | None = None,
         log_cycles: bool = False,
         fuel: FuelParams = DEFAULT_FUEL,
+        seed_step: int = 1,
     ) -> None:
         super().__init__()
+        if seed_step < 1:
+            raise ValueError(f"seed_step doit être ≥ 1 : {seed_step}")
 
         self.truck_count = truck_count
         self.shovel_count = shovel_count
         self.dump_count = dump_count
         self.episode_minutes = episode_minutes
         self._seed = seed
+        # Pas du compteur de graines (T29) : avec n environnements d'entraînement en
+        # parallèle, l'environnement i joue base + i, base + i + n, … sans doublon.
+        self._seed_step = seed_step
         self.breakdown_probability = breakdown_probability
         self.reward_weights = RewardWeights.from_tuple(reward_weights)
         # w1 à w4 gardés comme attributs (lus par EnvConfig.from_env et par les tests).
@@ -161,15 +167,18 @@ class MineEnv(gym.Env):
     ) -> tuple[np.ndarray, dict[str, Any]]:
         """Initialise un nouveau poste.
 
-        Sans graine, un compteur interne est utilisé (graine du constructeur
-        + 1, + 2, …) : c'est le cas pendant l'entraînement de PPO et DQN.
+        Sans graine, un compteur interne est utilisé : graine précédente + ``seed_step``
+        (graine du constructeur au départ). C'est le cas pendant l'entraînement de PPO et
+        DQN, où seule la première remise à zéro reçoit une graine. Depuis T29, une graine
+        explicite repositionne le compteur ; avec un seul environnement, la suite des
+        graines est inchangée (graine, + 1, + 2, …).
         """
         super().reset(seed=seed)
         if seed is None:
-            self._episode_counter = getattr(self, "_episode_counter", self._seed) + 1
-            effective_seed = self._episode_counter
+            self._episode_counter = getattr(self, "_episode_counter", self._seed) + self._seed_step
         else:
-            effective_seed = seed
+            self._episode_counter = seed
+        effective_seed = self._episode_counter
         # Graine réellement utilisée par cet épisode (T26 : vérifier qu'aucune graine
         # d'évaluation ne sert pendant un entraînement, compteur interne compris).
         self.last_episode_seed = effective_seed

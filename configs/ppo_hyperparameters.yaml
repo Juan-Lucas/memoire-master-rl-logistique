@@ -11,3 +11,7 @@ n_steps: 1024
 n_epochs: 10
 ent_coef: 0.02
 net_arch: [128, 128]   # MLP, activation Tanh (valeur par défaut de SB3 pour PPO)
+# Environnements collectés en parallèle (SubprocVecEnv au-delà de 1, T29). Changer cette
+# valeur change le modèle obtenu (n_steps pas par environnement, donc n_steps × n_envs par
+# mise à jour) : 1 = protocole de la v1.
+n_envs: 1

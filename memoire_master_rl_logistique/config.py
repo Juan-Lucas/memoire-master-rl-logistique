@@ -43,7 +43,7 @@ EXPERIMENT_KEYS = {"project", "seeds", "scenario_defaults", "scenarios", "main_s
 SEED_KEYS = {"evaluation", "tuning", "training", "training_episode_stride"}
 HYPERPARAMETER_KEYS = {
     "PPO": {"learning_rate", "gamma", "batch_size", "gae_lambda", "clip_range", "n_steps",
-            "n_epochs", "ent_coef", "net_arch"},
+            "n_epochs", "ent_coef", "net_arch", "n_envs"},
     "DQN": {"learning_rate", "gamma", "batch_size", "buffer_size", "learning_starts",
             "target_update_interval", "exploration_fraction", "exploration_initial_eps",
             "exploration_final_eps", "net_arch"},

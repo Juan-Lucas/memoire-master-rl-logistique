@@ -97,6 +97,8 @@ class ModelMetadata:
     git_dirty: bool | None = None
     created_at: str = ""
     schema_version: int = SCHEMA_VERSION
+    # Durée de l'entraînement en secondes (T29) ; absente des modèles plus anciens.
+    training_time_s: float | None = None
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), indent=2, ensure_ascii=False)
@@ -133,6 +135,7 @@ def build_metadata(
     observation_size: int,
     seed: int,
     training: dict[str, Any] | None = None,
+    training_time_s: float | None = None,
 ) -> ModelMetadata:
     """Métadonnées d'un modèle qui vient d'être entraîné, avec la date et l'état Git."""
     commit, dirty = git_state()
@@ -145,6 +148,7 @@ def build_metadata(
         git_commit=commit,
         git_dirty=dirty,
         created_at=dt.datetime.now().astimezone().isoformat(timespec="seconds"),
+        training_time_s=None if training_time_s is None else round(float(training_time_s), 3),
     )
 
 
