@@ -8,6 +8,7 @@ import pytest
 
 from memoire_master_rl_logistique.analysis.statistical_tests import load_results, select_mode
 from memoire_master_rl_logistique.analysis.transfer import transfer_table
+from memoire_master_rl_logistique.experiments import policies
 from memoire_master_rl_logistique.experiments import run_benchmark as rb
 from memoire_master_rl_logistique.experiments.scenarios import (
     SCENARIOS,
@@ -20,7 +21,7 @@ from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
 
 V1_MODELS = Path("data/results_v1_article")
-HEURISTICS = {"FIFO", "Fixed", "Nearest", "ShortestPath", "MTWT"}
+HEURISTICS = set(policies.HEURISTICS)
 
 
 def test_regimes_d_entrainement_par_scenario():
@@ -66,7 +67,7 @@ def test_regime_perturbe_specialises_et_transferes(regime, monkeypatch, tmp_path
                                     "q_learning_nominal_seed1", "sarsa_nominal_seed1"])
     df = pd.DataFrame(rows)
     heuristics = df[df["policy"].isin(HEURISTICS)]
-    assert heuristics["mode"].isna().all() and len(heuristics) == 5 * 2
+    assert heuristics["mode"].isna().all() and len(heuristics) == len(HEURISTICS) * 2
     agents = df[~df["policy"].isin(HEURISTICS)]
     assert agents.groupby(["policy", "mode"]).size().to_dict() == {
         ("Q-Learning", SPECIALISED): 2, ("Q-Learning", TRANSFERRED): 2,

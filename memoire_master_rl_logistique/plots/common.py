@@ -20,7 +20,8 @@ from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 # Ordre de lecture : heuristiques, puis RL tabulaire, puis RL profond.
 POLICY_ORDER = [
-    "FIFO", "Fixed", "Nearest", "ShortestPath", "MTWT", "Q-Learning", "SARSA", "DQN", "PPO",
+    "FIFO", "Fixed", "Nearest", "ShortestPath", "MTWT", "LP", "Q-Learning", "SARSA", "DQN",
+    "PPO",
 ]
 
 POLICY_LABELS = {
@@ -29,6 +30,7 @@ POLICY_LABELS = {
     "Nearest": "Pelle la plus proche",
     "ShortestPath": "Plus court chemin",
     "MTWT": "Temps d'attente minimal",
+    "LP": "Programme linéaire (DISPATCH)",
     "Q-Learning": "Q-Learning",
     "SARSA": "SARSA",
     "DQN": "DQN",

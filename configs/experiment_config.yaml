@@ -68,6 +68,14 @@ tuning:
       exploration_fraction: [0.1, 0.3]
       learning_rate: [0.0001, 0.0003]
 
+# Heuristique fondée sur un programme linéaire (T24, principe de DISPATCH) : utilisation
+# maximale planifiée des pelles et des verses. Choisie parmi les candidats sur les graines
+# de sélection (seeds.tuning), jamais sur celles de l'évaluation, par
+# baselines.lp_policy.select_max_utilization ; une seule valeur pour tous les régimes.
+heuristics:
+  lp_max_utilization: 0.7
+  lp_utilization_candidates: [0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 1.0]
+
 # Versions attendues (informatif ; voir pyproject.toml et requirements.txt).
 reproducibility:
   python_version: "3.11.11"

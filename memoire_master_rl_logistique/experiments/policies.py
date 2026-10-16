@@ -1,4 +1,4 @@
-"""Construction des huit politiques évaluées, avec une signature commune.
+"""Construction des politiques évaluées (6 heuristiques, 4 agents), avec une signature commune.
 
 Toutes les politiques sont des fonctions ``policy_fn(obs, info, env) -> action``.
 Ce module est partagé par le benchmark (``run_benchmark``) et l'analyse du
@@ -15,9 +15,11 @@ from typing import Any
 from memoire_master_rl_logistique.baselines.base import BaselinePolicy
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
+from memoire_master_rl_logistique.baselines.lp_policy import LPDispatchPolicy, LPPlan
 from memoire_master_rl_logistique.baselines.mtwt_policy import MTWTPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
+from memoire_master_rl_logistique.config import experiment_config
 from memoire_master_rl_logistique.env.mine_env import MineEnv
 from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
 from memoire_master_rl_logistique.rl.model_loading import load_model
@@ -26,7 +28,7 @@ from memoire_master_rl_logistique.rl.model_paths import model_dir
 
 PolicyFn = Callable[[Any, dict, MineEnv], int]
 
-HEURISTICS = ("FIFO", "Fixed", "Nearest", "ShortestPath", "MTWT")
+HEURISTICS = ("FIFO", "Fixed", "Nearest", "ShortestPath", "MTWT", "LP")
 AGENTS = ("Q-Learning", "SARSA", "DQN", "PPO")
 
 
@@ -52,8 +54,25 @@ def _baseline_fn(policy: BaselinePolicy, needs_graph_sync: bool = False) -> Poli
     return policy_fn
 
 
-def heuristic_policies(scenario: Scenario) -> dict[str, PolicyFn]:
-    """Les heuristiques (4 de la v1, plus MTWT depuis T23), initialisées pour le scénario."""
+def lp_plan(scenario: Scenario, max_utilization: float | None = None) -> LPPlan:
+    """Plan du programme linéaire (T24) pour un scénario ; ``max_utilization`` lu dans la
+    configuration (``heuristics.lp_max_utilization``) s'il n'est pas donné."""
+    if max_utilization is None:
+        max_utilization = experiment_config()["heuristics"]["lp_max_utilization"]
+    env = make_env(scenario)
+    env.reset(seed=scenario.seeds[0])
+    return LPPlan(
+        env.graph, [s.node_id for s in env.shovels], [d.node_id for d in env.dumps],
+        scenario.truck_count, [s.load_time_mean_min for s in env.shovels],
+        [d.unload_time_mean_min for d in env.dumps], scenario.breakdown_probability,
+        max_utilization,
+    )
+
+
+def heuristic_policies(
+    scenario: Scenario, lp_max_utilization: float | None = None,
+) -> dict[str, PolicyFn]:
+    """Les heuristiques (4 de la v1, MTWT depuis T23, LP depuis T24), pour le scénario."""
     env = make_env(scenario)
     env.reset(seed=scenario.seeds[0])
     shovel_nodes = [s.node_id for s in env.shovels]
@@ -68,6 +87,10 @@ def heuristic_policies(scenario: Scenario) -> dict[str, PolicyFn]:
             ShortestPathPolicy(env.graph, shovel_nodes, dump_nodes), needs_graph_sync=True),
         "MTWT": _baseline_fn(
             MTWTPolicy(env.graph, shovel_nodes, dump_nodes), needs_graph_sync=True),
+        "LP": _baseline_fn(
+            LPDispatchPolicy(env.graph, shovel_nodes, dump_nodes,
+                             lp_plan(scenario, lp_max_utilization)),
+            needs_graph_sync=True),
     }
 
 

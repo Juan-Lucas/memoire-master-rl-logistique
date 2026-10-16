@@ -39,8 +39,9 @@ CONFIG_FILES = (EXPERIMENT_FILE, *dict.fromkeys(HYPERPARAMETER_FILES.values()))
 
 # Clés attendues, ni plus ni moins.
 EXPERIMENT_KEYS = {"project", "seeds", "scenario_defaults", "scenarios", "main_scenarios",
-                   "tuning", "reproducibility"}
+                   "tuning", "heuristics", "reproducibility"}
 SEED_KEYS = {"evaluation", "tuning", "training", "training_episode_stride"}
+HEURISTIC_KEYS = {"lp_max_utilization", "lp_utilization_candidates"}
 HYPERPARAMETER_KEYS = {
     "PPO": {"learning_rate", "gamma", "batch_size", "gae_lambda", "clip_range", "n_steps",
             "n_epochs", "ent_coef", "net_arch", "n_envs"},
@@ -77,6 +78,7 @@ def experiment_config(directory: str | Path | None = None) -> dict[str, Any]:
     config = copy.deepcopy(_read_yaml(str(path)))
     _check_keys(set(config), EXPERIMENT_KEYS, str(path))
     _check_keys(set(config["seeds"]), SEED_KEYS, f"{path} (seeds)")
+    _check_keys(set(config["heuristics"]), HEURISTIC_KEYS, f"{path} (heuristics)")
     unknown = set(config["main_scenarios"]) - set(config["scenarios"])
     if unknown:
         raise ValueError(f"{path} : main_scenarios cite des scénarios non définis {sorted(unknown)}")

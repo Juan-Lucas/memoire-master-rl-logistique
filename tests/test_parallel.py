@@ -44,7 +44,7 @@ def _tiny_train(algorithm, scenario, train_seed, output_dir):
 def test_resultats_paralleles_identiques_aux_sequentiels(monkeypatch, tmp_path):
     """Test du plan : mêmes résultats, graine par graine, en séquentiel et sur 3 processus.
 
-    Les 8 politiques (DQN et PPO compris), spécialisées et transférées, en fortes pannes.
+    Les 10 politiques (DQN et PPO compris), spécialisées et transférées, en fortes pannes.
     Seules les durées mesurées peuvent différer.
     """
     monkeypatch.setattr(rb, "_train", _tiny_train)
@@ -53,7 +53,7 @@ def test_resultats_paralleles_identiques_aux_sequentiels(monkeypatch, tmp_path):
     sequential = pd.DataFrame(rb.run_benchmark(scenario, tmp_path, train_seeds=(1,), n_workers=1))
     parallel = pd.DataFrame(rb.run_benchmark(scenario, tmp_path, train_seeds=(1,), n_workers=3))
 
-    assert len(sequential) == (5 + 2 * 4) * 3  # 5 heuristiques + 4 agents × 2 modes
+    assert len(sequential) == (6 + 2 * 4) * 3  # 6 heuristiques + 4 agents × 2 modes
     compared = [c for c in sequential.columns if c not in TIMING_COLUMNS]
     pd.testing.assert_frame_equal(sequential[compared], parallel[compared])
     assert (parallel["episode_time_s"] > 0).all()
@@ -204,6 +204,6 @@ def test_commande_de_latence_n_ecrase_pas(monkeypatch, tmp_path):
 
     table = timing.main([str(out), "--n-seeds", "1"])
 
-    assert len(table) == 3 * 5 and out.exists()
+    assert len(table) == 3 * len(timing.HEURISTICS) and out.exists()
     with pytest.raises(FileExistsError):
         timing.main([str(out), "--n-seeds", "1"])

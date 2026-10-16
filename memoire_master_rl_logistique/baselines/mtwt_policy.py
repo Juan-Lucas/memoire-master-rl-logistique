@@ -13,13 +13,13 @@ sans regarder le trajet ; MTWT compare **l'attente qu'aura le camion à son arri
 donc combine files et temps de trajet, comme les systèmes commerciaux de gestion de
 flotte (Zeng et al., 2022).
 
-Approximation : la disponibilité des pelles et des verses est lue au moment de la
-décision ; les camions affectés entre-temps (qui peuvent prendre la place) ne sont pas
-anticipés.
+Disponibilité lue dans ``info`` : la libération **prévue** de chaque pelle et verse,
+camions déjà en route compris (``MineEnv.forecast_free_at``, T15). Les camions qui
+seront affectés après cette décision ne sont pas anticipés.
 
-Dans le simulateur actuel, un camion attend sa décision à la pelle qu'il vient de
-servir : le trajet vers cette pelle vaut 0, ce qui la favorise. Si la décision est
-prise à la verse (T16 bis), tous les trajets deviennent comparables.
+Depuis T16 bis, le camion décide à la verse où il vient de déverser (au parc pour son
+premier cycle) : les trajets vers toutes les pelles sont comparables. Avant, il décidait
+à la pelle qu'il venait de servir, et le trajet nul vers celle-ci la favorisait.
 """
 
 from __future__ import annotations
