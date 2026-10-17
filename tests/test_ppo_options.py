@@ -32,11 +32,12 @@ def test_recompense_normalisee_seulement_pendant_l_entrainement(tmp_path):
     np.testing.assert_allclose(logged, raw, atol=1e-4)
 
 
-def test_sans_option_comme_avant(tmp_path):
-    """Sans les options, PPO reste celui de la configuration (γ = 0,99, récompense brute) et
-    deux entraînements identiques donnent les mêmes poids."""
-    one = train_ppo(output_dir=str(tmp_path / "a"), **COMMON)
-    two = train_ppo(output_dir=str(tmp_path / "b"), **COMMON)
+def test_sans_normalisation_comme_la_v1(tmp_path):
+    """Options désactivées (protocole v1 : γ = 0,99, récompense brute) : pas de
+    VecNormalize, et deux entraînements identiques donnent les mêmes poids."""
+    v1 = dict(gamma=0.99, normalize_reward=False, **COMMON)
+    one = train_ppo(output_dir=str(tmp_path / "a"), **v1)
+    two = train_ppo(output_dir=str(tmp_path / "b"), **v1)
 
     assert not isinstance(one.get_env(), VecNormalize) and one.gamma == 0.99
     for a, b in zip(one.policy.state_dict().values(), two.policy.state_dict().values(),

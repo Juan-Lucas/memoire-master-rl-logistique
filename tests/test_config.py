@@ -83,17 +83,26 @@ def test_graines_identiques_a_t26():
     assert TRAIN_SEEDS == (1, 2, 3, 4, 5)
 
 
-def test_hyperparametres_identiques_a_la_v1():
+def test_hyperparametres_de_la_campagne():
+    """Valeurs de la campagne v2 (mise au point des agents, 17 octobre 2026). Par rapport à
+    la v1 : PPO learning_rate 3e-4 → 1e-4, ent_coef 0,02 → 0, gamma 0,99 → 0,995,
+    normalize_reward false → true ; DQN exploration_fraction 0,3 → 0,1, gamma 0,99 → 0,995."""
     assert hyperparameters("PPO") == {
-        "learning_rate": 3e-4, "gamma": 0.99, "batch_size": 64, "gae_lambda": 0.95,
-        "clip_range": 0.2, "n_steps": 1024, "n_epochs": 10, "ent_coef": 0.02,
+        "learning_rate": 1e-4, "gamma": 0.995, "batch_size": 64, "gae_lambda": 0.95,
+        "clip_range": 0.2, "n_steps": 1024, "n_epochs": 10, "ent_coef": 0.0,
         "net_arch": [128, 128], "n_envs": 1,  # n_envs : T29, 1 = protocole v1
-        "normalize_reward": False}  # piste 2 d'amélioration des agents ; false = v1
+        "normalize_reward": True}
     assert hyperparameters("DQN") == {
-        "learning_rate": 3e-4, "gamma": 0.99, "batch_size": 64, "buffer_size": 200_000,
+        "learning_rate": 3e-4, "gamma": 0.995, "batch_size": 64, "buffer_size": 200_000,
         "learning_starts": 1000, "target_update_interval": 1000,
-        "exploration_fraction": 0.3, "exploration_initial_eps": 1.0,
+        "exploration_fraction": 0.1, "exploration_initial_eps": 1.0,
         "exploration_final_eps": 0.02, "net_arch": [128, 128]}
+    # Les valeurs retenues font partie des grilles du réglage (T25 bis).
+    grids = experiment_config()["tuning"]["grids"]
+    assert hyperparameters("PPO")["ent_coef"] in grids["PPO"]["ent_coef"]
+    assert hyperparameters("PPO")["learning_rate"] in grids["PPO"]["learning_rate"]
+    assert hyperparameters("DQN")["exploration_fraction"] in grids["DQN"]["exploration_fraction"]
+    assert hyperparameters("DQN")["learning_rate"] in grids["DQN"]["learning_rate"]
     # Valeurs de la campagne (run_benchmark avant T28), communes à Q-Learning et SARSA.
     tabular = {"n_episodes": 30_000, "alpha": 0.2, "gamma": 0.99, "epsilon_start": 1.0,
                "epsilon_min": 0.01, "n_bins": 8}
@@ -129,12 +138,13 @@ def test_ppo_et_dqn_utilisent_la_configuration(tmp_path):
     """Le modèle construit a les hyperparamètres du YAML (et non des valeurs en dur)."""
     ppo = train_ppo(total_timesteps=1_024, episode_minutes=60.0, output_dir=str(tmp_path / "p"),
                     progress_bar=False)
-    assert (ppo.n_steps, ppo.batch_size, ppo.n_epochs, ppo.ent_coef) == (1024, 64, 10, 0.02)
+    assert (ppo.n_steps, ppo.batch_size, ppo.n_epochs, ppo.ent_coef) == (1024, 64, 10, 0.0)
+    assert ppo.gamma == 0.995
     assert ppo.policy.net_arch == [128, 128]
 
     dqn = train_dqn(total_timesteps=1_100, episode_minutes=60.0, output_dir=str(tmp_path / "d"),
-                    progress_bar=False, exploration_fraction=0.1)
-    assert dqn.exploration_fraction == 0.1  # argument donné
+                    progress_bar=False, exploration_fraction=0.3)
+    assert dqn.exploration_fraction == 0.3  # argument donné (configuration : 0,1)
     assert (dqn.buffer_size, dqn.learning_starts, dqn.exploration_final_eps) == (200_000, 1000, 0.02)
 
 
@@ -173,8 +183,8 @@ def test_fichier_d_un_autre_algorithme_refuse(config_copy):
 
 
 def test_remplacement_d_hyperparametres():
-    assert hyperparameters("PPO", ent_coef=0.0)["ent_coef"] == 0.0
-    assert hyperparameters("PPO", ent_coef=None)["ent_coef"] == 0.02  # None = non fourni
+    assert hyperparameters("PPO", ent_coef=0.02)["ent_coef"] == 0.02
+    assert hyperparameters("PPO", ent_coef=None)["ent_coef"] == 0.0  # None = non fourni
     with pytest.raises(ValueError, match="inconnus"):
         hyperparameters("PPO", exploration_fraction=0.1)
     with pytest.raises(ValueError, match="inconnu"):
