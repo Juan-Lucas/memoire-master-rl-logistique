@@ -34,12 +34,20 @@ from gymnasium import spaces
 import numpy as np
 from numpy.random import SeedSequence
 
+from memoire_master_rl_logistique.simulation.constants import (
+    LOAD_TIME_MEAN_MIN,
+    LOAD_TIME_STD_MIN,
+    REPAIR_RANGE_MIN,
+    UNLOAD_TIME_MEAN_MIN,
+    UNLOAD_TIME_STD_MIN,
+)
 from memoire_master_rl_logistique.simulation.entities import (
     CycleRecord,
     DumpSite,
     Shovel,
     Truck,
 )
+from memoire_master_rl_logistique.simulation.forecast import forecast_route
 from memoire_master_rl_logistique.simulation.fuel_model import (
     DEFAULT_FUEL,
     FuelParams,
@@ -224,8 +232,8 @@ class MineEnv(gym.Env):
             Shovel(
                 shovel_id=f"S{i + 1}",
                 node_id=f"shovel_{i + 1}",
-                load_time_mean_min=2.0,
-                load_time_std_min=0.3,
+                load_time_mean_min=LOAD_TIME_MEAN_MIN,
+                load_time_std_min=LOAD_TIME_STD_MIN,
             )
             for i in range(self.shovel_count)
         ]
@@ -234,8 +242,8 @@ class MineEnv(gym.Env):
             DumpSite(
                 dump_id=f"D{i + 1}",
                 node_id=f"dump_{i + 1}",
-                unload_time_mean_min=1.0,
-                unload_time_std_min=0.2,
+                unload_time_mean_min=UNLOAD_TIME_MEAN_MIN,
+                unload_time_std_min=UNLOAD_TIME_STD_MIN,
             )
             for i in range(self.dump_count)
         ]
@@ -261,9 +269,7 @@ class MineEnv(gym.Env):
         self.last_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
         self.episode_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
 
-        obs = self._get_obs()
-        info = self._get_info()
-        return obs, info
+        return self._observe()
 
     def step(
         self, action: int,
@@ -314,8 +320,7 @@ class MineEnv(gym.Env):
         if truncated:
             reward += self._finish_cycles()
 
-        obs = self._get_obs()
-        info = self._get_info()
+        obs, info = self._observe()
         return obs, reward, False, truncated, info
 
     # --- Moteur à événements (T15, T16 bis) ------------------------------------------
@@ -455,7 +460,7 @@ class MineEnv(gym.Env):
         # le k-ième cycle de ce camion reçoit ainsi la même panne quelle que soit la politique.
         breakdown_rng = self.rng_breakdowns[idx]
         breaks_down = breakdown_rng.random() < self.breakdown_probability
-        drawn_repair_min = breakdown_rng.uniform(10.0, 30.0)
+        drawn_repair_min = breakdown_rng.uniform(*REPAIR_RANGE_MIN)
         repair_min = drawn_repair_min if breaks_down else 0.0
         if breaks_down:
             truck.repair_min += self._in_shift(time_min, repair_min)
@@ -581,6 +586,25 @@ class MineEnv(gym.Env):
                 free[k] = max(free[k], arrival) + getattr(resources[k], mean)
         return shovels, dumps
 
+    def route_waits(
+        self, free_at: tuple[list[float], list[float]] | None = None,
+    ) -> list[float]:
+        """Attente prévue du camion qui décide, pour chaque route (pelle j, verse k), dans
+        l'ordre des actions (j × D + k), en minutes.
+
+        Calcul commun avec MTWT (``simulation.forecast.forecast_route``). ``free_at`` : la
+        prévision ``forecast_free_at`` si elle est déjà calculée pour cette décision.
+        """
+        shovel_free, dump_free = free_at or self.forecast_free_at()
+        location = self.truck_locations[self.current_truck_idx]
+        return [
+            forecast_route(self.graph, location, self.current_time_min, shovel.node_id,
+                           dump.node_id, shovel_free[j], dump_free[k],
+                           shovel.load_time_mean_min).total_wait
+            for j, shovel in enumerate(self.shovels)
+            for k, dump in enumerate(self.dumps)
+        ]
+
     def _shovel_waits(self, at_time: float) -> list[float]:
         """Attente prévue à chaque pelle à l'instant donné (``forecast_free_at``)."""
         return [max(0.0, free - at_time) for free in self.forecast_free_at()[0]]
@@ -692,10 +716,19 @@ class MineEnv(gym.Env):
         mu = log(max(0.2, mean_min)) - 0.5 * sigma * sigma
         return max(0.2, self.rng_service.lognormvariate(mu, sigma))
 
-    def _get_obs(self) -> np.ndarray:
-        """Construit l'observation courante et mémorise sa durée dans ``last_obs_time_ms``."""
+    def _observe(self) -> tuple[np.ndarray, dict[str, Any]]:
+        """Observation et ``info`` de la décision courante, avec **une seule** prévision de
+        libération des ressources, partagée par les deux. La durée mémorisée dans
+        ``last_obs_time_ms`` couvre la prévision et la construction de l'observation."""
         t0 = time.perf_counter()
-        obs = build_observation(
+        free_at = self.forecast_free_at()
+        obs = self._get_obs(free_at)
+        self.last_obs_time_ms = (time.perf_counter() - t0) * 1_000
+        return obs, self._get_info(free_at)
+
+    def _get_obs(self, free_at: tuple[list[float], list[float]]) -> np.ndarray:
+        """Construit l'observation courante."""
+        return build_observation(
             trucks=self.trucks,
             shovels=self.shovels,
             dumps=self.dumps,
@@ -705,14 +738,13 @@ class MineEnv(gym.Env):
             truck_locations=self.truck_locations,
             current_truck_idx=self.current_truck_idx,
             trucks_per_shovel=self._trucks_per_shovel(),
-            free_at=self.forecast_free_at(),
+            free_at=free_at,
+            route_waits=self.route_waits(free_at),
         )
-        self.last_obs_time_ms = (time.perf_counter() - t0) * 1_000
-        return obs
 
-    def _get_info(self) -> dict[str, Any]:
+    def _get_info(self, free_at: tuple[list[float], list[float]]) -> dict[str, Any]:
         """Dictionnaire d'informations de debug."""
-        shovel_free, dump_free = self.forecast_free_at()
+        shovel_free, dump_free = free_at
         return {
             "current_time_min": self.current_time_min,
             "current_truck_idx": self.current_truck_idx,

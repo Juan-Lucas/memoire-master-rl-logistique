@@ -13,6 +13,19 @@ from __future__ import annotations
 SLOPE_PENALTY_PER_PCT = 0.03
 
 # ---------------------------------------------------------------------------
+# Durées de service et pannes (lues par MineEnv, MTWT et le programme linéaire)
+# ---------------------------------------------------------------------------
+# Chargement à la pelle et déversement à la verse : lois log-normales de moyenne et
+# d'écart-type donnés (MineEnv._sample_duration).
+LOAD_TIME_MEAN_MIN = 2.0
+LOAD_TIME_STD_MIN = 0.3
+UNLOAD_TIME_MEAN_MIN = 1.0
+UNLOAD_TIME_STD_MIN = 0.2
+# Durée d'une réparation après une panne de camion : uniforme sur cet intervalle.
+REPAIR_RANGE_MIN = (10.0, 30.0)
+MEAN_REPAIR_MIN = sum(REPAIR_RANGE_MIN) / 2
+
+# ---------------------------------------------------------------------------
 # Carburant (T14, M20)
 # ---------------------------------------------------------------------------
 # Référence publiée : Cat 785D (charge utile ≈ 136 t, le plus proche des 140 t du

@@ -1,7 +1,7 @@
 """Construction du vecteur d'observation, normalisé dans [0, 1] (T18 : variables agrégées).
 
-La taille ne dépend plus du nombre de camions : 3S + 2D + 4 composantes, soit 17 avec
-3 pelles et 2 verses, pour 12 comme pour 18 camions. Un agent entraîné dans un régime
+La taille ne dépend plus du nombre de camions : 3S + 2D + S·D + 4 composantes, soit 23
+avec 3 pelles et 2 verses, pour 12 comme pour 18 camions. Un agent entraîné dans un régime
 peut donc être évalué dans un autre sans réentraînement.
 
 Avant T18, l'observation contenait un bloc par camion (statut, disponibilité, tonnage,
@@ -15,6 +15,10 @@ Disposition (voir ``observation_layout``), dans cet ordre :
 - ``shovel_trucks`` (S) : camions engagés vers chaque pelle (en route, en file ou en
   chargement), divisé par 24 ;
 - ``distance_to_shovel`` (S) : distance du camion qui décide à chaque pelle ;
+- ``route_wait`` (S·D, dans l'ordre des actions) : attente **prévue** du camion qui décide
+  s'il prend la route pelle j → verse k : file à son arrivée à la pelle, puis file à son
+  arrivée à la verse après un chargement moyen (``MineEnv.route_waits``), divisée par
+  30 min et plafonnée à 1. C'est l'information qu'utilise MTWT (T23) ;
 - ``position`` (D + 1) : codage one-hot du lieu du camion qui décide (parc ou verse,
   les seuls lieux où une décision est prise depuis T16 bis) ;
 - ``tonnage``, ``fuel`` : cumul du camion qui décide sur le poste ;
@@ -22,6 +26,10 @@ Disposition (voir ``observation_layout``), dans cet ordre :
 
 Les deux premiers blocs et les distances sont les mêmes qu'avant T18 : l'état discret
 de Q-Learning et SARSA (``rl/discretize.py``) est construit de la même façon.
+
+Amélioration des agents, piste 1 (16 octobre 2026) : bloc ``route_wait`` ajouté,
+17 → 23 composantes. Avec seulement les attentes et les distances, l'agent devait apprendre
+seul la combinaison non linéaire max(0, libération − arrivée) que MTWT calcule.
 
 T16 bis (décision à la verse) : 18 → 17 composantes. Le bloc ``position`` décrit le parc
 et les verses au lieu du parc et des pelles, et ``shovel_trucks`` compte les camions
@@ -40,6 +48,8 @@ from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 # Constantes de normalisation
 _MAX_DISTANCE_KM = 10.0
 _MAX_TIME_MIN = 480.0  # 8 heures
+# Échelle de l'attente prévue par route : celle du terme d'attente de la récompense.
+ROUTE_WAIT_SCALE_MIN = 30.0
 MAX_TRUCKS = 24  # plafond du nombre de camions (forte charge : 18)
 # 25 cycles de 140 t : au-delà du maximum observé (23 cycles, 3 220 t). L'ancien plafond
 # de 2 000 t saturait avant la fin du poste (T17).
@@ -61,6 +71,7 @@ def observation_layout(num_shovels: int, num_dumps: int) -> dict[str, slice]:
         ("dump_wait", num_dumps),
         ("shovel_trucks", num_shovels),
         ("distance_to_shovel", num_shovels),
+        ("route_wait", num_shovels * num_dumps),
         ("position", num_dumps + 1),
         ("tonnage", 1),
         ("fuel", 1),
@@ -74,7 +85,7 @@ def observation_layout(num_shovels: int, num_dumps: int) -> dict[str, slice]:
 
 
 def observation_size(num_shovels: int, num_dumps: int) -> int:
-    """Taille du vecteur d'observation : 3S + 2D + 4, indépendante du nombre de camions."""
+    """Taille du vecteur d'observation : 3S + 2D + S·D + 4, indépendante du nombre de camions."""
     return observation_layout(num_shovels, num_dumps)["time"].stop
 
 
@@ -89,12 +100,15 @@ def build_observation(
     current_truck_idx: int = 0,
     trucks_per_shovel: list[int] | None = None,
     free_at: tuple[list[float], list[float]] | None = None,
+    route_waits: list[float] | None = None,
 ) -> np.ndarray:
     """Construit le vecteur d'observation normalisé (voir la docstring du module).
 
     ``trucks_per_shovel`` : camions engagés vers chaque pelle (``MineEnv``) ; 0 par défaut.
     ``free_at`` : heures prévues de libération des pelles et des verses, camions en route
     compris (``MineEnv.forecast_free_at``) ; à défaut, ``available_at_min``.
+    ``route_waits`` : attente prévue par route, en minutes (``MineEnv.route_waits``) ; 0 par
+    défaut.
     """
     obs: list[float] = []
     shovel_nodes = [s.node_id for s in shovels]
@@ -114,6 +128,13 @@ def build_observation(
     location = truck_locations[current_truck_idx]
     for node in shovel_nodes:
         obs.append(_normalize_distance(graph.shortest_distance(location, node)))
+
+    if route_waits is None:
+        route_waits = [0.0] * (len(shovels) * len(dumps))
+    if len(route_waits) != len(shovels) * len(dumps):
+        raise ValueError(f"route_waits : {len(route_waits)} valeurs, "
+                         f"{len(shovels) * len(dumps)} attendues (une par route pelle → verse)")
+    obs.extend(min(wait / ROUTE_WAIT_SCALE_MIN, 1.0) for wait in route_waits)
 
     obs.append(1.0 if location not in dump_nodes else 0.0)  # au parc (début de poste)
     obs.extend(1.0 if location == node else 0.0 for node in dump_nodes)

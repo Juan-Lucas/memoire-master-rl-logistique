@@ -1,6 +1,7 @@
 """Tests de T18 (observation de taille fixe, variables agrégées) et de T17 (aucune
-composante constante ni saturée). Depuis T16 bis, 17 composantes : la décision se prend
-au parc ou à une verse."""
+composante constante ni saturée). Depuis T16 bis, la décision se prend au parc ou à une
+verse ; depuis la piste 1 d'amélioration des agents, 23 composantes, dont l'attente prévue
+par route pelle → verse."""
 
 import numpy as np
 import pytest
@@ -54,17 +55,17 @@ def test_meme_taille_quel_que_soit_le_nombre_de_camions():
     """Test du plan : ``observation_space.shape`` identique pour 12 et 18 camions (et 15)."""
     shapes = {MineEnv(truck_count=n).observation_space.shape for n in (12, 15, 18, MAX_TRUCKS)}
 
-    assert shapes == {(observation_size(3, 2),)} == {(17,)}
+    assert shapes == {(observation_size(3, 2),)} == {(23,)}
 
 
 def test_disposition_couvre_tout_le_vecteur():
-    """Les blocs se suivent sans trou ni chevauchement : 3S + 2D + 4 composantes."""
+    """Les blocs se suivent sans trou ni chevauchement : 3S + 2D + S·D + 4 composantes."""
     blocks = sorted(LAYOUT.values(), key=lambda b: b.start)
 
     assert blocks[0].start == 0
     assert all(a.stop == b.start for a, b in zip(blocks, blocks[1:]))
-    assert blocks[-1].stop == 3 * 3 + 2 * 2 + 4
-    assert observation_size(5, 3) == 3 * 5 + 2 * 3 + 4
+    assert blocks[-1].stop == 3 * 3 + 2 * 2 + 3 * 2 + 4
+    assert observation_size(5, 3) == 3 * 5 + 2 * 3 + 5 * 3 + 4
 
 
 def test_contenu_des_blocs():
@@ -142,3 +143,77 @@ def test_aucune_variable_continue_saturee(observations):
                   for j in range(block.start, block.stop)]
 
     assert ((observations[:, continuous] == 1.0).mean(axis=0) < 0.05).all()
+
+
+# --- Attente prévue par route (piste 1) ----------------------------------------------
+
+def test_attente_prevue_par_route_comme_mtwt():
+    """Pour chaque action (pelle j, verse k), l'attente prévue : file à l'arrivée à la
+    pelle, puis file à la verse après un chargement moyen. Le calcul est refait ici à la
+    main ; il est dans l'observation, divisé par 30 min."""
+    env = MineEnv(breakdown_probability=0.0)
+    env.reset(seed=42)
+    for action in (0, 0, 0, 0, 2, 2):  # quatre camions vers la pelle 1, deux vers la pelle 2
+        obs, *_ = env.step(action)
+
+    g, now = env.graph, env.current_time_min
+    location = env.truck_locations[env.current_truck_idx]
+    shovel_free, dump_free = env.forecast_free_at()
+    expected = []
+    for j, shovel in enumerate(env.shovels):
+        arrival = now + g.mean_route_time_minutes(location, shovel.node_id, loaded=False)
+        shovel_wait = max(0.0, shovel_free[j] - arrival)
+        for k, dump in enumerate(env.dumps):
+            dump_arrival = (arrival + shovel_wait + shovel.load_time_mean_min
+                            + g.mean_route_time_minutes(shovel.node_id, dump.node_id, loaded=True))
+            expected.append(shovel_wait + max(0.0, dump_free[k] - dump_arrival))
+
+    np.testing.assert_allclose(env.route_waits(), expected)
+    np.testing.assert_allclose(obs[LAYOUT["route_wait"]], np.minimum(np.array(expected) / 30, 1),
+                               rtol=1e-6)
+    assert max(expected) > 0 and min(expected) == 0  # des routes encombrées, d'autres libres
+
+
+def test_mtwt_lit_la_meme_attente_que_l_agent():
+    """MTWT choisit la pelle de plus petite attente prévue, celle que voit l'agent : les
+    deux utilisent ``simulation.forecast.forecast_route``."""
+    from memoire_master_rl_logistique.baselines.mtwt_policy import MTWTPolicy
+
+    env = MineEnv(breakdown_probability=0.0)
+    env.reset(seed=42)
+    for action in (0, 0, 0, 0, 2, 2):
+        _, _, _, _, info = env.step(action)
+    policy = MTWTPolicy(env.graph, [s.node_id for s in env.shovels],
+                        [d.node_id for d in env.dumps])
+    shovel, _ = policy.choose(env.truck_locations[env.current_truck_idx], env.current_time_min,
+                              info["shovel_available_at"], info["dump_available_at"])
+    waits = np.array(env.route_waits()).reshape(3, 2)
+    shovel_waits = waits.min(axis=1)  # l'attente à la pelle est commune à ses deux routes
+    assert shovel_waits[shovel] == shovel_waits.min()
+
+
+def test_une_seule_prevision_par_decision(monkeypatch):
+    """Observation et info partagent la même prévision : une seule à la fin d'un step."""
+    env = MineEnv()
+    env.reset(seed=42)
+    calls = []
+    original = env.forecast_free_at
+    monkeypatch.setattr(env, "forecast_free_at", lambda: calls.append(1) or original())
+    env.step(0)
+    assert len(calls) == 2  # une pour la décision (terme d'équilibre), une pour l'observation
+
+
+def test_attente_prevue_de_mauvaise_longueur_refusee():
+    from memoire_master_rl_logistique.env.observation_builder import build_observation
+
+    env = MineEnv()
+    env.reset(seed=42)
+    with pytest.raises(ValueError, match="route_waits"):
+        build_observation(env.trucks, env.shovels, env.dumps, env.graph, 0.0, 480.0,
+                          env.truck_locations, route_waits=[0.0] * 7)
+
+
+def test_attente_prevue_nulle_au_debut_du_poste():
+    env = MineEnv()
+    obs, _ = env.reset(seed=42)
+    assert (obs[LAYOUT["route_wait"]] == 0).all()

@@ -15,3 +15,6 @@ net_arch: [128, 128]   # MLP, activation Tanh (valeur par défaut de SB3 pour PP
 # valeur change le modèle obtenu (n_steps pas par environnement, donc n_steps × n_envs par
 # mise à jour) : 1 = protocole de la v1.
 n_envs: 1
+# Normalisation de la récompense pendant l'entraînement (VecNormalize, observations non
+# normalisées : elles sont déjà dans [0, 1]). false = protocole de la v1.
+normalize_reward: false

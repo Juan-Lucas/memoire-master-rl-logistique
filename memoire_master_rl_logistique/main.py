@@ -133,6 +133,14 @@ def main() -> None:
         "--visualize-graph", action="store_true",
         help="Générer la figure du réseau routier minier",
     )
+    parser.add_argument(
+        "--gamma", type=float, default=None,
+        help="Entraînement PPO : facteur d'actualisation (sinon configs/ppo_hyperparameters.yaml)",
+    )
+    parser.add_argument(
+        "--normalize-reward", action=argparse.BooleanOptionalAction, default=None,
+        help="Entraînement PPO : normaliser la récompense (sinon la configuration)",
+    )
 
     args = parser.parse_args()
 
@@ -198,6 +206,8 @@ def main() -> None:
             dump_count=args.dump_count,
             output_dir=training_dir("PPO", *fleet),
             overwrite=args.overwrite,
+            gamma=args.gamma,
+            normalize_reward=args.normalize_reward,
         )
         return
 

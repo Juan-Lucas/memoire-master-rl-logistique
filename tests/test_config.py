@@ -87,7 +87,8 @@ def test_hyperparametres_identiques_a_la_v1():
     assert hyperparameters("PPO") == {
         "learning_rate": 3e-4, "gamma": 0.99, "batch_size": 64, "gae_lambda": 0.95,
         "clip_range": 0.2, "n_steps": 1024, "n_epochs": 10, "ent_coef": 0.02,
-        "net_arch": [128, 128], "n_envs": 1}  # n_envs : T29, 1 = protocole v1
+        "net_arch": [128, 128], "n_envs": 1,  # n_envs : T29, 1 = protocole v1
+        "normalize_reward": False}  # piste 2 d'amélioration des agents ; false = v1
     assert hyperparameters("DQN") == {
         "learning_rate": 3e-4, "gamma": 0.99, "batch_size": 64, "buffer_size": 200_000,
         "learning_starts": 1000, "target_update_interval": 1000,

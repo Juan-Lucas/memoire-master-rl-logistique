@@ -29,16 +29,12 @@ from typing import Any
 import numpy as np
 
 from memoire_master_rl_logistique.baselines.base import encode_action
+from memoire_master_rl_logistique.simulation.constants import LOAD_TIME_MEAN_MIN
+from memoire_master_rl_logistique.simulation.forecast import forecast_route
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
-# Durée moyenne de chargement d'une pelle (min), comme ``Shovel.load_time_mean_min``.
-DEFAULT_LOAD_TIME_MIN = 2.0
-
-
-def _least_wait(arrivals: list[float], available_at: list[float]) -> int:
-    """Indice de plus petite attente prévue, puis de plus petite heure d'arrivée."""
-    waits = [max(0.0, free - arrival) for arrival, free in zip(arrivals, available_at)]
-    return min(range(len(waits)), key=lambda k: (waits[k], arrivals[k]))
+# Durée moyenne de chargement d'une pelle (min), celle du simulateur.
+DEFAULT_LOAD_TIME_MIN = LOAD_TIME_MEAN_MIN
 
 
 class MTWTPolicy:
@@ -63,21 +59,22 @@ class MTWTPolicy:
         shovel_available_at: list[float],
         dump_available_at: list[float],
     ) -> tuple[int, int]:
-        """(pelle, verse) choisies, en indices."""
-        shovel_arrivals = [
-            now + self.graph.mean_route_time_minutes(truck_location, node, loaded=False)
-            for node in self.shovel_node_ids
-        ]
-        shovel = _least_wait(shovel_arrivals, shovel_available_at)
-
-        departure = (max(shovel_arrivals[shovel], shovel_available_at[shovel])
-                     + self.load_time_min)
-        dump_arrivals = [
-            departure + self.graph.mean_route_time_minutes(
-                self.shovel_node_ids[shovel], node, loaded=True)
-            for node in self.dump_node_ids
-        ]
-        return shovel, _least_wait(dump_arrivals, dump_available_at)
+        """(pelle, verse) choisies, en indices : la pelle de plus petite attente prévue
+        (puis d'arrivée la plus tôt), puis, depuis elle, la verse de plus petite attente
+        prévue (puis d'arrivée la plus tôt). Calcul commun avec l'observation des agents
+        (``simulation.forecast.forecast_route``)."""
+        routes = {
+            (j, k): forecast_route(self.graph, truck_location, now, s_node, d_node,
+                                   shovel_available_at[j], dump_available_at[k],
+                                   self.load_time_min)
+            for j, s_node in enumerate(self.shovel_node_ids)
+            for k, d_node in enumerate(self.dump_node_ids)
+        }
+        shovel = min(range(len(self.shovel_node_ids)),
+                     key=lambda j: (routes[j, 0].shovel_wait, routes[j, 0].shovel_arrival))
+        dump = min(range(len(self.dump_node_ids)),
+                   key=lambda k: (routes[shovel, k].dump_wait, routes[shovel, k].dump_arrival))
+        return shovel, dump
 
     def predict(
         self,

@@ -47,10 +47,9 @@ import numpy as np
 from scipy.optimize import linprog
 
 from memoire_master_rl_logistique.baselines.base import encode_action
+from memoire_master_rl_logistique.simulation.constants import MEAN_REPAIR_MIN
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
-# Durée moyenne d'une réparation (min) : uniforme sur [10, 30] dans MineEnv._arrive_at_dump.
-MEAN_REPAIR_MIN = 20.0
 # Tolérance sur la production maximale dans le second programme (minimiser les trajets).
 PRODUCTION_TOLERANCE = 1e-3
 

@@ -18,8 +18,12 @@ from memoire_master_rl_logistique.experiments.policies import (
 from memoire_master_rl_logistique.experiments.run_benchmark import run_single_episode
 from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS, SCENARIOS
 from memoire_master_rl_logistique.seeds import TUNING_SEEDS
-
-LOAD_MIN, UNLOAD_MIN = 2.0, 1.0  # durées moyennes de MineEnv
+from memoire_master_rl_logistique.simulation.constants import (
+    LOAD_TIME_MEAN_MIN as LOAD_MIN,
+)
+from memoire_master_rl_logistique.simulation.constants import (
+    UNLOAD_TIME_MEAN_MIN as UNLOAD_MIN,
+)
 
 
 def nominal_env():

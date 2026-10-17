@@ -7,6 +7,7 @@ import time
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.logger import configure
+from stable_baselines3.common.vec_env import VecNormalize
 
 from memoire_master_rl_logistique.config import hyperparameters
 from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
@@ -21,6 +22,11 @@ from memoire_master_rl_logistique.rl.model_metadata import (
 )
 from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
 from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
+
+# Normalisation de la récompense (VecNormalize) : la récompense normalisée est coupée à
+# ± REWARD_CLIP (valeur par défaut de Stable-Baselines3, écrite ici pour être déclarée).
+REWARD_CLIP = 10.0
+VECNORMALIZE_FILE = "vecnormalize.pkl"
 
 
 def train_ppo(
@@ -38,6 +44,8 @@ def train_ppo(
     learning_rate: float | None = None,
     ent_coef: float | None = None,
     n_envs: int | None = None,
+    gamma: float | None = None,
+    normalize_reward: bool | None = None,
     progress_bar: bool = True,
 ) -> PPO:
     """Entraîne un agent PPO et l'enregistre dans ``output_dir``.
@@ -45,11 +53,18 @@ def train_ppo(
     Pour un espace d'actions discret, la politique produit des logits passés
     dans une Softmax. Avec une même graine, l'entraînement est déterministe.
     Hyperparamètres lus dans ``configs/ppo_hyperparameters.yaml`` (T28) ;
-    ``learning_rate``, ``ent_coef`` et ``n_envs``, s'ils sont donnés, remplacent ceux du
-    fichier (balayage de T25 bis ; environnements parallèles de T29). Les valeurs utilisées sont
-    écrites dans ``metadata.json``.
+    ``learning_rate``, ``ent_coef``, ``n_envs``, ``gamma`` et ``normalize_reward``, s'ils sont
+    donnés, remplacent ceux du fichier (balayage de T25 bis ; environnements parallèles de T29 ;
+    piste 2 d'amélioration des agents). Les valeurs utilisées sont écrites dans ``metadata.json``.
+
+    ``normalize_reward`` : la récompense est divisée, pendant l'entraînement seulement, par
+    l'écart-type courant du retour actualisé (``VecNormalize``), puis coupée à
+    ± ``REWARD_CLIP``. Les KPIs et ``Monitor`` gardent la récompense brute, et la politique
+    n'en dépend pas à l'évaluation. Les statistiques de normalisation sont enregistrées à
+    côté du modèle (``vecnormalize.pkl``) pour pouvoir reprendre l'entraînement.
     """
-    params = hyperparameters("PPO", learning_rate=learning_rate, ent_coef=ent_coef, n_envs=n_envs)
+    params = hyperparameters("PPO", learning_rate=learning_rate, ent_coef=ent_coef, n_envs=n_envs,
+                             gamma=gamma, normalize_reward=normalize_reward)
     out_path = Path(output_dir)
     ensure_new_model(out_path / "ppo_mine_agent", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -57,12 +72,16 @@ def train_ppo(
     # n_envs environnements en parallèle (T29) : n_envs = 1 redonne exactement le modèle
     # d'avant T29 ; au-delà, la collecte change, donc le modèle aussi (voir la config).
     n_envs = params.pop("n_envs")
+    normalize = params.pop("normalize_reward")
     env = make_training_vec_env(
         seed, n_envs,
         truck_count=truck_count, shovel_count=shovel_count, dump_count=dump_count,
         episode_minutes=episode_minutes, breakdown_probability=breakdown_probability,
         reward_weights=reward_weights,
     )
+    if normalize:
+        env = VecNormalize(env, norm_obs=False, norm_reward=True, gamma=params["gamma"],
+                           clip_reward=REWARD_CLIP)
 
     model = PPO(
         policy="MlpPolicy",
@@ -98,6 +117,8 @@ def train_ppo(
 
     model_path = out_path / "ppo_mine_agent"
     model.save(str(model_path))
+    if normalize:
+        env.save(str(out_path / VECNORMALIZE_FILE))
     write_metadata(out_path, build_metadata(
         "PPO",
         EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
@@ -105,7 +126,9 @@ def train_ppo(
         observation_size=env.observation_space.shape[0],
         training_time_s=time.perf_counter() - start,
         seed=seed,
-        training={"total_timesteps": total_timesteps, "n_envs": n_envs, **params},
+        training={"total_timesteps": total_timesteps, "n_envs": n_envs,
+                  "normalize_reward": normalize,
+                  **({"reward_clip": REWARD_CLIP} if normalize else {}), **params},
     ))
     print(f"Modèle sauvegardé : {model_path}")
 
