@@ -1,41 +1,54 @@
-"""Benchmark comparatif complet.
+"""Benchmark : 8 politiques × scénarios × 30 graines d'évaluation.
 
-Exécute toutes les méthodes (heuristiques + RL classiques + Deep RL)
-sur tous les scénarios avec plusieurs seeds pour produire les données
-du Chapitre 6.
-
-Protocole expérimental (Section 5.4 du mémoire) :
-- Mêmes scénarios pour toutes les méthodes
-- 30 réplications par scénario (seeds 42..71)
-- KPIs calculés de la même manière
-- Résultats sauvegardés en CSV reproductible
-
-Méthodes comparées (Section 4.7.1 du mémoire) :
 - Heuristiques : FIFO, Fixed, Nearest, ShortestPath
-- RL classiques : Q-Learning, SARSA
-- Deep RL : DQN, PPO
+- RL tabulaire : Q-Learning, SARSA
+- RL profond : DQN, PPO
+
+Les agents sont chargés depuis ``output_dir`` s'ils existent, sinon entraînés : un
+agent par (algorithme, régime d'entraînement, graine d'entraînement de
+``seeds.TRAIN_SEEDS``), jamais sur une graine d'évaluation (T26). En régime perturbé,
+les agents spécialisés et les agents nominaux transférés sont évalués (T27, colonne
+``mode``). Chaque lancement écrit ses résultats dans un nouveau fichier
+``benchmark_<AAAAMMJJ_HHMMSS>.csv`` ; un doublon (scénario, politique, mode, graine
+d'entraînement, graine d'évaluation) lève ``ValueError`` (voir ``write_results``).
 """
 
 from __future__ import annotations
 
+import argparse
+from collections.abc import Sequence
+from concurrent.futures import ProcessPoolExecutor
 import csv
-import time
+from dataclasses import dataclass
+import datetime as dt
 from pathlib import Path
+import time
 
-from stable_baselines3 import DQN, PPO
-
-from memoire_master_rl_logistique.baselines.base import BaselinePolicy
-from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
-from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
-from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
-from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
+from memoire_master_rl_logistique.config import snapshot_configs
 from memoire_master_rl_logistique.env.mine_env import MineEnv
-from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS, Scenario
+from memoire_master_rl_logistique.experiments.policies import (
+    HEURISTICS,
+    PolicyFn,
+    agent_policy_fn,
+    heuristic_policies,
+    make_env,
+)
+from memoire_master_rl_logistique.experiments.scenarios import (
+    MAIN_SCENARIOS,
+    SCENARIOS,
+    Scenario,
+    evaluation_mode,
+    training_regimes,
+)
+from memoire_master_rl_logistique.rl.model_loading import load_model, model_file
+from memoire_master_rl_logistique.rl.model_metadata import EnvConfig
+from memoire_master_rl_logistique.rl.model_paths import model_dir
 from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
-from memoire_master_rl_logistique.rl.train_q_learning import QLearningPolicy, train_q_learning
-from memoire_master_rl_logistique.rl.train_sarsa import SarsaPolicy, train_sarsa
-from memoire_master_rl_logistique.simulation.kpi import compute_kpis
+from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
+from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
+from memoire_master_rl_logistique.simulation.kpi import fleet_kpis
 
 
 def run_single_episode(
@@ -45,19 +58,30 @@ def run_single_episode(
     policy_name: str = "",
     debug_actions: bool = False,
 ) -> dict[str, float]:
-    """Lance un épisode et retourne les KPIs."""
+    """Lance un épisode et retourne les KPIs.
+
+    Deux durées sont mesurées séparément (T9, m20) :
+    - ``decision_time_ms`` : l'appel de la politique seul (observation déjà construite) ;
+    - ``obs_time_ms`` : la construction de l'observation par l'environnement.
+    La latence complète d'une décision est leur somme.
+    """
+    tabular_agent = getattr(policy_fn, "tabular_agent", None)
+    if tabular_agent is not None:
+        tabular_agent.reset_coverage()
     obs, info = env.reset(seed=seed)
     total_reward = 0.0
     actions_taken = []
-    inference_times_ms: list[float] = []
+    decision_times_ms: list[float] = []
+    obs_times_ms: list[float] = [env.last_obs_time_ms]
 
     while True:
         t0 = time.perf_counter()
         action = policy_fn(obs, info, env)
-        inference_times_ms.append((time.perf_counter() - t0) * 1_000)
+        decision_times_ms.append((time.perf_counter() - t0) * 1_000)
         if debug_actions and len(actions_taken) < 10:  # Log first 10 actions
             actions_taken.append(action)
         obs, reward, terminated, truncated, info = env.step(action)
+        obs_times_ms.append(env.last_obs_time_ms)
         total_reward += reward
         if terminated or truncated:
             break
@@ -65,27 +89,20 @@ def run_single_episode(
     if debug_actions and actions_taken:
         print(f"    [{policy_name}] First 10 actions: {actions_taken}")
 
-    total_tonnage = sum(t.total_tonnage_t for t in env.trucks)
-    total_wait = sum(t.total_wait_min for t in env.trucks)
-    total_active = sum(t.total_active_min for t in env.trucks)
-    total_fuel = sum(t.total_fuel_l for t in env.trucks)
-
-    total_cycles = sum(t.cycles_completed for t in env.trucks)
-
-    kpis = compute_kpis(
-        episode_minutes=env.episode_minutes,
-        truck_count=env.truck_count,
-        total_tonnage_t=total_tonnage,
-        total_wait_min=total_wait,
-        total_active_min=total_active,
-        total_fuel_l=total_fuel,
-        total_cycles=total_cycles,
-    )
+    kpis = fleet_kpis(env.trucks, env.shovels, env.episode_minutes)
     kpis["total_reward"] = total_reward
-    kpis["inference_time_ms_mean"] = (
-        sum(inference_times_ms) / len(inference_times_ms) if inference_times_ms else 0.0
-    )
-    kpis["inference_time_ms_max"] = max(inference_times_ms) if inference_times_ms else 0.0
+    # Décomposition de la récompense cumulée (T25) : reward_production + … = total_reward.
+    for name, value in info["episode_reward_terms"].items():
+        kpis[f"reward_{name}"] = value
+    # Décisions et part d'ATTENDRE (T19), comptées par l'environnement.
+    kpis["decisions"] = float(info["decisions"])
+    kpis["wait_actions"] = float(info["wait_actions"])
+    kpis["wait_share_pct"] = 100.0 * info["wait_actions"] / max(info["decisions"], 1)
+    if tabular_agent is not None:  # Q-Learning, SARSA : états connus et actions par défaut (T20)
+        kpis.update(tabular_agent.coverage())
+    for name, times in (("decision_time_ms", decision_times_ms), ("obs_time_ms", obs_times_ms)):
+        kpis[f"{name}_mean"] = sum(times) / len(times) if times else 0.0
+        kpis[f"{name}_max"] = max(times) if times else 0.0
     return kpis
 
 
@@ -93,259 +110,271 @@ def run_benchmark(
     scenario: Scenario,
     output_dir: Path,
     train_ppo_flag: bool = True,
-    model_scenario: str | None = None,
+    model_scenarios: Sequence[str] | None = None,
+    allow_legacy_models: bool = False,
+    train_seeds: Sequence[int | None] = TRAIN_SEEDS,
+    n_workers: int = 1,
 ) -> list[dict]:
     """Exécute le benchmark pour un scénario donné.
 
-    model_scenario : nom du scénario dont les modèles entraînés sont réutilisés.
-        Si None, utilise scenario.name (comportement normal).
-        Pour les scénarios de généralisation ("unseen_*"), passer "nominal" afin
-        d'évaluer des modèles non spécialisés sur des conditions nouvelles.
-    """
-    results = []
-    model_key = model_scenario if model_scenario is not None else scenario.name
+    n_workers : nombre de processus pour les épisodes d'évaluation (T29). Les résultats
+        sont identiques graine par graine quel que soit ce nombre ; seules les durées
+        mesurées (``decision_time_ms``, ``episode_time_s``) changent. Pour mesurer la
+        latence, garder 1 (voir ``experiments/timing``).
 
-    # Créer un environnement temporaire pour initialiser les politiques
-    temp_env = MineEnv(
+    model_scenarios : régimes d'entraînement des agents évalués (T27). Par défaut
+        ``training_regimes(scenario.name)`` : en régime perturbé, les agents spécialisés
+        et les agents nominaux transférés ; pour un scénario non vu, les agents nominaux.
+        Colonne ``mode`` du CSV : « spécialisé » ou « transféré » (vide pour les
+        heuristiques, évaluées une seule fois).
+
+    train_seeds : graines d'entraînement (T26) : un modèle par algorithme et par graine,
+        évalué sur toutes les graines d'évaluation ; colonne ``train_seed`` du CSV.
+        ``None`` désigne un modèle d'avant T26 (dossier sans suffixe, ex. modèles v1) :
+        il est relu, jamais entraîné.
+
+    Avant de réutiliser un modèle déjà entraîné, ses métadonnées sont comparées à la
+    configuration de son régime d'entraînement : un modèle périmé lève
+    ``ModelCompatibilityError``. ``allow_legacy_models`` permet de réévaluer, en
+    connaissance de cause, des modèles antérieurs à T8 (sans ``metadata.json``).
+    """
+    if model_scenarios is None:
+        model_scenarios = training_regimes(scenario.name)
+
+    # Heuristiques : même construction que l'analyse du comportement (experiments.policies).
+    specs = [PolicySpec(name) for name in HEURISTICS]
+
+    # Agents : un modèle par (régime d'entraînement, graine, algorithme), entraîné s'il manque.
+    algorithms = ("Q-Learning", "SARSA") + (("DQN", "PPO") if train_ppo_flag else ())
+    for regime in model_scenarios:
+        training_scenario = SCENARIOS.get(regime, scenario)
+        mode = evaluation_mode(scenario.name, regime)
+        for train_seed in train_seeds:
+            for algorithm in algorithms:
+                mdir = model_dir(output_dir, algorithm, regime, train_seed)
+                if not model_file(mdir, algorithm).exists():
+                    if train_seed is None:
+                        raise FileNotFoundError(f"Modèle d'avant T26 introuvable : {mdir}")
+                    print(f"  Entraînement {algorithm} ({regime}, graine {train_seed})...")
+                    _train(algorithm, training_scenario, train_seed, mdir)
+                specs.append(PolicySpec(
+                    algorithm, mode, train_seed, str(mdir),
+                    model_file(mdir, algorithm).stat().st_mtime_ns,
+                    EnvConfig.from_scenario(training_scenario), allow_legacy_models,
+                ))
+
+    # Chargement de chaque modèle avant de lancer les épisodes : un modèle incompatible
+    # arrête tout de suite, et non au milieu d'un calcul parallèle.
+    for spec in specs:
+        _policy_fn(spec, scenario)
+
+    tasks = [(scenario, spec, seed) for spec in specs for seed in scenario.seeds]
+    start = time.perf_counter()
+    results = _run_tasks(tasks, n_workers)
+    for row in results:
+        print(
+            f"  [{row['scenario']}] {row['policy']} {row['mode'] or ''} "
+            f"entraînement={row['train_seed']} seed={row['seed']}: "
+            f"prod={row['productivity_tph']:.1f} t/h, "
+            f"file={row['queue_wait_min_per_truck']:.1f} min, "
+            f"fuel={row['specific_fuel_l_per_ton']:.4f} L/t"
+        )
+    print(f"  [{scenario.name}] {len(tasks)} épisodes évalués en "
+          f"{time.perf_counter() - start:.1f} s ({n_workers} processus)")
+    return results
+
+
+@dataclass(frozen=True)
+class PolicySpec:
+    """Ce qu'il faut pour reconstruire une politique dans un autre processus (T29).
+
+    Une fonction ``policy_fn`` (fermeture sur un modèle chargé) ne se transmet pas d'un
+    processus à l'autre ; sa description, si. ``model_dir`` est vide pour une heuristique.
+    ``model_mtime_ns`` distingue deux versions d'un même fichier de modèle (cache).
+    """
+
+    name: str
+    mode: str | None = None
+    train_seed: int | None = None
+    model_dir: str | None = None
+    model_mtime_ns: int | None = None
+    trained_on: EnvConfig | None = None
+    allow_legacy: bool = False
+
+
+# Politiques déjà construites dans ce processus : chaque processus charge un modèle une
+# seule fois, quel que soit le nombre d'épisodes qu'il évalue.
+_POLICY_CACHE: dict[tuple[PolicySpec, str], PolicyFn] = {}
+
+
+def _policy_fn(spec: PolicySpec, scenario: Scenario) -> PolicyFn:
+    key = (spec, repr(scenario))
+    if key not in _POLICY_CACHE:
+        if spec.model_dir is None:
+            _POLICY_CACHE[key] = heuristic_policies(scenario)[spec.name]
+        else:
+            model = load_model(Path(spec.model_dir), spec.name, make_env(scenario),
+                               trained_on=spec.trained_on, allow_legacy=spec.allow_legacy)
+            _POLICY_CACHE[key] = agent_policy_fn(model, spec.name)
+    return _POLICY_CACHE[key]
+
+
+def _evaluate(task: tuple[Scenario, PolicySpec, int]) -> dict:
+    """Un épisode (politique, graine d'évaluation) : une ligne du CSV.
+
+    Sans effet de bord, donc identique quel que soit le processus qui l'exécute.
+    """
+    scenario, spec, seed = task
+    start = time.perf_counter()
+    kpis = run_single_episode(make_env(scenario), _policy_fn(spec, scenario), seed, spec.name)
+    return {
+        "scenario": scenario.name,
+        "policy": spec.name,
+        "mode": spec.mode,  # None pour les heuristiques (rien à entraîner ni transférer)
+        "train_seed": spec.train_seed,
+        "seed": seed,
+        **kpis,
+        # Durée réelle de l'épisode : varie d'un lancement à l'autre (colonne dynamique).
+        "episode_time_s": time.perf_counter() - start,
+    }
+
+
+def _run_tasks(tasks: list[tuple[Scenario, PolicySpec, int]], n_workers: int) -> list[dict]:
+    """Évalue les épisodes, en séquence ou en parallèle ; l'ordre des lignes est conservé.
+
+    Chaque épisode ne dépend que de sa politique et de sa graine (flux aléatoires propres,
+    T13 ; politiques sans état d'un épisode à l'autre) : le parallélisme ne change aucun
+    résultat, seulement les durées mesurées (processus concurrents).
+    """
+    if n_workers < 1:
+        raise ValueError(f"n_workers doit être ≥ 1 : {n_workers}")
+    if n_workers == 1:
+        return [_evaluate(task) for task in tasks]
+    # Paquets de plusieurs épisodes d'une même politique : moins de chargements de modèle.
+    chunksize = max(1, len(tasks) // (4 * n_workers))
+    with ProcessPoolExecutor(max_workers=n_workers) as pool:
+        return list(pool.map(_evaluate, tasks, chunksize=chunksize))
+
+
+def _train(algorithm: str, scenario: Scenario, train_seed: int, output_dir: Path) -> None:
+    """Entraîne un agent : régime et budget du scénario, hyperparamètres de ``configs/``."""
+    env_kwargs = dict(
+        seed=train_seed,
         truck_count=scenario.truck_count,
         shovel_count=scenario.shovel_count,
         dump_count=scenario.dump_count,
         episode_minutes=scenario.episode_minutes,
         breakdown_probability=scenario.breakdown_probability,
         reward_weights=scenario.reward_weights,
+        output_dir=str(output_dir),
     )
-    temp_env.reset(seed=scenario.seeds[0])
-
-    # Initialiser les politiques heuristiques (créées une seule fois)
-    fixed_policy_obj = FixedAssignmentPolicy(
-        num_shovels=scenario.shovel_count,
-        num_dumps=scenario.dump_count,
-    )
-
-    fifo_policy_obj = FIFOPolicy(
-        num_shovels=scenario.shovel_count,
-        num_dumps=scenario.dump_count,
-    )
-
-    nearest_policy_obj = NearestShovelPolicy(
-        graph=temp_env.graph,
-        shovel_node_ids=[s.node_id for s in temp_env.shovels],
-        dump_node_ids=[d.node_id for d in temp_env.dumps],
-    )
-
-    shortest_path_policy_obj = ShortestPathPolicy(
-        graph=temp_env.graph,
-        shovel_node_ids=[s.node_id for s in temp_env.shovels],
-        dump_node_ids=[d.node_id for d in temp_env.dumps],
-    )
-
-    def _make_policy_fn(policy_obj: BaselinePolicy, needs_graph_sync: bool = False):
-        """Adapte une BaselinePolicy à la signature policy_fn(obs, info, env)."""
-        def policy_fn(obs, info, env):
-            if needs_graph_sync:
-                policy_obj.graph = env.graph
-            return policy_obj.predict(
-                obs,
-                info,
-                truck_location=env.truck_locations[env.current_truck_idx],
-            )
-        return policy_fn
-
-    policies = {
-        "FIFO": _make_policy_fn(fifo_policy_obj),
-        "Fixed": _make_policy_fn(fixed_policy_obj),
-        "Nearest": _make_policy_fn(nearest_policy_obj, needs_graph_sync=True),
-        "ShortestPath": _make_policy_fn(shortest_path_policy_obj, needs_graph_sync=True),
-    }
-
-    # --- Q-Learning (Section 4.4.1) ---
-    ql_dir = output_dir / f"q_learning_{model_key}"
-    ql_path = ql_dir / "q_table.pkl"
-
-    if ql_path.exists():
-        print(f"  Chargement Q-Learning existant: {ql_path}")
-        ql_agent = QLearningPolicy.load(ql_path)
+    # Hyperparamètres : configs/*_hyperparameters.yaml, lus par chaque entraîneur (T28).
+    if algorithm in ("Q-Learning", "SARSA"):
+        trainer = train_q_learning if algorithm == "Q-Learning" else train_sarsa
+        trainer(**env_kwargs)
     else:
-        print(f"  Entraînement Q-Learning pour '{scenario.name}'...")
-        train_q_learning(
-            n_episodes=30_000,
-            alpha=0.2,
-            n_bins=8,
-            seed=scenario.seeds[0],
-            truck_count=scenario.truck_count,
-            shovel_count=scenario.shovel_count,
-            dump_count=scenario.dump_count,
-            episode_minutes=scenario.episode_minutes,
-            breakdown_probability=scenario.breakdown_probability,
-            reward_weights=scenario.reward_weights,
-            output_dir=str(ql_dir),
-        )
-        ql_agent = QLearningPolicy.load(ql_path)
+        trainer = train_dqn if algorithm == "DQN" else train_ppo
+        trainer(total_timesteps=scenario.total_timesteps, **env_kwargs)
 
-    def q_learning_policy(obs, info, env, _agent=ql_agent):
-        return _agent.predict(obs)
 
-    policies["Q-Learning"] = q_learning_policy
+def write_results(
+        rows: list[dict],
+        output_dir: Path,
+        run_id: str | None = None
+) -> Path:
+    """Écrit les résultats d'une exécution dans un nouveau fichier daté. Renvoie son chemin."""
 
-    # --- SARSA (Section 4.4.3) ---
-    sarsa_dir = output_dir / f"sarsa_{model_key}"
-    sarsa_path = sarsa_dir / "sarsa_table.pkl"
+    if not rows:
+        raise ValueError("La liste des résultats est vide.")
 
-    if sarsa_path.exists():
-        print(f"  Chargement SARSA existant: {sarsa_path}")
-        sarsa_agent = SarsaPolicy.load(sarsa_path)
-    else:
-        print(f"  Entraînement SARSA pour '{scenario.name}'...")
-        train_sarsa(
-            n_episodes=30_000,
-            alpha=0.2,
-            n_bins=8,
-            seed=scenario.seeds[0],
-            truck_count=scenario.truck_count,
-            shovel_count=scenario.shovel_count,
-            dump_count=scenario.dump_count,
-            episode_minutes=scenario.episode_minutes,
-            breakdown_probability=scenario.breakdown_probability,
-            reward_weights=scenario.reward_weights,
-            output_dir=str(sarsa_dir),
-        )
-        sarsa_agent = SarsaPolicy.load(sarsa_path)
+    seen = set()
 
-    def sarsa_policy_fn(obs, info, env, _agent=sarsa_agent):
-        return _agent.predict(obs)
-
-    policies["SARSA"] = sarsa_policy_fn
-
-    # --- DQN (Section 4.5.2) ---
-    if train_ppo_flag:
-        dqn_path_scenario = output_dir / f"dqn_{model_key}" / "dqn_mine_agent.zip"
-
-        if dqn_path_scenario.exists():
-            print(f"  Chargement DQN ({model_key}): {dqn_path_scenario}")
-            dqn_model = DQN.load(str(dqn_path_scenario))
+    for row in rows:
+        # (régime, politique, mode, graine d'entraînement, graine d'évaluation) : T26 et
+        # T27 ajoutent graine d'entraînement et mode, absents avant et pour les heuristiques.
+        triplet = (row["scenario"], row["policy"], row.get("mode"), row.get("train_seed"),
+                   row["seed"])
+        if triplet not in seen:
+            seen.add(triplet)
         else:
-            print(f"  Entraînement DQN pour scénario '{model_key}'...")
-            dqn_model = train_dqn(
-                total_timesteps=scenario.total_timesteps,
-                seed=scenario.seeds[0],
-                truck_count=scenario.truck_count,
-                shovel_count=scenario.shovel_count,
-                dump_count=scenario.dump_count,
-                episode_minutes=scenario.episode_minutes,
-                breakdown_probability=scenario.breakdown_probability,
-                reward_weights=scenario.reward_weights,
-                output_dir=str(output_dir / f"dqn_{model_key}"),
-            )
+            raise ValueError(f"Doublon détecté: {triplet}")
 
-        def dqn_policy(obs, info, env, _model=dqn_model):
-            action, _ = _model.predict(obs, deterministic=True)
-            return int(action)
+    if run_id is None:
+        run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        policies["DQN"] = dqn_policy
+    csv_path = output_dir / f"benchmark_{run_id}.csv"
 
-    # --- PPO (Section 4.5.4) ---
-    ppo_model = None
-    if train_ppo_flag:
-        ppo_path_scenario = output_dir / f"ppo_{model_key}" / "ppo_mine_agent.zip"
+    with open(csv_path, "x", newline="", encoding="utf-8") as f:
+        # Union des colonnes, dans l'ordre d'apparition : les agents tabulaires ont des
+        # colonnes (known_state_pct…) que les heuristiques, écrites d'abord, n'ont pas.
+        fieldnames = ["run_id"] + list(dict.fromkeys(k for row in rows for k in row))
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({"run_id": run_id, **row})
 
-        if ppo_path_scenario.exists():
-            print(f"  Chargement PPO ({model_key}): {ppo_path_scenario}")
-            ppo_model = PPO.load(str(ppo_path_scenario))
-        else:
-            print(f"  Entraînement PPO pour scénario '{model_key}'...")
-            ppo_model = train_ppo(
-                total_timesteps=scenario.total_timesteps,
-                seed=scenario.seeds[0],
-                truck_count=scenario.truck_count,
-                shovel_count=scenario.shovel_count,
-                dump_count=scenario.dump_count,
-                episode_minutes=scenario.episode_minutes,
-                breakdown_probability=scenario.breakdown_probability,
-                reward_weights=scenario.reward_weights,
-                output_dir=str(output_dir / f"ppo_{model_key}"),
-            )
-
-        def ppo_policy(obs, info, env, _model=ppo_model):
-            action, _ = _model.predict(obs, deterministic=True)
-            return int(action)
-
-        policies["PPO"] = ppo_policy
-
-    for policy_name, policy_fn in policies.items():
-        for seed in scenario.seeds:
-            env = MineEnv(
-                truck_count=scenario.truck_count,
-                shovel_count=scenario.shovel_count,
-                dump_count=scenario.dump_count,
-                episode_minutes=scenario.episode_minutes,
-                breakdown_probability=scenario.breakdown_probability,
-                reward_weights=scenario.reward_weights,
-            )
-            # Debug actions pour DQN, Nearest, ShortestPath (première seed seulement)
-            debug = (policy_name in ["DQN", "Nearest", "ShortestPath"] and seed == scenario.seeds[0])
-            kpis = run_single_episode(env, policy_fn, seed, policy_name, debug)
-            row = {
-                "scenario": scenario.name,
-                "policy": policy_name,
-                "seed": seed,
-                **kpis,
-            }
-            results.append(row)
-            print(
-                f"  [{scenario.name}] {policy_name} seed={seed}: "
-                f"prod={kpis['productivity_tph']:.1f} t/h, "
-                f"wait={kpis['avg_wait_min_per_truck']:.1f} min, "
-                f"fuel={kpis['specific_fuel_l_per_ton']:.4f} L/t"
-            )
-
-    return results
-
+    return csv_path
 
 def run_all_benchmarks(
     output_dir: str = "data/results",
     train_ppo_flag: bool = True,
-    scenario_names: list[str] | None = None,
-) -> None:
-    """Lance les benchmarks sur tous les scénarios."""
+    scenario_names: Sequence[str] | None = None,
+    allow_legacy_models: bool = False,
+    train_seeds: Sequence[int] = TRAIN_SEEDS,
+    run_id: str | None = None,
+    n_workers: int = 1,
+) -> Path:
+    """Lance les benchmarks sur les scénarios demandés (tous si ``None``) et renvoie le CSV.
+
+    La configuration utilisée est archivée **avant** le calcul dans
+    ``<output_dir>/configs_<run_id>/`` (T28) : même un lancement interrompu garde la
+    trace de ses réglages, et ``MINE_RL_CONFIG_DIR`` permet de le rejouer à l'identique.
+    """
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
+    if run_id is None:
+        run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    print(f"Configuration archivée : {snapshot_configs(out_path / f'configs_{run_id}')}")
 
-    scenarios_to_run = SCENARIOS
-    if scenario_names is not None:
-        scenarios_to_run = {
-            k: v for k, v in SCENARIOS.items() if k in scenario_names
-        }
+    unknown = set(scenario_names or ()) - set(SCENARIOS)
+    if unknown:
+        raise ValueError(f"Scénarios inconnus : {sorted(unknown)}")
+    names = list(SCENARIOS) if scenario_names is None else list(scenario_names)
 
     all_results: list[dict] = []
-
-    for name, scenario in scenarios_to_run.items():
+    for name in names:
+        scenario = SCENARIOS[name]
         print(f"\n{'='*60}")
         print(f"Scénario: {name} — {scenario.description}")
         print(f"{'='*60}")
-        # Scénarios "non vus" : réutiliser les modèles nominal (test de généralisation)
-        model_src = "nominal" if name.startswith("unseen_") else None
-        results = run_benchmark(scenario, out_path, train_ppo_flag, model_scenario=model_src)
-        all_results.extend(results)
+        # Agents spécialisés et/ou nominaux transférés : voir scenarios.training_regimes (T27).
+        all_results.extend(run_benchmark(
+            scenario, out_path, train_ppo_flag,
+            allow_legacy_models=allow_legacy_models, train_seeds=train_seeds,
+            n_workers=n_workers,
+        ))
 
-    csv_path = out_path / "benchmark_results.csv"
-    if all_results:
-        fieldnames = list(all_results[0].keys())
-        write_header = not csv_path.exists()
-        with csv_path.open("a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if write_header:
-                writer.writeheader()
-            writer.writerows(all_results)
-        print(f"\nRésultats sauvegardés : {csv_path}  ({len(all_results)} nouvelles lignes)")
+    csv_path = write_results(all_results, out_path, run_id)
+    print(f"\nRésultats sauvegardés : {csv_path}  ({len(all_results)} nouvelles lignes)")
+    return csv_path
 
 
-def main() -> None:
-    """Point d'entrée pour le benchmark complet."""
-    run_all_benchmarks(
-        output_dir="data/results",
-        train_ppo_flag=True,
-        scenario_names=["nominal", "high_load", "high_breakdown"],
-    )
+def main(argv: Sequence[str] | None = None) -> Path:
+    """Campagne en une commande, avec la configuration de ``configs/`` (ou ``MINE_RL_CONFIG_DIR``).
+
+    python -m memoire_master_rl_logistique.experiments.run_benchmark DOSSIER [--scenarios ...]
+    """
+    parser = argparse.ArgumentParser(description="Benchmark des politiques de dispatching.")
+    parser.add_argument("output_dir", type=Path, help="dossier des modèles et des résultats")
+    parser.add_argument("--scenarios", nargs="+", default=MAIN_SCENARIOS, choices=list(SCENARIOS),
+                        help="scénarios à évaluer (défaut : main_scenarios de la configuration)")
+    parser.add_argument("--allow-legacy-models", action="store_true")
+    parser.add_argument("--workers", type=int, default=1,
+                        help="processus d'évaluation (résultats identiques, durées non comparables)")
+    args = parser.parse_args(argv)
+    return run_all_benchmarks(str(args.output_dir), scenario_names=args.scenarios,
+                              allow_legacy_models=args.allow_legacy_models,
+                              n_workers=args.workers)
 
 
 if __name__ == "__main__":

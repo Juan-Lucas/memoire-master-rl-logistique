@@ -1,14 +1,8 @@
-"""Modèle de graphe routier minier G = (V, E) basé sur NetworkX.
+"""Graphe routier de la mine G = (V, E), construit avec NetworkX.
 
-Le réseau routier est modélisé comme un graphe orienté pondéré
-(Section 3.2 du mémoire). Chaque arête porte la distance, la pente
-et l'état de surface, permettant de calculer les temps de trajet
-stochastiques (Eq. 3.2).
-
-Utilise NetworkX pour :
-- Algorithme de plus court chemin (Dijkstra) — Section 3.2
-- Calcul de distances pondérées
-- Visualisation du réseau (Section 3.2, figure du graphe)
+Graphe orienté : chaque arête porte la distance, la pente et l'état de la
+piste, qui déterminent le temps de trajet (log-normal) et la consommation.
+Les plus courts chemins sont calculés par Dijkstra sur la distance.
 """
 
 from __future__ import annotations
@@ -34,19 +28,16 @@ class RoadEdge:
 
 
 class RoadGraph:
-    """Graphe orienté pondéré du réseau routier minier (NetworkX).
+    """Graphe orienté pondéré du réseau routier (enveloppe un ``nx.DiGraph``).
 
-    Encapsule un ``nx.DiGraph`` tout en conservant l'API existante
-    pour les modules consommateurs (mine_env, events, baselines).
+    Les arêtes sont aussi gardées dans un cache de ``RoadEdge`` : ce sont ces
+    objets, et non les attributs NetworkX, que ``mine_env`` modifie quand une
+    piste se dégrade.
     """
 
     def __init__(self) -> None:
         self._g: nx.DiGraph = nx.DiGraph()
         self._edge_cache: dict[tuple[str, str], RoadEdge] = {}
-
-    # ------------------------------------------------------------------
-    # Propriétés compatibles avec l'ancienne API
-    # ------------------------------------------------------------------
 
     @property
     def nodes(self) -> nx.classes.reportviews.NodeView:
@@ -62,10 +53,6 @@ class RoadGraph:
     def nx_graph(self) -> nx.DiGraph:
         """Accès direct au DiGraph NetworkX (pour visualisation)."""
         return self._g
-
-    # ------------------------------------------------------------------
-    # Construction
-    # ------------------------------------------------------------------
 
     def add_node(self, node_id: str, node_type: str) -> None:
         """Ajoute un nœud (lève ValueError si doublon)."""
@@ -103,10 +90,6 @@ class RoadGraph:
         )
         self._edge_cache[(src, dst)] = edge
 
-    # ------------------------------------------------------------------
-    # Accès aux arêtes
-    # ------------------------------------------------------------------
-
     def get_edge(self, src: str, dst: str) -> RoadEdge:
         """Récupère l'arête ou lève ValueError."""
         edge = self._edge_cache.get((src, dst))
@@ -115,14 +98,10 @@ class RoadGraph:
             raise ValueError(msg)
         return edge
 
-    # ------------------------------------------------------------------
-    # Plus court chemin (Dijkstra) — Section 3.2
-    # ------------------------------------------------------------------
-
     def shortest_path(
         self, src: str, dst: str, weight: str = "distance_km",
     ) -> list[str]:
-        """Plus court chemin via Dijkstra (Section 3.2 du mémoire).
+        """Plus court chemin via Dijkstra.
 
         Parameters
         ----------
@@ -153,17 +132,12 @@ class RoadGraph:
         except nx.NetworkXNoPath:
             return float("inf")
 
-    # ------------------------------------------------------------------
-    # Temps de trajet stochastique (Eq. 3.2)
-    # ------------------------------------------------------------------
-
     def mean_travel_time_minutes(self, src: str, dst: str, loaded: bool) -> float:
-        """Temps de trajet moyen déterministe T̄_ij (Eq. 3.2 sans bruit η).
+        """Temps de trajet moyen (min), sans aléa.
 
-        Tient compte de la vitesse de base, de la pente et de l'état
-        de la route. Utilisé à la fois pour échantillonner les trajets
-        réels (avec bruit log-normal) et pour estimer le coût d'un
-        cycle dans les politiques de type ShortestPath (Eq. 3.1).
+        Vitesse de base 26 km/h chargé, 32 km/h à vide, réduite par la pente
+        et l'état de la piste, avec un plancher de 5 km/h. Sert de moyenne au
+        tirage aléatoire et d'estimation de coût pour ShortestPathPolicy.
         """
         edge = self.get_edge(src, dst)
         base_speed_kmh = 26.0 if loaded else 32.0
@@ -173,13 +147,21 @@ class RoadGraph:
         mean_speed_kmh = max(5.0, base_speed_kmh * slope_factor * state_factor)
         return (edge.distance_km / mean_speed_kmh) * 60.0
 
+    def mean_route_time_minutes(self, src: str, dst: str, loaded: bool) -> float:
+        """Temps moyen (min) d'un trajet complet, le long du plus court chemin en distance,
+        celui que suit le simulateur (``MineEnv._find_route``). 0 si ``src == dst``."""
+        path = self.shortest_path(src, dst)
+        return sum(
+            self.mean_travel_time_minutes(a, b, loaded) for a, b in zip(path, path[1:])
+        )
+
     def sample_travel_time_minutes(
         self, src: str, dst: str, loaded: bool, rng: Random,
     ) -> float:
-        """Échantillonne un temps de trajet log-normal (Eq. 3.2).
+        """Tire un temps de trajet (min) selon une loi log-normale.
 
-        T_ij(t) = T̄_ij + η_ij(t), implémenté via une distribution
-        log-normale centrée sur le temps moyen déterministe.
+        mu est choisi pour que l'espérance soit égale au temps moyen ;
+        sigma = 0,12. Minimum 0,2 min.
         """
         mean_time_min = self.mean_travel_time_minutes(src, dst, loaded)
         sigma = 0.12
@@ -191,15 +173,14 @@ def build_mine_graph(
     shovel_count: int = 3,
     dump_count: int = 2,
 ) -> RoadGraph:
-    """Construit un graphe routier minier réaliste et paramétrable.
+    """Construit le graphe de la mine.
 
-    Topologie : yard central → intersection → pelles et dumps,
-    avec arêtes bidirectionnelles. Les distances et pentes sont
-    réalistes (basées sur les données Afrapoli 2019, Mohtasham 2023).
+    Topologie en étoile : parc ↔ intersection ↔ pelles et verses, plus des
+    arêtes directes pelle → verse (chargé) et verse → pelle (à vide).
+    Distances et pentes inspirées d'Afrapoli (2019) et Mohtasham (2023).
     """
     graph = RoadGraph()
 
-    # Nœuds
     graph.add_node("yard", "yard")
     graph.add_node("junction_1", "junction")
 
@@ -209,11 +190,9 @@ def build_mine_graph(
     for i in range(1, dump_count + 1):
         graph.add_node(f"dump_{i}", "dump")
 
-    # Yard ↔ Junction
     graph.add_edge("yard", "junction_1", distance_km=0.8, slope_pct=2.0)
     graph.add_edge("junction_1", "yard", distance_km=0.8, slope_pct=1.0)
 
-    # Junction ↔ Pelles
     shovel_params = [
         (1.5, 4.0),  # (distance_km, slope_pct)
         (1.8, 5.0),
@@ -226,10 +205,9 @@ def build_mine_graph(
         dist, slope = shovel_params[idx]
         node = f"shovel_{i}"
         graph.add_edge("junction_1", node, distance_km=dist, slope_pct=slope)
-        # Pente de retour réduite (descente partielle), plancher à 1.0 (heuristique).
+        # Pente de retour réduite (descente partielle), plancher à 1 %.
         graph.add_edge(node, "junction_1", distance_km=dist, slope_pct=max(1.0, slope - 2.0))
 
-    # Junction ↔ Dumps
     dump_params = [
         (2.8, 6.0),
         (3.2, 8.0),
@@ -240,10 +218,10 @@ def build_mine_graph(
         dist, slope = dump_params[idx]
         node = f"dump_{i}"
         graph.add_edge("junction_1", node, distance_km=dist, slope_pct=slope)
-        # Pente de retour réduite (descente partielle), plancher à 1.0 (heuristique).
+        # Pente de retour réduite (descente partielle), plancher à 1 %.
         graph.add_edge(node, "junction_1", distance_km=dist, slope_pct=max(1.0, slope - 3.0))
 
-    # Pelles → Dumps (trajets chargés directs)
+    # Pelle → verse (chargé) : distance = 0,8 × (somme des deux accès).
     for si in range(1, shovel_count + 1):
         for di in range(1, dump_count + 1):
             s_node = f"shovel_{si}"
@@ -254,7 +232,7 @@ def build_mine_graph(
             slope = (shovel_params[s_idx][1] + dump_params[d_idx][1]) / 2.0
             graph.add_edge(s_node, d_node, distance_km=dist, slope_pct=slope)
 
-    # Dumps → Pelles (retour à vide)
+    # Verse → pelle (à vide).
     for di in range(1, dump_count + 1):
         for si in range(1, shovel_count + 1):
             d_node = f"dump_{di}"

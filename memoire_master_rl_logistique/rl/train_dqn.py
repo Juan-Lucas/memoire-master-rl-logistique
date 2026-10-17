@@ -1,84 +1,82 @@
-"""Entraînement DQN pour le dispatching minier.
+"""Entraînement de l'agent DQN (Stable-Baselines3, MLP [128, 128], ReLU).
 
-Conforme au Chapitre 4, Section 4.5.2 du mémoire :
-- Algorithme : DQN (Deep Q-Network)
-- Bibliothèque : Stable-Baselines3
-- Rôle : Transition du tabulaire vers le Deep RL
-- Architecture : MLP 128×128 avec ReLU (Section 4.5.3)
-
-DQN remplace la Q-table par un réseau de neurones qui approxime
-la fonction Q(s, a). Il sert de modèle intermédiaire entre les
-méthodes tabulaires (Q-Learning, SARSA) et PPO.
+DQN remplace la Q-table par un réseau qui approxime Q(s, a), avec tampon de
+rejeu et réseau cible.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+import time
 
 from stable_baselines3 import DQN
-from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.logger import configure
 
+from memoire_master_rl_logistique.config import hyperparameters
 from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
-from memoire_master_rl_logistique.rl.env_factory import create_env
+from memoire_master_rl_logistique.rl.env_factory import (
+    make_training_vec_env,
+    reseed_training_vec_env,
+)
+from memoire_master_rl_logistique.rl.model_metadata import (
+    EnvConfig,
+    build_metadata,
+    write_metadata,
+)
+from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 
 def train_dqn(
     total_timesteps: int = 2_000_000,
-    seed: int = 42,
+    seed: int = TRAIN_SEEDS[0],
     truck_count: int = 12,
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
     breakdown_probability: float = 0.02,
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
-    output_dir: str = "models/dqn_mine",
+    output_dir: str = str(model_dir(RESULTS_DIR, "DQN", "nominal", TRAIN_SEEDS[0])),
     log_freq: int = 1000,
+    overwrite: bool = False,
+    learning_rate: float | None = None,
+    exploration_fraction: float | None = None,
+    progress_bar: bool = True,
 ) -> DQN:
-    """Entraîne un agent DQN sur l'environnement minier.
+    """Entraîne un agent DQN et l'enregistre dans ``output_dir``.
 
-    Hyperparamètres conformes au Chapitre 4 (Section 4.6.3) :
-    - Learning rate : 0.0003
-    - Gamma : 0.99
-    - Batch size : 64
-    - Buffer size : 200 000
-    - Exploration : ε de 1.0 à 0.02 (fraction 0.3)
-    - Architecture : MLP [128, 128]
+    ε décroît de 1,0 à 0,02 sur les ``exploration_fraction`` premiers pas (30 % par défaut).
+    Hyperparamètres lus dans ``configs/dqn_hyperparameters.yaml`` (T28) ;
+    ``learning_rate`` et ``exploration_fraction``, s'ils sont donnés, remplacent ceux du
+    fichier (balayage de T25 bis). Les valeurs utilisées sont écrites dans ``metadata.json``.
     """
+    params = hyperparameters("DQN", learning_rate=learning_rate,
+                             exploration_fraction=exploration_fraction)
     out_path = Path(output_dir)
+    ensure_new_model(out_path / "dqn_mine_agent", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    env = make_vec_env(
-        lambda: create_env(
-            truck_count=truck_count,
-            shovel_count=shovel_count,
-            dump_count=dump_count,
-            episode_minutes=episode_minutes,
-            seed=seed,
-            breakdown_probability=breakdown_probability,
-            reward_weights=reward_weights,
-        ),
-        n_envs=1,
-        seed=seed,
+    env = make_training_vec_env(
+        seed,
+        truck_count=truck_count, shovel_count=shovel_count, dump_count=dump_count,
+        episode_minutes=episode_minutes, breakdown_probability=breakdown_probability,
+        reward_weights=reward_weights,
     )
 
     model = DQN(
         policy="MlpPolicy",
         env=env,
-        learning_rate=3e-4,
-        gamma=0.99,
-        batch_size=64,
-        buffer_size=200_000,
-        learning_starts=1000,
-        target_update_interval=1000,
-        exploration_fraction=0.3,
-        exploration_initial_eps=1.0,
-        exploration_final_eps=0.02,
-        policy_kwargs={"net_arch": [128, 128]},
+        policy_kwargs={"net_arch": params["net_arch"]},
+        **{k: v for k, v in params.items() if k != "net_arch"},
         verbose=1,
         seed=seed,
-        tensorboard_log=None,  # Désactivé temporairement pour éviter le conflit TensorBoard
+        tensorboard_log=None,  # métriques écrites en CSV dans sb3_logs/
     )
+
+    # Stable-Baselines3 ré-ensemence l'environnement avec la graine du modèle
+    # (set_random_seed → env.seed(seed)) : sans cette ligne, le premier épisode
+    # utiliserait la graine ``seed`` elle-même, et non seed × 10⁶ (T26, vu par test_seeds).
+    reseed_training_vec_env(env, seed)
 
     kpi_callback = KPILoggerCallback(
         log_path=out_path / "training_kpis.csv",
@@ -90,14 +88,24 @@ def train_dqn(
     model.set_logger(new_logger)
 
     print(f"Début de l'entraînement DQN ({total_timesteps} steps)...")
+    start = time.perf_counter()
     model.learn(
         total_timesteps=total_timesteps,
         callback=kpi_callback,
-        progress_bar=True,
+        progress_bar=progress_bar,
     )
 
     model_path = out_path / "dqn_mine_agent"
     model.save(str(model_path))
+    write_metadata(out_path, build_metadata(
+        "DQN",
+        EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
+                  breakdown_probability, reward_weights),
+        observation_size=env.observation_space.shape[0],
+        training_time_s=time.perf_counter() - start,
+        seed=seed,
+        training={"total_timesteps": total_timesteps, **params},
+    ))
     print(f"Modèle DQN sauvegardé : {model_path}")
 
     env.close()
@@ -106,14 +114,8 @@ def train_dqn(
 
 def main() -> None:
     """Point d'entrée pour l'entraînement DQN."""
-    train_dqn(
-        total_timesteps=2_000_000,
-        seed=42,
-        truck_count=12,
-        shovel_count=3,
-        dump_count=2,
-        episode_minutes=480.0,
-    )
+    # Régime nominal ; hyperparamètres de configs/ (T28).
+    train_dqn(seed=TRAIN_SEEDS[0])
 
 
 if __name__ == "__main__":

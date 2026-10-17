@@ -1,14 +1,11 @@
-"""Point d'entrée principal du système de dispatching minier.
+"""Point d'entrée en ligne de commande.
 
-Pipeline complet :
-  1. Simulation DES pour validation du moteur
-  2. Entraînement des agents RL (Section 4.4–4.5)
-  3. Évaluation comparative heuristiques + RL classiques + Deep RL (Section 4.7)
-  4. Génération du rapport statistique (Chapitre 6)
+Tous les modèles sont rangés dans ``data/results/<algo>_<scénario>`` (``rl/model_paths``) :
+un entraînement lancé ici écrit exactement là où le benchmark relit. Sans option, le
+pipeline complet lance le benchmark des trois régimes, qui entraîne les modèles absents.
 
 Usage :
   python -m memoire_master_rl_logistique.main
-  python -m memoire_master_rl_logistique.main --sim-only
   python -m memoire_master_rl_logistique.main --train-only
   python -m memoire_master_rl_logistique.main --train-q-learning
   python -m memoire_master_rl_logistique.main --train-sarsa
@@ -23,12 +20,13 @@ from __future__ import annotations
 import argparse
 
 from memoire_master_rl_logistique.experiments.run_benchmark import run_all_benchmarks
+from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS, SCENARIOS
+from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, model_dir
 from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
-
-# from memoire_master_rl_logistique.simulation.events import build_simulation  # Removed - DES not in thesis
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 
 def run_check_env(
@@ -57,6 +55,23 @@ def run_check_env(
     print(f"  Action      : {env.action_space}")
     print(f"  Camions={truck_count}, Pelles={shovel_count}, Dumps={dump_count}")
 
+def training_dir(algorithm: str, truck_count: int, shovel_count: int, dump_count: int) -> str:
+    """Dossier où ranger un modèle entraîné depuis la ligne de commande.
+
+    Configuration nominale → le dossier relu par le benchmark (``<algo>_nominal``) ;
+    toute autre configuration → un dossier ``<algo>_custom_…`` distinct, pour ne jamais
+    mélanger un modèle hors scénario avec ceux de l'article.
+    """
+    nominal = SCENARIOS["nominal"]
+    if (truck_count, shovel_count, dump_count) == (
+        nominal.truck_count, nominal.shovel_count, nominal.dump_count
+    ):
+        name = "nominal"
+    else:
+        name = f"custom_{truck_count}t_{shovel_count}s_{dump_count}d"
+    return str(model_dir(RESULTS_DIR, algorithm, name, TRAIN_SEEDS[0]))
+
+
 def main() -> None:
     """Point d'entrée CLI."""
     parser = argparse.ArgumentParser(
@@ -64,23 +79,23 @@ def main() -> None:
     )
     parser.add_argument(
         "--train-only", action="store_true",
-        help="Exécuter uniquement l'entraînement PPO",
+        help="Entraîner uniquement l'agent PPO",
     )
     parser.add_argument(
         "--train-q-learning", action="store_true",
-        help="Entraîner l'agent Q-Learning tabulaire (Section 4.4.1)",
+        help="Entraîner l'agent Q-Learning tabulaire",
     )
     parser.add_argument(
         "--train-sarsa", action="store_true",
-        help="Entraîner l'agent SARSA tabulaire (Section 4.4.3)",
+        help="Entraîner l'agent SARSA tabulaire",
     )
     parser.add_argument(
         "--train-dqn", action="store_true",
-        help="Entraîner l'agent DQN (Section 4.5.2)",
+        help="Entraîner l'agent DQN",
     )
     parser.add_argument(
-        "--episodes", type=int, default=30_000,
-        help="Nombre d'épisodes pour Q-Learning/SARSA (défaut: 30000)",
+        "--episodes", type=int, default=None,
+        help="Nombre d'épisodes pour Q-Learning/SARSA (défaut : configs/tabular_hyperparameters.yaml)",
     )
     parser.add_argument(
         "--benchmark-only", action="store_true",
@@ -103,18 +118,34 @@ def main() -> None:
         help="Nombre de dumps (défaut: 2)",
     )
     parser.add_argument(
-        "--timesteps", type=int, default=2_000_000,
-        help="Nombre de steps d'entraînement PPO/DQN (défaut: 2000000)",
+        "--timesteps", type=int, default=SCENARIOS[MAIN_SCENARIOS[0]].total_timesteps,
+        help="Nombre de steps d'entraînement PPO/DQN (défaut : budget du nominal dans configs/)",
+    )
+    parser.add_argument(
+        "--overwrite", action="store_true",
+        help="Entraînement : remplacer un modèle existant",
+    )
+    parser.add_argument(
+        "--allow-legacy-models", action="store_true",
+        help="Benchmark : accepter des modèles sans metadata.json (antérieurs à T8), sans contrôle",
     )
     parser.add_argument(
         "--visualize-graph", action="store_true",
-        help="Générer la figure du réseau routier minier (Section 3.2)",
+        help="Générer la figure du réseau routier minier",
+    )
+    parser.add_argument(
+        "--gamma", type=float, default=None,
+        help="Entraînement PPO : facteur d'actualisation (sinon configs/ppo_hyperparameters.yaml)",
+    )
+    parser.add_argument(
+        "--normalize-reward", action=argparse.BooleanOptionalAction, default=None,
+        help="Entraînement PPO : normaliser la récompense (sinon la configuration)",
     )
 
     args = parser.parse_args()
 
     if args.visualize_graph:
-        from memoire_master_rl_logistique.experiments.visualize_mine_graph import (
+        from memoire_master_rl_logistique.plots.mine_graph import (
             generate_mine_graph_figure,
         )
 
@@ -131,13 +162,17 @@ def main() -> None:
             dump_count=args.dump_count,
         )
         return
-    
+
+    fleet = (args.truck_count, args.shovel_count, args.dump_count)
+
     if args.train_q_learning:
         train_q_learning(
             n_episodes=args.episodes,
             truck_count=args.truck_count,
             shovel_count=args.shovel_count,
             dump_count=args.dump_count,
+            output_dir=training_dir("Q-Learning", *fleet),
+            overwrite=args.overwrite,
         )
         return
 
@@ -147,6 +182,8 @@ def main() -> None:
             truck_count=args.truck_count,
             shovel_count=args.shovel_count,
             dump_count=args.dump_count,
+            output_dir=training_dir("SARSA", *fleet),
+            overwrite=args.overwrite,
         )
         return
 
@@ -156,6 +193,8 @@ def main() -> None:
             truck_count=args.truck_count,
             shovel_count=args.shovel_count,
             dump_count=args.dump_count,
+            output_dir=training_dir("DQN", *fleet),
+            overwrite=args.overwrite,
         )
         return
 
@@ -165,14 +204,19 @@ def main() -> None:
             truck_count=args.truck_count,
             shovel_count=args.shovel_count,
             dump_count=args.dump_count,
+            output_dir=training_dir("PPO", *fleet),
+            overwrite=args.overwrite,
+            gamma=args.gamma,
+            normalize_reward=args.normalize_reward,
         )
         return
 
     if args.benchmark_only:
         run_all_benchmarks(
-            output_dir="data/results",
+            output_dir=str(RESULTS_DIR),
             train_ppo_flag=True,
             scenario_names=None,
+            allow_legacy_models=args.allow_legacy_models,
         )
         return
 
@@ -181,19 +225,12 @@ def main() -> None:
     print("PIPELINE COMPLET — Dispatching minier par RL")
     print("=" * 60)
 
-    # Étape 1 : Entraînement PPO (Modèle final proposé)
-    train_ppo(
-        total_timesteps=args.timesteps,
-        truck_count=args.truck_count,
-        shovel_count=args.shovel_count,
-        dump_count=args.dump_count,
-    )
-
-    # Étape 2 : Benchmark sur TOUS les scénarios du mémoire
+    # Benchmark des trois régimes ; les modèles absents sont entraînés dans le bon dossier.
     run_all_benchmarks(
-        output_dir="data/results",
+        output_dir=str(RESULTS_DIR),
         train_ppo_flag=True,
-        scenario_names=["nominal", "high_load", "high_breakdown"],
+        scenario_names=MAIN_SCENARIOS,
+        allow_legacy_models=args.allow_legacy_models,
     )
 
 

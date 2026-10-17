@@ -1,0 +1,9 @@
+# Hyperparamètres de Q-Learning et SARSA tabulaires, lus par rl/train_q_learning.py
+# et rl/train_sarsa.py (T28). Mêmes valeurs pour les deux algorithmes.
+algorithm: tabular
+n_episodes: 30000
+alpha: 0.2
+gamma: 0.99
+epsilon_start: 1.0
+epsilon_min: 0.01      # ε décroît linéairement de epsilon_start à epsilon_min sur n_episodes
+n_bins: 8              # intervalles de discrétisation des attentes (rl/discretize.py)

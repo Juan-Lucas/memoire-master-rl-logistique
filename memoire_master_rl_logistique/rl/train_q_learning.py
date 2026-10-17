@@ -1,44 +1,48 @@
-"""Entraînement Q-Learning tabulaire pour le dispatching minier.
+"""Entraînement Q-Learning tabulaire (off-policy, ε-greedy à décroissance linéaire).
 
-Conforme au Chapitre 4, Section 4.4.1 du mémoire :
-- Algorithme : Q-Learning (off-policy, tabulaire)
-- Hyperparamètres : Tableau 4.4 du mémoire (Section 4.6.1)
-- Politique : ε-greedy avec décroissance linéaire
-
-L'observation continue est discrétisée en bins pour permettre
-l'utilisation d'une Q-table. Chaque dimension de l'observation
-est divisée en ``n_bins`` intervalles égaux dans [0, 1].
+L'observation est réduite à 6 variables discrètes (voir ``rl/discretize.py``) :
+les 5 attentes aux pelles et aux verses, et la pelle la plus proche.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+import time
 
 import numpy as np
 
+from memoire_master_rl_logistique.config import hyperparameters
 from memoire_master_rl_logistique.rl.discretize import _discretize_obs
+from memoire_master_rl_logistique.rl.model_metadata import (
+    EnvConfig,
+    build_metadata,
+    write_metadata,
+)
+from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
 from memoire_master_rl_logistique.rl.tabular_training import (
     TabularPolicy,
     init_tabular_training,
     save_tabular_artifacts,
 )
+from memoire_master_rl_logistique.seeds import TRAIN_SEEDS, training_episode_seed
 
 
 def train_q_learning(
-    n_episodes: int = 10_000,
-    alpha: float = 0.1,
-    gamma: float = 0.99,
-    epsilon_start: float = 1.0,
-    epsilon_min: float = 0.01,
-    n_bins: int = 8,
-    seed: int = 42,
+    n_episodes: int | None = None,
+    alpha: float | None = None,
+    gamma: float | None = None,
+    epsilon_start: float | None = None,
+    epsilon_min: float | None = None,
+    n_bins: int | None = None,
+    seed: int = TRAIN_SEEDS[0],
     truck_count: int = 12,
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
     breakdown_probability: float = 0.02,
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
-    output_dir: str = "models/q_learning",
+    output_dir: str = str(model_dir(RESULTS_DIR, "Q-Learning", "nominal", TRAIN_SEEDS[0])),
+    overwrite: bool = False,
 ) -> dict[tuple[int, ...], np.ndarray]:
     """Entraîne un agent Q-Learning tabulaire sur l'environnement minier.
 
@@ -46,9 +50,20 @@ def train_q_learning(
     -------
     q_table : dict mapping discretized state -> Q-values array
     """
+    # Hyperparamètres de configs/tabular_hyperparameters.yaml ; un argument donné les remplace (T28).
+    params = hyperparameters(
+        "Q-Learning", n_episodes=n_episodes, alpha=alpha, gamma=gamma,
+        epsilon_start=epsilon_start, epsilon_min=epsilon_min, n_bins=n_bins,
+    )
+    n_episodes, alpha, gamma = params["n_episodes"], params["alpha"], params["gamma"]
+    epsilon_start, epsilon_min, n_bins = (
+        params["epsilon_start"], params["epsilon_min"], params["n_bins"])
+
     out_path = Path(output_dir)
+    ensure_new_model(out_path / "q_table.pkl", overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
 
+    start = time.perf_counter()
     env, q_table, rng, epsilon, epsilon_decay, n_actions = init_tabular_training(
         seed=seed,
         truck_count=truck_count,
@@ -65,11 +80,12 @@ def train_q_learning(
     rewards_per_episode: list[float] = []
     epsilons_per_episode: list[float] = []
     td_errors_per_episode: list[float] = []
+    tonnages_per_episode: list[float] = []  # productivité d'entraînement (T30)
 
     print(f"Début de l'entraînement Q-Learning ({n_episodes} épisodes)...")
 
     for ep in range(n_episodes):
-        obs, _info = env.reset(seed=seed + ep)
+        obs, _info = env.reset(seed=training_episode_seed(seed, ep))  # disjointes de l'évaluation (T26)
         state = _discretize_obs(obs, n_bins, shovel_count, dump_count)
         total_reward = 0.0
         td_errors: list[float] = []
@@ -78,7 +94,7 @@ def train_q_learning(
             if state not in q_table:
                 q_table[state] = np.zeros(n_actions)
 
-            # ε-greedy action selection (Eq. 4.1)
+            # Choix ε-greedy
             if rng.random() < epsilon:
                 action = int(rng.integers(n_actions))
             else:
@@ -91,7 +107,7 @@ def train_q_learning(
             if next_state not in q_table:
                 q_table[next_state] = np.zeros(n_actions)
 
-            # Q-Learning update (off-policy): Eq. 4.1
+            # Mise à jour off-policy : cible r + γ · max_a' Q(s', a')
             best_next = float(np.max(q_table[next_state]))
             td_target = reward + gamma * best_next
             td_error = td_target - q_table[state][action]
@@ -106,6 +122,7 @@ def train_q_learning(
         rewards_per_episode.append(total_reward)
         epsilons_per_episode.append(epsilon)
         td_errors_per_episode.append(float(np.mean(td_errors)))
+        tonnages_per_episode.append(float(_info["total_tonnage_t"]))
         epsilon = max(epsilon_min, epsilon - epsilon_decay)
 
         if (ep + 1) % 1000 == 0 or ep == 0:
@@ -121,7 +138,17 @@ def train_q_learning(
         out_path, "q_table.pkl", "Q-table",
         q_table, n_bins, shovel_count, dump_count,
         rewards_per_episode, epsilons_per_episode, td_errors_per_episode,
+        tonnages_per_episode,
     )
+    write_metadata(out_path, build_metadata(
+        "Q-Learning",
+        EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
+                  breakdown_probability, reward_weights),
+        observation_size=env.observation_space.shape[0],
+        training_time_s=time.perf_counter() - start,
+        seed=seed,
+        training=params,
+    ))
 
     return q_table
 
@@ -132,12 +159,8 @@ class QLearningPolicy(TabularPolicy):
 
 def main() -> None:
     """Point d'entrée pour l'entraînement Q-Learning."""
-    train_q_learning(
-        n_episodes=30_000,
-        alpha=0.2,
-        gamma=0.99,
-        seed=42,
-    )
+    # Régime nominal ; hyperparamètres de configs/ (T28).
+    train_q_learning(seed=TRAIN_SEEDS[0])
 
 
 if __name__ == "__main__":

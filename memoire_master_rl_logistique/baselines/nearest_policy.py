@@ -1,6 +1,6 @@
 """Politique Nearest Shovel (Greedy).
 
-Baseline classique (Section 4.7.1 du mémoire) :
+Heuristique de référence :
 le camion choisit la pelle la plus proche géographiquement,
 puis le dump le plus proche de cette pelle.
 """
@@ -29,7 +29,7 @@ class NearestShovelPolicy:
         self.dump_node_ids = dump_node_ids
 
     def _estimate_distance(self, src: str, dst: str) -> float:
-        """Distance du plus court chemin via Dijkstra (Section 3.2)."""
+        """Distance du plus court chemin (km)."""
         return self.graph.shortest_distance(src, dst)
 
     def predict(

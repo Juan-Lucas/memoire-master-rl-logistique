@@ -19,6 +19,7 @@ requires-python = "==3.11.11"
 dependencies = [
     "networkx>=3.0",
     "matplotlib>=3.7",
+    "pyyaml>=6.0",  # lecture de configs/ (T28)
 ]
 
 

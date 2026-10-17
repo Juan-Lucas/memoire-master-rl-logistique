@@ -5,8 +5,7 @@ Ce package regroupe les sous-modules principaux :
 - `simulation` : entités, modèle de graphe, fonctions liées à la simulation
 - `rl` : algorithmes d'apprentissage (SARSA, Q-Learning, DQN, PPO)
 - `baselines` : heuristiques de référence (FIFO, Fixed, Nearest, ShortestPath)
-- `experiments` : scripts d'évaluation et scénarios expérimentaux
-
-Tous les modules utilisent des docstrings en français conformément
-au style du mémoire pour faciliter la lecture et la reproductibilité.
+- `experiments` : scénarios et lancement des expériences (benchmark, ablation)
+- `analysis` : calculs sur les résultats (statistiques, robustesse), sans figure
+- `plots` : figures de l'article et du mémoire
 """

@@ -1,9 +1,8 @@
 """Composants partagés par les entraînements tabulaires (Q-Learning, SARSA).
 
 Les deux algorithmes partagent l'initialisation de l'environnement et de la
-Q-table ainsi que la sauvegarde des artefacts d'entraînement. Seule la règle
-de mise à jour (Eq. 4.1 pour Q-Learning, Eq. 4.3 pour SARSA) diffère et reste
-implémentée séparément dans train_q_learning.py / train_sarsa.py.
+Q-table ainsi que la sauvegarde des artefacts. Seule la règle de mise à jour
+diffère (train_q_learning.py, train_sarsa.py).
 """
 
 from __future__ import annotations
@@ -14,16 +13,24 @@ import pickle
 import numpy as np
 
 from memoire_master_rl_logistique.env.mine_env import MineEnv
-from memoire_master_rl_logistique.rl.discretize import _discretize_obs
+from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS, _discretize_obs
+
+# Action choisie pour un état jamais rencontré pendant l'entraînement : 0 = (pelle 1, verse 1).
+# Sa fréquence est mesurée pendant l'évaluation (``TabularPolicy.coverage``).
+DEFAULT_ACTION = 0
 
 
 class TabularPolicy:
-    """Politique gloutonne basée sur une Q-table tabulaire entraînée."""
+    """Politique gloutonne basée sur une Q-table tabulaire entraînée.
+
+    Compte, depuis le dernier ``reset_coverage``, les décisions prises et celles où
+    l'état était inconnu (action par défaut) : voir ``coverage``.
+    """
 
     def __init__(
         self,
         q_table: dict[tuple[int, ...], np.ndarray],
-        n_bins: int = 8,
+        n_bins: int = DEFAULT_N_BINS,
         num_shovels: int = 3,
         num_dumps: int = 2,
     ) -> None:
@@ -31,6 +38,18 @@ class TabularPolicy:
         self.n_bins = n_bins
         self.num_shovels = num_shovels
         self.num_dumps = num_dumps
+        self.reset_coverage()
+
+    def reset_coverage(self) -> None:
+        """Remet à zéro le comptage des décisions (au début d'un épisode d'évaluation)."""
+        self.decisions = 0
+        self.unknown_states = 0
+
+    def coverage(self) -> dict[str, float]:
+        """Part des décisions prises sur un état déjà vu à l'entraînement, et sur un état
+        inconnu (donc avec l'action par défaut), en %."""
+        known = 100.0 * (self.decisions - self.unknown_states) / max(self.decisions, 1)
+        return {"known_state_pct": known, "default_action_pct": 100.0 - known if self.decisions else 0.0}
 
     @classmethod
     def load(cls, model_path: str | Path) -> TabularPolicy:
@@ -45,11 +64,13 @@ class TabularPolicy:
         )
 
     def predict(self, observation: np.ndarray) -> int:
-        """Retourne l'action gloutonne pour l'observation donnée."""
+        """Action gloutonne ; ``DEFAULT_ACTION`` si l'état n'a jamais été vu."""
         state = _discretize_obs(observation, self.n_bins, self.num_shovels, self.num_dumps)
+        self.decisions += 1
         if state in self.q_table:
             return int(np.argmax(self.q_table[state]))
-        return 0
+        self.unknown_states += 1
+        return DEFAULT_ACTION
 
 
 def init_tabular_training(
@@ -100,8 +121,13 @@ def save_tabular_artifacts(
     rewards_per_episode: list[float],
     epsilons_per_episode: list[float],
     td_errors_per_episode: list[float],
+    tonnages_per_episode: list[float],
 ) -> None:
-    """Sauvegarde la Q-table, les récompenses et les diagnostics d'entraînement."""
+    """Sauvegarde la Q-table, les récompenses et les diagnostics d'entraînement.
+
+    ``training_diagnostics.csv`` est la source des courbes d'apprentissage et de diagnostic
+    (T30) : elles viennent donc du modèle évalué, pas d'un réentraînement séparé.
+    """
     model_path = out_path / model_filename
     with model_path.open("wb") as f:
         pickle.dump({
@@ -121,7 +147,9 @@ def save_tabular_artifacts(
 
     diagnostics_path = out_path / "training_diagnostics.csv"
     with diagnostics_path.open("w", encoding="utf-8") as f:
-        f.write("episode,total_reward,epsilon,mean_abs_td_error\n")
-        for i, (r, eps, td) in enumerate(zip(rewards_per_episode, epsilons_per_episode, td_errors_per_episode)):
-            f.write(f"{i},{r:.4f},{eps:.6f},{td:.6f}\n")
+        f.write("episode,total_reward,epsilon,mean_abs_td_error,tonnage_t\n")
+        rows = zip(rewards_per_episode, epsilons_per_episode, td_errors_per_episode,
+                   tonnages_per_episode, strict=True)
+        for i, (r, eps, td, ton) in enumerate(rows):
+            f.write(f"{i},{r:.4f},{eps:.6f},{td:.6f},{ton:.2f}\n")
     print(f"Diagnostics d'entraînement : {diagnostics_path}")

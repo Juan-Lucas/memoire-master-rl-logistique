@@ -1,11 +1,83 @@
-experiment:
-  project: memoire-master-rl-logistique
-  seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71]
-  scenarios: [nominal, high_load, high_breakdown]
-  episode_minutes: 480
-  reward_weights: [1.0, 0.1, 0.05, 0.3]
+# Configuration des expériences (T28) : graines, régimes, réglage des hyperparamètres.
+# Lue par memoire_master_rl_logistique/config.py ; c'est la seule source de ces valeurs.
+# Pour relancer une expérience avec la configuration archivée dans un dossier de résultats :
+#   MINE_RL_CONFIG_DIR=<dossier>/configs_<run_id> python -m memoire_master_rl_logistique.experiments.run_benchmark <nouveau dossier>
+
+project: memoire-master-rl-logistique
+
+# Trois ensembles disjoints (T26, vérifié par tests/test_seeds.py).
+seeds:
+  evaluation: {start: 42, count: 30}      # 42 à 71 : les 30 réplications appariées
+  tuning: {start: 20000, count: 10}       # 20 000 à 20 009 : sélection des hyperparamètres (T25 bis)
+  training: [1, 2, 3, 4, 5]               # graines d'entraînement
+  training_episode_stride: 1000000        # épisodes d'entraînement : s × 1 000 000 + n° d'épisode
+
+# Valeurs communes à tous les scénarios ; chaque scénario ne donne que ce qui change.
+scenario_defaults:
+  truck_count: 12
+  shovel_count: 3
+  dump_count: 2
+  episode_minutes: 480.0
+  breakdown_probability: 0.02
+  reward_weights: [1.0, 0.1, 0.05, 0.3]   # w1 production, w2 distance, w3 carburant, w4 attente
+  total_timesteps: 2000000                # budget d'entraînement de DQN et PPO
+
+scenarios:
+  nominal:
+    description: "Conditions nominales : 12 camions, 3 pelles, 2 dumps."
+  nominal_asymétrique:
+    description: "Configuration asymétrique : 13 camions, 3 pelles, 2 dumps (MF=4.33, désavantage Fixed Assignment)."
+    truck_count: 13
+  high_load:
+    description: "Charge élevée : 18 camions pour 3 pelles (surcharge)."
+    truck_count: 18
+  high_breakdown:
+    description: "Taux de pannes élevé : 10% par cycle (robustesse)."
+    breakdown_probability: 0.10
+  # Ablation sur w4 (poids de la pénalité d'attente) ; w4 = 0,3 est le nominal lui-même.
+  ablation_w4_00:
+    description: "Ablation reward : w4=0.0 (nominal sinon)."
+    reward_weights: [1.0, 0.1, 0.05, 0.0]
+  ablation_w4_01:
+    description: "Ablation reward : w4=0.1 (nominal sinon)."
+    reward_weights: [1.0, 0.1, 0.05, 0.1]
+  ablation_w4_05:
+    description: "Ablation reward : w4=0.5 (nominal sinon)."
+    reward_weights: [1.0, 0.1, 0.05, 0.5]
+  # Scénarios non vus : évalués avec les agents nominaux seulement (T27).
+  unseen_medium_load:
+    description: "Non vu : 15 camions, pb=2 % (entre nominal et high_load)."
+    truck_count: 15
+  unseen_medium_breakdown:
+    description: "Non vu : 12 camions, pb=5 % (entre nominal et high_breakdown)."
+    breakdown_probability: 0.05
+
+# Les trois régimes comparés dans l'article ; le premier est le régime de référence,
+# celui dont les agents sont transférés dans les autres (T27).
+main_scenarios: [nominal, high_load, high_breakdown]
+
+# Réglage des hyperparamètres (T25 bis) : même nombre de configurations par algorithme,
+# valeurs de la v1 incluses ; budget réduit (10 % de la campagne finale), annoncé.
+tuning:
+  timesteps: 200000
+  grids:
+    PPO:
+      ent_coef: [0.0, 0.02]
+      learning_rate: [0.0001, 0.0003]
+    DQN:
+      exploration_fraction: [0.1, 0.3]
+      learning_rate: [0.0001, 0.0003]
+
+# Heuristique fondée sur un programme linéaire (T24, principe de DISPATCH) : utilisation
+# maximale planifiée des pelles et des verses. Choisie parmi les candidats sur les graines
+# de sélection (seeds.tuning), jamais sur celles de l'évaluation, par
+# baselines.lp_policy.select_max_utilization ; une seule valeur pour tous les régimes.
+heuristics:
+  lp_max_utilization: 0.7
+  lp_utilization_candidates: [0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 1.0]
+
+# Versions attendues (informatif ; voir pyproject.toml et requirements.txt).
 reproducibility:
-  python_version: "3.10"
-  gymnasium_version: "0.26"
-  stable_baselines3_version: "2.x"
-  note: "Seeds and hyperparameters are archived in configs/ for peer review and reproducibility."
+  python_version: "3.11.11"
+  gymnasium_version: "1.2.3"
+  stable_baselines3_version: "2.8.0"
