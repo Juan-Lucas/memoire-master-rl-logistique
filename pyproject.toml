@@ -35,3 +35,7 @@ extend-select = ["I"]  # Add import sorting
 known-first-party = ["memoire_master_rl_logistique"]
 force-sort-within-sections = true
 
+
+[tool.pytest.ini_options]
+# Les tests sont dans tests/ ; archives/ contient des scripts d'essai nommés *_test.py.
+testpaths = ["tests"]

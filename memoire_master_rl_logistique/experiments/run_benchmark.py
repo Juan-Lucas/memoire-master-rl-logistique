@@ -40,6 +40,7 @@ from memoire_master_rl_logistique.experiments.scenarios import (
     evaluation_mode,
     training_regimes,
 )
+from memoire_master_rl_logistique.rl.checkpoints import STATE_FILE, checkpoint_dir
 from memoire_master_rl_logistique.rl.model_loading import load_model, model_file
 from memoire_master_rl_logistique.rl.model_metadata import EnvConfig
 from memoire_master_rl_logistique.rl.model_paths import model_dir
@@ -257,8 +258,16 @@ def _run_tasks(tasks: list[tuple[Scenario, PolicySpec, int]], n_workers: int) ->
 
 
 def _train(algorithm: str, scenario: Scenario, train_seed: int, output_dir: Path) -> None:
-    """Entraîne un agent : régime et budget du scénario, hyperparamètres de ``configs/``."""
+    """Entraîne un agent : régime et budget du scénario, hyperparamètres de ``configs/``.
+
+    Si un entraînement interrompu a laissé une sauvegarde dans ``output_dir``, il est repris
+    (``rl/checkpoints.py``) : relancer la campagne après un arrêt ne refait que ce qui manque.
+    """
+    resume = (checkpoint_dir(output_dir) / STATE_FILE).exists()
+    if resume:
+        print(f"Reprise de l'entraînement interrompu : {output_dir}")
     env_kwargs = dict(
+        resume=resume,
         seed=train_seed,
         truck_count=scenario.truck_count,
         shovel_count=scenario.shovel_count,

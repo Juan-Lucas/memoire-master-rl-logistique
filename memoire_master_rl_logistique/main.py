@@ -126,6 +126,10 @@ def main() -> None:
         help="Entraînement : remplacer un modèle existant",
     )
     parser.add_argument(
+        "--resume", action="store_true",
+        help="Entraînement : reprendre un entraînement interrompu à sa dernière sauvegarde",
+    )
+    parser.add_argument(
         "--allow-legacy-models", action="store_true",
         help="Benchmark : accepter des modèles sans metadata.json (antérieurs à T8), sans contrôle",
     )
@@ -173,6 +177,7 @@ def main() -> None:
             dump_count=args.dump_count,
             output_dir=training_dir("Q-Learning", *fleet),
             overwrite=args.overwrite,
+            resume=args.resume,
         )
         return
 
@@ -184,6 +189,7 @@ def main() -> None:
             dump_count=args.dump_count,
             output_dir=training_dir("SARSA", *fleet),
             overwrite=args.overwrite,
+            resume=args.resume,
         )
         return
 
@@ -195,6 +201,7 @@ def main() -> None:
             dump_count=args.dump_count,
             output_dir=training_dir("DQN", *fleet),
             overwrite=args.overwrite,
+            resume=args.resume,
         )
         return
 
@@ -206,6 +213,7 @@ def main() -> None:
             dump_count=args.dump_count,
             output_dir=training_dir("PPO", *fleet),
             overwrite=args.overwrite,
+            resume=args.resume,
             gamma=args.gamma,
             normalize_reward=args.normalize_reward,
         )

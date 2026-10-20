@@ -6,12 +6,19 @@ choisie par la politique ε-greedy, et non le maximum sur les actions.
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from pathlib import Path
 import time
 
 import numpy as np
 
 from memoire_master_rl_logistique.config import hyperparameters
+from memoire_master_rl_logistique.rl.checkpoints import (
+    DEFAULT_CHECKPOINT_EVERY,
+    clear_checkpoint,
+    prepare_checkpoint,
+    training_signature,
+)
 from memoire_master_rl_logistique.rl.discretize import _discretize_obs
 from memoire_master_rl_logistique.rl.model_metadata import (
     EnvConfig,
@@ -23,6 +30,8 @@ from memoire_master_rl_logistique.rl.tabular_training import (
     TabularPolicy,
     init_tabular_training,
     save_tabular_artifacts,
+    save_tabular_progress,
+    start_or_resume_tabular,
 )
 from memoire_master_rl_logistique.seeds import TRAIN_SEEDS, training_episode_seed
 
@@ -43,6 +52,8 @@ def train_sarsa(
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
     output_dir: str = str(model_dir(RESULTS_DIR, "SARSA", "nominal", TRAIN_SEEDS[0])),
     overwrite: bool = False,
+    checkpoint_every: int | None = DEFAULT_CHECKPOINT_EVERY,
+    resume: bool = False,
 ) -> dict[tuple[int, ...], np.ndarray]:
     """Entraîne un agent SARSA tabulaire sur l'environnement minier.
 
@@ -61,6 +72,7 @@ def train_sarsa(
 
     out_path = Path(output_dir)
     ensure_new_model(out_path / "sarsa_table.pkl", overwrite)
+    folder = prepare_checkpoint(out_path, resume, overwrite)
     out_path.mkdir(parents=True, exist_ok=True)
 
     start = time.perf_counter()
@@ -76,11 +88,14 @@ def train_sarsa(
         epsilon_min=epsilon_min,
         n_episodes=n_episodes,
     )
-
-    rewards_per_episode: list[float] = []
-    epsilons_per_episode: list[float] = []
-    td_errors_per_episode: list[float] = []
-    tonnages_per_episode: list[float] = []  # productivité d'entraînement (T30)
+    env_config = EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
+                           breakdown_probability, reward_weights)
+    signature = training_signature(algorithm="SARSA", seed=seed, params=params,
+                                   env=asdict(env_config))
+    # Sauvegarde tous les ``checkpoint_every`` épisodes ; ``resume`` reprend exactement
+    # là où l'entraînement s'était arrêté (rl/checkpoints.py).
+    progress = start_or_resume_tabular(out_path, resume, signature, q_table, rng, epsilon)
+    q_table, epsilon = progress.q_table, progress.epsilon
 
     def _select_action(state: tuple[int, ...], eps: float) -> int:
         if state not in q_table:
@@ -91,7 +106,7 @@ def train_sarsa(
 
     print(f"Début de l'entraînement SARSA ({n_episodes} épisodes)...")
 
-    for ep in range(n_episodes):
+    for ep in range(progress.next_episode, n_episodes):
         obs, _info = env.reset(seed=training_episode_seed(seed, ep))  # disjointes de l'évaluation (T26)
         state = _discretize_obs(obs, n_bins, shovel_count, dump_count)
         action = _select_action(state, epsilon)
@@ -123,14 +138,16 @@ def train_sarsa(
             if terminated or truncated:
                 break
 
-        rewards_per_episode.append(total_reward)
-        epsilons_per_episode.append(epsilon)
-        td_errors_per_episode.append(float(np.mean(td_errors)))
-        tonnages_per_episode.append(float(_info["total_tonnage_t"]))
-        epsilon = max(epsilon_min, epsilon - epsilon_decay)
+        progress.record(total_reward, epsilon, float(np.mean(td_errors)),
+                        float(_info["total_tonnage_t"]))
+        epsilon = progress.epsilon = max(epsilon_min, epsilon - epsilon_decay)
+        if checkpoint_every and progress.next_episode % checkpoint_every == 0 \
+                and progress.next_episode < n_episodes:
+            save_tabular_progress(folder, progress, rng, signature,
+                                  progress.elapsed_before_s + time.perf_counter() - start)
 
         if (ep + 1) % 1000 == 0 or ep == 0:
-            avg_reward = np.mean(rewards_per_episode[-100:])
+            avg_reward = np.mean(progress.rewards[-100:])
             print(
                 f"  Épisode {ep + 1}/{n_episodes} — "
                 f"récompense moy. (100 derniers) = {avg_reward:.2f}, "
@@ -141,18 +158,18 @@ def train_sarsa(
     save_tabular_artifacts(
         out_path, "sarsa_table.pkl", "SARSA table",
         q_table, n_bins, shovel_count, dump_count,
-        rewards_per_episode, epsilons_per_episode, td_errors_per_episode,
-        tonnages_per_episode,
+        progress.rewards, progress.epsilons, progress.td_errors, progress.tonnages,
     )
     write_metadata(out_path, build_metadata(
         "SARSA",
-        EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
-                  breakdown_probability, reward_weights),
+        env_config,
         observation_size=env.observation_space.shape[0],
-        training_time_s=time.perf_counter() - start,
+        training_time_s=progress.elapsed_before_s + time.perf_counter() - start,
         seed=seed,
-        training=params,
+        training={**params, **({"resumed_from_episodes": progress.resumed_from_episodes}
+                              if progress.resumed_from_episodes else {})},
     ))
+    clear_checkpoint(out_path)
 
     return q_table
 

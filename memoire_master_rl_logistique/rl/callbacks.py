@@ -66,9 +66,30 @@ class KPILoggerCallback(BaseCallback):
 
         return True
 
+    @property
+    def episodes(self) -> int:
+        """Nombre d'épisodes terminés enregistrés."""
+        return len(self._episode_tonnages)
+
+    def restore(self, path: Path) -> None:
+        """Reprend les épisodes d'un journal écrit par ``write`` (reprise d'un entraînement)."""
+        with path.open(encoding="utf-8") as f:
+            next(f)  # en-tête
+            for line in f:
+                _, steps, ton, wait, fuel, reward = line.strip().split(",")
+                self._episode_timesteps.append(int(steps))
+                self._episode_tonnages.append(float(ton))
+                self._episode_waits.append(float(wait))
+                self._episode_fuels.append(float(fuel))
+                self._episode_rewards.append(float(reward))
+
     def _on_training_end(self) -> None:
-        self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        with self.log_path.open("w", encoding="utf-8") as f:
+        self.write(self.log_path)
+
+    def write(self, path: Path) -> None:
+        """Écrit le détail par épisode dans ``path`` (CSV)."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as f:
             f.write("episode,timesteps,tonnage_t,wait_min,fuel_l,reward\n")
             rows = zip(
                 self._episode_timesteps,

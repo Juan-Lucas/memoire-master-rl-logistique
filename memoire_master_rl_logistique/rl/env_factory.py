@@ -61,6 +61,11 @@ def make_training_vec_env(train_seed: int, n_envs: int = 1, **env_kwargs: Any) -
     return vec_env
 
 
-def reseed_training_vec_env(vec_env: VecEnv, train_seed: int) -> None:
-    """Première remise à zéro de l'environnement i sur base + i (SB3 ajoute l'indice)."""
-    vec_env.seed(training_episode_seed(train_seed))
+def reseed_training_vec_env(vec_env: VecEnv, train_seed: int, first_episode: int = 0) -> None:
+    """Première remise à zéro de l'environnement i sur base + ``first_episode`` + i (SB3
+    ajoute l'indice).
+
+    ``first_episode`` > 0 sert à la reprise d'un entraînement interrompu (un seul
+    environnement) : le premier épisode joué est le premier épisode non terminé.
+    """
+    vec_env.seed(training_episode_seed(train_seed, first_episode))

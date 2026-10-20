@@ -1,0 +1,115 @@
+diff --git a/memoire_master_rl_logistique/env/mine_env.py b/memoire_master_rl_logistique/env/mine_env.py
+index 2b0f2ce..9beb05e 100644
+--- a/memoire_master_rl_logistique/env/mine_env.py
++++ b/memoire_master_rl_logistique/env/mine_env.py
+@@ -67,6 +67,9 @@ STATUS_TO_SHOVEL = 1
+ STATUS_TO_DUMP = 2
+ 
+ REWARD_TERM_NAMES = tuple(RewardTerms.__dataclass_fields__)
++# « cycle_end » : récompense réelle, versée à la fin du cycle (option 1a) ;
++# « decision » : récompense du cycle estimée à la décision, avec les files prévues (1b).
++REWARD_TIMINGS = ("cycle_end", "decision")
+ 
+ # Flux aléatoires communs à tous les camions ; viennent ensuite les flux de pannes, un par camion.
+ SHARED_STREAMS = ("travel", "service", "road")
+@@ -121,10 +124,19 @@ class MineEnv(gym.Env):
+         log_cycles: bool = False,
+         fuel: FuelParams = DEFAULT_FUEL,
+         seed_step: int = 1,
++        reward_timing: str = "cycle_end",
++        queue_opportunity: bool = False,
+     ) -> None:
+         super().__init__()
+         if seed_step < 1:
+             raise ValueError(f"seed_step doit être ≥ 1 : {seed_step}")
++        if reward_timing not in REWARD_TIMINGS:
++            raise ValueError(f"reward_timing doit valoir {REWARD_TIMINGS} : {reward_timing!r}")
++        # Moment où la récompense d'un cycle est versée (voir ``step``).
++        self.reward_timing = reward_timing
++        # Coût d'opportunité aussi pour les minutes en file (essai) : un camion immobile dans
++        # une file perd la même production qu'un camion qui attend volontairement.
++        self.queue_opportunity = queue_opportunity
+ 
+         self.truck_count = truck_count
+         self.shovel_count = shovel_count
+@@ -307,7 +319,7 @@ class MineEnv(gym.Env):
+             self.wait_action_count += 1
+             reward += self._apply_wait_action(self.trucks[idx], time_min)
+         else:
+-            self._start_cycle(idx, action, time_min)
++            reward += self._start_cycle(idx, action, time_min)
+ 
+         reward += self._run_until_decision()
+         truncated = self.current_time_min >= self.episode_minutes
+@@ -320,11 +332,16 @@ class MineEnv(gym.Env):
+ 
+     # --- Moteur à événements (T15, T16 bis) ------------------------------------------
+ 
+-    def _start_cycle(self, idx: int, action: int, time_min: float) -> None:
+-        """Décision d'un cycle : le camion part vers la pelle choisie."""
++    def _start_cycle(self, idx: int, action: int, time_min: float) -> float:
++        """Décision d'un cycle : le camion part vers la pelle choisie.
++
++        Renvoie la récompense estimée du cycle si ``reward_timing == "decision"``, 0 sinon.
++        """
+         truck = self.trucks[idx]
+         shovel, dump = self._decode_action(action)
+         location = self.truck_locations[idx]
++        # Prévision faite avant d'engager ce camion : les files qu'il trouvera.
++        free_at = self.forecast_free_at() if self.reward_timing == "decision" else None
+ 
+         travel_min = 0.0
+         if location != shovel.node_id:
+@@ -348,6 +365,37 @@ class MineEnv(gym.Env):
+         self.truck_statuses[idx] = STATUS_TO_SHOVEL
+         truck.available_at_min = time_min + travel_min  # prochain événement : l'arrivée
+ 
++        if free_at is None:
++            return 0.0
++        return self._estimated_cycle_reward(self._cycles[idx], shovel, dump, free_at)
++
++    def _estimated_cycle_reward(
++        self, cycle: _CycleInProgress, shovel: Shovel, dump: DumpSite,
++        free_at: tuple[list[float], list[float]],
++    ) -> float:
++        """Récompense du cycle estimée à la décision (``reward_timing == "decision"``).
++
++        Files prévues avec ``forecast_free_at`` (camions en route compris), durées
++        moyennes de chargement, de trajet chargé et de déversement ; le trajet vers la
++        pelle, déjà tiré, est connu. Le tonnage compte si le déversement prévu finit avant
++        la fin du poste.
++        """
++        shovel_free, dump_free = free_at
++        arrival = cycle.start_min + cycle.travel_to_shovel_min
++        shovel_wait = max(0.0, shovel_free[cycle.shovel_idx] - arrival)
++        dump_arrival = (arrival + shovel_wait + shovel.load_time_mean_min
++                        + self.graph.mean_route_time_minutes(shovel.node_id, dump.node_id,
++                                                             loaded=True))
++        dump_wait = max(0.0, dump_free[cycle.dump_idx] - dump_arrival)
++        unload_end = dump_arrival + dump_wait + dump.unload_time_mean_min
++        return self._compute_reward(
++            delivered_tonnage_t=self.capacity_tonnes if unload_end < self.episode_minutes else 0.0,
++            route_distance_km=cycle.route_km,
++            resource_waits_min=cycle.shovel_waits_at_decision,
++            operational_wait_min=shovel_wait + dump_wait,
++            idle_min=shovel_wait + dump_wait if self.queue_opportunity else 0.0,
++        )
++
+     def _next_event(self, include_decisions: bool = True) -> int | None:
+         """Camion du prochain événement : le plus tôt ; à égalité, les arrivées passent
+         avant les décisions (l'état d'une décision tient compte de tout ce qui se passe à
+@@ -476,11 +524,14 @@ class MineEnv(gym.Env):
+                 unload_min=unload_min, repair_min=repair_min, delivered_t=delivered_tonnage,
+             ))
+ 
++        if self.reward_timing == "decision":
++            return 0.0  # déjà versée, estimée, à la décision
+         return self._compute_reward(
+             delivered_tonnage_t=delivered_tonnage,
+             route_distance_km=cycle.route_km,
+             resource_waits_min=cycle.shovel_waits_at_decision,
+             operational_wait_min=cycle.shovel_wait_min + dump_wait_min,
++            idle_min=(cycle.shovel_wait_min + dump_wait_min) if self.queue_opportunity else 0.0,
+         )
+ 
+     def _in_shift(self, start_min: float, duration_min: float) -> float:
