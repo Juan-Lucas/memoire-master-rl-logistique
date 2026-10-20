@@ -486,6 +486,8 @@ class MineEnv(gym.Env):
             route_distance_km=cycle.route_km,
             resource_waits_min=cycle.shovel_waits_at_decision,
             operational_wait_min=cycle.shovel_wait_min + dump_wait_min,
+            # Coût d'opportunité du cycle entier, décision comprise (option B).
+            truck_min=self._in_shift(cycle.start_min, time_min - cycle.start_min),
         )
 
     def _in_shift(self, start_min: float, duration_min: float) -> float:
@@ -507,8 +509,8 @@ class MineEnv(gym.Env):
         un coût d'attente proportionnel à une durée souvent minuscule (w4 × 0,2 / 30 ≈ 0,002
         pour 0,2 min). En forte charge, PPO choisissait ATTENDRE dans 87 % de ses décisions
         (T12 bis). Depuis la v2, la récompense ajoute le coût d'opportunité de l'immobilité
-        (``idle_min``, voir ``simulation.reward``). ``info["wait_actions"]`` compte ces
-        décisions.
+        (``truck_min``, voir ``simulation.reward``), étendu à chaque cycle par l'option B.
+        ``info["wait_actions"]`` compte ces décisions.
         """
         future_events = [
             t.available_at_min
@@ -544,7 +546,7 @@ class MineEnv(gym.Env):
             resource_waits_min=resource_waits,
             operational_wait_min=wait_min,
             # Production perdue pendant l'attente, seulement la part comprise dans le poste.
-            idle_min=self._in_shift(time_min, wait_min),
+            truck_min=self._in_shift(time_min, wait_min),
         )
 
     def _trucks_per_shovel(self) -> list[int]:
@@ -615,7 +617,7 @@ class MineEnv(gym.Env):
         route_distance_km: float,
         resource_waits_min: list[float],
         operational_wait_min: float,
-        idle_min: float = 0.0,
+        truck_min: float = 0.0,
     ) -> float:
         """Récompense d'une décision, calculée par ``simulation.reward`` (T25).
 
@@ -625,7 +627,7 @@ class MineEnv(gym.Env):
         """
         terms = reward_terms(
             delivered_tonnage_t, self.capacity_tonnes, route_distance_km,
-            resource_waits_min, operational_wait_min, idle_min,
+            resource_waits_min, operational_wait_min, truck_min,
         )
         for name, value in terms.weighted(self.reward_weights).items():
             self.last_reward_terms[name] += value

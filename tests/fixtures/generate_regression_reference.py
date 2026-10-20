@@ -8,6 +8,9 @@ Historique :
 - T15 et T16 bis (moteur à événements, décision à la verse) : changement voulu de la
   simulation, référence régénérée. Fixed et FIFO en nominal, graines 42 à 46 :
   productivité moyenne 4 084,5 → 4 273,5 t/h (Fixed) et 3 293,5 → 4 263,0 t/h (FIFO).
+- Option B (20 octobre 2026, coût d'opportunité de chaque cycle) : productivités et
+  attentes identiques ; ``total_reward`` baisse exactement de 12 × 480 / 23,2 = 248,276
+  sur chaque poste (vérifié avant de régénérer).
 
 À relancer seulement quand un changement **voulu** de la simulation modifie les
 résultats, en notant pourquoi dans le journal :
