@@ -7,3 +7,7 @@ gamma: 0.99
 epsilon_start: 1.0
 epsilon_min: 0.01      # ε décroît linéairement de epsilon_start à epsilon_min sur n_episodes
 n_bins: 8              # intervalles de discrétisation des attentes (rl/discretize.py)
+# Actualisation par minute (formulation semi-markovienne, décision du 21 octobre 2026,
+# rl/time_discount.py) : γ s'applique à une décision de 1,89 min ; une décision de Δt
+# minutes est actualisée par γ^(Δt / 1,89). false = actualisation par décision (essais 0 à 13).
+time_discount: true

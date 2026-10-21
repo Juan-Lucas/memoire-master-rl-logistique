@@ -26,6 +26,7 @@ from memoire_master_rl_logistique.experiments.scenarios import (
     _build_scenarios,
 )
 from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS
+from memoire_master_rl_logistique.rl.time_discount import per_minute_gamma
 from memoire_master_rl_logistique.rl.train_dqn import train_dqn
 from memoire_master_rl_logistique.rl.train_ppo import train_ppo
 from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
@@ -86,17 +87,19 @@ def test_graines_identiques_a_t26():
 def test_hyperparametres_de_la_campagne():
     """Valeurs de la campagne v2 (mise au point des agents, 17 octobre 2026). Par rapport à
     la v1 : PPO learning_rate 3e-4 → 1e-4, ent_coef 0,02 → 0, gamma 0,99 → 0,995,
-    normalize_reward false → true ; DQN exploration_fraction 0,3 → 0,1, gamma 0,99 → 0,995."""
+    normalize_reward false → true ; DQN exploration_fraction 0,3 → 0,1, gamma 0,99 → 0,995.
+    Depuis le 21 octobre 2026, actualisation par minute pour les quatre algorithmes
+    (time_discount, rl/time_discount.py)."""
     assert hyperparameters("PPO") == {
         "learning_rate": 1e-4, "gamma": 0.995, "batch_size": 64, "gae_lambda": 0.95,
         "clip_range": 0.2, "n_steps": 1024, "n_epochs": 10, "ent_coef": 0.0,
         "net_arch": [128, 128], "n_envs": 1,  # n_envs : T29, 1 = protocole v1
-        "normalize_reward": True}
+        "normalize_reward": True, "time_discount": True}
     assert hyperparameters("DQN") == {
         "learning_rate": 3e-4, "gamma": 0.995, "batch_size": 64, "buffer_size": 200_000,
         "learning_starts": 1000, "target_update_interval": 1000,
         "exploration_fraction": 0.1, "exploration_initial_eps": 1.0,
-        "exploration_final_eps": 0.02, "net_arch": [128, 128]}
+        "exploration_final_eps": 0.02, "net_arch": [128, 128], "time_discount": True}
     # Les valeurs retenues font partie des grilles du réglage (T25 bis).
     grids = experiment_config()["tuning"]["grids"]
     assert hyperparameters("PPO")["ent_coef"] in grids["PPO"]["ent_coef"]
@@ -105,7 +108,7 @@ def test_hyperparametres_de_la_campagne():
     assert hyperparameters("DQN")["learning_rate"] in grids["DQN"]["learning_rate"]
     # Valeurs de la campagne (run_benchmark avant T28), communes à Q-Learning et SARSA.
     tabular = {"n_episodes": 30_000, "alpha": 0.2, "gamma": 0.99, "epsilon_start": 1.0,
-               "epsilon_min": 0.01, "n_bins": 8}
+               "epsilon_min": 0.01, "n_bins": 8, "time_discount": True}
     assert hyperparameters("Q-Learning") == hyperparameters("SARSA") == tabular
 
 
@@ -128,10 +131,13 @@ def test_valeurs_par_defaut_du_code_coherentes_avec_la_configuration():
 # --- Les scripts lisent vraiment la configuration -----------------------------------
 
 def test_entraineurs_tabulaires_utilisent_la_configuration(tmp_path):
-    """metadata.json contient les hyperparamètres du YAML ; un argument donné les remplace."""
+    """metadata.json contient les hyperparamètres du YAML ; un argument donné les remplace.
+    Avec l'actualisation par minute, γ_min calculé à partir de γ est déclaré en plus."""
     train_q_learning(n_episodes=1, episode_minutes=60.0, output_dir=str(tmp_path))
     metadata = json.loads((tmp_path / "metadata.json").read_text(encoding="utf-8"))
-    assert metadata["training"] == hyperparameters("Q-Learning") | {"n_episodes": 1}
+    config = hyperparameters("Q-Learning")
+    assert metadata["training"] == config | {
+        "n_episodes": 1, "gamma_per_minute": per_minute_gamma(config["gamma"])}
 
 
 def test_ppo_et_dqn_utilisent_la_configuration(tmp_path):

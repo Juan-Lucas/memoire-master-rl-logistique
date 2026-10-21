@@ -19,3 +19,7 @@ exploration_fraction: 0.1
 exploration_initial_eps: 1.0
 exploration_final_eps: 0.02
 net_arch: [128, 128]
+# Actualisation par minute (formulation semi-markovienne, décision du 21 octobre 2026,
+# rl/time_discount.py) : γ s'applique à une décision de 1,89 min ; une décision de Δt
+# minutes est actualisée par γ^(Δt / 1,89). false = actualisation par décision (essais 0 à 13).
+time_discount: true

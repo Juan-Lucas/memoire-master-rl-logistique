@@ -11,6 +11,8 @@ Historique :
 - Option B (20 octobre 2026, coût d'opportunité de chaque cycle) : productivités et
   attentes identiques ; ``total_reward`` baisse exactement de 12 × 480 / 23,2 = 248,276
   sur chaque poste (vérifié avant de régénérer).
+- Retour à la récompense d'avant l'option B (21 octobre 2026, PPO apprenait à ATTENDRE) :
+  la référence de 2461c7c est restaurée telle quelle, et le code la retrouve exactement.
 
 À relancer seulement quand un changement **voulu** de la simulation modifie les
 résultats, en notant pourquoi dans le journal :

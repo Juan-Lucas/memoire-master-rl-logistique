@@ -1,8 +1,8 @@
-"""Mesures de l'analyse de l'échec des agents à valeurs (19 et 20 octobre 2026).
+"""Mesures de l'analyse de l'échec des agents à valeurs (19 au 21 octobre 2026).
 
-Voir « Analyse de l'échec de DQN », « Résultat des agents tabulaires » et « Option B sur
-le papier » dans ``docs/journal_corrections.md``. Trois mesures, en lecture seule, sans
-réentraîner :
+Voir « Analyse de l'échec de DQN », « Résultat des agents tabulaires », « Option B sur le
+papier » et « Résultat des essais de contrôle de l'option B » dans
+``docs/journal_corrections.md``. Quatre mesures, en lecture seule, sans réentraîner :
 
 1. **La récompense classe-t-elle les politiques comme la productivité ?**
    (``reward_by_policy``) Pour des politiques fixées, on mesure :
@@ -26,13 +26,17 @@ réentraîner :
 
 3. **Avec l'option B, le classement suit-il la productivité ?** (``option_b_rankings``)
    Douze politiques fixées (les heuristiques et les 6 routes constantes), trois régimes.
-   Corrélation de Spearman entre la productivité et la récompense par décision, avant et
-   après l'option B (``docs/option_b_recompense.md``).
+   Corrélation de Spearman entre la productivité et la récompense par décision, avec la
+   récompense actuelle et avec l'option B (``docs/option_b_recompense.md``).
 
-Depuis l'option B, ``reward_per_decision`` est la récompense actuelle. La récompense d'avant
-s'en déduit : on rajoute le coût d'opportunité des cycles, calculé à partir du journal des
-cycles (``reward_per_decision_before_b``). Les mesures du 19 octobre se refont donc sur le
-code actuel.
+4. **Pourquoi l'option B a échoué** (``option_b_wait_incentive``) : avec elle, intercaler
+   des ATTENDRE améliore la récompense par décision, alors que le poste est moins bon.
+
+``reward_per_decision`` est la récompense actuelle, celle d'avant l'option B : l'option B a
+été abandonnée le 21 octobre 2026 (PPO apprenait à ATTENDRE). La récompense de l'option B
+s'en déduit en retirant le coût d'opportunité des cycles, calculé à partir du journal des
+cycles (``reward_per_decision_option_b``). Toutes les mesures se refont donc sur le code
+actuel.
 
 Lancement (quelques minutes) :
     python -m memoire_master_rl_logistique.analysis.reward_diagnostics DOSSIER
@@ -105,8 +109,8 @@ def reward_by_policy(
     Les termes par décision (``per_decision_<terme>``) sont les contributions pondérées
     (``MineEnv.episode_reward_terms``), sommées sur tous les postes puis divisées par le
     nombre total de décisions ; leur somme est ``reward_per_decision``.
-    ``reward_per_decision_before_b`` : la même récompense sans le coût d'opportunité des
-    cycles (option B), c'est-à-dire celle d'avant le 20 octobre 2026.
+    ``reward_per_decision_option_b`` : la même récompense avec, en plus, le coût
+    d'opportunité de chaque cycle (option B, abandonnée).
     ``truck_min_per_shift`` : minutes-camion dans le poste, toutes décisions comprises
     (constant : nombre de camions × durée du poste).
     """
@@ -136,7 +140,7 @@ def reward_by_policy(
             "decisions_per_shift": decisions / len(seeds),
             "reward_per_shift": total / len(seeds),
             "reward_per_decision": total / decisions,
-            "reward_per_decision_before_b": (total + cycle_cost) / decisions,
+            "reward_per_decision_option_b": (total - cycle_cost) / decisions,
             "truck_min_per_shift": all_min / len(seeds),
             **{f"per_decision_{term}": value / decisions for term, value in terms.items()},
         })
@@ -152,16 +156,44 @@ def option_b_rankings(
     scenarios: Sequence[str] = ("nominal", "high_load", "high_breakdown"),
     seeds: Sequence[int] = DIAGNOSTIC_SEEDS,
 ) -> pd.DataFrame:
-    """Accord des classements, avant et après l'option B, par régime (tableau 2 de
-    ``docs/option_b_recompense.md``)."""
+    """Accord des classements avec la récompense actuelle et avec l'option B, par régime
+    (tableau 2 de ``docs/option_b_recompense.md``)."""
     rows = []
     for name in scenarios:
         scenario = SCENARIOS[name]
         table = reward_by_policy(option_b_policies(scenario), scenario, seeds)
         rows.append({"scenario": name, "n_policies": len(table),
-                     "spearman_before_b": rank_agreement(table, "reward_per_decision_before_b"),
-                     "spearman_option_b": rank_agreement(table, "reward_per_decision")})
+                     "spearman_current": rank_agreement(table, "reward_per_decision"),
+                     "spearman_option_b": rank_agreement(table, "reward_per_decision_option_b")})
     return pd.DataFrame(rows)
+
+
+def random_wait_policy(base: PolicyFn, wait_probability: float = 0.5, seed: int = 0) -> PolicyFn:
+    """``base``, sauf qu'une décision sur deux en moyenne (tirage de graine ``seed``) est
+    ATTENDRE (dernière action)."""
+    rng = np.random.default_rng(seed)
+
+    def policy(obs, info, env):
+        if rng.random() < wait_probability:
+            return env.action_space.n - 1
+        return base(obs, info, env)
+    return policy
+
+
+def option_b_wait_incentive(scenario: Scenario | None = None,
+                            seeds: Sequence[int] = DIAGNOSTIC_SEEDS) -> pd.DataFrame:
+    """MTWT, MTWT avec ATTENDRE une fois sur deux, et toujours ATTENDRE (journal du
+    21 octobre 2026). Avec l'option B, intercaler des ATTENDRE améliore la récompense par
+    décision (−0,054 contre −0,063) alors que le poste est moins bon (−28,0 contre −16,9) :
+    c'est ce que PPO a appris."""
+    scenario = scenario or SCENARIOS["nominal"]
+    mtwt = heuristic_policies(scenario)["MTWT"]
+    wait_action = scenario.shovel_count * scenario.dump_count
+    return reward_by_policy({
+        "MTWT": mtwt,
+        "MTWT, ATTENDRE une fois sur deux": random_wait_policy(mtwt),
+        "Toujours ATTENDRE": constant_action_policy(wait_action),
+    }, scenario, seeds)
 
 
 def q_value_gaps(model: Any, scenario: Scenario | None = None,
@@ -193,10 +225,11 @@ def q_value_gaps(model: Any, scenario: Scenario | None = None,
 
 
 def main(out_dir: str | Path, dqn_model: str | Path | None = None) -> pd.DataFrame:
-    """Écrit ``reward_by_policy.csv``, ``option_b_rankings.csv`` (et ``q_value_gaps.json``
-    avec ``dqn_model``)."""
+    """Écrit ``reward_by_policy.csv``, ``option_b_rankings.csv``,
+    ``option_b_wait_incentive.csv`` (et ``q_value_gaps.json`` avec ``dqn_model``)."""
     out_dir = Path(out_dir)
-    targets = [out_dir / "reward_by_policy.csv", out_dir / "option_b_rankings.csv"]
+    targets = [out_dir / "reward_by_policy.csv", out_dir / "option_b_rankings.csv",
+               out_dir / "option_b_wait_incentive.csv"]
     targets += [out_dir / "q_value_gaps.json"] if dqn_model else []
     existing = [p for p in targets if p.exists()]
     if existing:
@@ -210,11 +243,14 @@ def main(out_dir: str | Path, dqn_model: str | Path | None = None) -> pd.DataFra
     rankings = option_b_rankings()
     rankings.to_csv(targets[1], index=False)
     print(rankings.round(3).to_string(index=False))
+    incentive = option_b_wait_incentive(scenario)
+    incentive.to_csv(targets[2], index=False)
+    print(incentive.round(3).to_string(index=False))
     if dqn_model:
         from memoire_master_rl_logistique.rl.model_loading import load_model
 
         gaps = q_value_gaps(load_model(dqn_model, "DQN", make_env(scenario)), scenario)
-        targets[2].write_text(json.dumps(gaps, indent=2), encoding="utf-8")
+        targets[3].write_text(json.dumps(gaps, indent=2), encoding="utf-8")
         print(gaps)
     return table
 

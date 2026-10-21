@@ -11,24 +11,24 @@ avec cinq termes sans unité, chacun normalisé pour être de l'ordre de 1 :
   verse + retour. 0 pour ATTENDRE ;
 - **attente** = − min(attente / 30 min, 1) : file à la pelle + file à la verse pour un
   cycle, durée de l'ATTENDRE sinon. Plafonnée à −1 à partir de 30 min ;
-- **opportunité** (v2) = − minutes-camion de la décision / ``OPPORTUNITY_CYCLE_MIN`` : la
-  production que le camion aurait pu faire pendant ce temps, en cycles. Ce sont les minutes
-  dans le poste de l'ATTENDRE, ou du cycle entier (trajet à vide, files, chargement, trajet
-  chargé, déversement, panne éventuelle). Une minute de camion coûte environ 1/23 de cycle,
-  quoi que fasse le camion. Ce terme est pondéré par w1, le poids de la production, car il
+- **opportunité** (v2) = − durée de l'ATTENDRE / ``OPPORTUNITY_CYCLE_MIN`` : la production
+  perdue par un camion immobile, en cycles. Une minute d'attente coûte environ 1/23 de
+  cycle. 0 pour un cycle. Ce terme est pondéré par w1, le poids de la production, car il
   est dans la même unité : il n'ajoute aucun poids à régler.
 
 Poids par défaut (``Scenario.reward_weights``) : w1 = 1, w2 = 0,1, w3 = 0,05, w4 = 0,3.
+La production domine : la récompense cumulée d'un poste est proche du nombre de cycles
+terminés, diminuée surtout par la distance.
 
-Pourquoi le coût d'opportunité de chaque cycle (option B, décision de la directrice du
-20 octobre 2026 ; ``docs/option_b_recompense.md``) : avant, seule ATTENDRE le payait. Un
-cycle rapportait 1 quelle que soit sa durée, alors que γ s'applique par décision : un
-trajet long ne coûtait presque rien, et DQN, Q-Learning et SARSA dérivaient vers la pelle
-la plus éloignée. Sur un poste, chaque camion est toujours occupé (cycle, file, panne,
-ATTENDRE), donc le total des minutes-camion est fixe (nombre de camions × durée du
-poste) : le terme retire **la même constante** à la récompense de toutes les politiques,
-5 760 / 23,2 = 248,3 en nominal. L'objectif d'un poste ne change pas (le nombre de
-cycles) ; le coût du temps devient visible à chaque décision.
+**Option B, essayée puis abandonnée (20 et 21 octobre 2026).** Le coût d'opportunité a été
+étendu à chaque cycle (durée du cycle / 23,2) : la récompense d'un poste ne changeait que
+d'une constante, et la dérive des agents vers la pelle la plus éloignée a disparu. Mais un
+cycle rapportait alors en moyenne une valeur négative ; avec γ par décision, repousser une
+récompense négative la rend moins coûteuse, et PPO a appris à ATTENDRE dans 99,8 % de ses
+décisions (210 t/h). Retour à la récompense ci-dessus (commit de l'option B : 78ed5f5 ;
+``docs/journal_corrections.md``). Les deux défauts viennent de l'actualisation par
+décision, alors que les décisions n'ont pas toutes la même durée : une actualisation par
+unité de temps (formulation semi-markovienne) est une perspective.
 
 Ce module est un déplacement du calcul de ``MineEnv._compute_reward`` (T25). Les quatre
 premiers termes sont identiques à ceux de la v1 (test de non-régression).
@@ -37,7 +37,8 @@ Pourquoi le terme d'opportunité (T19, décision du 16 octobre 2026) : dans la v
 ne coûtait presque rien (w4 × 0,2 / 30 ≈ 0,002 pour 0,2 min, sans coût de distance), et
 PPO choisissait ATTENDRE dans 87 % de ses décisions en forte charge. Avec ce terme,
 attendre 0,2 min coûte 0,0086 de plus, et attendre la durée d'un cycle coûte un cycle,
-ce qu'un exploitant perd réellement.
+ce qu'un exploitant perd réellement. Les politiques qui n'attendent jamais (les
+heuristiques) ont exactement la même récompense qu'en v1.
 """
 
 from __future__ import annotations
@@ -100,8 +101,9 @@ def reward_terms(
 ) -> RewardTerms:
     """Les termes d'une décision (voir la docstring du module).
 
-    ``truck_min`` : minutes-camion de la décision comptées dans le poste (durée de
-    l'ATTENDRE, ou du cycle entier) ; 0 par défaut, ce qui redonne la formule de la v1.
+    ``truck_min`` : durée d'une ATTENDRE comptée dans le poste (0 pour un cycle, ce qui
+    redonne la formule de la v1). Avec la durée du cycle, on obtient l'option B, abandonnée
+    (voir la docstring du module) ; ``analysis.reward_diagnostics`` la recalcule.
     """
     production = delivered_tonnage_t / max(capacity_t, 1e-9)
 

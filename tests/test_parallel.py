@@ -146,8 +146,10 @@ def test_un_seul_environnement_comme_avant_t29():
 
 def test_nombre_d_environnements_change_le_modele(tmp_path):
     """Savoir expliquer : même graine, même budget, mais 1 ou 2 environnements donnent
-    deux modèles différents (autres épisodes collectés, autres mises à jour)."""
-    common = dict(total_timesteps=2_048, episode_minutes=60.0, progress_bar=False)
+    deux modèles différents (autres épisodes collectés, autres mises à jour). Actualisation
+    par décision : l'actualisation par minute suppose un seul environnement."""
+    common = dict(total_timesteps=2_048, episode_minutes=60.0, progress_bar=False,
+                  time_discount=False)
     one = train_ppo(output_dir=str(tmp_path / "n1"), n_envs=1, **common)
     two = train_ppo(output_dir=str(tmp_path / "n2"), n_envs=2, **common)
     again = train_ppo(output_dir=str(tmp_path / "n1bis"), n_envs=1, **common)

@@ -23,3 +23,7 @@ n_envs: 1
 # Normalisation de la récompense pendant l'entraînement (VecNormalize, observations non
 # normalisées : elles sont déjà dans [0, 1]). false = protocole de la v1.
 normalize_reward: true
+# Actualisation par minute (formulation semi-markovienne, décision du 21 octobre 2026,
+# rl/time_discount.py) : γ s'applique à une décision de 1,89 min ; une décision de Δt
+# minutes est actualisée par γ^(Δt / 1,89). false = actualisation par décision (essais 0 à 13).
+time_discount: true

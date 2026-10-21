@@ -33,6 +33,10 @@ from memoire_master_rl_logistique.rl.tabular_training import (
     save_tabular_progress,
     start_or_resume_tabular,
 )
+from memoire_master_rl_logistique.rl.time_discount import (
+    per_minute_gamma,
+    transition_discount,
+)
 from memoire_master_rl_logistique.seeds import TRAIN_SEEDS, training_episode_seed
 
 
@@ -40,6 +44,7 @@ def train_sarsa(
     n_episodes: int | None = None,
     alpha: float | None = None,
     gamma: float | None = None,
+    time_discount: bool | None = None,
     epsilon_start: float | None = None,
     epsilon_min: float | None = None,
     n_bins: int | None = None,
@@ -65,8 +70,11 @@ def train_sarsa(
     params = hyperparameters(
         "SARSA", n_episodes=n_episodes, alpha=alpha, gamma=gamma,
         epsilon_start=epsilon_start, epsilon_min=epsilon_min, n_bins=n_bins,
+        time_discount=time_discount,
     )
     n_episodes, alpha, gamma = params["n_episodes"], params["alpha"], params["gamma"]
+    # Actualisation par minute (rl/time_discount.py) : γ_min^Δt au lieu de γ dans la cible.
+    gamma_min = per_minute_gamma(gamma) if params["time_discount"] else None
     epsilon_start, epsilon_min, n_bins = (
         params["epsilon_start"], params["epsilon_min"], params["n_bins"])
 
@@ -121,13 +129,14 @@ def train_sarsa(
             # On choisit l'action suivante AVANT la mise à jour (on-policy).
             next_action = _select_action(next_state, epsilon)
 
-            # Mise à jour on-policy : cible r + γ · Q(s', a')
+            # Mise à jour on-policy : cible r + γ · Q(s', a') (γ_min^Δt par minute)
             if state not in q_table:
                 q_table[state] = np.zeros(n_actions)
             if next_state not in q_table:
                 q_table[next_state] = np.zeros(n_actions)
 
-            td_target = reward + gamma * q_table[next_state][next_action]
+            discount = transition_discount(gamma, gamma_min, _info)
+            td_target = reward + discount * q_table[next_state][next_action]
             td_error = td_target - q_table[state][action]
             td_errors.append(abs(td_error))
             q_table[state][action] += alpha * td_error
@@ -166,7 +175,8 @@ def train_sarsa(
         observation_size=env.observation_space.shape[0],
         training_time_s=progress.elapsed_before_s + time.perf_counter() - start,
         seed=seed,
-        training={**params, **({"resumed_from_episodes": progress.resumed_from_episodes}
+        training={**params, **({"gamma_per_minute": gamma_min} if gamma_min else {}),
+                  **({"resumed_from_episodes": progress.resumed_from_episodes}
                               if progress.resumed_from_episodes else {})},
     ))
     clear_checkpoint(out_path)

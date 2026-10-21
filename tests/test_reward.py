@@ -1,7 +1,6 @@
 """Tests de T25 : module de récompense séparé, termes exposés, valeurs inchangées.
 
-Et de la correction du coût d'ATTENDRE (T19, v2) : terme de coût d'opportunité, étendu à
-chaque cycle par l'option B (décision du 20 octobre 2026, docs/option_b_recompense.md)."""
+Et de la correction du coût d'ATTENDRE (T19, v2) : terme de coût d'opportunité."""
 
 import numpy as np
 import pandas as pd
@@ -88,8 +87,7 @@ def test_somme_ponderee_egale_la_recompense_de_step():
 
 def test_decomposition_d_un_poste_affectation_fixe():
     """Test du plan, Affectation fixe en nominal sur 30 graines : terme de distance ≈ −19 ;
-    le terme de production égale le nombre de cycles. Le coût d'opportunité (option B) vaut
-    −12 × 480 / 23,2 sur chaque poste : tout le temps des camions, compté une fois.
+    le terme de production égale le nombre de cycles, d'où « récompense ≈ nombre de cycles ».
 
     Valeurs depuis le moteur à événements (T15, T16 bis) : distance −19,4 (−19,1 avant :
     un cycle va maintenant du lieu de décision à la verse, sans retour), attente −1,38
@@ -101,8 +99,7 @@ def test_decomposition_d_un_poste_affectation_fixe():
                   "reward_opportunity"]]
 
     assert np.allclose(terms.sum(axis=1), runs["total_reward"])
-    assert runs["reward_opportunity"].to_numpy() == pytest.approx(
-        -scenario.truck_count * scenario.episode_minutes / OPPORTUNITY_CYCLE_MIN)
+    assert (runs["reward_opportunity"] == 0).all()  # l'Affectation fixe n'attend jamais
     assert (runs["reward_production"] == runs["total_cycles"]).all()
     assert runs["reward_distance"].mean() == pytest.approx(-19.42, abs=0.05)
     assert runs["reward_wait"].mean() == pytest.approx(-1.38, abs=0.05)
@@ -122,19 +119,16 @@ def test_intervalle_entre_decisions(scenario, minutes):
     assert s.episode_minutes / decisions == pytest.approx(minutes, abs=0.01)
 
 
-# --- Coût d'opportunité (v2 : ATTENDRE ; option B : chaque cycle) ---------------------
+# --- Coût d'opportunité d'ATTENDRE (v2) ----------------------------------------------
 
-def test_cout_d_opportunite_d_une_attente_et_d_un_cycle():
-    """Attendre 0,2 min coûte 0,2/23,2 de cycle en plus (pondéré par w1). Un cycle de
-    30 min coûte 30/23,2 (option B) : livré, il rapporte 1 − 30/23,2 avant les autres
-    termes. Une décision qui dure un cycle de référence coûte exactement un cycle."""
-    cycle = reward_terms(140.0, 140.0, 15.0, [2.0, 2.0, 2.0], 0.0, truck_min=30.0)
+def test_cout_d_opportunite_d_une_attente():
+    """Attendre 0,2 min coûte 0,2/23,2 de cycle en plus (pondéré par w1) ; un cycle, rien.
+    Attendre la durée d'un cycle de référence coûte exactement un cycle."""
+    cycle = reward_terms(140.0, 140.0, 15.0, [2.0, 2.0, 2.0], 0.0)
     wait = reward_terms(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.2, truck_min=0.2)
     full = reward_terms(0.0, 140.0, 0.0, [0.0, 0.0, 0.0], 0.0, truck_min=OPPORTUNITY_CYCLE_MIN)
 
-    assert cycle.opportunity == pytest.approx(-30.0 / OPPORTUNITY_CYCLE_MIN)
-    assert compute_reward(cycle, WEIGHTS) == pytest.approx(0.85 - 30.0 / OPPORTUNITY_CYCLE_MIN)
-    assert reward_terms(140.0, 140.0, 15.0, [2.0, 2.0, 2.0], 0.0).opportunity == 0.0
+    assert cycle.opportunity == 0.0
     assert wait.opportunity == pytest.approx(-0.2 / OPPORTUNITY_CYCLE_MIN)
     assert full.opportunity == -1.0
     assert compute_reward(wait, WEIGHTS) == pytest.approx(
@@ -176,30 +170,13 @@ def test_attendre_dans_l_environnement():
     assert info["reward_terms"]["opportunity"] == pytest.approx(-0.1 / OPPORTUNITY_CYCLE_MIN)
 
 
-def test_cout_d_un_cycle_dans_l_environnement():
-    """Chaque cycle paie la durée qu'il occupe dans le poste, décision comprise : pour une
-    politique qui n'attend jamais, le coût d'opportunité d'un poste est la somme des
-    durées des cycles du journal, bornées à 480 min."""
-    scenario = SCENARIOS["nominal"]
-    env = make_env(scenario, log_cycles=True)
-    run_single_episode(env, heuristic_policies(scenario)["MTWT"], 42)
-    end = scenario.episode_minutes
-    in_shift = sum(max(0.0, min(c.end_min, end) - min(c.start_min, end)) for c in env.cycle_log)
-    assert all(c.kind == "cycle" for c in env.cycle_log)
-    assert env.episode_reward_terms["opportunity"] == pytest.approx(-in_shift / OPPORTUNITY_CYCLE_MIN)
-    assert in_shift == pytest.approx(scenario.truck_count * end)
-
-
 @pytest.mark.parametrize("scenario", ["nominal", "high_load", "high_breakdown"])
-def test_heuristiques_une_constante_par_poste(scenario):
-    """Option B : les heuristiques n'attendent jamais, et le temps total des camions sur un
-    poste est fixe. Leur récompense est donc celle d'avant l'option B, moins une constante
-    (nombre de camions × durée du poste / 23,2), la même pour toutes : leur classement par
-    la récompense d'un poste ne change pas."""
+def test_heuristiques_inchangees(scenario):
+    """Les heuristiques n'attendent jamais : leur récompense est celle de la v1. Un cycle ne
+    paie pas de coût d'opportunité : l'option B (coût de chaque cycle) a été abandonnée le
+    21 octobre 2026, car PPO apprenait à ATTENDRE."""
     s = SCENARIOS[scenario]
-    constant = s.truck_count * s.episode_minutes / OPPORTUNITY_CYCLE_MIN
     policies = heuristic_policies(s)
     for name in HEURISTICS:
         kpis = run_single_episode(make_env(s), policies[name], s.seeds[0])
-        assert kpis["wait_actions"] == 0, name
-        assert kpis["reward_opportunity"] == pytest.approx(-constant), name
+        assert kpis["wait_actions"] == 0 and kpis["reward_opportunity"] == 0, name

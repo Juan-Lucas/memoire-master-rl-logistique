@@ -44,11 +44,12 @@ SEED_KEYS = {"evaluation", "tuning", "training", "training_episode_stride"}
 HEURISTIC_KEYS = {"lp_max_utilization", "lp_utilization_candidates"}
 HYPERPARAMETER_KEYS = {
     "PPO": {"learning_rate", "gamma", "batch_size", "gae_lambda", "clip_range", "n_steps",
-            "n_epochs", "ent_coef", "net_arch", "n_envs", "normalize_reward"},
+            "n_epochs", "ent_coef", "net_arch", "n_envs", "normalize_reward", "time_discount"},
     "DQN": {"learning_rate", "gamma", "batch_size", "buffer_size", "learning_starts",
             "target_update_interval", "exploration_fraction", "exploration_initial_eps",
-            "exploration_final_eps", "net_arch"},
-    "tabular": {"n_episodes", "alpha", "gamma", "epsilon_start", "epsilon_min", "n_bins"},
+            "exploration_final_eps", "net_arch", "time_discount"},
+    "tabular": {"n_episodes", "alpha", "gamma", "epsilon_start", "epsilon_min", "n_bins",
+                "time_discount"},
 }
 
 

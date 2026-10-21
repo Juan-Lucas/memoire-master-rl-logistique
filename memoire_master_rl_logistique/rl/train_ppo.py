@@ -30,6 +30,11 @@ from memoire_master_rl_logistique.rl.model_metadata import (
     write_metadata,
 )
 from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
+from memoire_master_rl_logistique.rl.time_discount import (
+    TimeDiscountCallback,
+    TimeDiscountRolloutBuffer,
+    per_minute_gamma,
+)
 from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 # Normalisation de la récompense (VecNormalize) : la récompense normalisée est coupée à
@@ -55,6 +60,7 @@ def train_ppo(
     n_envs: int | None = None,
     gamma: float | None = None,
     normalize_reward: bool | None = None,
+    time_discount: bool | None = None,
     progress_bar: bool = True,
     checkpoint_freq: int | None = DEFAULT_CHECKPOINT_FREQ,
     resume: bool = False,
@@ -74,13 +80,17 @@ def train_ppo(
     n'en dépend pas à l'évaluation. Les statistiques de normalisation sont enregistrées à
     côté du modèle (``vecnormalize.pkl``) pour pouvoir reprendre l'entraînement.
 
+    ``time_discount`` : actualisation par minute (``rl/time_discount.py``) : avantages GAE
+    avec γ_min^Δt par pas, γ_min = γ^(1 / 1,89). Un seul environnement.
+
     ``checkpoint_freq`` : sauvegarde de l'entraînement tous les ``checkpoint_freq`` pas
     (``None`` : aucune) ; ``resume`` reprend un entraînement interrompu à sa dernière
     sauvegarde, avec exactement la même configuration (voir ``rl/checkpoints.py`` : la
     reprise n'est pas identique au bit près, et elle est écrite dans ``metadata.json``).
     """
     params = hyperparameters("PPO", learning_rate=learning_rate, ent_coef=ent_coef, n_envs=n_envs,
-                             gamma=gamma, normalize_reward=normalize_reward)
+                             gamma=gamma, normalize_reward=normalize_reward,
+                             time_discount=time_discount)
     out_path = Path(output_dir)
     ensure_new_model(out_path / "ppo_mine_agent", overwrite)
     folder = prepare_checkpoint(out_path, resume, overwrite)
@@ -90,13 +100,18 @@ def train_ppo(
     # d'avant T29 ; au-delà, la collecte change, donc le modèle aussi (voir la config).
     n_envs = params.pop("n_envs")
     normalize = params.pop("normalize_reward")
+    per_minute = params.pop("time_discount")
+    if per_minute and n_envs != 1:
+        raise ValueError("L'actualisation par minute de PPO suppose n_envs = 1.")
+    gamma_min = per_minute_gamma(params["gamma"]) if per_minute else None
     if resume and n_envs != 1:
         raise ValueError("La reprise d'un entraînement n'est possible qu'avec n_envs = 1.")
     env_config = EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
                            breakdown_probability, reward_weights)
     signature = training_signature(
         algorithm="PPO", seed=seed, total_timesteps=total_timesteps, n_envs=n_envs,
-        normalize_reward=normalize, params=params, env=asdict(env_config))
+        normalize_reward=normalize, time_discount=per_minute, params=params,
+        env=asdict(env_config))
     env = make_training_vec_env(
         seed, n_envs,
         truck_count=truck_count, shovel_count=shovel_count, dump_count=dump_count,
@@ -128,6 +143,8 @@ def train_ppo(
             verbose=1,
             seed=seed,
             tensorboard_log=None,  # métriques écrites en CSV dans sb3_logs/
+            **({"rollout_buffer_class": TimeDiscountRolloutBuffer,
+                "rollout_buffer_kwargs": {"gamma_per_minute": gamma_min}} if per_minute else {}),
         )
 
         # Stable-Baselines3 ré-ensemence l'environnement avec la graine du modèle
@@ -139,6 +156,8 @@ def train_ppo(
         print(f"Début de l'entraînement PPO ({total_timesteps} steps)...")
 
     callbacks = [kpi_callback]
+    if per_minute:
+        callbacks.append(TimeDiscountCallback(params["gamma"]))
     if checkpoint_freq:
         callbacks.append(CheckpointCallback(folder, checkpoint_freq, kpi_callback, signature,
                                             elapsed_before, resumed_from))
@@ -163,7 +182,8 @@ def train_ppo(
         training_time_s=elapsed_before + time.perf_counter() - start,
         seed=seed,
         training={"total_timesteps": total_timesteps, "n_envs": n_envs,
-                  "normalize_reward": normalize,
+                  "normalize_reward": normalize, "time_discount": per_minute,
+                  **({"gamma_per_minute": gamma_min} if per_minute else {}),
                   **({"reward_clip": REWARD_CLIP} if normalize else {}), **params,
                   **({"resumed_from_timesteps": resumed_from} if resumed_from else {})},
     ))

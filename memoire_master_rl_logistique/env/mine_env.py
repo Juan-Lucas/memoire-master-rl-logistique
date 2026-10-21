@@ -160,6 +160,7 @@ class MineEnv(gym.Env):
         # Décisions de l'épisode (T19), exposées dans ``info`` : toutes, et ATTENDRE seules.
         self.decision_count: int = 0
         self.wait_action_count: int = 0
+        self.last_elapsed_min: float = 0.0  # durée de la dernière décision (actualisation)
         # Contributions pondérées des termes de la récompense (T25), remises à zéro au reset.
         self.last_reward_terms: dict[str, float] = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
         self.episode_reward_terms: dict[str, float] = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
@@ -266,6 +267,7 @@ class MineEnv(gym.Env):
         self.cycle_log = []
         self.decision_count = 0
         self.wait_action_count = 0
+        self.last_elapsed_min = 0.0
         self.last_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
         self.episode_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
 
@@ -296,6 +298,10 @@ class MineEnv(gym.Env):
         depuis la décision précédente (de n'importe quel camion), plus celle d'ATTENDRE
         si c'est l'action choisie. La somme sur un poste est la somme des récompenses de
         tous ses cycles : à la fin du poste, les cycles en cours sont menés à terme.
+
+        ``info["elapsed_min"]`` : durée de cette décision, de son heure à celle de la
+        décision suivante (ou à la fin du poste). Sert à l'actualisation par minute
+        (``rl/time_discount.py``).
         """
         assert self.graph is not None and self.rng_travel is not None
         action = int(action)
@@ -317,6 +323,7 @@ class MineEnv(gym.Env):
 
         reward += self._run_until_decision()
         truncated = self.current_time_min >= self.episode_minutes
+        self.last_elapsed_min = min(self.current_time_min, self.episode_minutes) - time_min
         if truncated:
             reward += self._finish_cycles()
 
@@ -486,8 +493,6 @@ class MineEnv(gym.Env):
             route_distance_km=cycle.route_km,
             resource_waits_min=cycle.shovel_waits_at_decision,
             operational_wait_min=cycle.shovel_wait_min + dump_wait_min,
-            # Coût d'opportunité du cycle entier, décision comprise (option B).
-            truck_min=self._in_shift(cycle.start_min, time_min - cycle.start_min),
         )
 
     def _in_shift(self, start_min: float, duration_min: float) -> float:
@@ -509,7 +514,7 @@ class MineEnv(gym.Env):
         un coût d'attente proportionnel à une durée souvent minuscule (w4 × 0,2 / 30 ≈ 0,002
         pour 0,2 min). En forte charge, PPO choisissait ATTENDRE dans 87 % de ses décisions
         (T12 bis). Depuis la v2, la récompense ajoute le coût d'opportunité de l'immobilité
-        (``truck_min``, voir ``simulation.reward``), étendu à chaque cycle par l'option B.
+        (``truck_min``, voir ``simulation.reward``).
         ``info["wait_actions"]`` compte ces décisions.
         """
         future_events = [
@@ -759,6 +764,8 @@ class MineEnv(gym.Env):
             "total_cycles": sum(t.cycles_completed for t in self.trucks),
             "decisions": self.decision_count,
             "wait_actions": self.wait_action_count,
+            # Durée de la dernière décision (0 après reset) : actualisation par minute.
+            "elapsed_min": self.last_elapsed_min,
             # Contributions pondérées des termes de la récompense (T25) : dernière décision
             # et cumul du poste. Leur somme égale la récompense (resp. la récompense cumulée).
             "reward_terms": dict(self.last_reward_terms),

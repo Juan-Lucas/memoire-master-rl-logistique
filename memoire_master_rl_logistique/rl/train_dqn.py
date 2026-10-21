@@ -33,6 +33,10 @@ from memoire_master_rl_logistique.rl.model_metadata import (
     write_metadata,
 )
 from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
+from memoire_master_rl_logistique.rl.time_discount import (
+    TimeDiscountReplayBuffer,
+    per_minute_gamma,
+)
 from memoire_master_rl_logistique.seeds import TRAIN_SEEDS
 
 
@@ -50,6 +54,7 @@ def train_dqn(
     overwrite: bool = False,
     learning_rate: float | None = None,
     exploration_fraction: float | None = None,
+    time_discount: bool | None = None,
     progress_bar: bool = True,
     checkpoint_freq: int | None = DEFAULT_CHECKPOINT_FREQ,
     resume: bool = False,
@@ -63,9 +68,15 @@ def train_dqn(
 
     ``checkpoint_freq`` et ``resume`` : sauvegarde en cours d'entraînement (mémoire de rejeu
     comprise) et reprise, comme pour PPO (voir ``rl/checkpoints.py``).
+
+    ``time_discount`` : actualisation par minute (``rl/time_discount.py``) : la mémoire de
+    rejeu garde γ_min^Δt de chaque transition, utilisé dans la cible à la place de γ.
     """
     params = hyperparameters("DQN", learning_rate=learning_rate,
-                             exploration_fraction=exploration_fraction)
+                             exploration_fraction=exploration_fraction,
+                             time_discount=time_discount)
+    per_minute = params.pop("time_discount")
+    gamma_min = per_minute_gamma(params["gamma"]) if per_minute else None
     out_path = Path(output_dir)
     ensure_new_model(out_path / "dqn_mine_agent", overwrite)
     folder = prepare_checkpoint(out_path, resume, overwrite)
@@ -74,7 +85,8 @@ def train_dqn(
     env_config = EnvConfig(truck_count, shovel_count, dump_count, episode_minutes,
                            breakdown_probability, reward_weights)
     signature = training_signature(algorithm="DQN", seed=seed, total_timesteps=total_timesteps,
-                                   params=params, env=asdict(env_config))
+                                   time_discount=per_minute, params=params,
+                                   env=asdict(env_config))
     env = make_training_vec_env(
         seed,
         truck_count=truck_count, shovel_count=shovel_count, dump_count=dump_count,
@@ -102,6 +114,8 @@ def train_dqn(
             verbose=1,
             seed=seed,
             tensorboard_log=None,  # métriques écrites en CSV dans sb3_logs/
+            **({"replay_buffer_class": TimeDiscountReplayBuffer,
+                "replay_buffer_kwargs": {"gamma_per_minute": gamma_min}} if per_minute else {}),
         )
 
         # Stable-Baselines3 ré-ensemence l'environnement avec la graine du modèle
@@ -134,7 +148,8 @@ def train_dqn(
         observation_size=env.observation_space.shape[0],
         training_time_s=elapsed_before + time.perf_counter() - start,
         seed=seed,
-        training={"total_timesteps": total_timesteps, **params,
+        training={"total_timesteps": total_timesteps, **params, "time_discount": per_minute,
+                  **({"gamma_per_minute": gamma_min} if per_minute else {}),
                   **({"resumed_from_timesteps": resumed_from} if resumed_from else {})},
     ))
     clear_checkpoint(out_path)
