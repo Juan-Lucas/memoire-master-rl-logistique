@@ -89,3 +89,47 @@ def test_pas_de_couverture_pour_les_autres_politiques():
                               heuristic_policies(SCENARIOS["nominal"])["Fixed"], seed=42)
 
     assert "known_state_pct" not in kpis
+
+
+# --- Variante de l'état : route de plus petite attente prévue (règle, point 9) --------------
+
+def test_variante_route_de_plus_petite_attente_prevue():
+    """``best_route`` : dernière variable = route (dans l'ordre des actions) de plus petite
+    attente prévue, la même prévision que MTWT (``MineEnv.route_waits``) ; 6 valeurs
+    possibles au lieu de 3."""
+    assert state_space_size(state_feature="best_route") == 8**5 * 6
+    scenario = SCENARIOS["nominal"]
+    env = make_env(scenario)
+    obs, info = env.reset(seed=42)
+    policy = heuristic_policies(scenario)["MTWT"]
+    seen = set()
+    for _ in range(300):
+        waits = env.route_waits()
+        state = _discretize_obs(obs, state_feature="best_route")
+        capped = np.minimum(np.asarray(waits) / 30.0, 1.0)  # bloc route_wait de l'observation
+        assert state[:5] == _discretize_obs(obs)[:5]  # attentes : inchangées
+        assert state[5] == int(np.argmin(capped))
+        seen.add(state[5])
+        obs, _, _, _, info = env.step(policy(obs, info, env))
+    assert len(seen) > 1  # la variable change au cours du poste
+    with pytest.raises(ValueError, match="state_feature"):
+        _discretize_obs(obs, state_feature="inconnu")
+
+
+def test_la_politique_garde_sa_representation(tmp_path):
+    """La Q-table enregistrée garde ``state_feature`` ; une Q-table d'avant le point 9 (sans
+    cette clé) est lue avec la pelle la plus proche."""
+    import pickle
+
+    from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
+
+    train_q_learning(n_episodes=2, episode_minutes=60.0, output_dir=str(tmp_path),
+                     state_feature="best_route", checkpoint_every=None)
+    data = pickle.loads((tmp_path / "q_table.pkl").read_bytes())
+    assert data["state_feature"] == "best_route"
+    assert {state[5] for state in data["q_table"]} <= set(range(6))
+    assert TabularPolicy.load(tmp_path / "q_table.pkl").state_feature == "best_route"
+
+    del data["state_feature"]
+    (tmp_path / "old.pkl").write_bytes(pickle.dumps(data))
+    assert TabularPolicy.load(tmp_path / "old.pkl").state_feature == "nearest_shovel"

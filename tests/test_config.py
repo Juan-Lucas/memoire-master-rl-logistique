@@ -108,7 +108,8 @@ def test_hyperparametres_de_la_campagne():
     assert hyperparameters("DQN")["learning_rate"] in grids["DQN"]["learning_rate"]
     # Valeurs de la campagne (run_benchmark avant T28), communes à Q-Learning et SARSA.
     tabular = {"n_episodes": 30_000, "alpha": 0.2, "gamma": 0.99, "epsilon_start": 1.0,
-               "epsilon_min": 0.01, "n_bins": 8, "time_discount": True}
+               "epsilon_min": 0.01, "n_bins": 8, "time_discount": True,
+               "state_feature": "nearest_shovel"}
     assert hyperparameters("Q-Learning") == hyperparameters("SARSA") == tabular
 
 

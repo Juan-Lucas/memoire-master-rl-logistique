@@ -49,7 +49,7 @@ HYPERPARAMETER_KEYS = {
             "target_update_interval", "exploration_fraction", "exploration_initial_eps",
             "exploration_final_eps", "net_arch", "time_discount"},
     "tabular": {"n_episodes", "alpha", "gamma", "epsilon_start", "epsilon_min", "n_bins",
-                "time_discount"},
+                "time_discount", "state_feature"},
 }
 
 

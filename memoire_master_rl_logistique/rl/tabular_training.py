@@ -18,7 +18,11 @@ from memoire_master_rl_logistique.rl.checkpoints import (
     load_tabular_checkpoint,
     save_tabular_checkpoint,
 )
-from memoire_master_rl_logistique.rl.discretize import DEFAULT_N_BINS, _discretize_obs
+from memoire_master_rl_logistique.rl.discretize import (
+    DEFAULT_N_BINS,
+    DEFAULT_STATE_FEATURE,
+    _discretize_obs,
+)
 
 # Action choisie pour un état jamais rencontré pendant l'entraînement : 0 = (pelle 1, verse 1).
 # Sa fréquence est mesurée pendant l'évaluation (``TabularPolicy.coverage``).
@@ -38,11 +42,13 @@ class TabularPolicy:
         n_bins: int = DEFAULT_N_BINS,
         num_shovels: int = 3,
         num_dumps: int = 2,
+        state_feature: str = DEFAULT_STATE_FEATURE,
     ) -> None:
         self.q_table = q_table
         self.n_bins = n_bins
         self.num_shovels = num_shovels
         self.num_dumps = num_dumps
+        self.state_feature = state_feature
         self.reset_coverage()
 
     def reset_coverage(self) -> None:
@@ -66,11 +72,14 @@ class TabularPolicy:
             n_bins=data["n_bins"],
             num_shovels=data.get("num_shovels", 3),
             num_dumps=data.get("num_dumps", 2),
+            # Q-tables d'avant le point 9 : pelle la plus proche.
+            state_feature=data.get("state_feature", DEFAULT_STATE_FEATURE),
         )
 
     def predict(self, observation: np.ndarray) -> int:
         """Action gloutonne ; ``DEFAULT_ACTION`` si l'état n'a jamais été vu."""
-        state = _discretize_obs(observation, self.n_bins, self.num_shovels, self.num_dumps)
+        state = _discretize_obs(observation, self.n_bins, self.num_shovels, self.num_dumps,
+                                self.state_feature)
         self.decisions += 1
         if state in self.q_table:
             return int(np.argmax(self.q_table[state]))
@@ -188,6 +197,7 @@ def save_tabular_artifacts(
     epsilons_per_episode: list[float],
     td_errors_per_episode: list[float],
     tonnages_per_episode: list[float],
+    state_feature: str = DEFAULT_STATE_FEATURE,
 ) -> None:
     """Sauvegarde la Q-table, les récompenses et les diagnostics d'entraînement.
 
@@ -201,6 +211,7 @@ def save_tabular_artifacts(
             "n_bins": n_bins,
             "num_shovels": shovel_count,
             "num_dumps": dump_count,
+            "state_feature": state_feature,
         }, f)
     print(f"{model_label} sauvegardée : {model_path}")
 

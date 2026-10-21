@@ -92,6 +92,8 @@ class Trial:
 OPTION_B = "78ed5f5"  # commit de l'option B (coût d'opportunité de chaque cycle), abandonnée
 PER_DECISION = {"time_discount": False}  # essais 0 à 13 : actualisation par décision
 PENDING = "à venir"
+# Grille du réglage tabulaire (règle, point 8) : (α, nombre d'intervalles).
+TABULAR_GRID = ((0.1, 6), (0.1, 8), (0.2, 6), (0.2, 8))
 
 
 TRIALS: dict[int, Trial] = {trial.number: trial for trial in (
@@ -126,12 +128,24 @@ TRIALS: dict[int, Trial] = {trial.number: trial for trial in (
           "4 133,5 ± 55,2 t/h, ATTENDRE 37,2 %, pelles 35 / 38 / 27 %", commit=OPTION_B),
     # Contrôle de l'actualisation par minute (règle, points 19 à 23) : configuration de la
     # campagne (time_discount: true), récompense des essais 0 à 9.
-    Trial(14, "PPO", "Actualisation par minute : PPO, configuration de la campagne", PENDING),
-    Trial(15, "DQN", "Actualisation par minute : DQN, configuration de la campagne", PENDING),
+    Trial(14, "PPO", "Actualisation par minute : PPO, configuration de la campagne",
+          "4 413,5 ± 67,9 t/h, ATTENDRE 0 %, pelles 62 / 36 / 2 %"),
+    Trial(15, "DQN", "Actualisation par minute : DQN, configuration de la campagne",
+          "120,8 ± 5,5 t/h, ATTENDRE 99,8 %, pelles 29 / 71 / 0 %"),
     Trial(16, "Q-Learning", "Actualisation par minute : Q-Learning, configuration de la "
-          "campagne (α = 0,2, 8 intervalles)", PENDING),
+          "campagne (α = 0,2, 8 intervalles)",
+          "3 974,2 ± 46,3 t/h, ATTENDRE 30,0 %, pelles 16 / 35 / 49 %"),
     Trial(17, "SARSA", "Actualisation par minute : SARSA, configuration de la campagne "
-          "(α = 0,2, 8 intervalles)", PENDING),
+          "(α = 0,2, 8 intervalles)", "3 601,5 ± 39,4 t/h, ATTENDRE 0 %, pelles 0 / 0 / 100 %"),
+    # Réglage de Q-Learning et SARSA (règle, points 8 et 24) : α ∈ {0,1 ; 0,2} × {6 ; 8}
+    # intervalles, actualisation par minute. Les essais 16 et 17 sont la 4e configuration
+    # (α = 0,2, 8 intervalles). Critère : productivité sur les graines de sélection.
+    *(Trial(number, algorithm, f"Réglage {algorithm} : α = {alpha:g}, {n_bins} intervalles "
+            "(actualisation par minute)".replace(".", ","), PENDING,
+            {"alpha": alpha, "n_bins": n_bins})
+      for number, (algorithm, alpha, n_bins) in enumerate(
+          [(algo, alpha, n_bins) for algo in ("Q-Learning", "SARSA")
+           for alpha, n_bins in TABULAR_GRID if (alpha, n_bins) != (0.2, 8)], start=18)),
 )}
 
 # Essais faits sur une version antérieure du code (voir archives/mise_au_point_agents/).

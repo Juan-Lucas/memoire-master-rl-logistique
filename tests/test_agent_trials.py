@@ -38,11 +38,11 @@ SHORT = replace(SCENARIOS["nominal"], episode_minutes=60.0)
 # --- Registre des essais ------------------------------------------------------------------
 
 def test_tous_les_essais_du_journal_sont_declares():
-    """Essais 0 à 17 du tableau du journal : archivés (0 à 4), refaisables sur le code
-    actuel (5 à 9 et 14 à 17), contrôles de l'option B abandonnée (10 à 13, commit 78ed5f5)."""
-    assert sorted([*ARCHIVED_TRIALS, *TRIALS]) == list(range(18))
-    assert all(f"{n} [" in list_trials() for n in range(18))
-    assert all(TRIALS[n].commit is None for n in [*range(5, 10), *range(14, 18)])
+    """Essais 0 à 23 du tableau du journal : archivés (0 à 4), refaisables sur le code
+    actuel (5 à 9 et 14 à 23), contrôles de l'option B abandonnée (10 à 13, commit 78ed5f5)."""
+    assert sorted([*ARCHIVED_TRIALS, *TRIALS]) == list(range(24))
+    assert all(f"{n} [" in list_trials() for n in range(24))
+    assert all(TRIALS[n].commit is None for n in [*range(5, 10), *range(14, 24)])
     assert all(TRIALS[n].commit == OPTION_B for n in range(10, 14))
 
 
@@ -72,7 +72,7 @@ def test_essai_5_ne_differe_de_la_campagne_que_par_la_piste_2():
     assert overrides["gamma"] == 0.99 and overrides["normalize_reward"] is False
 
 
-@pytest.mark.parametrize("number, budget", [(5, 1_024), (8, 3), (14, 1_024), (16, 3)])
+@pytest.mark.parametrize("number, budget", [(5, 1_024), (8, 3), (14, 1_024), (18, 3)])
 def test_un_essai_ecrit_son_resultat_et_ne_se_reentraine_pas(tmp_path, number, budget):
     """Sur un budget minuscule : résultat complet, évalué sur les graines de sélection ;
     relancé, l'essai réutilise le modèle au lieu de le réentraîner."""
@@ -172,3 +172,17 @@ def test_politique_constante_et_refus_d_ecraser(tmp_path):
     (tmp_path / "reward_by_policy.csv").write_text("")
     with pytest.raises(FileExistsError):
         reward_diagnostics.main(tmp_path)
+
+
+def test_reglage_tabulaire_de_meme_taille():
+    """Règle, point 8 : 4 configurations par algorithme, α ∈ {0,1 ; 0,2} × {6 ; 8} ; la
+    4e (α = 0,2, 8 intervalles) est l'essai de contrôle 16 ou 17 (configuration de la
+    campagne). Rien d'autre ne change que α et le nombre d'intervalles."""
+    config = hyperparameters("Q-Learning")
+    for algorithm, control in (("Q-Learning", 16), ("SARSA", 17)):
+        grid = {(TRIALS[n].overrides["alpha"], TRIALS[n].overrides["n_bins"])
+                for n in range(18, 24) if TRIALS[n].algorithm == algorithm}
+        grid.add((config["alpha"], config["n_bins"]))
+        assert grid == {(0.1, 6), (0.1, 8), (0.2, 6), (0.2, 8)}
+        assert TRIALS[control].algorithm == algorithm and not TRIALS[control].overrides
+    assert all(set(TRIALS[n].overrides) == {"alpha", "n_bins"} for n in range(18, 24))

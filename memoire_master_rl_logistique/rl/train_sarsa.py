@@ -48,6 +48,7 @@ def train_sarsa(
     epsilon_start: float | None = None,
     epsilon_min: float | None = None,
     n_bins: int | None = None,
+    state_feature: str | None = None,
     seed: int = TRAIN_SEEDS[0],
     truck_count: int = 12,
     shovel_count: int = 3,
@@ -70,13 +71,14 @@ def train_sarsa(
     params = hyperparameters(
         "SARSA", n_episodes=n_episodes, alpha=alpha, gamma=gamma,
         epsilon_start=epsilon_start, epsilon_min=epsilon_min, n_bins=n_bins,
-        time_discount=time_discount,
+        time_discount=time_discount, state_feature=state_feature,
     )
     n_episodes, alpha, gamma = params["n_episodes"], params["alpha"], params["gamma"]
     # Actualisation par minute (rl/time_discount.py) : γ_min^Δt au lieu de γ dans la cible.
     gamma_min = per_minute_gamma(gamma) if params["time_discount"] else None
     epsilon_start, epsilon_min, n_bins = (
         params["epsilon_start"], params["epsilon_min"], params["n_bins"])
+    state_feature = params["state_feature"]
 
     out_path = Path(output_dir)
     ensure_new_model(out_path / "sarsa_table.pkl", overwrite)
@@ -116,14 +118,15 @@ def train_sarsa(
 
     for ep in range(progress.next_episode, n_episodes):
         obs, _info = env.reset(seed=training_episode_seed(seed, ep))  # disjointes de l'évaluation (T26)
-        state = _discretize_obs(obs, n_bins, shovel_count, dump_count)
+        state = _discretize_obs(obs, n_bins, shovel_count, dump_count, state_feature)
         action = _select_action(state, epsilon)
         total_reward = 0.0
         td_errors: list[float] = []
 
         while True:
             obs_next, reward, terminated, truncated, _info = env.step(action)
-            next_state = _discretize_obs(obs_next, n_bins, shovel_count, dump_count)
+            next_state = _discretize_obs(obs_next, n_bins, shovel_count, dump_count,
+                                         state_feature)
             total_reward += reward
 
             # On choisit l'action suivante AVANT la mise à jour (on-policy).
@@ -168,6 +171,7 @@ def train_sarsa(
         out_path, "sarsa_table.pkl", "SARSA table",
         q_table, n_bins, shovel_count, dump_count,
         progress.rewards, progress.epsilons, progress.td_errors, progress.tonnages,
+        state_feature,
     )
     write_metadata(out_path, build_metadata(
         "SARSA",
