@@ -121,7 +121,9 @@ Ces documents fondent le modèle de carburant revu le 22/10/2026 (`simulation/co
 - Burt & Caccetta (2007), source probable de la formule du facteur d'appariement : https://doi.org/10.1080/17480930701388606
 - Wilcoxon (1945), Friedman (1937), Holm (1979), Efron & Tibshirani (1993), Puterman (1994)
 
-## Erreurs trouvées dans le `.bib` (à corriger au lot 2)
+## Erreurs trouvées dans le `.bib` (corrigées le 22/10/2026)
+
+Toutes corrigées dans `reports/article/RL_references.bib`. Les entrées de Krichen (`@misc`, document HAL) et de Sutton & Barto (éditeur, 2e édition) ont aussi été complétées : BibTeX ne donne plus aucun avertissement.
 
 | Clé | Problème | Correction |
 |---|---|---|
