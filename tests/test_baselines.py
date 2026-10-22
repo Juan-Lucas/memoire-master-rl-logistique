@@ -42,6 +42,35 @@ def test_fifo_ignore_les_trajets():
     assert actions == {encode_action(1, 0, 2)}
 
 
+def test_fifo_sert_la_pelle_qui_attend_depuis_le_plus_longtemps():
+    """Heure courante 5 : pelles 1 et 2 libres depuis 3 et 1 min, pelle 3 occupée jusqu'à
+    12. La règle choisit la pelle 2, qui attend un camion depuis le plus longtemps."""
+    assert FIFO.predict(None, info([3.0, 1.0, 12.0], [0.0, 0.0])) == encode_action(1, 0, 2)
+
+
+def test_fifo_dans_le_simulateur_est_la_regle_de_dispatching_fifo():
+    """Dans MineEnv, l'heure de libération d'une pelle libre n'est pas ramenée à l'heure
+    courante : quand plusieurs pelles attendent, FIFO choisit celle libre depuis le plus
+    longtemps (définition FIFO du dispatching, article §2). Vérifié à chaque décision
+    d'un poste où au moins deux pelles attendent."""
+    env = make_env(SCENARIOS["nominal"])
+    obs, situation = env.reset(seed=42)
+    checked = 0
+    while True:
+        now = env.current_time_min
+        free = situation["shovel_available_at"]
+        waiting = [k for k, t in enumerate(free) if t < now]
+        action = FIFO.predict(obs, situation)
+        if len(waiting) >= 2:
+            longest = min(waiting, key=lambda k: free[k])
+            assert action // 2 == longest
+            checked += 1
+        obs, _, terminated, truncated, situation = env.step(action)
+        if terminated or truncated:
+            break
+    assert checked > 0  # la situation se présente bien pendant un poste
+
+
 def test_fifo_egalite_et_absence_d_information():
     """Égalité : le plus petit indice ; sans ``info`` : action 0."""
     assert FIFO.predict(None, info([4.0, 4.0, 4.0], [2.0, 2.0])) == 0
