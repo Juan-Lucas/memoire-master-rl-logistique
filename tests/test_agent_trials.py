@@ -38,11 +38,11 @@ SHORT = replace(SCENARIOS["nominal"], episode_minutes=60.0)
 # --- Registre des essais ------------------------------------------------------------------
 
 def test_tous_les_essais_du_journal_sont_declares():
-    """Essais 0 à 23 du tableau du journal : archivés (0 à 4), refaisables sur le code
-    actuel (5 à 9 et 14 à 23), contrôles de l'option B abandonnée (10 à 13, commit 78ed5f5)."""
-    assert sorted([*ARCHIVED_TRIALS, *TRIALS]) == list(range(24))
-    assert all(f"{n} [" in list_trials() for n in range(24))
-    assert all(TRIALS[n].commit is None for n in [*range(5, 10), *range(14, 24)])
+    """Essais 0 à 25 du tableau du journal : archivés (0 à 4), refaisables sur le code
+    actuel (5 à 9 et 14 à 25), contrôles de l'option B abandonnée (10 à 13, commit 78ed5f5)."""
+    assert sorted([*ARCHIVED_TRIALS, *TRIALS]) == list(range(26))
+    assert all(f"{n} [" in list_trials() for n in range(26))
+    assert all(TRIALS[n].commit is None for n in [*range(5, 10), *range(14, 26)])
     assert all(TRIALS[n].commit == OPTION_B for n in range(10, 14))
 
 
@@ -186,3 +186,18 @@ def test_reglage_tabulaire_de_meme_taille():
         assert grid == {(0.1, 6), (0.1, 8), (0.2, 6), (0.2, 8)}
         assert TRIALS[control].algorithm == algorithm and not TRIALS[control].overrides
     assert all(set(TRIALS[n].overrides) == {"alpha", "n_bins"} for n in range(18, 24))
+
+
+def test_variante_avec_la_meilleure_configuration_du_reglage():
+    """Règle, point 9 : la variante de l'état est essayée une seule fois, avec la
+    configuration de meilleure productivité du réglage (essais 16 à 23), lue dans les
+    résultats notés : Q-Learning essai 20 (4 180,8 t/h), SARSA essai 21 (3 626,0 t/h)."""
+    def productivity(number):
+        return float(TRIALS[number].reported.split(" ±")[0].replace(" ", "").replace(" ", "")
+                     .replace(",", "."))
+
+    for algorithm, variant, best in (("Q-Learning", 24, 20), ("SARSA", 25, 21)):
+        candidates = [n for n in range(16, 24) if TRIALS[n].algorithm == algorithm]
+        assert max(candidates, key=productivity) == best
+        expected = {**TRIALS[best].overrides, "state_feature": "best_route"}
+        assert TRIALS[variant].algorithm == algorithm and TRIALS[variant].overrides == expected

@@ -94,6 +94,14 @@ PER_DECISION = {"time_discount": False}  # essais 0 à 13 : actualisation par d�
 PENDING = "à venir"
 # Grille du réglage tabulaire (règle, point 8) : (α, nombre d'intervalles).
 TABULAR_GRID = ((0.1, 6), (0.1, 8), (0.2, 6), (0.2, 8))
+TUNING_RESULTS = {  # essais 18 à 23 (22 octobre 2026), graines de sélection
+    18: "3 928,8 ± 51,0 t/h, ATTENDRE 30,5 %, pelles 19 / 23 / 58 %",
+    19: "3 368,8 ± 78,4 t/h, ATTENDRE 74,9 %, pelles 2 / 9 / 89 %",
+    20: "4 180,8 ± 48,4 t/h, ATTENDRE 33,3 %, pelles 35 / 46 / 18 %",
+    21: "3 626,0 ± 58,8 t/h, ATTENDRE 0,8 %, pelles 1 / 1 / 98 %",
+    22: "3 596,2 ± 30,0 t/h, ATTENDRE 0 %, pelles 0 / 0 / 100 %",
+    23: "3 480,8 ± 47,7 t/h, ATTENDRE 0,5 %, pelles 0 / 0 / 100 %",
+}
 
 
 TRIALS: dict[int, Trial] = {trial.number: trial for trial in (
@@ -141,11 +149,21 @@ TRIALS: dict[int, Trial] = {trial.number: trial for trial in (
     # intervalles, actualisation par minute. Les essais 16 et 17 sont la 4e configuration
     # (α = 0,2, 8 intervalles). Critère : productivité sur les graines de sélection.
     *(Trial(number, algorithm, f"Réglage {algorithm} : α = {alpha:g}, {n_bins} intervalles "
-            "(actualisation par minute)".replace(".", ","), PENDING,
+            "(actualisation par minute)".replace(".", ","), TUNING_RESULTS[number],
             {"alpha": alpha, "n_bins": n_bins})
       for number, (algorithm, alpha, n_bins) in enumerate(
           [(algo, alpha, n_bins) for algo in ("Q-Learning", "SARSA")
            for alpha, n_bins in TABULAR_GRID if (alpha, n_bins) != (0.2, 8)], start=18)),
+    # Variante de l'état (règle, point 9) : « route de plus petite attente prévue », une
+    # seule fois, avec la meilleure configuration du réglage (essais 16 à 23, graines de
+    # sélection) : Q-Learning α = 0,2, 6 intervalles (essai 20) ; SARSA α = 0,1,
+    # 6 intervalles (essai 21). Retenue seulement si elle fait mieux que cet essai.
+    Trial(24, "Q-Learning", "Variante de l'état (route de plus petite attente prévue), "
+          "α = 0,2, 6 intervalles", PENDING,
+          {"alpha": 0.2, "n_bins": 6, "state_feature": "best_route"}),
+    Trial(25, "SARSA", "Variante de l'état (route de plus petite attente prévue), "
+          "α = 0,1, 6 intervalles", PENDING,
+          {"alpha": 0.1, "n_bins": 6, "state_feature": "best_route"}),
 )}
 
 # Essais faits sur une version antérieure du code (voir archives/mise_au_point_agents/).
