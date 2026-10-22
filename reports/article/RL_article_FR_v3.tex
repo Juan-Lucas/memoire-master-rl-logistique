@@ -526,7 +526,7 @@ Le simulateur est conforme à l'interface Gymnasium \cite{MarkTowers2025}, ce qu
 \label{fig:simulation}
 \end{figure}
 
-\afig{dans draw.io, corriger le module « Simulation Engine » (« Time-step haulage physics » devient « Event-driven cycle simulation ») et le module « Energy Consumption » (« Fuel use from power demand ; idling, uphill hauling, braking » devient « Distance-based fuel model with slope factor ; idling at 10 L/h »), pour rester cohérent avec le texte (M11).}
+\afig{dans draw.io, corriger le module « Simulation Engine » (« Time-step haulage physics » devient « Discrete-event simulation ; decision at the dump ») et le module « Energy Consumption » (« Fuel use from power demand ; idling, uphill hauling, braking » devient « Distance-based fuel model with slope factor, calibrated to 95 L/h ; idling at 64.9 L/h »), pour rester cohérent avec le texte (M11, v3).}
 
 \begin{revbloc}{M11, A, v3}
 L'architecture comprend les modules suivants :
@@ -674,6 +674,8 @@ Actualisation & $\gamma_{\min}^{\Delta t_t}$ & \rev{M9, v3}{Par minute de simula
 \end{figure}
 
 \rev{m6}{\ifrevmarks\small Fichier renommé \texttt{mdp\_formulation.png} ; son contenu est déjà en anglais.\fi}
+
+\afig{dans draw.io : la flèche de récompense dit « Tonnage, balance, fuel, waiting » ; remplacer par « Production, balance, distance, waiting (paid at cycle end) ». La flèche d'action dit « Truck -> shovel assignment » ; remplacer par « Shovel--dump pair or WAIT ». Ajouter sur la flèche de l'état la durée de la décision « $\Delta t$ (per-minute discount) » (v3).}
 
 \subsection{Fonction de récompense multi-objectif}
 \label{sec:reward}
@@ -1578,20 +1580,21 @@ PPO                  & $0{,}0415\pm0{,}0006$ & $0{,}0475\pm0{,}0023$ & $0{,}0427
 \subsection{Limites}
 \label{sec:limitations}
 
-\begin{revbloc}{M7, M8, M9, M11, M12, M25, N1--N5}
+\begin{revbloc}{M7, M8, M9, M11, M12, M25, N1--N5, v3}
 \begin{itemize}
-  \item \textbf{Simulation et absence de validation sur site :} l'étude repose entièrement sur un simulateur non calibré sur des données réelles. Les conditions météorologiques, le comportement des opérateurs, les incidents routiers et les décisions de maintenance ne sont pas représentés.
-  \item \textbf{Une seule graine d'entraînement :} chaque agent a été entraîné une fois. Les 30 réplications mesurent la variabilité due à l'environnement, pas celle due à l'entraînement ; les comparaisons entre PPO et DQN opposent donc deux modèles, et non deux algorithmes \cite{Henderson2018, Agarwal2021}. Par ailleurs, les graines d'évaluation coïncident avec celles des premiers épisodes d'entraînement.
-  \item \textbf{Représentation de l'état :} sa taille dépend du nombre de camions, ce qui empêche le transfert des agents profonds entre flottes de tailles différentes, et plus d'un tiers de ses composantes sont constantes. Les agents tabulaires n'utilisent qu'une représentation réduite à six variables et n'atteignent pas la convergence dans le budget retenu ; leur performance est une borne inférieure.
-  \item \textbf{Modèle de simulation :} les cycles sont simulés d'un seul tenant au moment de la décision, et les pelles et les verses servent les camions dans l'ordre des décisions plutôt que dans l'ordre exact d'arrivée. Seuls les camions tombent en panne, au plus une fois par cycle, selon un processus stationnaire ; les pannes de pelles, souvent les plus pénalisantes, ne sont pas représentées. Le modèle de carburant n'est pas calibré.
-  \item \textbf{Aléas non synchronisés :} un seul générateur aléatoire est utilisé ; les aléas ne sont donc identiques entre politiques que jusqu'à leur première décision différente.
-  \item \textbf{Actualisation par décision :} l'horizon effectif en minutes dépend de la politique et de la taille de la flotte (\cref{sec:smdp}).
-  \item \textbf{Références et réglage :} deux des quatre heuristiques sont dégénérées dans l'implémentation évaluée, et aucune règle tenant compte à la fois des files et des temps de trajet ni aucune politique fondée sur l'optimisation n'est incluse. L'effort de réglage des hyperparamètres n'a pas été identique pour PPO et DQN.
+  \item \textbf{Simulation et absence de validation sur site :} l'étude repose entièrement sur un simulateur dont la structure n'est pas calibrée sur des données réelles. Un graphe de sept nœuds, trois pelles et deux verses représente la mine. Les conditions météorologiques, le comportement des opérateurs, les incidents routiers et les décisions de maintenance ne sont pas représentés. Le carburant est calibré sur une seule valeur publiée (consommation moyenne d'un tombereau de 136~t), et la surconsommation sur piste dégradée est une hypothèse.
+  \item \textbf{Pannes :} seuls les camions tombent en panne, au plus une fois par cycle, selon un processus stationnaire. Les pannes de pelles ne sont pas représentées. Avec un facteur d'appariement de 0,35, la perte d'une pelle retirerait d'un coup un tiers de la capacité de chargement : elle testerait la capacité de réaffectation des politiques bien plus que la panne d'un camion. C'est une perspective naturelle de ce travail.
+  \item \textbf{Nombres aléatoires communs partiels :} les pannes sont tirées dans un flux propre à chaque camion et sont identiques entre politiques ; les temps de trajet et de service sont tirés dans des flux partagés par tous les camions, dans l'ordre des événements, qui dépend des décisions. L'appariement entre politiques est donc fort, sans être parfait.
+  \item \textbf{Formulation et actualisation :} un agent unique décide successivement pour tous les camions, et la récompense d'un pas porte sur les cycles terminés pendant ce pas, quel que soit le camion : l'attribution du mérite à une décision n'est pas explicite. L'actualisation par minute repose sur deux approximations (récompense comptée au début du pas ; échelle de la normalisation de PPO estimée avec le $\gamma$ par décision) et impose un seul environnement simulé par entraînement. Le facteur par minute est rapporté à l'intervalle moyen de l'Affectation fixe en conditions nominales (1,89~min) ; une autre référence donnerait un autre horizon en minutes.
+  \item \textbf{Mise au point des agents :} elle a été faite en conditions nominales, avec une seule graine d'entraînement, sur des grilles de quatre configurations par algorithme, au budget réduit de 200\,000 pas pour PPO et DQN et au budget complet pour les agents tabulaires. Le facteur $\gamma$ des agents tabulaires n'a pas été réglé. Deux décisions ont été prises après avoir vu des résultats sur les graines de sélection : la variante de la récompense, puis son abandon au profit de l'actualisation par minute (\cref{sec:tuning}). Elles ont été prises avec une règle écrite à l'avance pour la suite et ne touchent pas aux graines d'évaluation, mais elles restent des choix informés par les données.
+  \item \textbf{DQN :} dans la version retenue, DQN s'effondre sur l'action ATTENDRE (\cref{sec:tuning}). Ses résultats décrivent cette configuration, et non l'algorithme en général. Des variantes connues pour réduire l'erreur d'estimation des valeurs, comme la normalisation de la récompense, une architecture \emph{dueling} ou un double réseau, n'ont pas été essayées, puisque la règle de mise au point l'interdisait.
+  \item \textbf{Agents tabulaires :} ils n'utilisent qu'une représentation réduite à six variables, et leur politique peut se dégrader à mesure que l'exploration diminue. Leur performance est une borne inférieure de ce que permettent ces algorithmes. \pending{à compléter avec la convergence observée pendant la campagne}
+  \item \textbf{Variabilité d'entraînement :} 5 graines d'entraînement par agent et par régime permettent de rapporter des intervalles de confiance sur les agents, mais restent peu nombreuses \cite{Henderson2018, Agarwal2021}. Les intervalles correspondants sont larges, et un agent instable peut avoir un plus mauvais modèle très éloigné de son IQM.
+  \item \textbf{Références :} MTWT n'anticipe pas les camions qui seront affectés après la décision en cours. Le plan de la politique LP est calculé une fois par poste, à partir de grandeurs moyennes, et son plafond d'utilisation est choisi une seule fois pour tous les régimes. Des systèmes industriels réoptimisent plus souvent et utilisent des règles plus élaborées.
   \item \textbf{Espace d'actions et algorithmes :} l'agent choisit parmi un ensemble discret de couples pelle--verse ; d'autres algorithmes, tels que Soft Actor-Critic \cite{Haarnoja2018, SampsonNwachukwu2025}, Advantage Actor-Critic ou des approches multi-agents \cite{Zhao2025}, n'ont pas été comparés.
-  \item \textbf{Taille du système :} trois pelles, deux verses et 12 à 18 camions sont loin des grandes exploitations. Les résultats décrivent une performance relative dans ce cadre.
+  \item \textbf{Taille du système et transfert :} trois pelles, deux verses et 12 à 18 camions sont loin des grandes exploitations. L'évaluation sans réentraînement ne porte que sur des changements de taille de flotte et de taux de pannes, pas sur un changement de réseau routier ou de nombre de pelles, qui modifierait la taille de l'état et de l'espace d'actions. Les résultats décrivent une performance relative dans ce cadre.
 \end{itemize}
 \end{revbloc}
-
 
 % ============================================================================
 % Section 9 : Conclusion
@@ -1622,7 +1625,7 @@ Les travaux futurs porteront d'abord sur la consolidation de ces résultats : pl
 
 Le code source du simulateur, les scripts d'entraînement et d'évaluation et la liste des graines utilisées pour les 30 réplications (graines 42 à 71) sont accessibles sur GitHub à l'adresse \url{https://github.com/Juan-Lucas/memoire-master-rl-logistique}.
 
-\adir{la version précédente mentionnait des fichiers YAML d'hyperparamètres dans un répertoire \texttt{configs/}. Ce répertoire existe, mais aucun script ne lit ses fichiers : les valeurs sont recopiées en dur dans le code et \texttt{experiment\_config.yaml} indique une version de Python erronée. Faire lire ces fichiers par les scripts, ou retirer la mention (plan de correction, T28). Les références internes au mémoire ont été retirées des commentaires du code le 7 octobre 2026 (rapport d'audit, N10).}
+\rev{T28, v3}{Les hyperparamètres, les régimes, les poids de la récompense et les graines sont lus dans les fichiers YAML du répertoire \texttt{configs/}, qui sont archivés avec chaque jeu de résultats. Les essais de la mise au point des agents peuvent être refaits par le module \texttt{experiments.agent\_trials}.}
 
 \section*{Contributions des auteurs}
 
