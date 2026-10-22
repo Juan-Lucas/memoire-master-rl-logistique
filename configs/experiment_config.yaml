@@ -19,7 +19,7 @@ scenario_defaults:
   dump_count: 2
   episode_minutes: 480.0
   breakdown_probability: 0.02
-  reward_weights: [1.0, 0.1, 0.05, 0.3]   # w1 production, w2 distance, w3 carburant, w4 attente
+  reward_weights: [1.0, 0.1, 0.05, 0.3]   # w1 production, w2 équilibre, w3 distance, w4 attente (simulation/reward.py)
   total_timesteps: 2000000                # budget d'entraînement de DQN et PPO
 
 scenarios:

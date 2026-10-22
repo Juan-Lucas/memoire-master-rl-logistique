@@ -27,8 +27,9 @@ cycle rapportait alors en moyenne une valeur négative ; avec γ par décision, 
 récompense négative la rend moins coûteuse, et PPO a appris à ATTENDRE dans 99,8 % de ses
 décisions (210 t/h). Retour à la récompense ci-dessus (commit de l'option B : 78ed5f5 ;
 ``docs/journal_corrections.md``). Les deux défauts viennent de l'actualisation par
-décision, alors que les décisions n'ont pas toutes la même durée : une actualisation par
-unité de temps (formulation semi-markovienne) est une perspective.
+décision, alors que les décisions n'ont pas toutes la même durée : depuis le 21 octobre
+2026, les quatre algorithmes actualisent par minute (formulation semi-markovienne,
+``rl/time_discount.py``), avec la récompense ci-dessus.
 
 Ce module est un déplacement du calcul de ``MineEnv._compute_reward`` (T25). Les quatre
 premiers termes sont identiques à ceux de la v1 (test de non-régression).
