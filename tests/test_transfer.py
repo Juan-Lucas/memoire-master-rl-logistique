@@ -91,6 +91,20 @@ def test_scenario_non_vu_seulement_transfere(monkeypatch, tmp_path):
     assert modes == {TRANSFERRED}
 
 
+def test_seuls_les_algorithmes_du_scenario_sont_entraines_et_evalues(monkeypatch, tmp_path):
+    """Ablation sur w4 : seuls les algorithmes du scénario sont entraînés et évalués
+    (ici Q-Learning, pour rester rapide) ; les heuristiques le sont toujours."""
+    calls = []
+    monkeypatch.setattr(rb, "_train", _tiny_train(calls))
+    scenario = dataclasses.replace(SCENARIOS["ablation_w4_05"], seeds=[42],
+                                   algorithms=("Q-Learning",))
+
+    rows = rb.run_benchmark(scenario, tmp_path, train_ppo_flag=True, train_seeds=(1,))
+
+    assert calls == ["q_learning_ablation_w4_05_seed1"]
+    assert {r["policy"] for r in rows} == HEURISTICS | {"Q-Learning"}
+
+
 def test_modele_d_avant_t26_jamais_entraine(monkeypatch, tmp_path):
     """train_seed=None désigne un modèle v1 : absent, il est signalé, pas entraîné."""
     monkeypatch.setattr(rb, "_train", lambda *a: pytest.fail("ne doit pas entraîner"))

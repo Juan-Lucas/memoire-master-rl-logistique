@@ -969,6 +969,8 @@ Fortes pannes  & 12 & 3 & 2 & 10\,\% & \rev{M15}{0,35} & Pannes de camions fréq
 
 \textbf{Évaluation sans réentraînement.} Pour mesurer la capacité d'une politique apprise à supporter un changement de régime, les agents entraînés en conditions nominales sont en outre évalués, sans aucun réentraînement, en forte charge et en fortes pannes, sur les mêmes graines que les agents spécialisés. C'est possible pour les quatre agents, puisque l'état a la même taille quel que soit le nombre de camions (\cref{sec:smdp}). Les agents nominaux sont aussi évalués dans deux régimes intermédiaires jamais vus : 15 camions avec 2\,\% de pannes, et 12 camions avec 5\,\% de pannes.
 
+\textbf{Étude d'ablation.} La sensibilité au poids de la pénalité d'attente est mesurée en conditions nominales pour $w_4 \in \{0 ; 0{,}1 ; 0{,}5\}$, la valeur retenue $w_4 = 0{,}3$ étant celle des agents nominaux. Elle porte sur PPO et DQN, avec les mêmes 5 graines d'entraînement, soit 30 entraînements de plus. PPO est l'agent principal de l'étude, et DQN celui dont le comportement dépend le plus de l'action ATTENDRE (\cref{sec:tuning}). Q-Learning et SARSA, dont la convergence est insuffisante, en sont exclus. Ce choix a été fixé avant la campagne.
+
 \textbf{Évaluation.} Toutes les politiques sont évaluées sur les mêmes 30 réplications. Les agents choisissent l'action de plus grande valeur, sans exploration : mode déterministe pour PPO, $\varepsilon = 0$ pour DQN et choix glouton pour les agents tabulaires.
 
 \textbf{Deux sources de variabilité.} Les 30 réplications mesurent la variabilité due à l'environnement ; les 5 graines d'entraînement mesurent celle due à l'apprentissage. Les deux sont rapportées séparément (\cref{sec:proto}).
@@ -1455,7 +1457,7 @@ Pour PPO, la relation entre $w_4$ et la performance n'est pas monotone : la prod
 \end{tabular}
 \end{table}
 
-\aexp{entraîner 3 à 5 graines par valeur de $w_4$ pour distinguer l'effet de la récompense de la variabilité de l'entraînement (M13).}
+\aexp{prévu dans la campagne (\cref{sec:protocol}) : PPO et DQN, 5 graines d'entraînement par valeur de $w_4$ ; section et tableau à réécrire avec ces résultats (lot 2, M13).}
 
 \paragraph{Sensibilité aux hyperparamètres.}
 \begin{revbloc}{M12}

@@ -232,6 +232,37 @@ def test_scenario_mal_decrit_refuse(config_copy):
         _build_scenarios(experiment_config(directory))
 
 
+def test_algorithmes_par_scenario():
+    """Les quatre agents partout, sauf l'ablation sur w4 : PPO et DQN seulement
+    (décision du 22 octobre 2026)."""
+    for name, scenario in SCENARIOS.items():
+        expected = ("DQN", "PPO") if name.startswith("ablation_w4") else \
+            ("Q-Learning", "SARSA", "DQN", "PPO")
+        assert scenario.algorithms == expected, name
+
+
+def test_algorithmes_mal_decrits_refuses_ou_absents(config_copy):
+    """Un nom inconnu ou une liste vide est refusé ; sans la clé (configuration archivée
+    avant le 22 octobre 2026), les quatre agents, comme avant."""
+    directory, edit = config_copy
+    for wrong in (["PPO", "A2C"], []):
+        edit("experiment_config.yaml",
+             lambda c, wrong=wrong: c["scenarios"]["ablation_w4_00"].update(algorithms=wrong))
+        config._read_yaml.cache_clear()
+        with pytest.raises(ValueError, match="ablation_w4_00"):
+            _build_scenarios(experiment_config(directory))
+
+    def remove_key(c):
+        c["scenario_defaults"].pop("algorithms")
+        for scenario in c["scenarios"].values():
+            scenario.pop("algorithms", None)
+
+    edit("experiment_config.yaml", remove_key)
+    config._read_yaml.cache_clear()
+    assert all(s.algorithms == ("Q-Learning", "SARSA", "DQN", "PPO")
+               for s in _build_scenarios(experiment_config(directory)).values())
+
+
 def test_regime_principal_inconnu_refuse(config_copy):
     directory, edit = config_copy
     edit("experiment_config.yaml", lambda c: c.update(main_scenarios=["nominal", "hihg_load"]))

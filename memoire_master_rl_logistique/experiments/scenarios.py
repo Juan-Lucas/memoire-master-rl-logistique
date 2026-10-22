@@ -34,7 +34,13 @@ class Scenario:
     breakdown_probability: float
     reward_weights: tuple[float, ...]
     total_timesteps: int
+    # Agents entraînés et évalués dans ce scénario (les heuristiques le sont toujours) :
+    # les quatre, sauf pour l'ablation sur w4 (PPO et DQN, décision du 22 octobre 2026).
+    algorithms: tuple[str, ...]
     seeds: list[int] = field(default_factory=lambda: list(EVAL_SEEDS))  # 30 réplications d'évaluation
+
+
+ALGORITHMS = ("Q-Learning", "SARSA", "DQN", "PPO")
 
 
 def _build_scenarios(config: dict) -> dict[str, Scenario]:
@@ -43,6 +49,12 @@ def _build_scenarios(config: dict) -> dict[str, Scenario]:
     for name, overrides in config["scenarios"].items():
         values = {**config["scenario_defaults"], **overrides}
         values["reward_weights"] = tuple(values["reward_weights"])
+        # Clé absente (configuration archivée avant le 22 octobre 2026) : les quatre.
+        values["algorithms"] = tuple(values.get("algorithms", ALGORITHMS))
+        unknown = set(values["algorithms"]) - set(ALGORITHMS)
+        if unknown or not values["algorithms"]:
+            raise ValueError(f"Scénario {name!r} : algorithmes {list(values['algorithms'])} "
+                             f"(attendus : une partie non vide de {ALGORITHMS})")
         try:
             scenarios[name] = Scenario(name=name, **values)
         except TypeError as error:  # clé inconnue (faute de frappe dans le YAML)

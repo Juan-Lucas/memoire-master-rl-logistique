@@ -146,7 +146,9 @@ def run_benchmark(
     specs = [PolicySpec(name) for name in HEURISTICS]
 
     # Agents : un modèle par (régime d'entraînement, graine, algorithme), entraîné s'il manque.
-    algorithms = ("Q-Learning", "SARSA") + (("DQN", "PPO") if train_ppo_flag else ())
+    # Les algorithmes sont ceux du scénario évalué (ablation sur w4 : PPO et DQN seulement).
+    algorithms = tuple(a for a in scenario.algorithms
+                       if train_ppo_flag or a not in ("DQN", "PPO"))
     for regime in model_scenarios:
         training_scenario = SCENARIOS.get(regime, scenario)
         mode = evaluation_mode(scenario.name, regime)

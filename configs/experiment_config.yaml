@@ -21,6 +21,7 @@ scenario_defaults:
   breakdown_probability: 0.02
   reward_weights: [1.0, 0.1, 0.05, 0.3]   # w1 production, w2 équilibre, w3 distance, w4 attente (simulation/reward.py)
   total_timesteps: 2000000                # budget d'entraînement de DQN et PPO
+  algorithms: [Q-Learning, SARSA, DQN, PPO]  # agents entraînés et évalués dans le scénario
 
 scenarios:
   nominal:
@@ -35,15 +36,21 @@ scenarios:
     description: "Taux de pannes élevé : 10% par cycle (robustesse)."
     breakdown_probability: 0.10
   # Ablation sur w4 (poids de la pénalité d'attente) ; w4 = 0,3 est le nominal lui-même.
+  # PPO et DQN seulement (décision du 22 octobre 2026, avant la campagne) : PPO est
+  # l'agent principal, DQN celui qui attend (99,8 % des décisions, essai 15) ; les agents
+  # tabulaires, qui convergent mal, sont exclus.
   ablation_w4_00:
     description: "Ablation reward : w4=0.0 (nominal sinon)."
     reward_weights: [1.0, 0.1, 0.05, 0.0]
+    algorithms: [DQN, PPO]
   ablation_w4_01:
     description: "Ablation reward : w4=0.1 (nominal sinon)."
     reward_weights: [1.0, 0.1, 0.05, 0.1]
+    algorithms: [DQN, PPO]
   ablation_w4_05:
     description: "Ablation reward : w4=0.5 (nominal sinon)."
     reward_weights: [1.0, 0.1, 0.05, 0.5]
+    algorithms: [DQN, PPO]
   # Scénarios non vus : évalués avec les agents nominaux seulement (T27).
   unseen_medium_load:
     description: "Non vu : 15 camions, pb=2 % (entre nominal et high_load)."
