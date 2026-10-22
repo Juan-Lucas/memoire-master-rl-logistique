@@ -1,176 +1,132 @@
-# Classification des Articles - Revue de Littérature
+# Références de l'article et du mémoire
 
-Cette structure organise les articles selon les trois piliers de la thèse et l'ordre de lecture recommandé.
+Ce dossier contient les PDF des travaux cités et leurs fiches de lecture (un carnet `fiches-lecture.ipynb` par dossier, une cellule par article).
 
-## 📚 Structure des Dossiers
+- **Les PDF ne sont pas versionnés** (`references/**/*.pdf` dans `.gitignore`) : ils restent sur la machine et ne sont pas publiés sur GitHub. Les fiches, elles, sont versionnées.
+- **Mise à jour du 22/10/2026** :
+  - inventaire des 50 références citées dans l'article v3 (`reports/article/RL_article_FR_v3.tex`) ;
+  - téléchargement des PDF librement accessibles ;
+  - nouvelles fiches et fiches réécrites.
 
-### 1️⃣ État de l'Art et FMS (`1-etat-de-art-fms/`)
-**Objectif** : Comprendre les systèmes de gestion de flotte existants (FMS), leurs logiques et leurs limites.
+  Chaque fiche ajoutée ce jour-là dit si elle repose sur le **texte intégral** ou sur le **résumé seulement**. Ce sont des lectures assistées, à relire.
 
-**Articles à placer ici** :
-- ✅ **Afrapoli & Askari-Nasab (2017)** - *Mining fleet management systems: a review of models and algorithms* → `Mining fleet management systems a review of models and algorithms.pdf`
-- ✅ **Alarie & Gamache (2002)** - *Overview of Solution Strategies Used in Truck Dispatching Systems for Open Pit Mines* → `Overview of Solution Strategies Used in Truck Dispatching Systems for Open Pit Mines.pdf`
-- ✅ **Newman et al. (2010)** - *A Review of Operations Research in Mine Planning* → `A Review of Operations Research in Mine Planning.pdf`
-- ✅ **Mohtasham et al. (2023)** - *Evaluating the performance of the DISPATCH algorithm* → `Evaluating the performance of the DISPATCH algorithm, a commercial software, in the Sungun copper mine.pdf`
+## Organisation
 
-**Ordre de lecture** : 
-1. Afrapoli & Askari-Nasab (2017) - **Commencer par celui-ci**
-2. Alarie & Gamache (2002)
-3. Newman et al. (2010) - En diagonale pour le contexte global
-4. Mohtasham et al. (2023) - Étude de cas récente
+| Dossier | Contenu | Fiches |
+|---|---|---|
+| `1-etat-de-art-fms/` | Systèmes de gestion de flotte, revues, DISPATCH | 6 |
+| `2-methodes-classiques-baselines/` | Heuristiques et optimisation (références de comparaison) | 6 |
+| `3-rl-nouvelles-approches/` | RL appliqué au dispatching et aux problèmes voisins | 9 |
+| `4-etudes-cas-complementaires/` | Simulation et optimisation en mine, études de cas | 8 |
+| `5-fondements-rl/` (nouveau) | Algorithmes, processus semi-markoviens, bibliothèques | 15 |
+| `6-evaluation-statistique/` (nouveau) | Tests, bootstrap, reproductibilité | 7 |
 
----
+## Inventaire des références citées dans l'article v3
 
-### 2️⃣ Méthodes Classiques - Baselines (`2-methodes-classiques-baselines/`)
-**Objectif** : Maîtriser les approches d'optimisation classiques contre lesquelles l'agent RL sera comparé.
+Légende :
+- **PDF** : présent dans ce dossier ;
+- **Fiche** : *existante* = fiche déjà présente avant le 22/10/2026, non modifiée ; *texte* = fiche fondée sur le texte intégral ; *résumé* = fondée sur le résumé seulement ; *non lu* = ouvrage ou article payant, la fiche dit seulement à quoi il sert.
 
-**Articles à placer ici** :
-- ✅ **Munirathinam & Yingling (1994)** - *A review of computer-based truck dispatching strategies* → `A review of computer-based truck dispatching strategies for surface mining operations.pdf`
-- ✅ **Subtil et al. (2011)** - *A Practical Approach to Truck Dispatch* → `A Practical Approach to Truck Dispatch for Open Pit Mines.pdf`
-- ✅ **Souza et al. (2010)** - *A hybrid heuristic algorithm* → `A hybrid heuristic algorithm for the open-pit-mining operational planning problem.pdf`
-- ✅ **Ahangaran et al. (2012)** - *Real-time dispatching modelling* → `Real Time Dispatching Modelling For Trucks With Different Capacities In Open Pit Mines.pdf`
-- ✅ **Ta et al. (2013)** - *A linear model for surface mining* → `A linear model for surface mining haul truck allocation incorporating shovel idle probabilities.pdf`
-- ✅ **Wang (2022)** - *Truck Dispatching Optimization Model* → `Truck Dispatching Optimization Model and Algorithm Based on 0-1 Decision Variables.pdf`
+### Domaine : gestion de flotte et dispatching minier
 
-**Ordre de lecture** :
-1. Munirathinam & Yingling (1994) - **Heuristiques de base**
-2. Subtil et al. (2011) - Approche hybride LP + Simulation
-3. Souza et al. (2010) - Métaheuristiques (GRASP, VNS)
-4. Les autres en lecture rapide pour voir la diversité des approches
+| Clé `.bib` | Dossier | PDF | Fiche |
+|---|---|---|---|
+| Afrapoli2017 | 1 | ✅ | existante |
+| Alarie2002 | 1 | ✅ | existante |
+| AlexandraNewman2010 | 1 | ✅ | existante |
+| MehrnazMohtasham2023 | 1 | ✅ | existante |
+| Hazrathosseini2024 | 1 | ❌ (SAGE bloque le téléchargement automatique ; essayer dans un navigateur) | résumé |
+| BurtCaccetta2014 | 1 | ❌ (accès fermé) | résumé |
+| MohanMunirathinam1994 | 2 | ✅ | existante |
+| Subtil2011 | 2 | ✅ | existante |
+| Souza2010 | 2 | ✅ | existante |
+| Ahangaran2012 | 2 | ✅ | existante |
+| ChungTa2013 | 2 | ✅ | existante |
+| ZhongxinWang2022 | 2 | ✅ | existante |
+| MohammadrezaNazari2018 | 3 | ✅ | existante |
+| CongZhang2020 | 3 | ✅ | existante |
+| GuangweiLiu2019 | 3 | ✅ | existante |
+| AmandaSmith2020 | 3 | ✅ | existante |
+| deCarvalho2023 | 3 | ✅ (nouveau) | texte (réécrite) |
+| Zhao2025 | 3 | ❌ (accès fermé) | résumé |
+| Pei2025 | 3 | ❌ (accès fermé) | résumé |
+| FranciscoRosales2025 | 3 | ✅ (nouveau) | texte (réécrite) |
+| Banerjee2025 | 3 | ✅ (nouveau) | texte (réécrite) |
+| BurakOzdemir2019 | 4 | ✅ | existante |
+| MiladAbolghasemian2020 | 4 | ✅ | existante |
+| MarceloFioroni2008 | 4 | ✅ | existante |
+| ShivPrakashUpadhyay2017 | 4 | ✅ | existante |
+| NecmettinCetin2004 | 4 | ✅ | existante |
+| Zeng2022 | 4 | ✅ | existante |
+| Soumis1989 | 4 | ✅ | existante |
 
----
+### Fondements de l'apprentissage par renforcement et outils (dossier 5)
 
-### 3️⃣ RL et Nouvelles Approches (`3-rl-nouvelles-approches/`)
-**Objectif** : S'inspirer des approches par Reinforcement Learning et optimisation moderne.
+| Clé `.bib` | PDF | Fiche |
+|---|---|---|
+| RichardSutton2018 | ✅ (version en ligne des auteurs) | texte |
+| WatkinsDayan1992 | ✅ | texte |
+| RummeryNiranjan1994 | ✅ | texte |
+| Mnih2015 | ✅ | texte |
+| JohnSchulman2017 | ✅ | texte |
+| Schulman2016GAE | ✅ | texte |
+| Haarnoja2018 | ✅ | texte |
+| BradtkeDuff1995 | ✅ | texte |
+| SuttonPrecupSingh1999 | ✅ | texte |
+| AntoninRaffin2021 | ✅ | texte |
+| MarkTowers2025 | ✅ | texte |
+| Puterman1994 | ❌ (ouvrage payant) | non lu |
+| MoezKrichen2022 | ❌ (HAL bloque le téléchargement automatique ; libre dans un navigateur) | résumé |
+| KingaSzatmari2025 | ❌ (accès libre, mais ScienceDirect bloque le téléchargement automatique) | résumé |
+| SampsonNwachukwu2025 | ❌ (accès libre, mais IEEE bloque le téléchargement automatique) | résumé |
 
-**Articles à placer ici** :
-- ✅ **Nazari et al. (2018)** - *Reinforcement Learning for Solving the Vehicle Routing Problem* → `Reinforcement Learning for Solving the Vehicle Routing Problem.pdf`
-- ✅ **Zhang et al. (2020)** - *Learning to Dispatch for Job Shop Scheduling* → `Learning to Dispatch for Job Shop Scheduling via Deep Reinforcement Learning.pdf`
-- ✅ **Liu & Chai (2019)** - *Optimizing Open-Pit Truck Route* → `Optimizing Open-Pit Truck Route Based on Minimization of Time-Varying Transport Energy Consumption.pdf`
-- ✅ **Optimization-Based Dispatching Policies** → `Optimization-Based Dispatching Policies for Open-Pit Mining.pdf`
+### Évaluation statistique (dossier 6)
 
-**Ordre de lecture** :
-1. **Nazari et al. (2018) - À LIRE EN PROFONDEUR** (définition MDP, architecture réseau)
-2. Liu & Chai (2019) - Pour la fonction de récompense (énergie/carburant)
-3. Zhang et al. (2020) - Approche GNN (Graph Neural Network) - Avancé
+| Clé `.bib` | PDF | Fiche |
+|---|---|---|
+| Henderson2018 | ✅ | texte |
+| Agarwal2021 | ✅ | texte |
+| Demsar2006 | ✅ | texte |
+| Wilcoxon1945 | ❌ (JSTOR, payant) | non lu |
+| Friedman1937 | ❌ (payant) | non lu |
+| Holm1979 | ❌ (JSTOR, payant) | non lu |
+| EfronTibshirani1993 | ❌ (ouvrage payant) | non lu |
 
----
+**Bilan** : 50 références citées, 38 PDF présents, 50 fiches (21 existantes ; 17 nouvelles ou réécrites sur le texte intégral ; 7 sur le résumé ; 5 « non lu »).
 
-### 4️⃣ Études de Cas et Compléments (`4-etudes-cas-complementaires/`)
-**Objectif** : Collecter exemples concrets, résultats chiffrés et techniques complémentaires.
+## PDF à récupérer à la main
 
-**Articles à placer ici** :
-- ✅ **Ozdemir & Kumral (2019)** - *Simulation based optimization* → `Simulation based optimization of truck shovel material handling systems in multi pit surface mines.pdf`
-- ✅ **Abolghasemian et al. (2020)** - *A Two-Phase Simulation-Based Optimization* → `A Two-Phase Simulation-Based Optimization of Hauling System in Open-Pit Mine.pdf`
-- ✅ **Concurrent Simulation And Optimization** → `Concurrent Simulation And Optimization Models For Mining Planning.pdf`
-- ✅ **Simulation and optimization approach** → `Simulation and optimization approach for uncertainty based short-term planning in open pit mines.pdf`
-- ✅ **Open Pit Truck Shovel Haulage System Simulation** → `Open Pit Truck Shovel Haulage System Simulation.pdf`
-- ✅ **A simulation model to study truck allocation options** → `A simulation model to study truckallocation options.pdf`
-- ✅ **Truck dispatching in an open pit mine** → `Truck dispatching in an open pit mine.pdf`
-- ✅ **Use of Machine Learning Algorithm Models** → `Use of Machine Learning Algorithm Models to Optimize the Fleet Management System in Opencast Mines.pdf`
+**Accès libre** (dans un navigateur, le site bloque seulement les téléchargements automatiques) :
+- Szatmári et al. (2025) : https://doi.org/10.1016/j.ceja.2025.100753
+- Nwachukwu et al. (2025) : https://doi.org/10.1109/ACCESS.2025.3561807
+- Krichen (2022) : https://hal.science/hal-04139754
+- Hazrathosseini & Moradi Afrapoli (2024), accès hybride, probablement libre : https://doi.org/10.1177/25726668231222998
 
-**Ordre de lecture** : Lecture rapide/ciblée pour collecter :
-- Modèles utilisés (LP, MILP, Simulation...)
-- Résultats obtenus (ex: amélioration de X%)
-- Limites identifiées par les auteurs
+**Accès payant**, par la bibliothèque ou en écrivant aux auteurs :
+- Zhao et al. (2025) : https://doi.org/10.1080/23249935.2025.2522360
+- Pei et al. (2025) : https://doi.org/10.1080/17480930.2025.2486316
+- Burt & Caccetta (2014) : https://doi.org/10.1287/inte.2013.0732
+- Burt & Caccetta (2007), source probable de la formule du facteur d'appariement : https://doi.org/10.1080/17480930701388606
+- Wilcoxon (1945), Friedman (1937), Holm (1979), Efron & Tibshirani (1993), Puterman (1994)
 
----
+## Erreurs trouvées dans le `.bib` (à corriger au lot 2)
 
-## 🎯 Ordre de Lecture Stratégique Global
+| Clé | Problème | Correction |
+|---|---|---|
+| FranciscoRosales2025 | Mauvaise publication, et fiche avec un mauvais co-auteur (« D'Angelo ») | `@inproceedings` : Rosales Marticorena, L. F. ; Diaz, A. *Proc. 12th Int. Conf. of Management and Industrial Engineering (ICMIE)*, vol. 12, p. 207-217, 2025, DOI 10.56177/12icmie2025.202 |
+| deCarvalho2023 | Titre incomplet | « Integrating short-term stochastic production planning updating with mining fleet management… », *Applied Intelligence* 53, 23179-23202, DOI 10.1007/s10489-023-04774-3 |
+| Banerjee2025 | Titre de la v1 | « … for Open-Pit Truck Dispatch Optimization » (v2), arXiv:2503.19195 |
+| MarkTowers2025 | Titre | « A **Standardized** Interface… », NeurIPS 2025 |
+| Hazrathosseini2024 | Incomplet | 133(1), 50-73, DOI 10.1177/25726668231222998 |
+| Zhao2025 | Incomplet | 7e auteur Xiaolei Ma, DOI 10.1080/23249935.2025.2522360 |
+| Pei2025 | Incomplet | 40(2), 89-106, DOI 10.1080/17480930.2025.2486316 (en ligne en 2025) |
 
-### **Étape 1 : Big Picture (2-3 jours)**
-Dossier `1-etat-de-art-fms/`
-1. Afrapoli & Askari-Nasab (2017) ⭐ **PRIORITÉ 1**
-2. Alarie & Gamache (2002)
-3. Newman et al. (2010) - Survol
+## Points à revoir dans l'article (lot 2)
 
-### **Étape 2 : Plonger dans les Méthodes (1 semaine)**
-Dossiers `2-methodes-classiques-baselines/` + `3-rl-nouvelles-approches/`
-1. Munirathinam & Yingling (1994) - Heuristiques baselines
-2. **Nazari et al. (2018)** ⭐ **PRIORITÉ 2 - Cœur de ta contribution**
-3. Liu & Chai (2019) - Fonction de récompense
-4. Zhang et al. (2020) - Si temps disponible (GNN avancé)
-
-### **Étape 3 : Compléter (lecture rapide)**
-Dossiers `2-methodes-classiques-baselines/` + `4-etudes-cas-complementaires/`
-- Lire les autres articles en se concentrant sur :
-  - Résultats chiffrés
-  - Limites identifiées
-  - Métriques utilisées
-
----
-
-## 📋 Commandes pour Organiser
-
-```powershell
-# Déplacer les articles dans leurs dossiers respectifs
-
-# 1. État de l'Art et FMS
-Move-Item "Mining fleet management systems a review of models and algorithms.pdf" "1-etat-de-art-fms/"
-Move-Item "Overview of Solution Strategies Used in Truck Dispatching Systems for Open Pit Mines.pdf" "1-etat-de-art-fms/"
-Move-Item "A Review of Operations Research in Mine Planning.pdf" "1-etat-de-art-fms/"
-Move-Item "Evaluating the performance of the DISPATCH algorithm, a commercial software, in the Sungun copper mine.pdf" "1-etat-de-art-fms/"
-
-# 2. Méthodes Classiques - Baselines
-Move-Item "A review of computer-based truck dispatching strategies for surface mining operations.pdf" "2-methodes-classiques-baselines/"
-Move-Item "A Practical Approach to Truck Dispatch for Open Pit Mines.pdf" "2-methodes-classiques-baselines/"
-Move-Item "A hybrid heuristic algorithm for the open-pit-mining operational planning problem.pdf" "2-methodes-classiques-baselines/"
-Move-Item "Real Time Dispatching Modelling For Trucks With Different Capacities In Open Pit Mines.pdf" "2-methodes-classiques-baselines/"
-Move-Item "A linear model for surface mining haul truck allocation incorporating shovel idle probabilities.pdf" "2-methodes-classiques-baselines/"
-Move-Item "Truck Dispatching Optimization Model and Algorithm Based on 0-1 Decision Variables.pdf" "2-methodes-classiques-baselines/"
-
-# 3. RL et Nouvelles Approches
-Move-Item "Reinforcement Learning for Solving the Vehicle Routing Problem.pdf" "3-rl-nouvelles-approches/"
-Move-Item "Learning to Dispatch for Job Shop Scheduling via Deep Reinforcement Learning.pdf" "3-rl-nouvelles-approches/"
-Move-Item "Optimizing Open-Pit Truck Route Based on Minimization of Time-Varying Transport Energy Consumption.pdf" "3-rl-nouvelles-approches/"
-Move-Item "Optimization-Based Dispatching Policies for Open-Pit Mining.pdf" "3-rl-nouvelles-approches/"
-
-# 4. Études de Cas et Compléments
-Move-Item "Simulation based optimization of truck shovel material handling systems in multi pit surface mines.pdf" "4-etudes-cas-complementaires/"
-Move-Item "A Two-Phase Simulation-Based Optimization of Hauling System in Open-Pit Mine.pdf" "4-etudes-cas-complementaires/"
-Move-Item "Concurrent Simulation And Optimization Models For Mining Planning.pdf" "4-etudes-cas-complementaires/"
-Move-Item "Simulation and optimization approach for uncertainty based short-term planning in open pit mines.pdf" "4-etudes-cas-complementaires/"
-Move-Item "Open Pit Truck Shovel Haulage System Simulation.pdf" "4-etudes-cas-complementaires/"
-Move-Item "A simulation model to study truckallocation options.pdf" "4-etudes-cas-complementaires/"
-Move-Item "Truck dispatching in an open pit mine.pdf" "4-etudes-cas-complementaires/"
-Move-Item "Use of Machine Learning Algorithm Models to Optimize the Fleet Management System in Opencast Mines.pdf" "4-etudes-cas-complementaires/"
-```
-
----
-
-## 📊 Tableau Récapitulatif par Priorité
-
-| Priorité | Article | Catégorie | Pourquoi Crucial |
-|----------|---------|-----------|------------------|
-| ⭐⭐⭐ | Afrapoli & Askari-Nasab (2017) | État de l'art FMS | Review complet, détaille DISPATCH, pointe les limites |
-| ⭐⭐⭐ | Nazari et al. (2018) | RL nouvelles approches | **Cœur méthodologique** - MDP pour VRP |
-| ⭐⭐ | Alarie & Gamache (2002) | État de l'art FMS | Classique cité, structure single-stage vs multi-stage |
-| ⭐⭐ | Munirathinam & Yingling (1994) | Baselines classiques | Heuristiques de base pour ta baseline |
-| ⭐⭐ | Liu & Chai (2019) | RL nouvelles approches | Fonction de récompense (énergie/carburant) |
-| ⭐ | Zhang et al. (2020) | RL nouvelles approches | GNN avancé (si temps) |
-| ⭐ | Mohtasham et al. (2023) | État de l'art FMS | Étude de cas récente DISPATCH |
-
----
-
-## ✅ Checklist de Lecture
-
-### Phase 1 (Priorité Absolue - 1 semaine)
-- [ ] Afrapoli & Askari-Nasab (2017) - Annoté, fiché
-- [ ] Alarie & Gamache (2002) - Annoté, fiché
-- [ ] Nazari et al. (2018) - **Décortiqué en profondeur** (MDP, architecture, reward)
-
-### Phase 2 (Important - 1 semaine)
-- [ ] Munirathinam & Yingling (1994) - Heuristiques notées
-- [ ] Liu & Chai (2019) - Formules de consommation extraites
-- [ ] Newman et al. (2010) - Contexte global noté
-
-### Phase 3 (Compléments - Au fur et à mesure)
-- [ ] Autres articles lus rapidement (focus résultats + limites)
-- [ ] Tableau comparatif créé (approches, métriques, résultats)
-
----
-
-**Note** : Commite régulièrement tes fiches de lecture dans le notebook `1.0-business-and-data-understanding.ipynb` avec des messages comme :
-```bash
-git commit -m "docs(understanding): Synthèse Afrapoli & Askari-Nasab 2017"
-```
+- **Szatmári et al. (2025)** est une revue : « démontrent des architectures multi-niveaux » (l. 187) devient « passent en revue ».
+- **Krichen (2022)** est un document HAL non évalué par les pairs : le retirer de l'introduction (l. 181).
+- **Nwachukwu et al. (2025)** est hors domaine : Haarnoja et al. (2018) suffit pour SAC (l. 1603).
+- **Pei et al. (2025)** évaluent déjà leur politique sans réentraînement, sur des flottes de 20 à 25 camions : ne pas présenter l'évaluation sans réentraînement comme entièrement nouvelle.
+- **Rosales & Diaz (2025)** ne donnent aucun résultat chiffré : ne pas leur attribuer de gain.
+- **Facteur d'appariement** (l. 935) : vérifier la formule dans Burt & Caccetta (2007) ou (2014).
+- **Watkins & Dayan (1992)** : leurs conditions de convergence (table, exploration infinie, pas décroissants) ne sont pas réunies pour nos agents tabulaires. C'est un argument pour expliquer leur mauvaise convergence.
