@@ -5,13 +5,14 @@ coût du cycle complet, sur les deux segments (T16 bis : le cycle finit à la ve
   camion → pelle (à vide) + pelle → verse (chargé) :
 
   C_cycle = α · T_cycle (min) + β · D_cycle (km) + γ · E_cycle (L)
-  avec α = 0,5, β = 0,3, γ = 0,2 / FUEL_CALIBRATION_FACTOR. Les temps sont les temps
-  moyens, sans aléa.
+  avec α = 0,5, β = 0,3, γ = 0,2 / 6,49. Les temps sont les temps moyens, sans aléa.
 
-  γ valait 0,2 avant la calibration du carburant (T14), qui multiplie toutes les
-  consommations par FUEL_CALIBRATION_FACTOR (≈ 6,49). Diviser γ par ce facteur garde
-  γ · E exactement identique : la calibration change la mesure du carburant, pas les
-  décisions de l'heuristique.
+  γ valait 0,2 avant la calibration du carburant de T14, qui multipliait toutes les
+  consommations par 6,49 ; diviser γ par ce facteur gardait les décisions identiques.
+  Depuis le modèle de carburant du 22 octobre 2026 (courbes de Kubler, voir
+  ``simulation/constants.py``), γ garde la même valeur numérique : le poids d'un litre
+  ne change pas, mais la consommation d'un trajet dépend plus de la pente et de la
+  charge, ce qui peut changer quelques décisions.
 
 Différence avec Nearest Shovel :
   Nearest minimise uniquement d(camion→pelle).
@@ -27,12 +28,13 @@ from typing import Any
 import numpy as np
 
 from memoire_master_rl_logistique.baselines.base import encode_action
-from memoire_master_rl_logistique.simulation.constants import FUEL_CALIBRATION_FACTOR
 from memoire_master_rl_logistique.simulation.fuel_model import estimate_travel_fuel_l
 from memoire_master_rl_logistique.simulation.graph_model import RoadGraph
 
-# Poids du carburant, par litre calibré (0,2 par litre avant T14) : voir la docstring du module.
-DEFAULT_GAMMA = 0.2 / FUEL_CALIBRATION_FACTOR
+# Poids du carburant, par litre (0,2 avant T14, divisé par le facteur de T14) : voir la
+# docstring du module.
+T14_FUEL_FACTOR = 95.0 / 14.635  # ≈ 6,49 : 95 L/h visés / 14,635 L/h mesurés avant T14
+DEFAULT_GAMMA = 0.2 / T14_FUEL_FACTOR
 
 
 class ShortestPathPolicy:

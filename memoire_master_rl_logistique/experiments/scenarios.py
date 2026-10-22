@@ -2,7 +2,9 @@
 
 Décrits dans ``configs/experiment_config.yaml`` depuis T28. Valeurs inspirées de la
 littérature :
-- 12 camions Cat 785C (Kangwa 2021, Kansanshi)
+- 12 camions Cat 785C (Kangwa 2021, Kansanshi) ; le carburant est calé sur le Cat 785D,
+  de consommation quasi identique (Caterpillar Performance Handbook, éd. 49 :
+  voir ``simulation/constants.py``)
 - 3 pelles Hitachi 2500 (Mohtasham 2023)
 - 2 verses, poste de 8 heures
 - 30 réplications par scénario (graines d'évaluation 42 à 71, ``seeds.EVAL_SEEDS``).

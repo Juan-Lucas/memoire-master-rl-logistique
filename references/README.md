@@ -20,6 +20,7 @@ Ce dossier contient les PDF des travaux cités et leurs fiches de lecture (un ca
 | `4-etudes-cas-complementaires/` | Simulation et optimisation en mine, études de cas | 8 |
 | `5-fondements-rl/` (nouveau) | Algorithmes, processus semi-markoviens, bibliothèques | 15 |
 | `6-evaluation-statistique/` (nouveau) | Tests, bootstrap, reproductibilité | 7 |
+| `7-donnees-equipements/` (nouveau) | Données Caterpillar et mesures de terrain sur le Cat 785D (modèle de carburant) | 4 |
 
 ## Inventaire des références citées dans l'article v3
 
@@ -92,7 +93,18 @@ Légende :
 | Holm1979 | ❌ (JSTOR, payant) | non lu |
 | EfronTibshirani1993 | ❌ (ouvrage payant) | non lu |
 
-**Bilan** : 50 références citées, 38 PDF présents, 50 fiches (21 existantes ; 17 nouvelles ou réécrites sur le texte intégral ; 7 sur le résumé ; 5 « non lu »).
+### Données d'équipement (dossier 7, ajoutées le 22/10/2026)
+
+| Document | PDF | Fiche | Clé `.bib` |
+|---|---|---|---|
+| Caterpillar Performance Handbook, éd. 49 (2019) | ✅ `Cat-Performance-Handbook-2020.pdf` | texte (sections utilisées) | Caterpillar2019 (ajoutée) |
+| Cat 785D, spécifications techniques (2025) | ✅ `CM20240802-58b3d-16a58.pdf` | texte | Caterpillar785D2025 (ajoutée) |
+| Kubler (2015), mémoire USQ, consommation mesurée d'un 785D | ✅ `Kubler_K_Baker.pdf` | texte | Kubler2015 (ajoutée) |
+| Fiche Cat 777D (source inconnue) | ✅ `777D-Rigid-Dump-Truck.pdf` | texte | — (à ne pas citer) |
+
+Ces documents fondent le modèle de carburant revu le 22/10/2026 (`simulation/constants.py`) : ralenti 11,3 L/h et effet de la pente mesurés par Kubler, niveau moyen de 95 L/h tiré du Handbook.
+
+**Bilan** (hors dossier 7) : 50 références citées, 38 PDF présents, 50 fiches (21 existantes ; 17 nouvelles ou réécrites sur le texte intégral ; 7 sur le résumé ; 5 « non lu »).
 
 ## PDF à récupérer à la main
 

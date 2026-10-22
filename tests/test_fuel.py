@@ -1,86 +1,99 @@
-"""Tests de T14 : carburant paramétrable et calibré sur une référence publiée."""
+"""Tests du modèle de carburant : ralenti et pente mesurés par Kubler (2015) sur un Cat 785D,
+niveau moyen ramené au Caterpillar Performance Handbook (modèle du 22 octobre 2026)."""
 
 import pandas as pd
 import pytest
 
 from memoire_master_rl_logistique.baselines import shortest_path_policy as sp
-from memoire_master_rl_logistique.experiments.policies import (
-    _baseline_fn,
-    heuristic_policies,
-    make_env,
-)
+from memoire_master_rl_logistique.experiments.policies import heuristic_policies, make_env
 from memoire_master_rl_logistique.experiments.run_benchmark import run_single_episode
-from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS, SCENARIOS
+from memoire_master_rl_logistique.experiments.scenarios import SCENARIOS
+from memoire_master_rl_logistique.seeds import TUNING_SEEDS
 from memoire_master_rl_logistique.simulation.constants import (
-    FUEL_CALIBRATION_FACTOR as F,
+    FUEL_REFERENCE_L_PER_H,
+    FUEL_TRAVEL_SCALE,
 )
 from memoire_master_rl_logistique.simulation.fuel_model import (
     DEFAULT_FUEL,
     FuelParams,
     estimate_idle_fuel_l,
     estimate_travel_fuel_l,
+    l_per_km,
 )
 
-UNCALIBRATED = FuelParams(l_per_km_loaded=0.65, l_per_km_empty=0.45, idle_l_per_h=10.0)
-CAT_785D_MEDIUM_L_PER_H = (81.4, 108.5)  # Caterpillar Performance Handbook, usage moyen
+CAT_785D_MEDIUM_L_PER_H = (81.4, 108.5)  # Handbook éd. 49, section 25, usage moyen
+CAT_785D_MAX_L_PER_H = 135.6  # usage intensif, borne haute
 
 
-def test_un_seul_facteur_pour_toutes_les_consommations():
-    """Calibré = non calibré × facteur, pour les trajets (chargé, à vide) et le ralenti."""
-    assert F == pytest.approx(6.49, abs=0.01)
-    for loaded in (True, False):
-        calibrated = estimate_travel_fuel_l(2.0, 5.0, 0.8, loaded)
-        assert calibrated == pytest.approx(F * estimate_travel_fuel_l(2.0, 5.0, 0.8, loaded, UNCALIBRATED))
-    assert estimate_idle_fuel_l(30.0) == pytest.approx(F * estimate_idle_fuel_l(30.0, UNCALIBRATED))
+def test_courbes_de_kubler():
+    """Valeurs lues sur les figures 29 et 30 de Kubler (L/km) : environ 4,7 à vide et
+    8,5 en charge à 1 % de pente ; environ 21 en charge et 11 à vide à 10 %."""
+    assert l_per_km(1.0, loaded=False) == pytest.approx(4.70, abs=0.01)
+    assert l_per_km(1.0, loaded=True) == pytest.approx(8.50, abs=0.01)
+    assert l_per_km(10.0, loaded=True) == pytest.approx(20.96, abs=0.01)
+    assert l_per_km(10.0, loaded=False) == pytest.approx(10.86, abs=0.01)
+    # Chargé consomme plus qu'à vide, et la consommation croît avec la pente.
+    for slope in (0.0, 2.0, 5.0, 8.0):
+        assert l_per_km(slope, True) > l_per_km(slope, False)
+        assert l_per_km(slope + 1.0, True) > l_per_km(slope, True)
+
+
+def test_pente_bornee_au_domaine_mesure():
+    """Une descente compte comme du plat ; au-delà de 18 %, la valeur à 18 %."""
+    assert l_per_km(-5.0, True) == l_per_km(0.0, True)
+    assert l_per_km(30.0, False) == l_per_km(18.0, False)
+
+
+def test_trajet_et_ralenti():
+    """Trajet = distance × échelle × L/km × majoration de piste ; ralenti mesuré 11,3 L/h."""
+    assert estimate_idle_fuel_l(60.0) == pytest.approx(11.3)
+    assert estimate_travel_fuel_l(2.0, 5.0, 1.0, True) == pytest.approx(
+        2.0 * FUEL_TRAVEL_SCALE * l_per_km(5.0, True))
+    assert estimate_travel_fuel_l(2.0, 5.0, 0.6, False) == pytest.approx(
+        2.0 * FUEL_TRAVEL_SCALE * l_per_km(5.0, False) * 1.2)
 
 
 def test_parametres_modifiables():
     """Le modèle est paramétrable sans toucher au code (étude de sensibilité)."""
     assert estimate_idle_fuel_l(60.0, FuelParams(idle_l_per_h=20.0)) == pytest.approx(20.0)
-    assert DEFAULT_FUEL.idle_l_per_h == pytest.approx(10.0 * F)
+    flat = FuelParams(loaded_poly=(5.0,), empty_poly=(3.0,), travel_scale=1.0)
+    assert estimate_travel_fuel_l(1.0, 7.0, 1.0, True, flat) == pytest.approx(5.0)
+    assert DEFAULT_FUEL.idle_l_per_h == pytest.approx(11.3)
 
 
-def test_calibration_sur_le_cat_785d():
-    """Affectation fixe, nominal, 30 graines : ≈ 95 L/h par camion, dans la plage
-    « usage moyen » publiée pour le Cat 785D (81,4 à 108,5 L/h).
-
-    Le facteur a été calibré sur le moteur de T13 (95,0 L/h). Avec le moteur à événements
-    (T15, T16 bis), la même flotte consomme 95,7 L/h : le facteur, propriété du camion
-    (L/km, L/h au ralenti), n'est pas recalé à chaque changement du simulateur."""
+def _fixed_l_per_h(seeds):
     scenario = SCENARIOS["nominal"]
     policy = heuristic_policies(scenario)["Fixed"]
-    runs = pd.DataFrame([run_single_episode(make_env(scenario), policy, s) for s in scenario.seeds])
-    l_per_h = (runs["total_fuel_l"] / runs["truck_count"] / (scenario.episode_minutes / 60)).mean()
+    runs = pd.DataFrame([run_single_episode(make_env(scenario), policy, s) for s in seeds])
+    return (runs["total_fuel_l"] / runs["truck_count"] / (scenario.episode_minutes / 60)).mean()
 
-    assert l_per_h == pytest.approx(95.72, abs=0.05)
+
+def test_echelle_calibree_sur_les_graines_de_selection():
+    """Le facteur d'échelle du roulage donne 95 L/h (milieu de la plage « usage moyen »)
+    pour l'Affectation fixe en nominal, sur les graines de SÉLECTION : aucun choix n'est
+    fait sur les graines d'évaluation."""
+    assert _fixed_l_per_h(TUNING_SEEDS) == pytest.approx(FUEL_REFERENCE_L_PER_H, abs=0.01)
+
+
+def test_graines_d_evaluation_dans_la_plage_publiee():
+    """Sur les graines d'évaluation, la consommation reste dans la plage « usage moyen »
+    du Cat 785D (95,4 L/h mesurés le 22/10/2026)."""
+    l_per_h = _fixed_l_per_h(SCENARIOS["nominal"].seeds)
+    assert l_per_h == pytest.approx(95.45, abs=0.05)
     assert CAT_785D_MEDIUM_L_PER_H[0] <= l_per_h <= CAT_785D_MEDIUM_L_PER_H[1]
-    assert runs["cost_per_cycle"].mean() == pytest.approx(37.9, abs=0.1)  # L par cycle
 
 
-# Le test « l'agent voit les mêmes observations qu'avant T14 » a été retiré en T18 :
-# l'observation a changé (variables agrégées), donc tous les agents profonds seront
-# réentraînés de toute façon. Le carburant de l'observation est testé dans test_observation.py.
+def test_sans_echelle_le_simulateur_depasse_le_maximum_publie():
+    """Les courbes de Kubler appliquées telles quelles donnent plus que le maximum publié :
+    c'est ce qui justifie le facteur d'échelle (toutes les pistes du simulateur montent)."""
+    scenario = SCENARIOS["nominal"]
+    policy = heuristic_policies(scenario)["Fixed"]
+    raw = FuelParams(travel_scale=1.0)
+    runs = pd.DataFrame([run_single_episode(make_env(scenario, fuel=raw), policy, s)
+                         for s in TUNING_SEEDS[:3]])
+    assert (runs["total_fuel_l"] / runs["truck_count"] / 8).mean() > CAT_785D_MAX_L_PER_H
 
 
-@pytest.mark.parametrize("scenario", MAIN_SCENARIOS)
-def test_plus_court_chemin_decide_comme_avant(scenario, monkeypatch):
-    """γ divisé par le facteur : « Plus court chemin » prend les mêmes décisions qu'avant
-    T14 (γ = 0,2 avec le carburant non calibré)."""
-    s = SCENARIOS[scenario]
-    calibrated = [run_single_episode(make_env(s), heuristic_policies(s)["ShortestPath"], seed)
-                  for seed in s.seeds[:5]]
-
-    original = sp.estimate_travel_fuel_l
-    monkeypatch.setattr(sp, "estimate_travel_fuel_l",
-                        lambda **kw: original(**kw, params=UNCALIBRATED))
-    env = make_env(s)
-    env.reset(seed=s.seeds[0])
-    shovels, dumps = [x.node_id for x in env.shovels], [x.node_id for x in env.dumps]
-    before = [run_single_episode(
-        make_env(s, fuel=UNCALIBRATED),
-        _baseline_fn(sp.ShortestPathPolicy(env.graph, shovels, dumps, gamma=0.2), True), seed)
-        for seed in s.seeds[:5]]
-
-    for new, old in zip(calibrated, before):
-        assert new["productivity_tph"] == old["productivity_tph"]
-        assert new["total_fuel_l"] == pytest.approx(F * old["total_fuel_l"])
+def test_poids_du_carburant_de_plus_court_chemin_inchange():
+    """γ garde la valeur de T14 (0,2 divisé par l'ancien facteur 95 / 14,635)."""
+    assert sp.DEFAULT_GAMMA == pytest.approx(0.2 / (95.0 / 14.635))
