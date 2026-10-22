@@ -11,14 +11,18 @@ la dimension :
     (0 à S·D − 1, dans l'ordre des actions), lu dans le bloc ``route_wait`` de
     l'observation, c'est-à-dire la même prévision que MTWT (``simulation.forecast``). À
     égalité (par exemple aucune file), la première route. Les attentes elles-mêmes ne
-    sont pas ajoutées : la table passerait de 8⁵ à 8¹¹ états et plus.
+    sont pas ajoutées : la table passerait de 6⁵ à 6¹¹ états et plus. Essayée une fois
+    (essais 24 et 25, 22 octobre 2026), elle n'a pas été retenue.
 
-Avec 3 pelles, 2 verses et 8 intervalles : 8⁵ × 3 = 98 304 états possibles
-(``state_space_size``), 8⁵ × 6 = 196 608 avec ``"best_route"``. Le nombre de camions n'y apparaît pas : une Q-table apprise avec
-12 camions peut être utilisée telle quelle avec 18.
+Avec 3 pelles, 2 verses et 6 intervalles : 6⁵ × 3 = 23 328 états possibles
+(``state_space_size``), 6⁵ × 6 = 46 656 avec ``"best_route"``. Le nombre de camions
+n'y apparaît pas : une Q-table apprise avec 12 camions peut être utilisée telle quelle
+avec 18.
 
 Les valeurs ci-dessous sont celles qui ont servi à entraîner les Q-tables : les
-modifier change l'état discret, donc oblige à réentraîner Q-Learning et SARSA.
+modifier change l'état discret, donc oblige à réentraîner Q-Learning et SARSA. Le
+nombre d'intervalles est enregistré avec chaque table (``TabularPolicy``) : une table
+apprise avec 8 intervalles (avant le réglage) se relit correctement.
 """
 
 import numpy as np
@@ -31,8 +35,10 @@ from memoire_master_rl_logistique.env.observation_builder import observation_lay
 WAIT_SCALE = 50.0
 WAIT_SATURATION_MIN = 480.0 / WAIT_SCALE
 
-# Nombre d'intervalles par attente : 8 intervalles de 9,6 / 8 = 1,2 min.
-DEFAULT_N_BINS = 8
+# Nombre d'intervalles par attente : 6 intervalles de 9,6 / 6 = 1,6 min (réglage du
+# 22 octobre 2026, essais 20 et 21 ; 8 intervalles de 1,2 min avant). Égal à n_bins de
+# configs/tabular_hyperparameters.yaml (tests/test_config.py).
+DEFAULT_N_BINS = 6
 
 # Dernière variable de l'état discret (voir la docstring du module).
 STATE_FEATURES = ("nearest_shovel", "best_route")

@@ -22,6 +22,7 @@ from memoire_master_rl_logistique.experiments.agent_trials import (
     ARCHIVED_TRIALS,
     OPTION_B,
     PER_DECISION,
+    PRE_TUNING,
     RESULT_FILE,
     TRIALS,
     list_trials,
@@ -49,10 +50,15 @@ def test_tous_les_essais_du_journal_sont_declares():
 def test_essais_de_controle_avec_la_configuration_de_la_campagne():
     """Essais 6 à 9 : configuration de la campagne avec l'actualisation par décision
     (la seule à l'époque). Essais 10 à 13 (option B, commit figé) et 14 à 17 (actualisation
-    par minute) : configuration de la campagne, aucun hyperparamètre écrasé. Les trois
-    séries portent sur les mêmes agents (règle, points 13 et 22)."""
-    assert all(TRIALS[n].overrides == PER_DECISION for n in (6, 7, 8, 9))
-    assert all(not TRIALS[n].overrides for n in (10, 11, 12, 13, 14, 15, 16, 17))
+    par minute) : configuration de la campagne, aucun hyperparamètre écrasé. Pour les
+    agents tabulaires, c'est la configuration d'avant le réglage (``PRE_TUNING``), que
+    ``configs/`` ne donne plus. Les trois séries portent sur les mêmes agents (règle,
+    points 13 et 22)."""
+    assert PRE_TUNING == {"alpha": 0.2, "n_bins": 8}
+    assert all(TRIALS[n].overrides == PER_DECISION for n in (6, 7))
+    assert all(TRIALS[n].overrides == PER_DECISION | PRE_TUNING for n in (8, 9))
+    assert all(not TRIALS[n].overrides for n in (10, 11, 12, 13, 14, 15))
+    assert all(TRIALS[n].overrides == PRE_TUNING for n in (16, 17))
     assert hyperparameters("PPO")["time_discount"] is True
     algorithms = [TRIALS[n].algorithm for n in (6, 7, 8, 9)]
     assert algorithms == [TRIALS[n].algorithm for n in (10, 11, 12, 13)] ==         [TRIALS[n].algorithm for n in (14, 15, 16, 17)]
@@ -177,27 +183,40 @@ def test_politique_constante_et_refus_d_ecraser(tmp_path):
 def test_reglage_tabulaire_de_meme_taille():
     """Règle, point 8 : 4 configurations par algorithme, α ∈ {0,1 ; 0,2} × {6 ; 8} ; la
     4e (α = 0,2, 8 intervalles) est l'essai de contrôle 16 ou 17 (configuration de la
-    campagne). Rien d'autre ne change que α et le nombre d'intervalles."""
-    config = hyperparameters("Q-Learning")
+    campagne d'alors). Rien d'autre ne change que α et le nombre d'intervalles."""
     for algorithm, control in (("Q-Learning", 16), ("SARSA", 17)):
         grid = {(TRIALS[n].overrides["alpha"], TRIALS[n].overrides["n_bins"])
-                for n in range(18, 24) if TRIALS[n].algorithm == algorithm}
-        grid.add((config["alpha"], config["n_bins"]))
+                for n in (control, *range(18, 24)) if TRIALS[n].algorithm == algorithm}
         assert grid == {(0.1, 6), (0.1, 8), (0.2, 6), (0.2, 8)}
-        assert TRIALS[control].algorithm == algorithm and not TRIALS[control].overrides
-    assert all(set(TRIALS[n].overrides) == {"alpha", "n_bins"} for n in range(18, 24))
+        assert TRIALS[control].algorithm == algorithm
+    assert all(set(TRIALS[n].overrides) == {"alpha", "n_bins"} for n in (16, 17, *range(18, 24)))
+
+
+def reported_productivity(number):
+    """Productivité notée dans le journal pour l'essai ``number`` (t/h)."""
+    return float(TRIALS[number].reported.split(" ±")[0].replace(" ", "").replace(" ", "")
+                 .replace(",", "."))
 
 
 def test_variante_avec_la_meilleure_configuration_du_reglage():
     """Règle, point 9 : la variante de l'état est essayée une seule fois, avec la
     configuration de meilleure productivité du réglage (essais 16 à 23), lue dans les
     résultats notés : Q-Learning essai 20 (4 180,8 t/h), SARSA essai 21 (3 626,0 t/h)."""
-    def productivity(number):
-        return float(TRIALS[number].reported.split(" ±")[0].replace(" ", "").replace(" ", "")
-                     .replace(",", "."))
-
     for algorithm, variant, best in (("Q-Learning", 24, 20), ("SARSA", 25, 21)):
         candidates = [n for n in range(16, 24) if TRIALS[n].algorithm == algorithm]
-        assert max(candidates, key=productivity) == best
+        assert max(candidates, key=reported_productivity) == best
         expected = {**TRIALS[best].overrides, "state_feature": "best_route"}
         assert TRIALS[variant].algorithm == algorithm and TRIALS[variant].overrides == expected
+
+
+def test_configuration_de_la_campagne_issue_de_la_mise_au_point():
+    """Décision de la règle (points 8 et 9, 22 octobre 2026) : configs/ contient, pour
+    chaque agent tabulaire, la meilleure configuration du réglage, et la variante de l'état
+    seulement si elle a fait mieux. Essais 24 et 25 : 4 061,8 < 4 180,8 et 3 505,2 < 3 626,0,
+    rejetée pour les deux ; la pelle la plus proche reste la dernière variable."""
+    for algorithm, variant, best in (("Q-Learning", 24, 20), ("SARSA", 25, 21)):
+        kept = variant if reported_productivity(variant) > reported_productivity(best) else best
+        assert kept == best
+        config = hyperparameters(algorithm)
+        assert {k: config[k] for k in TRIALS[kept].overrides} == TRIALS[kept].overrides
+        assert config["state_feature"] == "nearest_shovel"

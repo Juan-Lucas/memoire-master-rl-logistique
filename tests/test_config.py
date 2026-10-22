@@ -106,11 +106,13 @@ def test_hyperparametres_de_la_campagne():
     assert hyperparameters("PPO")["learning_rate"] in grids["PPO"]["learning_rate"]
     assert hyperparameters("DQN")["exploration_fraction"] in grids["DQN"]["exploration_fraction"]
     assert hyperparameters("DQN")["learning_rate"] in grids["DQN"]["learning_rate"]
-    # Valeurs de la campagne (run_benchmark avant T28), communes à Q-Learning et SARSA.
-    tabular = {"n_episodes": 30_000, "alpha": 0.2, "gamma": 0.99, "epsilon_start": 1.0,
-               "epsilon_min": 0.01, "n_bins": 8, "time_discount": True,
+    # Agents tabulaires : réglage du 22 octobre 2026 (essais 16 à 23), α par algorithme,
+    # 6 intervalles au lieu de 8 ; variante de l'état rejetée (essais 24 et 25).
+    tabular = {"n_episodes": 30_000, "gamma": 0.99, "epsilon_start": 1.0,
+               "epsilon_min": 0.01, "n_bins": 6, "time_discount": True,
                "state_feature": "nearest_shovel"}
-    assert hyperparameters("Q-Learning") == hyperparameters("SARSA") == tabular
+    assert hyperparameters("Q-Learning") == tabular | {"alpha": 0.2}
+    assert hyperparameters("SARSA") == tabular | {"alpha": 0.1}
 
 
 def test_valeurs_par_defaut_du_code_coherentes_avec_la_configuration():
@@ -187,6 +189,31 @@ def test_fichier_d_un_autre_algorithme_refuse(config_copy):
     edit("ppo_hyperparameters.yaml", lambda c: c.update(algorithm="DQN"))
     with pytest.raises(ValueError, match="ne correspond pas"):
         hyperparameters("PPO", directory)
+
+
+def test_valeur_par_algorithme_tabulaire(config_copy):
+    """Une valeur tabulaire peut dépendre de l'algorithme ; elle doit alors nommer
+    Q-Learning et SARSA, sans faute de frappe. Une valeur commune reste acceptée (fichiers
+    archivés avant le réglage)."""
+    directory, edit = config_copy
+
+    def set_value(**values):
+        edit("tabular_hyperparameters.yaml", lambda c: c.update(values))
+        config._read_yaml.cache_clear()  # le fichier est relu après chaque modification
+
+    set_value(n_bins={"Q-Learning": 4, "SARSA": 10})
+    assert hyperparameters("Q-Learning", directory)["n_bins"] == 4
+    assert hyperparameters("SARSA", directory)["n_bins"] == 10
+    assert hyperparameters("SARSA", directory, n_bins=8)["n_bins"] == 8  # argument donné
+    set_value(alpha=0.3)
+    assert hyperparameters("Q-Learning", directory)["alpha"] == \
+        hyperparameters("SARSA", directory)["alpha"] == 0.3
+    set_value(alpha={"Q-Learning": 0.2, "Sarsa": 0.1})
+    with pytest.raises(ValueError, match="Sarsa"):
+        hyperparameters("Q-Learning", directory)
+    set_value(alpha={"Q-Learning": 0.2})
+    with pytest.raises(ValueError, match="SARSA"):
+        hyperparameters("Q-Learning", directory)
 
 
 def test_remplacement_d_hyperparametres():

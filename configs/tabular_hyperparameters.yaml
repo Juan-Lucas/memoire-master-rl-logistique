@@ -1,14 +1,20 @@
 # Hyperparamètres de Q-Learning et SARSA tabulaires, lus par rl/train_q_learning.py
-# et rl/train_sarsa.py (T28). Mêmes valeurs pour les deux algorithmes.
+# et rl/train_sarsa.py (T28). Une valeur donnée sous la forme {Q-Learning: …, SARSA: …}
+# dépend de l'algorithme ; les autres sont communes aux deux.
 algorithm: tabular
 n_episodes: 30000
-alpha: 0.2
+# α : réglage du 22 octobre 2026 (règle de mise au point, point 8 ; essais 16 à 23,
+# graines de sélection). Avant le réglage : 0,2 pour les deux algorithmes.
+alpha:
+  Q-Learning: 0.2      # essai 20
+  SARSA: 0.1           # essai 21
 gamma: 0.99
 epsilon_start: 1.0
 epsilon_min: 0.01      # ε décroît linéairement de epsilon_start à epsilon_min sur n_episodes
-n_bins: 8              # intervalles de discrétisation des attentes (rl/discretize.py)
+n_bins: 6              # intervalles de discrétisation des attentes (rl/discretize.py) ; 8 avant le réglage
 # Dernière variable de l'état discret (rl/discretize.py) : nearest_shovel (pelle la plus
 # proche, valeur d'origine) ou best_route (route de plus petite attente prévue, point 9).
+# best_route a été essayée une fois (essais 24 et 25) et rejetée pour les deux algorithmes.
 state_feature: nearest_shovel
 # Actualisation par minute (formulation semi-markovienne, décision du 21 octobre 2026,
 # rl/time_discount.py) : γ s'applique à une décision de 1,89 min ; une décision de Δt

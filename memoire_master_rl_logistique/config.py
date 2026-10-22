@@ -86,6 +86,21 @@ def experiment_config(directory: str | Path | None = None) -> dict[str, Any]:
     return config
 
 
+TABULAR_ALGORITHMS = ("Q-Learning", "SARSA")
+
+
+def _tabular_value(value: Any, algorithm: str, where: str) -> Any:
+    """Valeur d'un hyperparamètre tabulaire : commune, ou ``{Q-Learning: …, SARSA: …}``.
+
+    Depuis le réglage du 22 octobre 2026, α diffère entre les deux algorithmes. Une valeur
+    par algorithme doit les nommer tous les deux, sans faute de frappe.
+    """
+    if not isinstance(value, dict):
+        return value
+    _check_keys(set(value), set(TABULAR_ALGORITHMS), where)
+    return value[algorithm]
+
+
 def hyperparameters(
     algorithm: str, directory: str | Path | None = None, **overrides: Any,
 ) -> dict[str, Any]:
@@ -102,6 +117,9 @@ def hyperparameters(
         raise ValueError(f"{path} : « algorithm: {family} » ne correspond pas à {algorithm}")
     expected = HYPERPARAMETER_KEYS[family]
     _check_keys(set(params), expected, str(path))
+    if family == "tabular":
+        params = {key: _tabular_value(value, algorithm, f"{path} ({key})")
+                  for key, value in params.items()}
 
     given = {k: v for k, v in overrides.items() if v is not None}
     if set(given) - expected:

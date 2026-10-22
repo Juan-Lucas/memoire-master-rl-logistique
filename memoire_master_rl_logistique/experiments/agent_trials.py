@@ -10,10 +10,13 @@ Conditions communes : régime nominal, graine d'entraînement ``TRAIN_SEEDS[0]``
 critère = productivité de la politique sans exploration sur les **graines de sélection**
 (20 000 à 20 009), jamais sur celles de l'évaluation finale (42 à 71).
 
-Les essais 5 à 9 et 14 à 17 se refont sur le code actuel (``TRIALS``). Seuls changent les
+Les essais 5 à 9 et 14 à 25 se refont sur le code actuel (``TRIALS``). Seuls changent les
 hyperparamètres que chaque essai fixe explicitement ; le reste vient de ``configs/``. Les
 essais 5 à 9 précisent l'actualisation par décision (``PER_DECISION``), celle d'avant le
-21 octobre 2026 ; les essais 14 à 17 contrôlent l'actualisation par minute.
+21 octobre 2026 ; les essais 14 à 17 contrôlent l'actualisation par minute. Depuis le
+réglage tabulaire (22 octobre 2026), ``configs/`` donne α = 0,2 (Q-Learning) ou 0,1
+(SARSA) et 6 intervalles : les essais tabulaires faits avant (8, 9, 16, 17) fixent donc
+la configuration d'alors (``PRE_TUNING``), et tous les autres fixent α et les intervalles.
 Les essais 10 à 13 (contrôle de l'option B, 20 et 21 octobre 2026) ont utilisé une
 récompense abandonnée depuis : ils se refont depuis le commit ``78ed5f5``
 (``Trial.commit`` ; ``run_trial`` refuse de les lancer sur le code actuel, qui donnerait
@@ -91,16 +94,20 @@ class Trial:
 
 OPTION_B = "78ed5f5"  # commit de l'option B (coût d'opportunité de chaque cycle), abandonnée
 PER_DECISION = {"time_discount": False}  # essais 0 à 13 : actualisation par décision
-PENDING = "à venir"
+# Configuration tabulaire de la campagne avant le réglage (essais 8, 9, 16, 17), commune
+# aux deux algorithmes.
+PRE_TUNING = {"alpha": 0.2, "n_bins": 8}
 # Grille du réglage tabulaire (règle, point 8) : (α, nombre d'intervalles).
 TABULAR_GRID = ((0.1, 6), (0.1, 8), (0.2, 6), (0.2, 8))
-TUNING_RESULTS = {  # essais 18 à 23 (22 octobre 2026), graines de sélection
+TUNING_RESULTS = {  # essais 18 à 25 (22 octobre 2026), graines de sélection
     18: "3 928,8 ± 51,0 t/h, ATTENDRE 30,5 %, pelles 19 / 23 / 58 %",
     19: "3 368,8 ± 78,4 t/h, ATTENDRE 74,9 %, pelles 2 / 9 / 89 %",
     20: "4 180,8 ± 48,4 t/h, ATTENDRE 33,3 %, pelles 35 / 46 / 18 %",
     21: "3 626,0 ± 58,8 t/h, ATTENDRE 0,8 %, pelles 1 / 1 / 98 %",
     22: "3 596,2 ± 30,0 t/h, ATTENDRE 0 %, pelles 0 / 0 / 100 %",
     23: "3 480,8 ± 47,7 t/h, ATTENDRE 0,5 %, pelles 0 / 0 / 100 %",
+    24: "4 061,8 ± 44,8 t/h, ATTENDRE 32,2 %, pelles 26 / 32 / 42 %",
+    25: "3 505,2 ± 59,5 t/h, ATTENDRE 9,2 %, pelles 2 / 3 / 95 %",
 }
 
 
@@ -118,10 +125,11 @@ TRIALS: dict[int, Trial] = {trial.number: trial for trial in (
           "3 592,8 ± 59,5 t/h, ATTENDRE 0 %, pelles 0 / 1 / 99 %", PER_DECISION),
     Trial(8, "Q-Learning", "Chronométrage et point de départ du réglage (α = 0,2, "
           "8 intervalles, = configuration de la campagne, actualisation par décision)",
-          "3 955,0 ± 36,9 t/h, ATTENDRE 1,9 %, pelles 1 / 36 / 62 %", PER_DECISION),
+          "3 955,0 ± 36,9 t/h, ATTENDRE 1,9 %, pelles 1 / 36 / 62 %",
+          PER_DECISION | PRE_TUNING),
     Trial(9, "SARSA", "Chronométrage et point de départ du réglage (α = 0,2, "
           "8 intervalles, = configuration de la campagne, actualisation par décision)",
-          "3 535,0 ± 42,9 t/h, ATTENDRE 0 %, pelles 1 / 1 / 98 %", PER_DECISION),
+          "3 535,0 ± 42,9 t/h, ATTENDRE 0 %, pelles 1 / 1 / 98 %", PER_DECISION | PRE_TUNING),
     # Contrôle avec la récompense de l'option B (règle, points 13 et 14) : configuration de
     # la campagne, rien d'autre ne change. Option B abandonnée ensuite (PPO apprend à ATTENDRE).
     Trial(10, "PPO", "Contrôle option B : PPO, configuration de la campagne",
@@ -142,9 +150,10 @@ TRIALS: dict[int, Trial] = {trial.number: trial for trial in (
           "120,8 ± 5,5 t/h, ATTENDRE 99,8 %, pelles 29 / 71 / 0 %"),
     Trial(16, "Q-Learning", "Actualisation par minute : Q-Learning, configuration de la "
           "campagne (α = 0,2, 8 intervalles)",
-          "3 974,2 ± 46,3 t/h, ATTENDRE 30,0 %, pelles 16 / 35 / 49 %"),
+          "3 974,2 ± 46,3 t/h, ATTENDRE 30,0 %, pelles 16 / 35 / 49 %", PRE_TUNING),
     Trial(17, "SARSA", "Actualisation par minute : SARSA, configuration de la campagne "
-          "(α = 0,2, 8 intervalles)", "3 601,5 ± 39,4 t/h, ATTENDRE 0 %, pelles 0 / 0 / 100 %"),
+          "(α = 0,2, 8 intervalles)", "3 601,5 ± 39,4 t/h, ATTENDRE 0 %, pelles 0 / 0 / 100 %",
+          PRE_TUNING),
     # Réglage de Q-Learning et SARSA (règle, points 8 et 24) : α ∈ {0,1 ; 0,2} × {6 ; 8}
     # intervalles, actualisation par minute. Les essais 16 et 17 sont la 4e configuration
     # (α = 0,2, 8 intervalles). Critère : productivité sur les graines de sélection.
@@ -157,12 +166,13 @@ TRIALS: dict[int, Trial] = {trial.number: trial for trial in (
     # Variante de l'état (règle, point 9) : « route de plus petite attente prévue », une
     # seule fois, avec la meilleure configuration du réglage (essais 16 à 23, graines de
     # sélection) : Q-Learning α = 0,2, 6 intervalles (essai 20) ; SARSA α = 0,1,
-    # 6 intervalles (essai 21). Retenue seulement si elle fait mieux que cet essai.
+    # 6 intervalles (essai 21). Retenue seulement si elle fait mieux que cet essai :
+    # rejetée pour les deux (4 061,8 < 4 180,8 ; 3 505,2 < 3 626,0).
     Trial(24, "Q-Learning", "Variante de l'état (route de plus petite attente prévue), "
-          "α = 0,2, 6 intervalles", PENDING,
+          "α = 0,2, 6 intervalles", TUNING_RESULTS[24],
           {"alpha": 0.2, "n_bins": 6, "state_feature": "best_route"}),
     Trial(25, "SARSA", "Variante de l'état (route de plus petite attente prévue), "
-          "α = 0,1, 6 intervalles", PENDING,
+          "α = 0,1, 6 intervalles", TUNING_RESULTS[25],
           {"alpha": 0.1, "n_bins": 6, "state_feature": "best_route"}),
 )}
 

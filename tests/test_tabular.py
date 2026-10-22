@@ -26,23 +26,29 @@ LAYOUT = observation_layout(3, 2)
 
 def test_valeurs_inchangees():
     """Les constantes nommées gardent les valeurs d'entraînement (sinon il faudrait réentraîner)."""
-    assert WAIT_SCALE == 50.0 and DEFAULT_N_BINS == 8 and DEFAULT_ACTION == 0
+    assert WAIT_SCALE == 50.0 and DEFAULT_N_BINS == 6 and DEFAULT_ACTION == 0
     assert WAIT_SATURATION_MIN == pytest.approx(9.6)
 
 
 def test_taille_de_l_espace_d_etats():
-    """« Savoir expliquer » : 8⁵ attentes discrétisées × 3 pelles possibles = 98 304 états."""
-    assert state_space_size() == 8**5 * 3 == 98_304
+    """« Savoir expliquer » : 6⁵ attentes discrétisées × 3 pelles possibles = 23 328 états
+    (98 304 avec les 8 intervalles d'avant le réglage)."""
+    assert state_space_size() == 6**5 * 3 == 23_328
+    assert state_space_size(n_bins=8) == 8**5 * 3 == 98_304
 
 
-def test_discretisation_identique_a_l_ancienne_formule():
+@pytest.mark.parametrize("n_bins", [6, 8])
+def test_discretisation_identique_a_l_ancienne_formule(n_bins):
     """Sur des observations aléatoires, l'état est le même qu'avec les constantes écrites en dur."""
     rng = np.random.default_rng(0)
     for obs in rng.random((200, 18)).astype(np.float32):
         waits = np.clip(np.concatenate([obs[LAYOUT["shovel_wait"]], obs[LAYOUT["dump_wait"]]]) * 50, 0, 1)
-        expected = (*np.minimum((waits * 8).astype(int), 7), int(np.argmin(obs[LAYOUT["distance_to_shovel"]])))
+        expected = (*np.minimum((waits * n_bins).astype(int), n_bins - 1),
+                    int(np.argmin(obs[LAYOUT["distance_to_shovel"]])))
 
-        assert _discretize_obs(obs) == expected
+        assert _discretize_obs(obs, n_bins) == expected
+        if n_bins == DEFAULT_N_BINS:
+            assert _discretize_obs(obs) == expected
 
 
 @pytest.mark.parametrize("trucks", [12, 18])
@@ -58,7 +64,7 @@ def test_couverture_etats_connus_et_action_par_defaut():
     known_obs, _ = MineEnv().reset(seed=42)
     policy = TabularPolicy({_discretize_obs(known_obs): np.array([0, 0, 5.0, 0, 0, 0, 0])})
     unknown_obs = known_obs.copy()
-    unknown_obs[LAYOUT["shovel_wait"]] = 0.02  # attente de 9,6 min : intervalle 7, jamais vu
+    unknown_obs[LAYOUT["shovel_wait"]] = 0.02  # attente de 9,6 min : dernier intervalle, jamais vu
 
     assert policy.predict(known_obs) == 2
     assert policy.predict(unknown_obs) == DEFAULT_ACTION
@@ -97,7 +103,7 @@ def test_variante_route_de_plus_petite_attente_prevue():
     """``best_route`` : dernière variable = route (dans l'ordre des actions) de plus petite
     attente prévue, la même prévision que MTWT (``MineEnv.route_waits``) ; 6 valeurs
     possibles au lieu de 3."""
-    assert state_space_size(state_feature="best_route") == 8**5 * 6
+    assert state_space_size(state_feature="best_route") == 6**5 * 6 == 46_656
     scenario = SCENARIOS["nominal"]
     env = make_env(scenario)
     obs, info = env.reset(seed=42)
