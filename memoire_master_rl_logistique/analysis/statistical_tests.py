@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 import sys
 
@@ -33,7 +34,14 @@ DYNAMIC_COLUMNS = [
     "episode_time_s",  # T29
 ]
 SCENARIOS = MAIN_SCENARIOS
-PAIRS = [("PPO", "Fixed"), ("DQN", "Fixed"), ("PPO", "DQN")]
+# Comparaisons par paires de la campagne (T31), fixées le 22 octobre 2026 AVANT les
+# résultats : chaque agent contre MTWT (meilleure heuristique sur les graines de sélection)
+# et contre l'Affectation fixe (référence de la v1) ; correction de Holm sur les 8 par régime.
+AGENTS = ("PPO", "DQN", "Q-Learning", "SARSA")
+REFERENCE_HEURISTICS = ("MTWT", "Fixed")
+PAIRS = [(agent, heuristic) for heuristic in REFERENCE_HEURISTICS for agent in AGENTS]
+# Comparaisons de l'article v1 (8 politiques, sans MTWT) : pour relire son CSV.
+V1_PAIRS = [("PPO", "Fixed"), ("DQN", "Fixed"), ("PPO", "DQN")]
 METRICS = ["productivity_tph", "specific_fuel_l_per_ton"]
 
 def select_mode(data: pd.DataFrame, mode: str | None = SPECIALISED) -> pd.DataFrame:
@@ -225,11 +233,15 @@ def cohens_d(x: np.ndarray, y: np.ndarray) -> float:
     pooled = np.sqrt(((nx - 1) * x.std(ddof=1) ** 2 + (ny - 1) * y.std(ddof=1) ** 2) / (nx + ny - 2))
     return float((x.mean() - y.mean()) / pooled) if pooled > 0 else float("nan")
 
-def main(csv_path: str | Path) -> None:
+def main(csv_path: str | Path, pairs: Sequence[tuple[str, str]] = PAIRS) -> None:
     """Analyse appariée complète : Friedman, Wilcoxon + Holm, IC bootstrap, d, puis interaction."""
 
     # T30 : avec plusieurs graines d'entraînement, chaque agent est moyenné sur ses modèles.
     df = average_over_training_seeds(load_results(csv_path))
+    # Le fichier de la campagne contient aussi les régimes non vus et l'ablation : toute
+    # l'analyse, y compris l'interaction, porte sur les régimes principaux seulement
+    # (défaut trouvé par la répétition du 22/10/2026 : F(49, …) au lieu de F(18, …)).
+    df = df[df["scenario"].isin(SCENARIOS)]
 
     for metric in METRICS:
         print(f"\n===== {metric} =====")
@@ -239,8 +251,8 @@ def main(csv_path: str | Path) -> None:
             k = len(table.columns)
             line = f"{scenario} — Friedman : χ²({k - 1}) = {stat:.1f}, {format_p(p)}"
             print(line.replace(".", ","))
-            comp = paired_comparisons(table, PAIRS)
-            comp["d"] = [cohens_d(table[a], table[b]) for a, b in PAIRS]
+            comp = paired_comparisons(table, list(pairs))
+            comp["d"] = [cohens_d(table[a], table[b]) for a, b in pairs]
             print(comp.to_string(index=False))
 
     inter = interaction_test(df)

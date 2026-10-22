@@ -219,5 +219,5 @@ def test_tests_apparies_acceptent_plusieurs_graines(tmp_path, capsys):
     benchmark().to_csv(csv, index=False)
     with pytest.raises(ValueError, match="average_over_training_seeds"):
         st.paired_table(st.load_results(csv), "nominal", "productivity_tph")
-    st.main(csv)
+    st.main(csv, st.V1_PAIRS)  # CSV synthétique sans MTWT
     assert "Friedman" in capsys.readouterr().out

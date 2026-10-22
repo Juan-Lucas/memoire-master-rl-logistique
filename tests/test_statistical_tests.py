@@ -6,6 +6,8 @@ import pandas as pd
 import pytest
 
 from memoire_master_rl_logistique.analysis.statistical_tests import (
+    PAIRS,
+    V1_PAIRS,
     format_p,
     friedman_test,
     interaction_test,
@@ -250,9 +252,34 @@ REFERENCES_CSV = Path(__file__).parent.parent / "data" / "results_v1_article" / 
 def test_main_retrouve_article(capsys):
     """Sur le CSV v1, main affiche les chiffres de l'article (Friedman, interaction)."""
 
-    main(REFERENCES_CSV)
+    main(REFERENCES_CSV, V1_PAIRS)
     out = capsys.readouterr().out
 
     assert "χ²(7) = 207,6" in out
     assert "F(14, 609) = 430,7" in out
 
+
+
+@pytest.mark.skipif(not REFERENCES_CSV.exists(), reason="Données manquantes")
+def test_main_ignore_les_regimes_hors_comparaison(tmp_path, capsys):
+    """Le fichier de la campagne contient aussi les régimes non vus et l'ablation : ils
+    ne changent ni les tests ni l'interaction, qui portent sur les régimes principaux
+    (défaut trouvé par la répétition du 22/10/2026)."""
+    data = pd.read_csv(REFERENCES_CSV)
+    extra = data[data["scenario"] == "nominal"].assign(
+        scenario="ablation_w4_00", productivity_tph=lambda d: d["productivity_tph"] * 0.5)
+    with_extra = tmp_path / "avec_ablation.csv"
+    pd.concat([data, extra]).to_csv(with_extra, index=False)
+
+    main(REFERENCES_CSV, V1_PAIRS)
+    reference = capsys.readouterr().out
+    main(with_extra, V1_PAIRS)
+    assert capsys.readouterr().out == reference
+    assert "F(14, 609) = 430,7" in reference
+
+
+def test_comparaisons_fixees_avant_la_campagne():
+    """Chaque agent contre MTWT (meilleure heuristique) et contre l'Affectation fixe
+    (référence de la v1) : 8 comparaisons par régime, décidées le 22/10/2026."""
+    assert PAIRS == [("PPO", "MTWT"), ("DQN", "MTWT"), ("Q-Learning", "MTWT"), ("SARSA", "MTWT"),
+                     ("PPO", "Fixed"), ("DQN", "Fixed"), ("Q-Learning", "Fixed"), ("SARSA", "Fixed")]

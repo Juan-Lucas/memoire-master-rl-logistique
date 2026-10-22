@@ -40,7 +40,7 @@ from memoire_master_rl_logistique.experiments.scenarios import MAIN_SCENARIOS, S
 N_BOOT = 50_000  # nombre de rééchantillonnages, celui de rliable
 BOOT_SEED = 0
 CONFIDENCE = 0.95
-REFERENCE_POLICY = "Fixed"  # heuristique de référence des comparaisons (statistical_tests.PAIRS)
+REFERENCE_POLICY = "Fixed"  # normalisation des agrégats (référence de la v1 ; voir aussi statistical_tests.PAIRS)
 IMPROVEMENT_PAIRS = [("PPO", "DQN"), ("PPO", "Q-Learning"), ("DQN", "Q-Learning"),
                      ("Q-Learning", "SARSA")]
 # Métriques pour lesquelles une valeur plus faible est meilleure.
