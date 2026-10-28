@@ -9,8 +9,8 @@
 \usepackage[a4paper,margin=2.2cm]{geometry}
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{graphicx}
-% Figures: ./figures (Overleaf project), then article/v3/figures (campaign), v2, reports/figures.
-\graphicspath{{./}{v3/}{v2/}{../}}
+% Figures: ./figures (Overleaf project), then v3/en/figures (campaign, English labels), v3, v2, reports/figures.
+\graphicspath{{./}{v3/en/}{v3/}{v2/}{../}}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{tabularx}
@@ -1216,17 +1216,29 @@ PPO                  & 16.7 $\pm$ 1.1 & 0.0 & 24.7 & 22.6 $\pm$ 1.2 & 5.5 & 35.9
  & \multicolumn{2}{c|}{\textbf{Nominal}} & \multicolumn{2}{c|}{\textbf{High load}} & \multicolumn{2}{c}{\textbf{Frequent breakdowns}} \\
 \textbf{Policy} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} \\
 \midrule
-\multicolumn{7}{c}{\pending{rows produced by the replay (\texttt{campaign behaviour}), in progress}} \\
+FIFO                 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 \\
+Fixed Assignment     & 36 / 33 / 31 & 0 & 36 / 33 / 31 & 0 & 36 / 34 / 31 & 0 \\
+Nearest Shovel       & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 \\
+Shortest Path        & 74 / 26 / 0 & 0 & 71 / 29 / 0 & 0 & 72 / 28 / 0 & 0 \\
+MTWT                 & 50 / 35 / 15 & 0 & 42 / 36 / 22 & 0 & 49 / 37 / 14 & 0 \\
+LP                   & 60 / 40 / 0 & 0 & 42 / 42 / 17 & 0 & 64 / 36 / 0 & 0 \\
+\midrule
+Q-Learning           & 36 / 34 / 31 & 42 & 39 / 28 / 34 & 46 & 36 / 34 / 30 & 33 \\
+SARSA                & 0 / 0 / 99 & 2 & 1 / 30 / 69 & 1 & 0 / 1 / 99 & 15 \\
+DQN                  & 46 / 27 / 27 & 79 & 44 / 15 / 42 & 99 & 50 / 43 / 7 & 96 \\
+PPO                  & 59 / 36 / 4 & 0 & 46 / 36 / 18 & 26 & 56 / 37 / 7 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\pending{comment on \cref{tab:behaviour}: concentration of the distance rules, allocation of MTWT, LP and PPO, shovels used by DQN and the tabular agents.}
+Three profiles emerge among the heuristics. The distance rules concentrate the fleet: Nearest Shovel sends all its cycles to shovel 1, and Shortest Path 71 to 74\%. FIFO and Fixed Assignment split the cycles almost equally, and therefore send nearly a third of them to shovel 3, the farthest. MTWT and LP favour shovels 1 and 2 and use shovel 3 only when the other two are busy, mostly under high load (22 and 17\%). PPO follows the same profile as MTWT, but uses shovel 3 even less: 4\% against 15\% under nominal conditions, 7\% against 14\% under frequent breakdowns. Its cycles are therefore shorter, which explains its lower consumption per tonne (\cref{sec:sustainability}).
+
+The value-based agents show extreme behaviours. SARSA sends 99\% of its cycles to shovel 3 under nominal conditions and frequent breakdowns, as during tuning. Q-Learning spreads its cycles over the three shovels, but waits in 33 to 46\% of its decisions. DQN waits in 79 to 99\% of its decisions. Its only working nominal model (seed 2, 3,932~t/h) sends 99\% of its cycles to shovel 1: it reproduces Nearest Shovel (3,893~t/h), not a new policy.
 \end{revbloc}
 
 \begin{figure}[H]
 \centering
-\phfig[5cm]{\textbf{Figure produced by the replay} (\texttt{plots.behaviour}, from \texttt{analyses/comportement/behaviour\_summary.csv}).}
+\includegraphics[width=\textwidth]{figures/behaviour_30_replications.png}
 \caption{Allocation of cycles among shovels (stacked bars) and share of WAIT decisions, by policy and regime, means over 30 replications (and over the 5 models of a specialised agent).}
 \label{fig:behavioral}
 \end{figure}
@@ -1368,7 +1380,7 @@ SARSA $-$ Fixed     & $-$672.8 [$-$688.7; $-$657.1] & $-$13.4 & $-$795.1 [$-$810
 \end{tabular}}
 \end{table}
 
-These comparisons concern the expected performance of each algorithm: for each replication, an agent is represented by the mean of its 5 models. They do not say that a model drawn at random would do the same: for DQN, one model in five is close to the heuristics and the others are not (\cref{tab:runs}).
+These comparisons concern the expected performance of each algorithm: for each replication, an agent is represented by the mean of its 5 models. They do not say that a model drawn at random would do the same: for DQN, one model in five reproduces Nearest Shovel and the others collapse (\cref{tab:runs,tab:behaviour}).
 \end{revbloc}
 
 \subsection{Variability between replications and between models}
@@ -1496,8 +1508,8 @@ H3 & High productivity does not necessarily come with low queueing time. & \rev{
 \begin{revbloc}{T31}
 \begin{itemize}
   \item \textbf{Knowing the queues is what matters.} The three leading policies all use an estimate of future waiting: MTWT chooses the route with the smallest predicted waiting, LP follows a flow plan computed on capacities, and PPO observes the predicted waiting per route, added to the state during tuning (\cref{sec:tuning}). It is therefore consistent that PPO almost reaches the level of MTWT: it has the same information, and does no better than the rule that exploits it directly. This reading is an interpretation; no experiment of the study removes this information from PPO once tuning was over.
-  \item \textbf{PPO trades a little productivity for fuel.} PPO's reward penalises the distance travelled ($w_3$). PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, for 0.5 to 0.9\% less productivity: a trade-off consistent with this penalty, which MTWT, which only looks at waiting, does not make.
-  \item \textbf{The failure of DQN is reproducible and does not depend on $w_4$.} Four nominal models out of five collapse onto the WAIT action, and the collapse persists for every value of $w_4$, including without a waiting penalty. During training, exploration masks this collapse: training episodes produce about 3,460~t/h, the greedy policy 1,287~t/h on average. With a single model, as in the previous version, the result of DQN would have depended on the seed: 3,932~t/h with seed 2, 194~t/h with seed 1.
+  \item \textbf{PPO trades a little productivity for fuel.} PPO's reward penalises the distance travelled ($w_3$). PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, for 0.5 to 0.9\% less productivity, by sending fewer cycles to the farthest shovel (\cref{tab:behaviour}): a trade-off consistent with this penalty, which MTWT, which only looks at waiting, does not make.
+  \item \textbf{The failure of DQN is reproducible and does not depend on $w_4$.} Four nominal models out of five collapse onto the WAIT action, and the collapse persists for every value of $w_4$, including without a waiting penalty. During training, exploration masks this collapse: training episodes produce about 3,460~t/h, the greedy policy 1,287~t/h on average. With a single model, as in the previous version, the result of DQN would have depended on the seed: 3,932~t/h with seed 2, whose model reproduces Nearest Shovel, 194~t/h with seed 1.
   \item \textbf{The tabular agents do not converge.} Their productivity decreases as exploration diminishes, in the three regimes and for the 5 models. A representation of six discretised variables does not seem sufficient to distinguish the situations in which a detour to another shovel pays off.
   \item \textbf{Evaluating across several regimes remains necessary,} even though the top of the ranking does not change here: it is under high load that the distance rules and SARSA lose the most, and an evaluation limited to nominal conditions would not have shown it.
 \end{itemize}

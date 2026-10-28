@@ -21,6 +21,9 @@ import pandas as pd
 from memoire_master_rl_logistique.experiments.scenarios import SPECIALISED
 from memoire_master_rl_logistique.plots.common import (
     SCENARIO_LABELS,
+    LANGUAGES,
+    set_language,
+    tr,
     SCENARIO_ORDER,
     order_policies,
     policy_label,
@@ -46,27 +49,31 @@ def plot_behaviour(summary: pd.DataFrame, out_path: Path) -> None:
                     label=col.removeprefix("share_").removesuffix("_pct"))
             left += data[col]
         for i, wait in enumerate(data["wait_share_pct"]):
-            ax.text(103, i, f"ATT {wait:.0f} %", va="center", fontsize=8)
+            ax.text(103, i, tr(f"ATT {wait:.0f} %", f"WAIT {wait:.0f}%"), va="center", fontsize=8)
         ax.set_xlim(0, 125)
         ax.set_xticks([0, 25, 50, 75, 100])
-        ax.set_xlabel("Part des cycles par pelle (%)")
+        ax.set_xlabel(tr("Part des cycles par pelle (%)", "Share of cycles per shovel (%)"))
         ax.set_title(SCENARIO_LABELS.get(scenario, scenario))
         ax.invert_yaxis()
     axes[0][0].set_yticks(range(len(policies)))
     axes[0][0].set_yticklabels([policy_label(p) for p in policies])
     handles, labels = axes[0][0].get_legend_handles_labels()
-    fig.legend(handles, labels, title="Pelle", loc="lower center", ncol=len(shares),
+    fig.legend(handles, labels, title=tr("Pelle", "Shovel"), loc="lower center", ncol=len(shares),
                fontsize=8, bbox_to_anchor=(0.5, -0.02))
 
-    fig.suptitle("Répartition des cycles entre les pelles et part des décisions ATTENDRE "
-                 "(moyennes sur 30 réplications)")
+    fig.suptitle(tr("Répartition des cycles entre les pelles et part des décisions ATTENDRE "
+                    "(moyennes sur 30 réplications)",
+                    "Allocation of cycles among shovels and share of WAIT decisions "
+                    "(means over 30 replications)"))
     fig.tight_layout(rect=(0, 0.08, 1, 1))  # place pour la légende sous les panneaux
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 
-def main(summary_csv: str | Path, out_dir: str | Path, overwrite: bool = False) -> Path:
+def main(summary_csv: str | Path, out_dir: str | Path, overwrite: bool = False,
+         lang: str = "fr") -> Path:
     """Produit ``behaviour_30_replications.png`` dans ``out_dir``."""
+    set_language(lang)
     (out_path,) = prepare_outputs(out_dir, ["behaviour_30_replications.png"], overwrite)
     summary = pd.read_csv(summary_csv)
     if "mode" in summary.columns:  # campagne (T31) : agents spécialisés et heuristiques
@@ -81,5 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("summary_csv", type=Path, help="behaviour_summary.csv")
     parser.add_argument("out_dir", type=Path, help="dossier de sortie (créé si besoin)")
     parser.add_argument("--overwrite", action="store_true", help="autoriser l'écrasement")
+    parser.add_argument("--lang", choices=LANGUAGES, default="fr",
+                        help="langue des textes de la figure (en : article anglais)")
     args = parser.parse_args()
-    main(args.summary_csv, args.out_dir, args.overwrite)
+    main(args.summary_csv, args.out_dir, args.overwrite, args.lang)

@@ -113,3 +113,22 @@ def test_schema_des_regimes(tmp_path):
     assert out.exists() and out.stat().st_size > 0
     with pytest.raises(FileExistsError):
         sc.main(tmp_path)
+
+
+def test_libelles_des_figures_en_anglais(tmp_path):
+    """La version anglaise de l'article a ses propres figures : mêmes données, textes en
+    anglais ; revenir au français remet les libellés français."""
+    from memoire_master_rl_logistique.plots import common
+
+    try:
+        common.set_language("en")
+        assert common.policy_label("Fixed") == "Fixed Assignment"
+        assert common.SCENARIO_LABELS["high_breakdown"] == "Frequent breakdowns"
+        assert common.tr("Politique", "Policy") == "Policy"
+        common.set_language("fr")
+        assert common.policy_label("Fixed") == "Affectation fixe"
+        assert common.tr("Politique", "Policy") == "Politique"
+        with pytest.raises(ValueError):
+            common.set_language("de")
+    finally:
+        common.set_language("fr")

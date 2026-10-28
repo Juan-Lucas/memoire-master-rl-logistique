@@ -36,6 +36,9 @@ from memoire_master_rl_logistique.plots.common import (
     SCENARIO_LABELS,
     SCENARIO_ORDER,
     WAIT_LABELS,
+    LANGUAGES,
+    set_language,
+    tr,
     order_policies,
     policy_label,
     prepare_outputs,
@@ -101,7 +104,7 @@ def plot_grouped_bars(summary: pd.DataFrame, ylabel: str, title: str, out_path: 
     ax.set_xticklabels([policy_label(p) for p in policies], rotation=20, ha="right")
     ax.set_ylabel(ylabel)
     ax.set_title(title)
-    ax.legend(title="Régime")
+    ax.legend(title=tr("Régime", "Regime"))
     ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
@@ -132,15 +135,17 @@ def plot_pareto(
         ax.set_title(SCENARIO_LABELS.get(scenario, scenario))
         ax.set_xlabel(wait_label)
         ax.grid(True, alpha=0.3)
-    axes[0][0].set_ylabel("Productivité (t/h)")
+    axes[0][0].set_ylabel(tr("Productivité (t/h)", "Productivity (t/h)"))
 
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
 
 
-def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False) -> list[Path]:
+def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False,
+         lang: str = "fr") -> list[Path]:
     """Produit les trois figures dans ``out_dir`` ; refuse d'écraser sans ``overwrite``."""
+    set_language(lang)
     bars_prod, bars_wait, pareto = prepare_outputs(out_dir, OUTPUT_FILES, overwrite)
     # Un agent à plusieurs graines d'entraînement (T30) : une valeur par réplication, la
     # moyenne de ses modèles, pour que l'IC porte sur les 30 réplications, comme pour une
@@ -152,10 +157,12 @@ def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False) -> 
     wait_label = WAIT_LABELS[wait_col]
     wait = summarise(df, wait_col)
 
-    plot_grouped_bars(prod, "Productivité (t/h)",
-                      "Productivité moyenne par politique et par régime (IC 95 %)", bars_prod)
+    plot_grouped_bars(prod, tr("Productivité (t/h)", "Productivity (t/h)"),
+                      tr("Productivité moyenne par politique et par régime (IC 95 %)",
+                         "Mean productivity by policy and regime (95% CI)"), bars_prod)
     plot_grouped_bars(wait, wait_label,
-                      "Attente par politique et par régime (IC 95 %)", bars_wait)
+                      tr("Attente par politique et par régime (IC 95 %)",
+                         "Queueing time by policy and regime (95% CI)"), bars_wait)
     plot_pareto(prod, wait, pareto, wait_label)
 
     outputs = [bars_prod, bars_wait, pareto]
@@ -168,9 +175,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("csv_path", type=Path, help="CSV de résultats de benchmark")
     parser.add_argument("out_dir", type=Path, help="dossier de sortie (créé si besoin)")
     parser.add_argument("--overwrite", action="store_true", help="autoriser l'écrasement")
+    parser.add_argument("--lang", choices=LANGUAGES, default="fr",
+                        help="langue des textes de la figure (en : article anglais)")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse_args()
-    main(args.csv_path, args.out_dir, args.overwrite)
+    main(args.csv_path, args.out_dir, args.overwrite, args.lang)

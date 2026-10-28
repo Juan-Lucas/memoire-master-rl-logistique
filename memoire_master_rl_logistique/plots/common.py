@@ -50,6 +50,42 @@ WAIT_LABELS = {
     "avg_wait_min_per_truck": "Immobilisation totale par camion (min par poste)",
 }
 
+# Libellés anglais (article RL_article.tex) ; ``set_language("en")`` les met en place.
+_LABELS = {
+    "fr": {"policy": dict(POLICY_LABELS), "scenario": dict(SCENARIO_LABELS),
+           "wait": dict(WAIT_LABELS)},
+    "en": {
+        "policy": {**POLICY_LABELS, "Fixed": "Fixed Assignment", "Nearest": "Nearest Shovel",
+                   "ShortestPath": "Shortest Path"},
+        "scenario": {"nominal": "Nominal", "high_load": "High load",
+                     "high_breakdown": "Frequent breakdowns"},
+        "wait": {"queue_wait_min_per_truck": "Queueing time per truck (min per shift)",
+                 "avg_wait_min_per_truck": "Total idle time per truck (min per shift)"},
+    },
+}
+LANGUAGES = tuple(_LABELS)
+_language = "fr"
+
+
+def set_language(lang: str) -> None:
+    """Langue des figures : ``fr`` (article français, par défaut) ou ``en`` (article
+    anglais). Les dictionnaires de libellés sont mis à jour sur place, pour que les
+    modules qui les ont importés voient la même langue."""
+    global _language
+    if lang not in _LABELS:
+        raise ValueError(f"Langue inconnue : {lang} (attendu : {LANGUAGES})")
+    _language = lang
+    for target, key in ((POLICY_LABELS, "policy"), (SCENARIO_LABELS, "scenario"),
+                        (WAIT_LABELS, "wait")):
+        target.clear()
+        target.update(_LABELS[lang][key])
+
+
+def tr(fr: str, en: str) -> str:
+    """Texte d'une figure dans la langue choisie par ``set_language``."""
+    return en if _language == "en" else fr
+
+
 SCENARIO_COLORS = {
     "nominal": "#FF7043",
     "high_load": "#1A237E",
@@ -69,7 +105,7 @@ def order_policies(policies: Iterable[str]) -> list[str]:
 
 
 def policy_label(policy: str) -> str:
-    """Libellé français d'une politique (le nom brut si elle est inconnue)."""
+    """Libellé d'une politique dans la langue des figures (le nom brut si elle est inconnue)."""
     return POLICY_LABELS.get(policy, policy)
 
 
@@ -127,7 +163,8 @@ def plot_band(ax: plt.Axes, curve: pd.DataFrame, color: str, label: str,
     xs = curve[x] / scale
     n_runs = int(curve["n_runs"].max())
     ax.plot(xs, curve["mean"], color=color, linewidth=1.8, linestyle=linestyle,
-            label=f"{label} (moyenne de {n_runs} graines, IC 95 %)")
+            label=tr(f"{label} (moyenne de {n_runs} graines, IC 95 %)",
+                     f"{label} (mean of {n_runs} seeds, 95% CI)"))
     band = curve["ci_low"].notna()
     ax.fill_between(xs[band], curve["ci_low"][band], curve["ci_high"][band], color=color,
                     alpha=0.2, linewidth=0)

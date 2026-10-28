@@ -22,6 +22,9 @@ import pandas as pd
 from memoire_master_rl_logistique.plots.common import (
     AGENT_COLORS,
     SCENARIO_LABELS,
+    LANGUAGES,
+    set_language,
+    tr,
     SCENARIO_ORDER,
     plot_band,
     prepare_outputs,
@@ -45,16 +48,20 @@ def plot_campaign_curves(curves: pd.DataFrame, out_path: Path) -> None:
                 plot_band(ax, curve.sort_values("progress_pct"), AGENT_COLORS[agent], agent,
                           x="progress_pct")
         ax.set_title(SCENARIO_LABELS.get(scenario, scenario))
-        ax.set_xlabel("Avancement de l'entraînement (% du budget)")
+        ax.set_xlabel(tr("Avancement de l'entraînement (% du budget)",
+                         "Training progress (% of budget)"))
         ax.grid(True, alpha=0.3)
-    axes[0][0].set_ylabel("Productivité des épisodes d'entraînement (t/h)")
+    axes[0][0].set_ylabel(tr("Productivité des épisodes d'entraînement (t/h)",
+                             "Productivity of training episodes (t/h)"))
     axes[0][0].legend(fontsize=7, loc="lower left")
     fig.tight_layout()
     save_figure(fig, out_path)
 
 
-def main(curves_csv: str | Path, out_dir: str | Path, overwrite: bool = False) -> Path:
+def main(curves_csv: str | Path, out_dir: str | Path, overwrite: bool = False,
+         lang: str = "fr") -> Path:
     """Produit ``learning_curves_campagne.png`` dans ``out_dir`` (sans écraser par défaut)."""
+    set_language(lang)
     (out_path,) = prepare_outputs(out_dir, [OUTPUT_FILE], overwrite)
     plot_campaign_curves(pd.read_csv(curves_csv), out_path)
     print(f"Écrit : {out_path}")
@@ -66,5 +73,7 @@ if __name__ == "__main__":
     parser.add_argument("curves_csv", type=Path, help="courbes_productivity_tph.csv")
     parser.add_argument("out_dir", type=Path, help="dossier de sortie (créé si besoin)")
     parser.add_argument("--overwrite", action="store_true", help="autoriser l'écrasement")
+    parser.add_argument("--lang", choices=LANGUAGES, default="fr",
+                        help="langue des textes de la figure (en : article anglais)")
     args = parser.parse_args()
-    main(args.curves_csv, args.out_dir, args.overwrite)
+    main(args.curves_csv, args.out_dir, args.overwrite, args.lang)

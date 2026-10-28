@@ -24,6 +24,9 @@ from memoire_master_rl_logistique.experiments.scenarios import PERTURBED_SCENARI
 from memoire_master_rl_logistique.plots.common import (
     SCENARIO_LABELS,
     WAIT_LABELS,
+    LANGUAGES,
+    set_language,
+    tr,
     order_policies,
     policy_label,
     prepare_outputs,
@@ -47,7 +50,9 @@ def plot_robustness_heatmap(
     order = order_policies(ratios.index)
     labels = [policy_label(p) for p in order]
     panels = [
-        ((ratios.loc[order] - 1) * 100, "Productivité (par camion en forte charge)", "RdBu"),
+        ((ratios.loc[order] - 1) * 100,
+         tr("Productivité (par camion en forte charge)", "Productivity (per truck under high load)"),
+         "RdBu"),
         (wait_pct.loc[order], wait_label, "RdBu_r"),
     ]
 
@@ -60,20 +65,23 @@ def plot_robustness_heatmap(
                     linewidths=0.5, ax=ax, cbar_kws={"label": "%"})
         ax.set_title(title)
         ax.set_xlabel("")
-    axes[0].set_ylabel("Politique")
+    axes[0].set_ylabel(tr("Politique", "Policy"))
 
-    fig.suptitle("Variation par rapport aux conditions nominales (%)")
+    fig.suptitle(tr("Variation par rapport aux conditions nominales (%)",
+                    "Change with respect to nominal conditions (%)"))
     fig.tight_layout()
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 
-def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False) -> pd.DataFrame:
+def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False,
+         lang: str = "fr") -> pd.DataFrame:
     """Calcule, affiche et enregistre le tableau de robustesse et la heatmap.
 
     Refuse d'écraser des fichiers existants sauf si ``overwrite`` est vrai.
     Renvoie le tableau, pour pouvoir le réutiliser ou le tester.
     """
+    set_language(lang)
     csv_out, png_out = prepare_outputs(out_dir, OUTPUT_FILES, overwrite)
     df = load_results(csv_path)
     ratios = robustness_ratios(df)
@@ -94,9 +102,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("csv_path", type=Path, help="CSV de résultats de benchmark")
     parser.add_argument("out_dir", type=Path, help="dossier de sortie (créé si besoin)")
     parser.add_argument("--overwrite", action="store_true", help="autoriser l'écrasement")
+    parser.add_argument("--lang", choices=LANGUAGES, default="fr",
+                        help="langue des textes de la figure (en : article anglais)")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse_args()
-    main(args.csv_path, args.out_dir, args.overwrite)
+    main(args.csv_path, args.out_dir, args.overwrite, args.lang)

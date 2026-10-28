@@ -1220,17 +1220,29 @@ Le \cref{tab:behaviour} décrit la répartition des cycles entre les trois pelle
  & \multicolumn{2}{c|}{\textbf{Nominal}} & \multicolumn{2}{c|}{\textbf{Forte charge}} & \multicolumn{2}{c}{\textbf{Fortes pannes}} \\
 \textbf{Politique} & \textbf{P1 / P2 / P3} & \textbf{Att.} & \textbf{P1 / P2 / P3} & \textbf{Att.} & \textbf{P1 / P2 / P3} & \textbf{Att.} \\
 \midrule
-\multicolumn{7}{c}{\pending{lignes produites par le rejeu (\texttt{campaign behaviour}), en cours}} \\
+FIFO                 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 \\
+Affectation fixe     & 36 / 33 / 31 & 0 & 36 / 33 / 31 & 0 & 36 / 34 / 31 & 0 \\
+Pelle la plus proche & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 \\
+Plus court chemin    & 74 / 26 / 0 & 0 & 71 / 29 / 0 & 0 & 72 / 28 / 0 & 0 \\
+MTWT                 & 50 / 35 / 15 & 0 & 42 / 36 / 22 & 0 & 49 / 37 / 14 & 0 \\
+LP                   & 60 / 40 / 0 & 0 & 42 / 42 / 17 & 0 & 64 / 36 / 0 & 0 \\
+\midrule
+Q-Learning           & 36 / 34 / 31 & 42 & 39 / 28 / 34 & 46 & 36 / 34 / 30 & 33 \\
+SARSA                & 0 / 0 / 99 & 2 & 1 / 30 / 69 & 1 & 0 / 1 / 99 & 15 \\
+DQN                  & 46 / 27 / 27 & 79 & 44 / 15 / 42 & 99 & 50 / 43 / 7 & 96 \\
+PPO                  & 59 / 36 / 4 & 0 & 46 / 36 / 18 & 26 & 56 / 37 / 7 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\pending{commentaire du \cref{tab:behaviour} : concentration des règles de distance, répartition de MTWT, LP et PPO, pelles utilisées par DQN et les agents tabulaires.}
+Trois profils se dégagent parmi les heuristiques. Les règles de distance concentrent la flotte : Pelle la plus proche envoie tous ses cycles à la pelle 1, et Plus court chemin de 71 à 74\,\%. FIFO et l'Affectation fixe répartissent les cycles presque à parts égales, et envoient donc près d'un tiers des cycles à la pelle 3, la plus éloignée. MTWT et LP privilégient les pelles 1 et 2 et n'utilisent la pelle 3 que lorsque les deux autres sont chargées, surtout en forte charge (22 et 17\,\%). PPO suit le même profil que MTWT, mais utilise encore moins la pelle 3 : 4\,\% contre 15\,\% en conditions nominales, 7\,\% contre 14\,\% en fortes pannes. Ses cycles sont donc plus courts, ce qui explique sa consommation plus faible par tonne (\cref{sec:sustainability}).
+
+Les agents à valeurs ont des comportements extrêmes. SARSA envoie 99\,\% de ses cycles à la pelle 3 en conditions nominales et en fortes pannes, comme pendant la mise au point. Q-Learning répartit ses cycles entre les trois pelles, mais attend dans 33 à 46\,\% de ses décisions. DQN attend dans 79 à 99\,\% de ses décisions. Son seul modèle nominal qui fonctionne (graine 2, 3\,932~t/h) envoie 99\,\% de ses cycles à la pelle 1 : il reproduit la Pelle la plus proche (3\,893~t/h), et non une politique nouvelle.
 \end{revbloc}
 
 \begin{figure}[H]
 \centering
-\phfig[5cm]{\textbf{Figure produite par le rejeu} (\texttt{plots.behaviour}, à partir de \texttt{analyses/comportement/behaviour\_summary.csv}).}
+\includegraphics[width=\textwidth]{figures/behaviour_30_replications.png}
 \caption{Répartition des cycles entre les pelles (barres empilées) et part des décisions ATTENDRE, par politique et par régime, moyennes sur 30 réplications (et sur les 5 modèles d'un agent spécialisé).}
 \label{fig:behavioral}
 \end{figure}
@@ -1373,7 +1385,7 @@ SARSA $-$ Aff. fixe & $-$672,8 [$-$688,7 ; $-$657,1] & $-$13,4 & $-$795,1 [$-$81
 \end{tabular}}
 \end{table}
 
-Ces comparaisons portent sur la performance attendue de chaque algorithme : pour chaque réplication, un agent est représenté par la moyenne de ses 5 modèles. Elles ne disent pas qu'un modèle pris au hasard ferait de même : pour DQN, un modèle sur cinq est proche des heuristiques et les autres non (\cref{tab:runs}).
+Ces comparaisons portent sur la performance attendue de chaque algorithme : pour chaque réplication, un agent est représenté par la moyenne de ses 5 modèles. Elles ne disent pas qu'un modèle pris au hasard ferait de même : pour DQN, un modèle sur cinq reproduit la Pelle la plus proche et les autres s'effondrent (\cref{tab:runs,tab:behaviour}).
 \end{revbloc}
 
 \subsection{Variabilité entre réplications et entre modèles}
@@ -1500,8 +1512,8 @@ H3 & Une productivité élevée ne s'accompagne pas nécessairement d'une faible
 \begin{revbloc}{T31}
 \begin{itemize}
   \item \textbf{Connaître les files est ce qui compte.} Les trois politiques en tête utilisent toutes une estimation de l'attente à venir : MTWT choisit la route de plus faible attente prévue, LP suit un plan de flux calculé sur les capacités, et PPO observe l'attente prévue par route, ajoutée à l'état pendant la mise au point (\cref{sec:tuning}). Il est donc cohérent que PPO atteigne presque le niveau de MTWT : il dispose de la même information, et ne fait pas mieux que la règle qui l'exploite directement. Cette lecture est une interprétation ; aucune expérience de l'étude ne retire cette information à PPO une fois la mise au point terminée.
-  \item \textbf{PPO échange un peu de productivité contre du carburant.} La récompense de PPO pénalise la distance parcourue ($w_3$). PPO consomme de 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT, pour 0,5 à 0,9\,\% de productivité en moins : un compromis cohérent avec cette pénalité, que MTWT, qui ne regarde que l'attente, ne fait pas.
-  \item \textbf{L'échec de DQN est reproductible et ne dépend pas de $w_4$.} Quatre modèles nominaux sur cinq s'effondrent sur l'action ATTENDRE, et l'effondrement persiste pour toutes les valeurs de $w_4$, y compris sans pénalité d'attente. Pendant l'entraînement, l'exploration masque cet effondrement : les épisodes d'entraînement produisent environ 3\,460~t/h, la politique gloutonne 1\,287~t/h en moyenne. Avec un seul modèle, comme dans la version précédente, le résultat de DQN aurait dépendu de la graine : 3\,932~t/h avec la graine 2, 194~t/h avec la graine 1.
+  \item \textbf{PPO échange un peu de productivité contre du carburant.} La récompense de PPO pénalise la distance parcourue ($w_3$). PPO consomme de 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT, pour 0,5 à 0,9\,\% de productivité en moins, en envoyant moins de cycles à la pelle la plus éloignée (\cref{tab:behaviour}) : un compromis cohérent avec cette pénalité, que MTWT, qui ne regarde que l'attente, ne fait pas.
+  \item \textbf{L'échec de DQN est reproductible et ne dépend pas de $w_4$.} Quatre modèles nominaux sur cinq s'effondrent sur l'action ATTENDRE, et l'effondrement persiste pour toutes les valeurs de $w_4$, y compris sans pénalité d'attente. Pendant l'entraînement, l'exploration masque cet effondrement : les épisodes d'entraînement produisent environ 3\,460~t/h, la politique gloutonne 1\,287~t/h en moyenne. Avec un seul modèle, comme dans la version précédente, le résultat de DQN aurait dépendu de la graine : 3\,932~t/h avec la graine 2, dont le modèle reproduit la Pelle la plus proche, 194~t/h avec la graine 1.
   \item \textbf{Les agents tabulaires ne convergent pas.} Leur productivité baisse quand l'exploration diminue, dans les trois régimes et pour les 5 modèles. Une représentation de six variables discrétisées ne semble pas suffire à distinguer les situations où un détour vers une autre pelle paie.
   \item \textbf{Évaluer sur plusieurs régimes reste nécessaire,} même si la tête du classement ne change pas ici : c'est en forte charge que les règles de distance et SARSA perdent le plus, et une évaluation limitée aux conditions nominales ne l'aurait pas montré.
 \end{itemize}
