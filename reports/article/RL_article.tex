@@ -885,14 +885,7 @@ Shortest Path & Assign the truck to the shovel--dump pair that minimises the cos
 \subsection{System architecture and computational cost}
 \label{sec:compute}
 
-The architecture decouples the learning logic from the simulation, which makes it possible to test different agents interchangeably (\cref{fig:architecture}). The agent selects an action $a_t$ from the state $s_t$; the environment applies the assignment and returns the next state and the reward; the evaluation module computes the indicators for \rev{v3}{the ten policies (six heuristics and four agents)} in the three regimes.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.88\textwidth]{figures/functional_architecture.png}
-\caption{Interaction loop between the agent and the environment.}
-\label{fig:architecture}
-\end{figure}
+The architecture decouples the learning logic from the simulation, which makes it possible to test different agents interchangeably (\cref{fig:simulation,fig:mdp}). The agent selects an action $a_t$ from the state $s_t$; the environment applies the assignment and returns the next state and the reward; the evaluation module computes the indicators for \rev{v3}{the ten policies (six heuristics and four agents)} in the three regimes.
 
 \begin{revbloc}{M28, m20, m24, v3}
 All measurements are made on the CPU of an 8-core laptop, without a graphics card.

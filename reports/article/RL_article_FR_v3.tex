@@ -888,16 +888,7 @@ Plus court chemin & Affecter le camion au couple pelle--verse qui minimise le co
 \subsection{Architecture du système et coût de calcul}
 \label{sec:compute}
 
-L'architecture découple la logique d'apprentissage de la simulation, ce qui permet de tester différents agents de manière interchangeable (\cref{fig:architecture}). L'agent sélectionne une action $a_t$ à partir de l'état $s_t$ ; l'environnement applique l'affectation et renvoie l'état suivant et la récompense ; le module d'évaluation calcule les indicateurs pour \rev{v3}{les dix politiques (six heuristiques et quatre agents)} dans les trois régimes.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.88\textwidth]{figures/functional_architecture.png}
-\caption{Boucle d'interaction entre l'agent et l'environnement.}
-\label{fig:architecture}
-\end{figure}
-
-\rev{m6}{\ifrevmarks\small Fichier renommé \texttt{functional\_architecture.png} ; son contenu est déjà en anglais.\fi}
+L'architecture découple la logique d'apprentissage de la simulation, ce qui permet de tester différents agents de manière interchangeable (\cref{fig:simulation,fig:mdp}). L'agent sélectionne une action $a_t$ à partir de l'état $s_t$ ; l'environnement applique l'affectation et renvoie l'état suivant et la récompense ; le module d'évaluation calcule les indicateurs pour \rev{v3}{les dix politiques (six heuristiques et quatre agents)} dans les trois régimes.
 
 \begin{revbloc}{M28, m20, m24, v3}
 Toutes les mesures sont faites sur le processeur d'un ordinateur portable à 8 cœurs, sans carte graphique.
