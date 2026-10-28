@@ -21,6 +21,7 @@ references/**/*.pdf
 # Sorties de compilation LaTeX et configuration de l'IDE
 $build/
 .idea/
+.vscode/
 
 # Documentation personnelle (usage interne — non publiée sur GitHub)
 # Restent visibles : le glossaire, et le plan et le journal des corrections (trace de
