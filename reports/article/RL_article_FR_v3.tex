@@ -64,7 +64,7 @@
 % une figure à régénérer avec les scripts du projet.
 % ============================================================================
 \newif\ifrevmarks
-\revmarkstrue
+\revmarksfalse
 \definecolor{revcolor}{RGB}{0,70,160}
 \newcommand{\revtag}[1]{\ifrevmarks\textsuperscript{\textcolor{red!70!black}{\scriptsize[#1]}}\fi}
 \newcommand{\rev}[2]{\ifrevmarks{\color{revcolor}#2}\revtag{#1}\else#2\fi}
