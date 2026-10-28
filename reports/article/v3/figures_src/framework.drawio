@@ -1,0 +1,55 @@
+<mxfile host="Electron">
+  <diagram id="framework" name="framework">
+    <mxGraphModel dx="1365" dy="673" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="340" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=center;verticalAlign=middle;arcSize=8;" value="&lt;b&gt;1. Modelling&lt;/b&gt;&lt;br&gt;Truck–shovel system&lt;br&gt;(3 shovels, 2 dumps, 12–18 trucks)&lt;br&gt;Discrete-event simulator,&lt;br&gt;Gymnasium API" vertex="1">
+          <mxGeometry height="170" width="236" x="20" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#555555;" value="&lt;i&gt;§5.1–5.3&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="236" x="20" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=center;verticalAlign=middle;arcSize=8;" value="&lt;b&gt;2. Decision problem&lt;/b&gt;&lt;br&gt;Semi-Markov decision process&lt;br&gt;23-feature state, 7 actions&lt;br&gt;Multi-objective reward,&lt;br&gt;per-minute discount" vertex="1">
+          <mxGeometry height="170" width="236" x="292" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#555555;" value="&lt;i&gt;§5.4–5.5&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="236" x="292" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=middle;arcSize=8;" value="&lt;b&gt;3. Policies&lt;/b&gt;&lt;br&gt;6 heuristics (incl. MTWT, LP)&lt;br&gt;4 RL agents: Q-Learning,&lt;br&gt;SARSA, DQN, PPO&lt;br&gt;5 training seeds" vertex="1">
+          <mxGeometry height="170" width="236" x="564" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#555555;" value="&lt;i&gt;§5.6–5.7, §6.3&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="236" x="564" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;align=center;verticalAlign=middle;arcSize=8;" value="&lt;b&gt;4. Evaluation&lt;/b&gt;&lt;br&gt;3 regimes: nominal, high load,&lt;br&gt;frequent breakdowns&lt;br&gt;30 paired replications&lt;br&gt;Transfer without retraining" vertex="1">
+          <mxGeometry height="170" width="236" x="836" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c10" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#555555;" value="&lt;i&gt;§6.1–6.2&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="236" x="836" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=center;verticalAlign=middle;arcSize=8;" value="&lt;b&gt;5. Analysis&lt;/b&gt;&lt;br&gt;Friedman, Wilcoxon + Holm,&lt;br&gt;bootstrap CI&lt;br&gt;IQM over training seeds&lt;br&gt;Behaviour (shovels, WAIT)" vertex="1">
+          <mxGeometry height="170" width="236" x="1108" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c12" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#555555;" value="&lt;i&gt;§6.5, §7&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="236" x="1108" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="c13" edge="1" parent="1" source="c3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#000000;fontSize=11;fontColor=#000000;" target="c5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c14" edge="1" parent="1" source="c5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#000000;fontSize=11;fontColor=#000000;" target="c7" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c15" edge="1" parent="1" source="c7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#000000;fontSize=11;fontColor=#000000;" target="c9" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c16" edge="1" parent="1" source="c9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#000000;fontSize=11;fontColor=#000000;" target="c11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c17" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;verticalAlign=middle;arcSize=8;" value="Seed sets kept disjoint: selection (20,000–20,009) · training (1–5) · evaluation (42–71)" vertex="1">
+          <mxGeometry height="50" width="508" x="564" y="250" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
