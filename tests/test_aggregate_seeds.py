@@ -181,6 +181,54 @@ def test_commande_d_agregation(tmp_path):
                            for k in ("by_scenario", "overall", "improvement")}
 
 
+def zero_tonnage(data, policy="DQN", train_seeds=(2, 4), scenario="nominal"):
+    """Runs qui n'ont rien produit, écrits comme dans le CSV de la campagne (fuel / 1e-9)."""
+    data = data.copy()
+    rows = ((data["policy"] == policy) & data["train_seed"].isin(train_seeds)
+            & (data["scenario"] == scenario))
+    data.loc[rows, ["productivity_tph", "total_tonnage_t"]] = 0.0
+    data.loc[rows, "specific_fuel_l_per_ton"] = 1.0848e12
+    data["total_tonnage_t"] = data["total_tonnage_t"].fillna(1000.0)
+    return data
+
+
+def test_carburant_des_runs_sans_tonne_exclu_et_compte(tmp_path):
+    """Ablation w4 = 0,5 de la campagne : deux DQN attendent tout le poste. Leur carburant
+    par tonne n'est pas défini ; le tableau résume les 3 autres runs et compte les 2 exclus,
+    au lieu d'afficher une moyenne de 4e11 L/t."""
+    csv = tmp_path / "benchmark.csv"
+    zero_tonnage(benchmark().assign(total_tonnage_t=1000.0)).to_csv(csv, index=False)
+    data = st.load_results(csv)
+    table = ag.aggregate_table(data, "specific_fuel_l_per_ton", n_boot=2_000)
+    dqn = table[(table["scenario"] == "nominal") & (table["policy"] == "DQN")].iloc[0]
+    assert (dqn["n_train_seeds"], dqn["n_undefined"]) == (3, 2)
+    expected = np.mean([0.5 - 3400.0 / 1e4 + t / 1e3 for t in (1, 3, 5)])
+    assert dqn["mean"] == pytest.approx(expected)
+    assert dqn["max"] < 1.0
+    # La productivité (0 t/h) reste définie : les 5 runs sont résumés.
+    prod = ag.aggregate_table(data, "productivity_tph", n_boot=2_000)
+    dqn = prod[(prod["scenario"] == "nominal") & (prod["policy"] == "DQN")].iloc[0]
+    assert (dqn["n_train_seeds"], dqn["n_undefined"]) == (5, 0)
+
+
+def test_run_sans_aucune_valeur_definie():
+    data = zero_tonnage(benchmark(), train_seeds=(1, 2, 3, 4, 5))
+    data = st.undefined_fuel_as_nan(data)
+    table = ag.aggregate_table(data, "specific_fuel_l_per_ton", n_boot=2_000)
+    dqn = table[(table["scenario"] == "nominal") & (table["policy"] == "DQN")].iloc[0]
+    assert (dqn["n_train_seeds"], dqn["n_undefined"]) == (0, 5)
+    assert np.isnan(dqn["iqm"])
+
+
+def test_tests_apparies_refusent_un_carburant_non_defini(tmp_path):
+    """Dans les régimes principaux, une valeur non définie serait ignorée en silence par la
+    moyenne sur les graines d'entraînement : les tests appariés refusent."""
+    csv = tmp_path / "benchmark.csv"
+    zero_tonnage(benchmark()).to_csv(csv, index=False)
+    with pytest.raises(ValueError, match="non définie"):
+        st.main(csv, pairs=[("PPO", "Fixed")])
+
+
 # --- Tests appariés avec plusieurs graines d'entraînement ---------------------------
 
 def test_moyenne_sur_les_graines_d_entrainement():

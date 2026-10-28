@@ -5,6 +5,8 @@ Les valeurs de référence du plan (22,2 / 7,2 / 1,1 min) ont évolué avec deux
 - T13 change l'ordre des tirages aléatoires (même loi) : 22,26 / 7,37 / 1,15 min.
 """
 
+import math
+
 import pandas as pd
 import pytest
 from reference_values import reference
@@ -45,6 +47,15 @@ def test_compute_kpis_unites():
     assert (kpis["queue_wait_min_per_truck"], kpis["repair_min_per_truck"],
             kpis["voluntary_wait_min_per_truck"]) == (30, 15, 5)
     assert kpis["queue_wait_min_per_cycle"] == 3
+
+
+def test_carburant_par_tonne_non_defini_sans_tonne():
+    """Un poste sans aucune tonne (agent qui attend tout le poste) n'a pas de carburant
+    par tonne : NaN, et non le carburant divisé par 1e-9 (≈ 1e12 L/t avant le 28/10)."""
+    common = dict(episode_minutes=480, truck_count=12, queue_wait_min=0, repair_min=0,
+                  voluntary_wait_min=5000, total_active_min=0, total_fuel_l=1085.0)
+    assert math.isnan(compute_kpis(total_tonnage_t=0, **common)["specific_fuel_l_per_ton"])
+    assert compute_kpis(total_tonnage_t=2170.0, **common)["specific_fuel_l_per_ton"] == 0.5
 
 
 def test_total_wait_est_la_somme_des_trois_compteurs():

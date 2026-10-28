@@ -38,6 +38,10 @@ def compute_kpis(
     Utilisation (T11), sur le temps disponible du poste :
     - ``utilization_pct`` : camions, temps actif (trajets, chargement, déchargement) ;
     - ``shovel_utilization_pct`` : pelles, temps de chargement (0 si ``shovel_count`` = 0).
+
+    ``specific_fuel_l_per_ton`` n'est pas défini pour un poste sans aucune tonne
+    transportée (agent qui attend tout le poste) : il vaut NaN, et non le carburant
+    divisé par 1e-9 (≈ 1e12 L/t avant le 28/10/2026).
     Les compteurs sont bornés à la fin du poste, donc les deux restent ≤ 100 %.
     """
     trucks = max(float(truck_count), 1.0)
@@ -65,7 +69,8 @@ def compute_kpis(
             shovel_busy_min / max(float(shovel_count) * episode_minutes, 1e-9) * 100.0
         ) if shovel_count else 0.0,
         "total_fuel_l": float(total_fuel_l),
-        "specific_fuel_l_per_ton": float(total_fuel_l / max(total_tonnage_t, 1e-9)),
+        "specific_fuel_l_per_ton": (float(total_fuel_l / total_tonnage_t)
+                                    if total_tonnage_t > 0 else float("nan")),
         "total_cycles": float(total_cycles),
         "cost_per_cycle": float(total_fuel_l / cycles),  # carburant moyen par cycle (L)
     }

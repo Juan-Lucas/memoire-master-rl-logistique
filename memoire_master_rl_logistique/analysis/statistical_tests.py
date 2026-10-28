@@ -54,6 +54,18 @@ def select_mode(data: pd.DataFrame, mode: str | None = SPECIALISED) -> pd.DataFr
     return data[data["mode"].isna() | (data["mode"] == mode)]
 
 
+def undefined_fuel_as_nan(data: pd.DataFrame) -> pd.DataFrame:
+    """Carburant par tonne non défini (NaN) pour les postes sans aucune tonne.
+
+    Les CSV écrits avant le 28/10/2026, dont celui de la campagne, contiennent le
+    carburant divisé par 1e-9 (≈ 1e12 L/t) pour ces postes (``simulation.kpi``).
+    """
+    if {"specific_fuel_l_per_ton", "total_tonnage_t"} <= set(data.columns):
+        data = data.copy()
+        data.loc[data["total_tonnage_t"] <= 0, "specific_fuel_l_per_ton"] = float("nan")
+    return data
+
+
 def load_results(
     csv_path: str | Path, n_expected: int = 30, mode: str | None = SPECIALISED,
 ) -> pd.DataFrame:
@@ -69,7 +81,7 @@ def load_results(
     """
 
     #1. Charger les données
-    data = select_mode(pd.read_csv(csv_path), mode)
+    data = undefined_fuel_as_nan(select_mode(pd.read_csv(csv_path), mode))
 
     #2. Retirer les doublons identiques (lignes)
     static_columns = [c for c in list(data.columns) if c not in DYNAMIC_COLUMNS]
@@ -236,12 +248,21 @@ def cohens_d(x: np.ndarray, y: np.ndarray) -> float:
 def main(csv_path: str | Path, pairs: Sequence[tuple[str, str]] = PAIRS) -> None:
     """Analyse appariée complète : Friedman, Wilcoxon + Holm, IC bootstrap, d, puis interaction."""
 
-    # T30 : avec plusieurs graines d'entraînement, chaque agent est moyenné sur ses modèles.
-    df = average_over_training_seeds(load_results(csv_path))
     # Le fichier de la campagne contient aussi les régimes non vus et l'ablation : toute
     # l'analyse, y compris l'interaction, porte sur les régimes principaux seulement
     # (défaut trouvé par la répétition du 22/10/2026 : F(49, …) au lieu de F(18, …)).
+    df = load_results(csv_path)
     df = df[df["scenario"].isin(SCENARIOS)]
+    # Une valeur non définie (carburant d'un poste sans tonne) serait ignorée en silence
+    # par la moyenne sur les graines d'entraînement : on refuse plutôt que de comparer
+    # des agents moyennés sur des modèles différents.
+    undefined = df[df[METRICS].isna().any(axis=1)]
+    if not undefined.empty:
+        runs = undefined.groupby(["scenario", "policy"], dropna=False).size().to_dict()
+        raise ValueError(f"Métrique non définie (poste sans tonne) dans les régimes "
+                         f"principaux : {runs}")
+    # T30 : avec plusieurs graines d'entraînement, chaque agent est moyenné sur ses modèles.
+    df = average_over_training_seeds(df)
 
     for metric in METRICS:
         print(f"\n===== {metric} =====")

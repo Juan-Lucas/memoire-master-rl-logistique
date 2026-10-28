@@ -156,6 +156,8 @@ def run_scores(data: pd.DataFrame, metric: str) -> pd.DataFrame:
     ``metric`` sur ses graines d'évaluation. Les heuristiques sont exclues.
 
     Tous les runs d'un même agent doivent avoir été évalués sur les mêmes graines.
+    Les épisodes où ``metric`` n'est pas définie (NaN : carburant par tonne d'un poste
+    sans tonne) sont ignorés ; un run sans aucun épisode défini a un score NaN.
     """
     if "train_seed" not in data.columns:
         raise ValueError("Pas de colonne train_seed : résultats d'avant T26, un seul run.")
@@ -188,13 +190,21 @@ def aggregate_table(
     data: pd.DataFrame, metric: str, n_boot: int = N_BOOT, seed: int = BOOT_SEED,
 ) -> pd.DataFrame:
     """Une ligne par (régime, agent, mode) : IQM des runs et son IC, moyenne, médiane,
-    plus mauvais et meilleur run."""
+    plus mauvais et meilleur run. ``n_train_seeds`` compte les runs résumés,
+    ``n_undefined`` ceux dont la métrique n'est pas définie (exclus du résumé)."""
     rows = []
     for (scenario, policy, mode), group in run_scores(data, metric).groupby(RUN_KEY[:3]):
-        scores = group["score"].to_numpy()
+        # Runs sans valeur (aucune tonne sur tout le poste) : comptés à part, pas résumés.
+        scores = group["score"].dropna().to_numpy()
+        n_undefined = len(group) - len(scores)
+        if len(scores) == 0:
+            rows.append({"scenario": scenario, "policy": policy, "mode": mode,
+                         "n_train_seeds": 0, "n_undefined": n_undefined})
+            continue
         low, high = bootstrap_ci(scores, "iqm", n_boot, seed)
         rows.append({"scenario": scenario, "policy": policy, "mode": mode,
-                     "n_train_seeds": len(scores), "iqm": aggregate(scores, "iqm"),
+                     "n_train_seeds": len(scores), "n_undefined": n_undefined,
+                     "iqm": aggregate(scores, "iqm"),
                      "ci_low": low, "ci_high": high, "mean": scores.mean(),
                      "median": float(np.median(scores)), "min": scores.min(),
                      "max": scores.max()})
