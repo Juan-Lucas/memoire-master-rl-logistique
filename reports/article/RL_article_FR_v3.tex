@@ -174,13 +174,13 @@ Pour gérer cette complexité, les métaheuristiques ont été largement appliqu
 
 \subsection{Approches par apprentissage par renforcement}
 
-Le passage à l'apprentissage par renforcement représente un changement de paradigme : au lieu de résoudre un nouveau problème d'optimisation à chaque époque de décision, un agent apprend une politique qui associe les états du système à des actions optimales \cite{RichardSutton2018, MoezKrichen2022}. Les premières applications du RL en logistique, comme celles de Nazari et al. \cite{MohammadrezaNazari2018} pour le problème de tournées de véhicules (VRP) et de Zhang et al. \cite{CongZhang2020} pour l'ordonnancement d'atelier, ont démontré que le DRL pouvait surpasser les heuristiques classiques en apprenant à partir de milliers d'interactions simulées.
+Le passage à l'apprentissage par renforcement représente un changement de paradigme : au lieu de résoudre un nouveau problème d'optimisation à chaque époque de décision, un agent apprend une politique qui associe les états du système à des actions \rev{v3}{\cite{RichardSutton2018}}. Les premières applications du RL en logistique, comme celles de Nazari et al. \cite{MohammadrezaNazari2018} pour le problème de tournées de véhicules (VRP) et de Zhang et al. \cite{CongZhang2020} pour l'ordonnancement d'atelier, ont démontré que le DRL pouvait surpasser les heuristiques classiques en apprenant à partir de milliers d'interactions simulées.
 
 Au sein de la famille de l'apprentissage par renforcement, les méthodes diffèrent substantiellement par leur puissance de représentation et leur paradigme d'apprentissage. \rev{m5}{Les méthodes tabulaires, telles que Q-Learning et SARSA \cite{RichardSutton2018},} construisent des fonctions de valeur sur des tables d'états-actions discrets, ce qui les rend transparentes et légères en calcul, mais leur expressivité se dégrade fortement lorsque l'espace d'observation croît avec la taille de la flotte. Les agents DQN répondent à ce problème en approximant la fonction Q par un réseau de neurones et en stabilisant l'entraînement grâce au rejeu d'expériences et au gel du réseau cible, ce qui permet de généraliser à des entrées continues de grande dimension. PPO \cite{JohnSchulman2017} appartient à la famille acteur-critique : elle optimise directement la politique via un objectif de substitution dont la contrainte d'écrêtage empêche les mises à jour catastrophiques des paramètres. Ces quatre algorithmes, du tabulaire au profond et de l'approche fondée sur la valeur au gradient de politique, forment un spectre comparatif naturel et constituent précisément la composante RL du banc d'essai conçu dans cette étude.
 
 Dans le secteur minier, cette transition est plus récente. Hazrathosseini et Afrapoli \cite{Hazrathosseini2024} proposent une revue critique, soulignant que, bien que le RL présente un potentiel considérable pour les FMS intelligents, la plupart des études restent au stade de la preuve de concept. de Carvalho et Dimitrakopoulos \cite{deCarvalho2023} ont appliqué un cadre acteur--critique à la planification de la production, montrant que le RL peut traiter efficacement la dynamique de la flotte tout en mettant à jour les objectifs de production.
 
-Des bancs d'essai récents, tels que Mining-Gym \cite{Banerjee2025}, ont commencé à fournir des environnements standardisés pour tester ces algorithmes. Zhao et al. \cite{Zhao2025} ont proposé une approche hiérarchique d'apprentissage par renforcement multi-agent (MARL) pour un dispatching durable, avec un accent sur l'efficacité énergétique, tandis que Pei et al. \cite{Pei2025} et Rosales et Diaz \cite{FranciscoRosales2025} ont exploré le dispatching par apprentissage et le dispatching interprétable pour le transport minier autonome. L'usage d'une aide à la décision fondée sur le RL pour l'ordonnancement industriel hiérarchique dépasse le secteur minier : Szatmari et al.~\cite{KingaSzatmari2025} démontrent des architectures multi-niveaux similaires dans la conduite de procédés chimiques, ce qui suggère que les schémas de conception émergeant dans la recherche sur le dispatching minier ont une large pertinence inter-domaines. Une limite commune à ces études est toutefois leur focalisation sur les conditions nominales. La plupart des agents RL sont entraînés et testés dans des environnements stables ; peu d'études évaluent explicitement le comportement d'un agent DQN ou PPO face à des pannes d'équipements fréquentes ou à des pics de congestion inattendus.
+Des bancs d'essai récents, tels que Mining-Gym \cite{Banerjee2025}, ont commencé à fournir des environnements standardisés pour tester ces algorithmes. Zhao et al. \cite{Zhao2025} ont proposé une approche hiérarchique d'apprentissage par renforcement multi-agent (MARL) pour un dispatching durable, avec un accent sur l'efficacité énergétique, tandis que Pei et al. \cite{Pei2025} et Rosales et Diaz \cite{FranciscoRosales2025} ont exploré le dispatching par apprentissage et le dispatching interprétable pour le transport minier autonome. L'usage d'une aide à la décision fondée sur le RL pour l'ordonnancement industriel hiérarchique dépasse le secteur minier : \rev{v3}{Szatmári et al.~\cite{KingaSzatmari2025} passent en revue} des architectures multi-niveaux similaires dans la conduite de procédés chimiques, ce qui suggère que les schémas de conception émergeant dans la recherche sur le dispatching minier ont une large pertinence inter-domaines. Une limite commune à ces études est toutefois leur focalisation sur les conditions nominales. La plupart des agents RL sont entraînés et testés dans des environnements stables ; peu d'études évaluent explicitement le comportement d'un agent DQN ou PPO face à des pannes d'équipements fréquentes ou à des pics de congestion inattendus.
 
 % ============================================================================
 % Section 3 : Positionnement et problématique
@@ -358,9 +358,9 @@ Dispatching de type preuve de concept
 &
 \textbf{Congestion et pannes}
 &
-\textbf{8 politiques}
+\rev{T31}{\textbf{6 heuristiques, dont MTWT et LP}}
 &
-\rev{M3}{\textbf{30 réplications appariées}}
+\rev{M3, T31}{\textbf{30 réplications appariées, 5 graines d'entraînement}}
 &
 \textbf{Résilience opérationnelle sur trois régimes}
 \\
@@ -441,7 +441,7 @@ Trois hypothèses réfutables, formulées avant l'analyse des résultats, guiden
 % ---------------------------------------------------------
 
 \begin{revbloc}{M26, M27}
-La contribution de cet article est évaluative plutôt qu'algorithmique : aucun nouvel algorithme d'apprentissage par renforcement n'est proposé. Elle ne repose pas non plus sur l'existence d'un environnement de simulation minier, puisque des environnements comparables existent déjà, tels que Mining-Gym \cite{Banerjee2025}. Elle réside dans la combinaison de plusieurs éléments rarement réunis : \rev{T31}{dix politiques de familles différentes, dont deux références fortes,} dans un même environnement, plusieurs régimes de fonctionnement traités comme un facteur expérimental, une évaluation de politiques apprises sans réentraînement, un protocole de réplication appariée avec des tests corrigés, et une analyse du comportement des politiques qui explique les écarts observés.
+La contribution de cet article est évaluative plutôt qu'algorithmique : aucun nouvel algorithme d'apprentissage par renforcement n'est proposé. Elle ne repose pas non plus sur l'existence d'un environnement de simulation minier, puisque des environnements comparables existent déjà, tels que Mining-Gym \cite{Banerjee2025}. Elle réside dans la combinaison de plusieurs éléments rarement réunis : \rev{T31}{dix politiques de familles différentes, dont deux références fortes,} dans un même environnement, plusieurs régimes de fonctionnement traités comme un facteur expérimental, une évaluation de politiques apprises sans réentraînement \rev{v3}{(faite aussi par Pei et al.~\cite{Pei2025} pour le transport autonome)}, un protocole de réplication appariée avec des tests corrigés, et une analyse du comportement des politiques qui explique les écarts observés.
 
 Trois limites de portée découlent de ce positionnement et sont discutées dans la \cref{sec:limitations}. L'évaluation est menée en simulation, de sorte que les ordres de grandeur rapportés décrivent une performance relative dans l'environnement simulé proposé plutôt que des prédictions à l'échelle d'un site. Les agents sont des contrôleurs uniques qui décident pour tous les camions, de sorte que les formulations multi-agents \cite{Zhao2025} sortent de l'espace comparé. Enfin, les trois régimes représentent des perturbations stylisées, conçues pour être interprétables et reproductibles.
 \end{revbloc}
@@ -464,7 +464,7 @@ Ce travail apporte quatre contributions.
   \item \textbf{C1. Un protocole d'évaluation sur plusieurs régimes.} Un simulateur stochastique compatible avec l'interface Gymnasium est associé à un protocole de mesure qui traite le régime de fonctionnement comme un facteur expérimental, évalue chaque politique sur 30 réplications appariées et applique des tests appariés corrigés pour les comparaisons multiples.
   \item \textbf{C2. Une comparaison de \rev{T31}{dix} politiques de familles différentes.} \rev{T31}{Six heuristiques, dont une règle fondée sur l'attente prévue (MTWT) et une politique fondée sur un programme linéaire (LP),} deux agents d'apprentissage tabulaire et deux agents d'apprentissage profond sont évalués dans le même environnement, avec les mêmes actions, les mêmes graines et les mêmes indicateurs.
   \item \textbf{C3. Une analyse du comportement des politiques.} La répartition des cycles entre les pelles et l'usage de l'action d'attente, mesurés sur toutes les réplications, expliquent les écarts de productivité et d'attente entre politiques.
-  \item \textbf{C4. Une mise en évidence de la dépendance au régime.} Le classement des politiques change d'un régime à l'autre, l'interaction entre politique et régime est significative, et une évaluation sans réentraînement montre dans quelle mesure une politique apprise en conditions nominales conserve sa performance sous perturbation.
+  \item \textbf{C4. Une mise en évidence de la dépendance au régime.} \rev{T31}{Le classement des politiques est comparé d'un régime à l'autre, l'interaction entre politique et régime est testée,} et une évaluation sans réentraînement montre dans quelle mesure une politique apprise en conditions nominales conserve sa performance sous perturbation.
 \end{itemize}
 \end{revbloc}
 
@@ -527,7 +527,7 @@ Le simulateur est conforme à l'interface Gymnasium \cite{MarkTowers2025}, ce qu
 \label{fig:simulation}
 \end{figure}
 
-\afig{dans draw.io, corriger le module « Simulation Engine » (« Time-step haulage physics » devient « Discrete-event simulation ; decision at the dump ») et le module « Energy Consumption » (« Fuel use from power demand ; idling, uphill hauling, braking » devient « Distance-based fuel model with slope factor, calibrated to 95 L/h ; idling at 64.9 L/h »), pour rester cohérent avec le texte (M11, v3).}
+\afig{dans draw.io, corriger le module « Simulation Engine » (« Time-step haulage physics » devient « Discrete-event simulation ; decision at the dump ») et le module « Energy Consumption » (« Fuel use from power demand ; idling, uphill hauling, braking » devient « Grade-dependent fuel curves measured on a Cat 785D ; idling at 11.3 L/h »), pour rester cohérent avec le texte (M11, v3).}
 
 \begin{revbloc}{M11, A, v3}
 L'architecture comprend les modules suivants :
@@ -1043,7 +1043,7 @@ Dans cette étude, la résilience opérationnelle désigne la capacité d'une po
 
 \begin{enumerate}
   \item \textbf{Productivité :} tonnage livré par heure (t/h), et productivité par camion (t/h/camion), qui permet de comparer des régimes dont la flotte n'a pas la même taille.
-  \item \textbf{Attente en file :} temps total passé par un camion en file d'attente aux pelles et aux verses pendant le poste, moyenné sur les camions (min par camion et par poste). Ce n'est pas une attente par cycle : avec environ 19 cycles par camion en conditions nominales, 22~min d'attente en file par poste correspondent à environ 1,1~min par cycle.
+  \item \textbf{Attente en file :} temps total passé par un camion en file d'attente aux pelles et aux verses pendant le poste, moyenné sur les camions (min par camion et par poste). Ce n'est pas une attente par cycle : \rev{T31}{avec environ 20 cycles par camion en conditions nominales, 11~min d'attente en file par poste correspondent à environ 0,6~min par cycle.}
   \item \textbf{Temps d'immobilisation total :} somme, par camion et par poste, de l'attente en file, de l'immobilisation pour panne et du temps passé à attendre volontairement par l'action ATTENDRE. C'est l'indicateur rapporté sous le nom de « temps d'attente » dans la version précédente de cet article.
   \item \textbf{Utilisation des camions :} part du poste pendant laquelle les camions roulent, chargent ou déversent (\%). Le temps d'activité du dernier cycle qui dépasse la fin du poste est exclu.
   \item \textbf{Utilisation des pelles :} part du poste pendant laquelle les pelles chargent (\%).
@@ -1680,7 +1680,7 @@ M3 & §6.4, §7.6, tableau \ref{tab:stats} & Chaque réplication figurait deux f
 M4, M6 & §6.4 & Tests appariés (Friedman, Wilcoxon, Holm) à la place de Welch, Kruskal--Wallis et Dunn ; suppression de l'affirmation erronée sur Games--Howell ; description honnête des graines communes. \\
 M5 & §7.6 & Test de l'interaction entre politique et régime. \\
 M7 & §6.2, §7.7, §7.8, limites & Une seule graine d'entraînement : QR5 supprimée, comparaisons présentées comme entre modèles. Expériences à faire signalées. \\
-M8 & §5.6.3 & Description exacte de la représentation tabulaire (6 variables, 98\,304 états). \\
+M8 & §5.6.3 & Description exacte de la représentation tabulaire (v3 : 6 variables, 23\,328 états). \\
 M9 & §5.4 & Formulation semi-markovienne, horizon effectif chiffré, attribution du mérite, références. \\
 M10 & §5.5 & Formules exactes de la récompense et explication de son ordre de grandeur. \\
 M11 & §5.1 à §5.3, tableau \ref{tab:simparams} & Paramètres du simulateur ; moteur décrit comme piloté par les événements ; pannes limitées aux camions. \\
