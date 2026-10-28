@@ -110,3 +110,27 @@ def test_repetition_demande_un_dossier_vide(tmp_path):
     (tmp_path / "x").write_text("x")
     with pytest.raises(FileExistsError, match="vide"):
         campaign.rehearse(tmp_path)
+
+
+def test_journal_ecrit_pendant_l_entrainement(tmp_path, monkeypatch):
+    """Le journal d'un entraînement se lit pendant le calcul, pas seulement à la fin : une
+    ligne affichée sans flush (comme les tableaux de Stable-Baselines3) est déjà sur le
+    disque avant la fin de l'entraînement."""
+    import sys
+
+    from memoire_master_rl_logistique.experiments import run_benchmark
+
+    job = TrainJob("PPO", "nominal", 1)
+    log = tmp_path / campaign.LOG_DIR / f"{job.label()}.log"
+    seen = {}
+
+    def fake_train(algorithm, scenario, train_seed, output_dir):
+        print("| rollout/ep_rew_mean | 123 |")          # stdout, sans flush
+        print("progression 50 %", file=sys.stderr)       # tqdm écrit sur stderr
+        seen["pendant"] = log.read_text(encoding="utf-8")
+
+    monkeypatch.setattr(run_benchmark, "_train", fake_train)
+    log.parent.mkdir(parents=True)
+    campaign._run_job(job, str(tmp_path))
+    assert "ep_rew_mean" in seen["pendant"] and "progression 50 %" in seen["pendant"]
+    assert "=== fin" in log.read_text(encoding="utf-8")

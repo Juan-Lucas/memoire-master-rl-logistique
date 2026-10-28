@@ -2638,21 +2638,24 @@ En définitive, ce travail démontre que l'apprentissage par renforcement profon
 
 \section*{Technologies utilisées}
 
-Le tableau ci-dessous r\'ecapitule la pile technologique compl\`ete du projet, avec les versions exactes employ\'ees. Il garantit la reproductibilit\'e de l'environnement logiciel et compl\`ete les \'el\'ements pr\'esent\'es au Chapitre~5.
+Le tableau ci-dessous r\'ecapitule la pile technologique du projet, avec les versions exactes employ\'ees pour la campagne finale (octobre 2026). Elles sont fix\'ees dans \texttt{requirements.txt} et enregistr\'ees avec chaque mod\`ele entra\^in\'e.
 
 \begin{table}[H]
 \centering
-\caption{Stack technologique du projet}
+\caption{Pile technologique du projet (versions de la campagne finale)}
 \begin{tabular}{lll}
 \toprule
 \textbf{Composant} & \textbf{Technologie} & \textbf{Version} \\
 \midrule
-Langage & Python & 3.10+ \\
-Environnement RL & Gymnasium & 0.29+ \\
-Agents Deep RL & Stable-Baselines3 & 2.x \\
-Graphe routier & NetworkX & 3.x \\
-Calcul numérique & NumPy & 1.24+ \\
-Gestion de projet & Poetry / pip & — \\
+Langage & Python & 3.11.11 \\
+Environnement RL & Gymnasium & 1.2.3 \\
+Agents Deep RL & Stable-Baselines3 & 2.8.0 \\
+Réseaux de neurones & PyTorch (processeur) & 2.5.1 \\
+Graphe routier & NetworkX & 3.6.1 \\
+Calcul numérique & NumPy / pandas & 2.4.6 / 3.0.2 \\
+Statistiques & SciPy / statsmodels & 1.17.1 / 0.14.6 \\
+Configuration & PyYAML (fichiers \texttt{configs/*.yaml}) & 6.0.3 \\
+Tests & pytest & 9.0.3 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -2660,15 +2663,13 @@ Gestion de projet & Poetry / pip & — \\
 \section*{Modules principaux}
 
 \begin{itemize}
-    \item Module \textbf{env} : environnement Gymnasium (reset, step, render)
-    \item Module \textbf{env} : construction du vecteur d'observation (147 dimensions)
-    \item Module \textbf{simulation} : graphe routier NetworkX, algorithme Dijkstra
-    \item Module \textbf{simulation} : modèle de consommation carburant
-    \item Module \textbf{simulation} : entités Truck, Shovel, DumpSite
-    \item Module \textbf{rl} : entraînement PPO et DQN (Stable-Baselines3)
-    \item Module \textbf{rl} : entraînement Q-Learning et SARSA tabulaires
-    \item Module \textbf{baselines} : heuristiques FIFO, Fixed, Nearest, ShortestPath
-    \item Module \textbf{experiments} : orchestrateur du benchmark comparatif
+    \item Module \textbf{env} : environnement Gymnasium \texttt{MineEnv} (reset, step), état de 23 composantes de taille fixe
+    \item Module \textbf{simulation} : moteur à événements discrets (décision à la verse), graphe routier NetworkX et algorithme de Dijkstra
+    \item Module \textbf{simulation} : modèle de carburant (ralenti et courbes de pente mesurés sur un Cat 785D), récompense, indicateurs
+    \item Module \textbf{rl} : entraînement PPO et DQN (Stable-Baselines3) et Q-Learning, SARSA tabulaires, avec actualisation par minute
+    \item Module \textbf{baselines} : heuristiques FIFO, Affectation fixe, Pelle la plus proche, Plus court chemin, MTWT et politique LP
+    \item Module \textbf{experiments} : régimes, benchmark, campagne finale, essais de mise au point des agents
+    \item Modules \textbf{analysis} et \textbf{plots} : tests statistiques appariés, agrégation sur les graines d'entraînement, transfert, comportement, figures
 \end{itemize}
 
 \section*{Commandes principales}
@@ -2677,42 +2678,47 @@ Gestion de projet & Poetry / pip & — \\
 # Validation de l'environnement Gymnasium
 python -m memoire_master_rl_logistique.main --check-env
 
-# Entrainement PPO (2M steps, ~2h CPU)
-python -m memoire_master_rl_logistique.main --train-only
+# Campagne finale : entrainements, evaluation unique, analyses
+python -m memoire_master_rl_logistique.experiments.campaign train     DOSSIER --workers 4
+python -m memoire_master_rl_logistique.experiments.campaign evaluate  DOSSIER --workers 4
+python -m memoire_master_rl_logistique.experiments.campaign analyze   DOSSIER
+python -m memoire_master_rl_logistique.experiments.campaign behaviour DOSSIER --workers 4
 
-# Entrainement Q-Learning (30k episodes, ~15 min CPU)
-python -m memoire_master_rl_logistique.main --train-q-learning
-
-# Benchmark comparatif complet (tous scenarios)
-python -m memoire_master_rl_logistique.main --benchmark-only
+# Repetition a petite echelle de toute la chaine (environ 30 min)
+python -m memoire_master_rl_logistique.experiments.campaign rehearse  DOSSIER_VIDE
 \end{lstlisting}
 
 \chapter{Hyperparamètres des modèles}
 \label{ann:hyperparametres}
 
-Le tableau ci-dessous regroupe, \`a des fins de r\'ef\'erence, l'int\'egralit\'e des hyperparam\`etres des quatre agents en une seule vue comparative. Les tirets (---) indiquent les param\`etres non applicables \`a une m\'ethode donn\'ee, faisant appara\^itre les sp\'ecificit\'es de chaque famille d'algorithmes (tabulaire vs Deep RL, off-policy vs on-policy).
+Le tableau ci-dessous regroupe les hyperparam\`etres des quatre agents de la campagne finale. Les valeurs en gras ont \'et\'e choisies par un r\'eglage sur des graines de s\'election distinctes de l'\'evaluation ; les tirets (---) indiquent les param\`etres non applicables.
 
 \begin{table}[H]
 \centering
-\caption{Hyperparamètres complets de tous les agents}
+\caption{Hyperparamètres de tous les agents (campagne finale)}
+\small
 \begin{tabular}{lllll}
 \toprule
 \textbf{Hyperparamètre} & \textbf{Q-Learning} & \textbf{SARSA} & \textbf{DQN} & \textbf{PPO} \\
 \midrule
-Taux d'apprentissage ($\alpha$) & 0.2 & 0.2 & $3\times10^{-4}$ & $3\times10^{-4}$ \\
-Facteur d'actualisation ($\gamma$) & 0.99 & 0.99 & 0.99 & 0.99 \\
-$\epsilon$ initial / final & 1.0 / 0.01 & 1.0 / 0.01 & 1.0 / 0.02 & — \\
-Épisodes / Steps & 30\,000 ép. & 30\,000 ép. & 2\,000\,000 & 2\,000\,000 \\
-Bins discrétisation & 8 & 8 & — & — \\
-Features d'état & 6 & 6 & — & — \\
-Taille buffer replay & — & — & 200\,000 & — \\
-Batch size & — & — & 64 & 64 \\
-$n\_steps$ & — & — & — & 1\,024 \\
-GAE $\lambda$ & — & — & — & 0.95 \\
-Clip range & — & — & — & 0.2 \\
-Coefficient entropie & — & — & — & 0.02 \\
-Architecture réseau & — & — & MLP [128,128] & MLP [128,128] \\
-Activation & — & — & ReLU & ReLU \\
+Taux d'apprentissage ($\alpha$) & \textbf{0,2} & \textbf{0,1} & $\mathbf{3\times10^{-4}}$ & $\mathbf{1\times10^{-4}}$ \\
+Facteur $\gamma$ (décision de 1,89~min) & 0,99 & 0,99 & 0,995 & 0,995 \\
+Actualisation & \multicolumn{4}{c}{par minute de simulation, $\gamma_{\min} = \gamma^{1/1{,}89}$} \\
+$\epsilon$ initial / final & 1,0 / 0,01 & 1,0 / 0,01 & 1,0 / 0,02 & --- \\
+Durée de l'exploration & 30\,000 ép. & 30\,000 ép. & \textbf{10\,\%} des pas & --- \\
+Budget d'entraînement & 30\,000 ép. & 30\,000 ép. & 2\,000\,000 pas & 2\,000\,000 pas \\
+Intervalles de discrétisation & \textbf{6} & \textbf{6} & --- & --- \\
+Variables d'état & 6 & 6 & 23 & 23 \\
+Tampon de rejeu / échauffement & --- & --- & 200\,000 / 1\,000 & --- \\
+Mise à jour du réseau cible & --- & --- & 1\,000 pas & --- \\
+Taille de lot & --- & --- & 64 & 64 \\
+$n\_steps$ / époques & --- & --- & --- & 1\,024 / 10 \\
+GAE $\lambda$ / écrêtage & --- & --- & --- & 0,95 / 0,2 \\
+Coefficient d'entropie & --- & --- & --- & \textbf{0} \\
+Normalisation de la récompense & --- & --- & non & oui \\
+Architecture réseau & --- & --- & MLP [128,128] & MLP [128,128] \\
+Activation & --- & --- & ReLU & Tanh \\
+Graines d'entraînement & 1 à 5 & 1 à 5 & 1 à 5 & 1 à 5 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -2720,24 +2726,30 @@ Activation & — & — & ReLU & ReLU \\
 \section*{Poids de la fonction de récompense}
 
 \begin{center}
-$w_1 = 1{,}0$ (rendement) \quad $w_2 = 0{,}1$ (équité) \quad $w_3 = 0{,}05$ (coût) \quad $w_4 = 0{,}3$ (attente)
+$w_1 = 1{,}0$ (production) \quad $w_2 = 0{,}1$ (équilibre) \quad $w_3 = 0{,}05$ (distance) \quad $w_4 = 0{,}3$ (attente)
 \end{center}
+
+L'action ATTENDRE coûte en outre un coût d'opportunité de $w_1 \times$ durée$/23{,}2$~min.
 
 \chapter{Scénarios de simulation}
 \label{ann:scenarios}
 
-Le tableau ci-dessous d\'etaille l'ensemble des param\`etres des trois sc\'enarios, en compl\'etant le Match Factor (MF) th\'eorique de chacun. Il met en \'evidence que seuls deux leviers varient d'un sc\'enario \`a l'autre --- la taille de flotte et le taux de pannes --- toutes les autres conditions restant constantes pour isoler leurs effets.
+Le tableau ci-dessous d\'etaille les r\'egimes de la campagne finale. Seuls deux leviers varient --- la taille de la flotte et le taux de pannes ---, toutes les autres conditions restant constantes. Le facteur d'appariement (MF) rapporte la capacit\'e de transport \`a la capacit\'e de chargement : il reste inf\'erieur \`a 1 dans tous les r\'egimes.
 
 \begin{table}[H]
 \centering
-\caption{Paramètres complets des scénarios expérimentaux}
-\begin{tabular}{lllllll}
+\caption{Régimes de la campagne finale}
+\small
+\begin{tabular}{llllllp{4.6cm}}
 \toprule
-\textbf{Scénario} & \textbf{Camions} & \textbf{Pelles} & \textbf{Dumps} & \textbf{$p_b$} & \textbf{MF} & \textbf{Description} \\
+\textbf{Régime} & \textbf{Camions} & \textbf{Pelles} & \textbf{Verses} & \textbf{$p_b$} & \textbf{MF} & \textbf{Rôle} \\
 \midrule
-nominal & 12 & 3 & 2 & 2\% & 4.0 & Conditions nominales équilibrées \\
-high\_load & 18 & 3 & 2 & 2\% & 6.0 & Surcharge (flotte surdimensionnée) \\
-high\_breakdown & 12 & 3 & 2 & 10\% & 4.0 & Pannes fréquentes (5× nominal) \\
+nominal & 12 & 3 & 2 & 2\% & 0,35 & référence \\
+high\_load & 18 & 3 & 2 & 2\% & 0,52 & flotte augmentée de 50\,\% \\
+high\_breakdown & 12 & 3 & 2 & 10\% & 0,35 & pannes fréquentes \\
+unseen\_medium\_load & 15 & 3 & 2 & 2\% & 0,44 & non vu, agents nominaux seulement \\
+unseen\_medium\_breakdown & 12 & 3 & 2 & 5\% & 0,35 & non vu, agents nominaux seulement \\
+ablation\_w4\_00 / 01 / 05 & 12 & 3 & 2 & 2\% & 0,35 & $w_4 = 0$ ; 0,1 ; 0,5 (PPO et DQN) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -2746,16 +2758,21 @@ high\_breakdown & 12 & 3 & 2 & 10\% & 4.0 & Pannes fréquentes (5× nominal) \\
 
 \begin{itemize}
     \item Durée d'un épisode : 480 minutes (8 heures)
-    \item Capacité des camions : 140 tonnes (Cat 785C)
-    \item Temps de chargement : $\mathcal{LN}(2{,}0~\text{min},\ \sigma = 0{,}3)$
-    \item Temps de déchargement : $\mathcal{LN}(1{,}0~\text{min},\ \sigma = 0{,}2)$
-    \item Vitesse à vide / chargé : 32 / 26 km/h (base, ajustée par pente et état route)
-    \item Dégradation route : probabilité 5\%, réduction 2\% par passage
-    \item Évaluation : 10 réplications indépendantes (seeds 42 à 51)
+    \item Capacité des camions : 140 tonnes (Cat 785D)
+    \item Temps de chargement : log-normal, moyenne 2,0~min, écart-type 0,3~min
+    \item Temps de déchargement : log-normal, moyenne 1,0~min, écart-type 0,2~min
+    \item Vitesse à vide / chargé : 32 / 26 km/h (base, ajustée par la pente et l'état de la piste)
+    \item Dégradation des pistes : probabilité 5\% par passage de perdre 0,02 d'état (plancher 0,6)
+    \item Pannes : camions seulement, réparation uniforme entre 10 et 30~min
+    \item Carburant : ralenti 11,3~L/h ; roulage selon des courbes de pente mesurées, calibré à 95~L/h
+    \item Graines : sélection 20\,000 à 20\,009 ; entraînement 1 à 5 ; évaluation 42 à 71 (30 réplications appariées)
 \end{itemize}
 
 \chapter{Résultats statistiques complémentaires}
 \label{ann:stats}
+% À REFAIRE avec le chapitre 6 : cette annexe commente les résultats de la v1 (8 politiques,
+% 10 graines, Tukey HSD). Les tests de la campagne finale (Wilcoxon apparié + Holm,
+% 10 politiques, 30 réplications) sont dans data/results_v2/campagne/analyses/.
 
 \section*{Test post-hoc de Tukey HSD — scénario nominal}
 
@@ -2873,14 +2890,18 @@ ShortestPath & Nearest & $+29{,}75$ & $-66{,}0$ & $+125{,}5$ & \textbf{Non} \\
 \begin{verbatim}
 memoire-master-rl-logistique/
 |-- memoire_master_rl_logistique/
-|   |-- env/           (Environnement Gymnasium, vecteur d'observation 147 dim.)
-|   |-- simulation/    (Entites, graphe routier, carburant, KPIs)
-|   |-- rl/            (Entrainement PPO, DQN, Q-Learning, SARSA)
-|   |-- baselines/     (Heuristiques FIFO, Fixed, Nearest, ShortestPath)
-|   `-- experiments/   (Scenarios et benchmark comparatif)
-|-- data/results/      (Resultats du benchmark)
-|-- models/            (Modeles entraines)
-`-- reports/           (Memoire LaTeX)
+|   |-- env/           (environnement Gymnasium, etat de 23 composantes)
+|   |-- simulation/    (moteur a evenements, graphe routier, carburant,
+|   |                   recompense, indicateurs)
+|   |-- rl/            (entrainement PPO, DQN, Q-Learning, SARSA)
+|   |-- baselines/     (FIFO, Fixed, Nearest, ShortestPath, MTWT, LP)
+|   |-- experiments/   (regimes, benchmark, campagne, mise au point)
+|   |-- analysis/      (tests apparies, agregation, transfert, comportement)
+|   `-- plots/         (figures)
+|-- configs/           (parametres YAML)
+|-- tests/             (tests automatiques)
+|-- data/results_v2/   (resultats de la campagne finale)
+`-- reports/           (articles, memoire LaTeX)
 \end{verbatim}
 
 \chapter{Interfaces et démonstrations}
@@ -2894,7 +2915,7 @@ La conformité de l'environnement avec l'interface Gymnasium est vérifiée par 
 $ python -m memoire_master_rl_logistique.main --check-env
 
 check_env OK
-  Observation : Box(0.0, 1.0, (147,), float32)
+  Observation : Box(0.0, 1.0, (23,), float32)
   Action      : Discrete(7)
   Camions=12, Pelles=3, Dumps=2
 \end{lstlisting}
@@ -2904,11 +2925,12 @@ check_env OK
 Le benchmark produit un fichier CSV de résultats structuré avec les colonnes suivantes~:
 
 \begin{center}
-\texttt{scenario, policy, seed, productivity\_tph, avg\_wait\_min\_per\_truck,}\\
-\texttt{utilization\_pct, specific\_fuel\_l\_per\_ton, total\_cycles, total\_reward}
+\texttt{scenario, policy, mode, train\_seed, seed, productivity\_tph,}\\
+\texttt{queue\_wait\_min\_per\_truck, voluntary\_wait\_min\_per\_truck, utilization\_pct,}\\
+\texttt{specific\_fuel\_l\_per\_ton, total\_cycles, total\_reward, wait\_share\_pct, \ldots}
 \end{center}
 
-Chaque ligne correspond à une réplication (seed) d'une politique sur un scénario, soit $8~\text{politiques} \times 3~\text{scénarios} \times 10~\text{seeds} = 240$~lignes pour le benchmark principal.
+Chaque ligne correspond à un épisode : une politique, un régime, une graine d'évaluation et, pour un agent, son mode (spécialisé ou transféré) et sa graine d'entraînement. Le fichier de la campagne finale compte 6\,540 lignes.
 
 % ============================================================================
 \end{document}

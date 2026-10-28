@@ -114,12 +114,17 @@ def campaign_jobs(regimes: Sequence[str] = TRAINING_REGIMES,
 
 
 def _run_job(job: TrainJob, root: str) -> tuple[TrainJob, float]:
-    """Entraîne un modèle dans le processus courant ; sortie dans ``logs/<job>.log``."""
+    """Entraîne un modèle dans le processus courant ; sortie dans ``logs/<job>.log``.
+
+    Le journal est écrit ligne par ligne (``buffering=1``) : on suit l'entraînement en
+    cours. Avec le tampon par défaut (8 Ko), la sortie de Stable-Baselines3 n'apparaissait
+    qu'à la fin de chaque modèle pendant la campagne du 22 au 27/10/2026.
+    """
     from memoire_master_rl_logistique.experiments.run_benchmark import _train
 
     log = Path(root) / LOG_DIR / f"{job.label()}.log"
     start = time.perf_counter()
-    with open(log, "a", encoding="utf-8") as f, contextlib.redirect_stdout(f), \
+    with open(log, "a", encoding="utf-8", buffering=1) as f, contextlib.redirect_stdout(f), \
             contextlib.redirect_stderr(f):
         print(f"=== {job.label()} — début {time.strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
         _train(job.algorithm, SCENARIOS[job.regime], job.train_seed, job.directory(root))
