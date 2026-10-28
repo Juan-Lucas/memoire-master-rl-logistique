@@ -16,7 +16,7 @@ d'entraînement, graine d'évaluation) lève ``ValueError`` (voir ``write_result
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from concurrent.futures import ProcessPoolExecutor
 import csv
 from dataclasses import dataclass
@@ -139,6 +139,45 @@ def run_benchmark(
     ``ModelCompatibilityError``. ``allow_legacy_models`` permet de réévaluer, en
     connaissance de cause, des modèles antérieurs à T8 (sans ``metadata.json``).
     """
+    specs = policy_specs(scenario, output_dir, train_ppo_flag, model_scenarios,
+                         allow_legacy_models, train_seeds)
+
+    # Chargement de chaque modèle avant de lancer les épisodes : un modèle incompatible
+    # arrête tout de suite, et non au milieu d'un calcul parallèle.
+    for spec in specs:
+        policy_from_spec(spec, scenario)
+
+    tasks = [(scenario, spec, seed) for spec in specs for seed in scenario.seeds]
+    start = time.perf_counter()
+    results = _run_tasks(tasks, n_workers)
+    for row in results:
+        print(
+            f"  [{row['scenario']}] {row['policy']} {row['mode'] or ''} "
+            f"entraînement={row['train_seed']} seed={row['seed']}: "
+            f"prod={row['productivity_tph']:.1f} t/h, "
+            f"file={row['queue_wait_min_per_truck']:.1f} min, "
+            f"fuel={row['specific_fuel_l_per_ton']:.4f} L/t"
+        )
+    print(f"  [{scenario.name}] {len(tasks)} épisodes évalués en "
+          f"{time.perf_counter() - start:.1f} s ({n_workers} processus)")
+    return results
+
+
+def policy_specs(
+    scenario: Scenario,
+    output_dir: Path,
+    train_ppo_flag: bool = True,
+    model_scenarios: Sequence[str] | None = None,
+    allow_legacy_models: bool = False,
+    train_seeds: Sequence[int | None] = TRAIN_SEEDS,
+    train_missing: bool = True,
+) -> list[PolicySpec]:
+    """Les politiques évaluées dans ``scenario`` : les heuristiques, puis un modèle par
+    (régime d'entraînement, graine, algorithme). Voir ``run_benchmark`` pour les arguments.
+
+    Un modèle manquant est entraîné si ``train_missing`` ; sinon ``FileNotFoundError``
+    (rejeu des épisodes de la campagne, ``analysis.behavior``).
+    """
     if model_scenarios is None:
         model_scenarios = training_regimes(scenario.name)
 
@@ -158,6 +197,8 @@ def run_benchmark(
                 if not model_file(mdir, algorithm).exists():
                     if train_seed is None:
                         raise FileNotFoundError(f"Modèle d'avant T26 introuvable : {mdir}")
+                    if not train_missing:
+                        raise FileNotFoundError(f"Modèle introuvable (rien n'est entraîné) : {mdir}")
                     print(f"  Entraînement {algorithm} ({regime}, graine {train_seed})...")
                     _train(algorithm, training_scenario, train_seed, mdir)
                 specs.append(PolicySpec(
@@ -166,25 +207,7 @@ def run_benchmark(
                     EnvConfig.from_scenario(training_scenario), allow_legacy_models,
                 ))
 
-    # Chargement de chaque modèle avant de lancer les épisodes : un modèle incompatible
-    # arrête tout de suite, et non au milieu d'un calcul parallèle.
-    for spec in specs:
-        _policy_fn(spec, scenario)
-
-    tasks = [(scenario, spec, seed) for spec in specs for seed in scenario.seeds]
-    start = time.perf_counter()
-    results = _run_tasks(tasks, n_workers)
-    for row in results:
-        print(
-            f"  [{row['scenario']}] {row['policy']} {row['mode'] or ''} "
-            f"entraînement={row['train_seed']} seed={row['seed']}: "
-            f"prod={row['productivity_tph']:.1f} t/h, "
-            f"file={row['queue_wait_min_per_truck']:.1f} min, "
-            f"fuel={row['specific_fuel_l_per_ton']:.4f} L/t"
-        )
-    print(f"  [{scenario.name}] {len(tasks)} épisodes évalués en "
-          f"{time.perf_counter() - start:.1f} s ({n_workers} processus)")
-    return results
+    return specs
 
 
 @dataclass(frozen=True)
@@ -210,7 +233,7 @@ class PolicySpec:
 _POLICY_CACHE: dict[tuple[PolicySpec, str], PolicyFn] = {}
 
 
-def _policy_fn(spec: PolicySpec, scenario: Scenario) -> PolicyFn:
+def policy_from_spec(spec: PolicySpec, scenario: Scenario) -> PolicyFn:
     key = (spec, repr(scenario))
     if key not in _POLICY_CACHE:
         if spec.model_dir is None:
@@ -229,7 +252,7 @@ def _evaluate(task: tuple[Scenario, PolicySpec, int]) -> dict:
     """
     scenario, spec, seed = task
     start = time.perf_counter()
-    kpis = run_single_episode(make_env(scenario), _policy_fn(spec, scenario), seed, spec.name)
+    kpis = run_single_episode(make_env(scenario), policy_from_spec(spec, scenario), seed, spec.name)
     return {
         "scenario": scenario.name,
         "policy": spec.name,
@@ -242,21 +265,24 @@ def _evaluate(task: tuple[Scenario, PolicySpec, int]) -> dict:
     }
 
 
-def _run_tasks(tasks: list[tuple[Scenario, PolicySpec, int]], n_workers: int) -> list[dict]:
+def _run_tasks(tasks: list[tuple[Scenario, PolicySpec, int]], n_workers: int,
+               worker: Callable[[tuple[Scenario, PolicySpec, int]], dict] | None = None,
+               ) -> list[dict]:
     """Évalue les épisodes, en séquence ou en parallèle ; l'ordre des lignes est conservé.
 
     Chaque épisode ne dépend que de sa politique et de sa graine (flux aléatoires propres,
     T13 ; politiques sans état d'un épisode à l'autre) : le parallélisme ne change aucun
     résultat, seulement les durées mesurées (processus concurrents).
     """
+    worker = worker or _evaluate  # autre traitement d'un épisode : analysis.behavior
     if n_workers < 1:
         raise ValueError(f"n_workers doit être ≥ 1 : {n_workers}")
     if n_workers == 1:
-        return [_evaluate(task) for task in tasks]
+        return [worker(task) for task in tasks]
     # Paquets de plusieurs épisodes d'une même politique : moins de chargements de modèle.
     chunksize = max(1, len(tasks) // (4 * n_workers))
     with ProcessPoolExecutor(max_workers=n_workers) as pool:
-        return list(pool.map(_evaluate, tasks, chunksize=chunksize))
+        return list(pool.map(worker, tasks, chunksize=chunksize))
 
 
 def _train(algorithm: str, scenario: Scenario, train_seed: int, output_dir: Path) -> None:

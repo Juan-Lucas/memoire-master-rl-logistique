@@ -29,8 +29,9 @@ POLICY_LABELS = {
     "Fixed": "Affectation fixe",
     "Nearest": "Pelle la plus proche",
     "ShortestPath": "Plus court chemin",
-    "MTWT": "Temps d'attente minimal",
-    "LP": "Programme linéaire (DISPATCH)",
+    # Sigles des tableaux de l'article v3 (définis dans la section 5.7).
+    "MTWT": "MTWT",
+    "LP": "LP",
     "Q-Learning": "Q-Learning",
     "SARSA": "SARSA",
     "DQN": "DQN",

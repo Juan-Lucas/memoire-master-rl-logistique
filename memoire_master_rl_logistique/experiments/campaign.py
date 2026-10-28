@@ -19,7 +19,11 @@ l'autre, dans un seul processus (environ 13 jours pour 90 entraînements). Lanc�
 plusieurs fenêtres, il pourrait entraîner deux fois le même modèle nominal, dont les
 régimes perturbés ont besoin pour le transfert.
 
-``rehearse`` enchaîne les trois étapes avec une configuration réduite (budgets
+``behaviour`` (après ``evaluate``) rejoue les épisodes des régimes principaux avec le
+journal des cycles, pour la répartition entre pelles (``analysis.behavior``) ; il vérifie
+que chaque épisode rejoué est identique à celui de l'évaluation.
+
+``rehearse`` enchaîne les quatre étapes avec une configuration réduite (budgets
 minuscules, graines d'évaluation DISJOINTES de 42 à 71), dans des processus séparés
 qui lisent cette configuration par ``MINE_RL_CONFIG_DIR`` : toute la chaîne est
 vérifiée sans toucher aux graines d'évaluation de la campagne.
@@ -27,6 +31,7 @@ vérifiée sans toucher aux graines d'évaluation de la campagne.
     python -m memoire_master_rl_logistique.experiments.campaign train DOSSIER --workers 4
     python -m memoire_master_rl_logistique.experiments.campaign evaluate DOSSIER --workers 4
     python -m memoire_master_rl_logistique.experiments.campaign analyze DOSSIER
+    python -m memoire_master_rl_logistique.experiments.campaign behaviour DOSSIER --workers 4
     python -m memoire_master_rl_logistique.experiments.campaign rehearse DOSSIER --workers 4
 """
 
@@ -222,6 +227,20 @@ def analyze(root: str | Path) -> Path:
     return out_dir
 
 
+BEHAVIOUR_DIR = "comportement"
+
+
+def behaviour(root: str | Path, workers: int = 4) -> Path:
+    """Comportement des politiques (pelles, ATTENDRE, durée des cycles), par rejeu des
+    épisodes de l'évaluation ; dans ``<dossier>/analyses/comportement/``."""
+    from memoire_master_rl_logistique.analysis.behavior import campaign_behaviour
+
+    root = Path(root)
+    out_dir = root / ANALYSES_DIR / BEHAVIOUR_DIR
+    campaign_behaviour(root, results_csv(root), out_dir, workers)
+    return out_dir
+
+
 # --- Répétition -------------------------------------------------------------------------
 
 def rehearsal_config(destination: str | Path, source: str | Path | None = None) -> Path:
@@ -252,14 +271,14 @@ def rehearsal_config(destination: str | Path, source: str | Path | None = None) 
 
 
 def rehearse(root: str | Path, workers: int = 4) -> None:
-    """Les trois étapes, avec la configuration réduite, chacune dans un processus séparé
+    """Les quatre étapes, avec la configuration réduite, chacune dans un processus séparé
     (les modules lisent la configuration à l'import)."""
     root = Path(root)
     if root.exists() and any(root.iterdir()):
         raise FileExistsError(f"La répétition demande un dossier vide : {root}")
     configuration = rehearsal_config(root / REHEARSAL_CONFIG_DIR)
     env = {**os.environ, CONFIG_DIR_ENV: str(configuration)}
-    for step in ("train", "evaluate", "analyze"):
+    for step in ("train", "evaluate", "analyze", "behaviour"):
         command = [sys.executable, "-m", MODULE, step, str(root)]
         if step != "analyze":
             command += ["--workers", str(workers)]
@@ -271,7 +290,7 @@ def rehearse(root: str | Path, workers: int = 4) -> None:
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Campagne finale (T31) et sa répétition.")
-    parser.add_argument("step", choices=["train", "evaluate", "analyze", "rehearse"])
+    parser.add_argument("step", choices=["train", "evaluate", "analyze", "behaviour", "rehearse"])
     parser.add_argument("output_dir", type=Path)
     parser.add_argument("--workers", type=int, default=4)
     args = parser.parse_args(argv)
@@ -281,6 +300,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         print(f"Résultats : {evaluate(args.output_dir, args.workers)}")
     elif args.step == "analyze":
         print(f"Analyses : {analyze(args.output_dir)}")
+    elif args.step == "behaviour":
+        print(f"Comportement : {behaviour(args.output_dir, args.workers)}")
     else:
         rehearse(args.output_dir, args.workers)
 

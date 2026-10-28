@@ -57,3 +57,45 @@ def test_main_ecrit_les_trois_figures(tmp_path):
     assert all(p.exists() for p in outputs)
     with pytest.raises(FileExistsError):
         main(REFERENCES_CSV, tmp_path)
+
+
+def test_courbes_de_la_campagne(tmp_path):
+    """Une figure, trois panneaux (régimes), à partir du CSV des courbes de la campagne ;
+    jamais d'écrasement sans --overwrite."""
+    from memoire_master_rl_logistique.plots.campaign_curves import main as curves_main
+
+    rows = [dict(x=p, progress_pct=p, n_runs=5, mean=4000 + p, ci_low=3990 + p,
+                 ci_high=4010 + p, algorithm=a, scenario=s)
+            for a in ("PPO", "DQN", "Q-Learning", "SARSA")
+            for s in ("nominal", "high_load", "high_breakdown") for p in (0.5, 50.5, 99.5)]
+    csv = tmp_path / "courbes.csv"
+    pd.DataFrame(rows).to_csv(csv, index=False)
+    out = curves_main(csv, tmp_path / "fig")
+    assert out.exists() and out.stat().st_size > 0
+    with pytest.raises(FileExistsError):
+        curves_main(csv, tmp_path / "fig")
+
+
+def test_figures_avec_plusieurs_graines_d_entrainement(tmp_path):
+    """Campagne : un agent a 5 modèles. La barre est la moyenne de ses modèles, et l'IC
+    porte sur les 30 réplications (moyennées sur les modèles), pas sur 150 épisodes."""
+    from memoire_master_rl_logistique.analysis import statistical_tests as st
+    from memoire_master_rl_logistique.plots import benchmark_comparisons as bc
+
+    rows = []
+    for scenario, trucks in (("nominal", 12), ("high_load", 18), ("high_breakdown", 12)):
+        for s in range(42, 72):
+            rows.append(dict(scenario=scenario, policy="Fixed", mode=None, train_seed=None,
+                             seed=s, truck_count=trucks, productivity_tph=4000.0 + s,
+                             queue_wait_min_per_truck=10.0))
+            for t in range(1, 6):
+                rows.append(dict(scenario=scenario, policy="PPO", mode="spécialisé",
+                                 train_seed=t, seed=s, truck_count=trucks,
+                                 productivity_tph=4100.0 + s + 10 * t,
+                                 queue_wait_min_per_truck=12.0))
+    csv = tmp_path / "campagne.csv"
+    pd.DataFrame(rows).to_csv(csv, index=False)
+    df = st.average_over_training_seeds(st.load_results(csv))
+    ppo = df[(df["policy"] == "PPO") & (df["scenario"] == "nominal")]
+    assert len(ppo) == 30 and ppo["productivity_tph"].mean() == pytest.approx(4100 + 56.5 + 30)
+    assert len(bc.main(csv, tmp_path / "fig")) == 3

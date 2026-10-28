@@ -27,6 +27,7 @@ import pandas as pd
 
 from memoire_master_rl_logistique.analysis.robustness import wait_column
 from memoire_master_rl_logistique.analysis.statistical_tests import (
+    average_over_training_seeds,
     load_results,
     paired_bootstrap_ci,
 )
@@ -141,7 +142,11 @@ def plot_pareto(
 def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False) -> list[Path]:
     """Produit les trois figures dans ``out_dir`` ; refuse d'écraser sans ``overwrite``."""
     bars_prod, bars_wait, pareto = prepare_outputs(out_dir, OUTPUT_FILES, overwrite)
-    df = load_results(csv_path)
+    # Un agent à plusieurs graines d'entraînement (T30) : une valeur par réplication, la
+    # moyenne de ses modèles, pour que l'IC porte sur les 30 réplications, comme pour une
+    # heuristique. Régimes de l'article seulement (la campagne évalue aussi l'ablation).
+    df = average_over_training_seeds(load_results(csv_path))
+    df = df[df["scenario"].isin(SCENARIO_ORDER)]
     prod = summarise(df, PRODUCTIVITY)
     wait_col = wait_column(df)
     wait_label = WAIT_LABELS[wait_col]

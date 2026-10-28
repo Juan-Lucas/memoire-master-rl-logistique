@@ -195,3 +195,65 @@ def test_cout_du_transfert_couples_incomplets_ignores():
 def test_cout_du_transfert_csv_sans_mode():
     with pytest.raises(ValueError, match="T27"):
         transfer_table(_results().drop(columns="mode"))
+
+
+# --- Rejeu des épisodes de la campagne (comportement, T31) ---------------------------
+
+def _tiny_campaign(monkeypatch, tmp_path, regime="high_breakdown"):
+    """Mini-campagne : Q-Learning seul (1 épisode d'entraînement), 5 graines
+    d'entraînement, 2 graines d'évaluation ; évaluée puis écrite comme la vraie."""
+    from memoire_master_rl_logistique.analysis import behavior
+
+    scenario = dataclasses.replace(SCENARIOS[regime], seeds=[42, 43], algorithms=("Q-Learning",))
+    monkeypatch.setitem(behavior.SCENARIOS, regime, scenario)
+    monkeypatch.setattr(rb, "_train", _tiny_train([]))
+    for name in training_regimes(regime):  # modèles nominaux du transfert
+        if name != regime:
+            monkeypatch.setitem(behavior.SCENARIOS, name, dataclasses.replace(
+                SCENARIOS[name], algorithms=("Q-Learning",)))
+    csv = rb.write_results(rb.run_benchmark(scenario, tmp_path), tmp_path, run_id="mini")
+    return behavior, csv
+
+
+def test_rejeu_identique_a_l_evaluation(monkeypatch, tmp_path):
+    """Rejouer les épisodes avec le journal des cycles redonne exactement l'évaluation ;
+    le comportement est résumé par politique et par mode."""
+    behavior, csv = _tiny_campaign(monkeypatch, tmp_path)
+    monkeypatch.setattr(rb, "_train", lambda *a: pytest.fail("le rejeu n'entraîne jamais"))
+    summary = behavior.campaign_behaviour(tmp_path, csv, tmp_path / "comportement",
+                                          scenarios=["high_breakdown"])
+    runs = pd.read_csv(tmp_path / "comportement" / "behaviour_runs.csv")
+    assert len(runs) == len(pd.read_csv(csv)) == 2 * (len(HEURISTICS) + 2 * 5)
+    q = summary[summary["policy"] == "Q-Learning"]
+    assert sorted(q["mode"]) == sorted([SPECIALISED, TRANSFERRED])
+    shares = q[["share_S1_pct", "share_S2_pct", "share_S3_pct"]].sum(axis=1)
+    assert shares.round(9).eq(100).all()
+    with pytest.raises(FileExistsError):  # jamais d'écrasement
+        behavior.campaign_behaviour(tmp_path, csv, tmp_path / "comportement",
+                                    scenarios=["high_breakdown"])
+
+
+def test_rejeu_different_refuse(monkeypatch, tmp_path):
+    """Une seule valeur différente du CSV de l'évaluation, ou un épisode absent : refus,
+    et rien n'est écrit."""
+    behavior, csv = _tiny_campaign(monkeypatch, tmp_path)
+    results = pd.read_csv(csv, float_precision="round_trip")
+    altered = results.copy()
+    altered.loc[altered.index[3], "total_fuel_l"] += 1e-9
+    altered.to_csv(tmp_path / "altere.csv", index=False)
+    with pytest.raises(ValueError, match="différent"):
+        behavior.campaign_behaviour(tmp_path, tmp_path / "altere.csv", tmp_path / "a",
+                                    scenarios=["high_breakdown"])
+    results.drop(results.index[0]).to_csv(tmp_path / "incomplet.csv", index=False)
+    with pytest.raises(ValueError, match="en trop"):
+        behavior.campaign_behaviour(tmp_path, tmp_path / "incomplet.csv", tmp_path / "b",
+                                    scenarios=["high_breakdown"])
+    assert not (tmp_path / "a").exists() and not (tmp_path / "b").exists()
+
+
+def test_rejeu_sans_modele_refuse(monkeypatch, tmp_path):
+    from memoire_master_rl_logistique.analysis import behavior
+
+    monkeypatch.setattr(rb, "_train", lambda *a: pytest.fail("le rejeu n'entraîne jamais"))
+    with pytest.raises(FileNotFoundError, match="rien n'est entraîné"):
+        behavior.campaign_runs(tmp_path, ["nominal"])

@@ -18,6 +18,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from memoire_master_rl_logistique.experiments.scenarios import SPECIALISED
 from memoire_master_rl_logistique.plots.common import (
     SCENARIO_LABELS,
     SCENARIO_ORDER,
@@ -67,7 +68,10 @@ def plot_behaviour(summary: pd.DataFrame, out_path: Path) -> None:
 def main(summary_csv: str | Path, out_dir: str | Path, overwrite: bool = False) -> Path:
     """Produit ``behaviour_30_replications.png`` dans ``out_dir``."""
     (out_path,) = prepare_outputs(out_dir, ["behaviour_30_replications.png"], overwrite)
-    plot_behaviour(pd.read_csv(summary_csv), out_path)
+    summary = pd.read_csv(summary_csv)
+    if "mode" in summary.columns:  # campagne (T31) : agents spécialisés et heuristiques
+        summary = summary[summary["mode"].isna() | (summary["mode"] == SPECIALISED)]
+    plot_behaviour(summary, out_path)
     print(f"Figure enregistrée : {out_path}")
     return out_path
 
