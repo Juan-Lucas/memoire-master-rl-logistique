@@ -99,3 +99,17 @@ def test_figures_avec_plusieurs_graines_d_entrainement(tmp_path):
     ppo = df[(df["policy"] == "PPO") & (df["scenario"] == "nominal")]
     assert len(ppo) == 30 and ppo["productivity_tph"].mean() == pytest.approx(4100 + 56.5 + 30)
     assert len(bc.main(csv, tmp_path / "fig")) == 3
+
+
+def test_schema_des_regimes(tmp_path):
+    """Les trois régimes avec la probabilité de panne par cycle (plus de camions « en
+    panne » dessinés) ; jamais d'écrasement sans --overwrite."""
+    from memoire_master_rl_logistique.plots import scenarios_schematic as sc
+
+    assert [s["name"] for s in sc.SCENARIOS] == ["Nominal", "High load", "Frequent breakdowns"]
+    assert [s["breakdown_pct"] for s in sc.SCENARIOS] == [2, 2, 10]
+    assert all("broken_trucks" not in s for s in sc.SCENARIOS)
+    out = sc.main(tmp_path)
+    assert out.exists() and out.stat().st_size > 0
+    with pytest.raises(FileExistsError):
+        sc.main(tmp_path)
