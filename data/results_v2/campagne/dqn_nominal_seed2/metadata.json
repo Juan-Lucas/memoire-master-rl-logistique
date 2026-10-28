@@ -1,0 +1,41 @@
+{
+  "algorithm": "DQN",
+  "env": {
+    "truck_count": 12,
+    "shovel_count": 3,
+    "dump_count": 2,
+    "episode_minutes": 480.0,
+    "breakdown_probability": 0.02,
+    "reward_weights": [
+      1.0,
+      0.1,
+      0.05,
+      0.3
+    ]
+  },
+  "observation_size": 23,
+  "seed": 2,
+  "training": {
+    "total_timesteps": 2000000,
+    "learning_rate": 0.0003,
+    "gamma": 0.995,
+    "batch_size": 64,
+    "buffer_size": 200000,
+    "learning_starts": 1000,
+    "target_update_interval": 1000,
+    "exploration_fraction": 0.1,
+    "exploration_initial_eps": 1.0,
+    "exploration_final_eps": 0.02,
+    "net_arch": [
+      128,
+      128
+    ],
+    "time_discount": true,
+    "gamma_per_minute": 0.9973513752813592
+  },
+  "git_commit": "8ed61259f333778a8ffa913d9777cc23bd4e4206",
+  "git_dirty": false,
+  "created_at": "2026-10-26T20:50:37+02:00",
+  "schema_version": 1,
+  "training_time_s": 21070.728
+}

@@ -1,0 +1,94 @@
+
+===== productivity_tph : IQM sur les graines d'entraînement (IC 95 % stratifié) =====
+      scenario     policy       mode  n_train_seeds  n_undefined       iqm    ci_low   ci_high      mean    median       min       max
+       nominal Q-Learning spécialisé              5            0 4092.0833 4015.0833 4154.8889 4088.2333 4096.1667 3994.0833 4170.8333
+       nominal      SARSA spécialisé              5            0 3589.0556 3521.0000 3604.4167 3573.2667 3589.2500 3493.0000 3606.1667
+       nominal        DQN spécialisé              5            0  769.4167  199.5000 3009.4167 1286.9500  934.5000  194.2500 3932.2500
+       nominal        PPO spécialisé              5            0 4415.4444 4410.7778 4417.1944 4414.6667 4416.4167 4409.4167 4417.5833
+     high_load Q-Learning spécialisé              5            0 5830.4167 5605.8333 5924.9167 5787.9500 5796.0000 5520.6667 5927.8333
+     high_load      SARSA spécialisé              5            0 5403.6111 5241.4444 5589.8889 5409.8333 5393.5000 5201.0000 5637.3333
+     high_load        DQN spécialisé              5            0  234.8889   59.8889 2882.0556  984.5500  315.0000   52.5000 4165.5833
+     high_load        PPO spécialisé              5            0 6336.9444 6216.7778 6371.7500 6310.0333 6323.9167 6164.0833 6375.2500
+high_breakdown Q-Learning spécialisé              5            0 3839.5000 3811.3056 3869.6389 3839.8500 3837.1667 3806.8333 3873.9167
+high_breakdown      SARSA spécialisé              5            0 3386.4444 3223.1111 3443.4167 3353.1167 3372.2500 3150.0000 3456.2500
+high_breakdown        DQN spécialisé              5            0 1399.6111  210.0000 3302.4444 1578.5000 1048.8333  210.0000 3483.6667
+high_breakdown        PPO spécialisé              5            0 4163.0556 4155.8611 4173.5556 4163.9500 4162.0833 4155.0833 4175.5000
+ablation_w4_00        DQN spécialisé              5            0 1314.4444  210.0000 3685.3056 1587.7167  247.9167  210.0000 3785.2500
+ablation_w4_00        PPO spécialisé              5            0 4417.0000 4410.7778 4422.0556 4416.8833 4419.3333 4410.5833 4422.8333
+ablation_w4_01        DQN spécialisé              5            0 2445.9167  306.4444 3703.7778 2267.4167 3305.7500  210.0000 3789.3333
+ablation_w4_01        PPO spécialisé              5            0 4410.5833 4405.5278 4417.0000 4410.8167 4408.8333 4405.3333 4417.0000
+ablation_w4_05        DQN spécialisé              5            0 2121.5833    0.0000 3663.3333 2016.9333 2814.5833    0.0000 3719.9167
+ablation_w4_05        PPO spécialisé              5            0 4411.5556 4403.1944 4420.5000 4411.4000 4408.2500 4401.2500 4421.0833
+
+----- productivity_tph : tous régimes, normalisé par Fixed -----
+    policy       mode  n_train_seeds  n_scenarios    iqm  ci_low  ci_high   mean
+Q-Learning spécialisé              5            3 0.9558  0.9485   0.9613 0.9519
+     SARSA spécialisé              5            3 0.8497  0.8418   0.8572 0.8506
+       DQN spécialisé              5            3 0.1871  0.0646   0.4384 0.2855
+       PPO spécialisé              5            3 1.0367  1.0349   1.0373 1.0326
+
+----- productivity_tph : probabilité d'amélioration -----
+      scenario               pair  p_improvement  ci_low  ci_high
+       nominal          PPO > DQN          1.000   1.000      1.0
+     high_load          PPO > DQN          1.000   1.000      1.0
+high_breakdown          PPO > DQN          1.000   1.000      1.0
+      ensemble          PPO > DQN          1.000   1.000      1.0
+       nominal   PPO > Q-Learning          1.000   1.000      1.0
+     high_load   PPO > Q-Learning          1.000   1.000      1.0
+high_breakdown   PPO > Q-Learning          1.000   1.000      1.0
+      ensemble   PPO > Q-Learning          1.000   1.000      1.0
+       nominal   DQN > Q-Learning          0.000   0.000      0.0
+     high_load   DQN > Q-Learning          0.000   0.000      0.0
+high_breakdown   DQN > Q-Learning          0.000   0.000      0.0
+      ensemble   DQN > Q-Learning          0.000   0.000      0.0
+       nominal Q-Learning > SARSA          1.000   1.000      1.0
+     high_load Q-Learning > SARSA          0.960   0.840      1.0
+high_breakdown Q-Learning > SARSA          1.000   1.000      1.0
+      ensemble Q-Learning > SARSA          0.987   0.947      1.0
+
+===== specific_fuel_l_per_ton : IQM sur les graines d'entraînement (IC 95 % stratifié) =====
+      scenario     policy       mode  n_train_seeds  n_undefined    iqm  ci_low  ci_high   mean  median    min    max
+       nominal Q-Learning spécialisé              5            0 0.2716  0.2654   0.2766 0.2712  0.2711 0.2638 0.2774
+       nominal      SARSA spécialisé              5            0 0.2999  0.2983   0.3166 0.3044  0.2995 0.2982 0.3240
+       nominal        DQN spécialisé              5            0 0.5458  0.2876   0.9139 0.5646  0.4047 0.2349 0.9511
+       nominal        PPO spécialisé              5            0 0.2363  0.2361   0.2385 0.2369  0.2363 0.2361 0.2396
+     high_load Q-Learning spécialisé              5            0 0.2774  0.2713   0.2894 0.2786  0.2721 0.2711 0.2900
+     high_load      SARSA spécialisé              5            0 0.3034  0.2948   0.3091 0.3029  0.3065 0.2945 0.3097
+     high_load        DQN spécialisé              5            0 1.6547  0.4528   3.8483 1.8738  0.8708 0.2513 4.1538
+     high_load        PPO spécialisé              5            0 0.2494  0.2417   0.2527 0.2481  0.2495 0.2395 0.2529
+high_breakdown Q-Learning spécialisé              5            0 0.2745  0.2722   0.2781 0.2748  0.2738 0.2715 0.2790
+high_breakdown      SARSA spécialisé              5            0 0.3130  0.3056   0.3218 0.3131  0.3101 0.3035 0.3231
+high_breakdown        DQN spécialisé              5            0 0.5170  0.2649   0.9076 0.5460  0.3918 0.2384 0.9407
+high_breakdown        PPO spécialisé              5            0 0.2418  0.2407   0.2433 0.2419  0.2414 0.2406 0.2435
+ablation_w4_00        DQN spécialisé              5            0 0.6433  0.2789   0.8546 0.6098  0.7676 0.2625 0.8565
+ablation_w4_00        PPO spécialisé              5            0 0.2380  0.2366   0.2417 0.2386  0.2375 0.2363 0.2429
+ablation_w4_01        DQN spécialisé              5            0 0.3898  0.2690   0.7389 0.4527  0.3343 0.2492 0.8451
+ablation_w4_01        PPO spécialisé              5            0 0.2386  0.2337   0.2411 0.2379  0.2393 0.2319 0.2420
+ablation_w4_05        DQN spécialisé              3            2 0.2708  0.2289   0.3049 0.2708  0.2786 0.2289 0.3049
+ablation_w4_05        PPO spécialisé              5            0 0.2383  0.2361   0.2403 0.2382  0.2384 0.2356 0.2408
+
+----- specific_fuel_l_per_ton : tous régimes, normalisé par Fixed -----
+    policy       mode  n_train_seeds  n_scenarios    iqm  ci_low  ci_high   mean
+Q-Learning spécialisé              5            3 1.0088  1.0007   1.0218 1.0136
+     SARSA spécialisé              5            3 1.1256  1.1143   1.1459 1.1313
+       DQN spécialisé              5            3 2.3981  1.5747   3.8595 3.6632
+       PPO spécialisé              5            3 0.8888  0.8835   0.8960 0.8934
+
+----- specific_fuel_l_per_ton : probabilité d'amélioration -----
+      scenario               pair  p_improvement  ci_low  ci_high
+       nominal          PPO > DQN           0.80   0.400      1.0
+     high_load          PPO > DQN           0.92   0.760      1.0
+high_breakdown          PPO > DQN           0.80   0.400      1.0
+      ensemble          PPO > DQN           0.84   0.653      1.0
+       nominal   PPO > Q-Learning           1.00   1.000      1.0
+     high_load   PPO > Q-Learning           1.00   1.000      1.0
+high_breakdown   PPO > Q-Learning           1.00   1.000      1.0
+      ensemble   PPO > Q-Learning           1.00   1.000      1.0
+       nominal   DQN > Q-Learning           0.20   0.000      0.6
+     high_load   DQN > Q-Learning           0.20   0.000      0.6
+high_breakdown   DQN > Q-Learning           0.20   0.000      0.6
+      ensemble   DQN > Q-Learning           0.20   0.000      0.4
+       nominal Q-Learning > SARSA           1.00   1.000      1.0
+     high_load Q-Learning > SARSA           1.00   1.000      1.0
+high_breakdown Q-Learning > SARSA           1.00   1.000      1.0
+      ensemble Q-Learning > SARSA           1.00   1.000      1.0

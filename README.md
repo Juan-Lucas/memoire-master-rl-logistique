@@ -68,6 +68,8 @@ Campagne du 22 au 28 octobre 2026 : 10 politiques (6 heuristiques, Q-Learning, S
 - PPO entraîné en conditions nominales garde ses performances sans réentraînement en forte charge, en fortes pannes et dans deux régimes jamais vus.
 - DQN s'effondre sur l'action ATTENDRE dans 4 modèles nominaux sur 5 ; les agents tabulaires se dégradent quand l'exploration diminue.
 
+Données : CSV de l'évaluation, analyses, configurations et métadonnées des modèles dans `data/results_v2/campagne/` (les modèles eux-mêmes restent hors de git).
+
 Détails : article `reports/article/RL_article.tex` (anglais, version soumise) et `reports/article/RL_article_FR_v3.tex` (français) ; analyses dans `data/results_v2/campagne/analyses/`.
 
 ---
@@ -126,5 +128,5 @@ memoire_master_rl_logistique/
 configs/        paramètres (YAML)
 tests/          tests automatiques
 reports/        article (français et anglais), mémoire, figures
-docs/           journal des corrections et notes de travail (non versionné)
+docs/           plan et journal des corrections (versionnés), notes de travail (locales)
 ```

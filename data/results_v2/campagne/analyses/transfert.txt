@@ -1,0 +1,22 @@
+
+===== productivity_tph (transféré − spécialisé) =====
+      scenario     policy  n_seeds  specialised  transferred      diff    ci_low   ci_high  diff_pct
+high_breakdown        DQN       30     1578.500     1226.167  -352.333  -367.967  -329.230   -22.321
+high_breakdown        PPO       30     4163.950     4163.483    -0.467    -6.183     5.020    -0.011
+high_breakdown Q-Learning       30     3839.850     3871.583    31.733    22.867    40.370     0.826
+high_breakdown      SARSA       30     3353.117     3419.150    66.033    51.683    79.450     1.969
+     high_load        DQN       30      984.550     1802.267   817.717   724.730   908.367    83.055
+     high_load        PPO       30     6310.033     6257.883   -52.150   -67.083   -37.567    -0.826
+     high_load Q-Learning       30     5787.950     5757.033   -30.917   -49.583   -10.850    -0.534
+     high_load      SARSA       30     5409.833     4035.733 -1374.100 -1393.000 -1355.083   -25.400
+
+===== specific_fuel_l_per_ton (transféré − spécialisé) =====
+      scenario     policy  n_seeds  specialised  transferred   diff  ci_low  ci_high  diff_pct
+high_breakdown        DQN       30        0.546        0.568  0.022   0.003    0.045     3.991
+high_breakdown        PPO       30        0.242        0.239 -0.003  -0.004   -0.003    -1.347
+high_breakdown Q-Learning       30        0.275        0.273 -0.002  -0.003   -0.001    -0.655
+high_breakdown      SARSA       30        0.313        0.306 -0.007  -0.008   -0.006    -2.161
+     high_load        DQN       30        1.874        0.591 -1.283  -1.331   -1.230   -68.475
+     high_load        PPO       30        0.248        0.243 -0.005  -0.005   -0.005    -1.992
+     high_load Q-Learning       30        0.279        0.276 -0.003  -0.003   -0.002    -0.969
+     high_load      SARSA       30        0.303        0.319  0.016   0.014    0.017     5.169
