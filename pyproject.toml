@@ -19,6 +19,7 @@ requires-python = "==3.11.11"
 dependencies = [
     "networkx>=3.0",
     "matplotlib>=3.7",
+    "pyyaml>=6.0",  # lecture de configs/ (T28)
 ]
 
 
@@ -34,3 +35,7 @@ extend-select = ["I"]  # Add import sorting
 known-first-party = ["memoire_master_rl_logistique"]
 force-sort-within-sections = true
 
+
+[tool.pytest.ini_options]
+# Les tests sont dans tests/ ; archives/ contient des scripts d'essai nommés *_test.py.
+testpaths = ["tests"]

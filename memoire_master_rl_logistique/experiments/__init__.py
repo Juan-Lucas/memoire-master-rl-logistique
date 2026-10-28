@@ -1,1 +1,1 @@
-"""Module d'expérimentation (Chapitre 5)."""
+"""Définition des scénarios et lancement des expériences (benchmark, ablation)."""

@@ -1,11 +1,29 @@
+# Hyperparamètres de PPO (Stable-Baselines3), lus par rl/train_ppo.py (T28).
+# La graine n'est pas ici : un agent par graine d'entraînement (experiment_config.yaml).
+# Le budget (total_timesteps) dépend du scénario (experiment_config.yaml).
+#
+# Valeurs de la campagne v2 (17 octobre 2026), voir « Mise au point des agents » dans le
+# journal : learning_rate et ent_coef choisis par le réglage de T25 bis (graines de
+# sélection, 200 000 pas) ; gamma et normalize_reward retenus par la piste 2 (2 000 000 pas).
+# Valeurs de la v1 : learning_rate 0,0003, gamma 0,99, ent_coef 0,02, normalize_reward false.
 algorithm: PPO
-seed: 42
-learning_rate: 0.0003
-gamma: 0.99
+learning_rate: 0.0001
+gamma: 0.995
 batch_size: 64
 gae_lambda: 0.95
 clip_range: 0.2
 n_steps: 1024
 n_epochs: 10
-ent_coef: 0.02
-net_arch: [128, 128]
+ent_coef: 0.0
+net_arch: [128, 128]   # MLP, activation Tanh (valeur par défaut de SB3 pour PPO)
+# Environnements collectés en parallèle (SubprocVecEnv au-delà de 1, T29). Changer cette
+# valeur change le modèle obtenu (n_steps pas par environnement, donc n_steps × n_envs par
+# mise à jour) : 1 = protocole de la v1.
+n_envs: 1
+# Normalisation de la récompense pendant l'entraînement (VecNormalize, observations non
+# normalisées : elles sont déjà dans [0, 1]). false = protocole de la v1.
+normalize_reward: true
+# Actualisation par minute (formulation semi-markovienne, décision du 21 octobre 2026,
+# rl/time_discount.py) : γ s'applique à une décision de 1,89 min ; une décision de Δt
+# minutes est actualisée par γ^(Δt / 1,89). false = actualisation par décision (essais 0 à 13).
+time_discount: true

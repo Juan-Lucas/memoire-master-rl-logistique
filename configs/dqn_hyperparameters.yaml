@@ -1,12 +1,25 @@
+# Hyperparamètres de DQN (Stable-Baselines3), lus par rl/train_dqn.py (T28).
+# La graine n'est pas ici : un agent par graine d'entraînement (experiment_config.yaml).
+# Le budget (total_timesteps) dépend du scénario (experiment_config.yaml).
+#
+# Valeurs de la campagne v2 (17 octobre 2026), voir « Mise au point des agents » dans le
+# journal : exploration_fraction et learning_rate choisis par le réglage de T25 bis (graines
+# de sélection, 200 000 pas) ; gamma = celui retenu pour PPO (règle d'équité, point 11).
+# La récompense n'est pas normalisée pour DQN : sa mémoire de rejeu garderait des
+# récompenses normalisées avec des statistiques qui changent (déclaré dans l'article).
+# Valeurs de la v1 : gamma 0,99, exploration_fraction 0,3.
 algorithm: DQN
-seed: 42
 learning_rate: 0.0003
-gamma: 0.99
+gamma: 0.995
 batch_size: 64
 buffer_size: 200000
 learning_starts: 1000
 target_update_interval: 1000
-exploration_fraction: 0.3
+exploration_fraction: 0.1
 exploration_initial_eps: 1.0
 exploration_final_eps: 0.02
 net_arch: [128, 128]
+# Actualisation par minute (formulation semi-markovienne, décision du 21 octobre 2026,
+# rl/time_discount.py) : γ s'applique à une décision de 1,89 min ; une décision de Δt
+# minutes est actualisée par γ^(Δt / 1,89). false = actualisation par décision (essais 0 à 13).
+time_discount: true

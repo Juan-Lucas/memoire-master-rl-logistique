@@ -1,0 +1,1717 @@
+\documentclass[11pt,a4paper]{article}
+
+% Paquets de base
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[shorthands=off,french]{babel}
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{graphicx}
+\graphicspath{{v3/}{v2/}{../}} % figures de la campagne (article/v3/figures), puis v2, puis reports/figures
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{longtable}
+
+% Pseudocode
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algrenewcommand\algorithmicrequire{\textbf{Entrée :}}
+\algrenewcommand\algorithmicensure{\textbf{Sortie :}}
+
+% Références et Liens
+\usepackage[hyphens]{url}
+\usepackage{hyperref}
+\usepackage[nameinlink,capitalise]{cleveref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=blue!55!black,
+  urlcolor=blue!65!black,
+  pdftitle={Au-delà des heuristiques de dispatching statiques},
+  pdfauthor={Jean-Luc MUPASA KALUNGA}
+}
+
+% Configuration des légendes et tableaux
+\captionsetup{font=small,labelfont=bf} % Légendes petites et labels en gras
+\setlist[itemize]{leftmargin=1.5em,itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{leftmargin=1.7em,itemsep=2pt,topsep=4pt}
+\renewcommand{\arraystretch}{1.15} % Espacement vertical des tableaux
+
+% Suppression du style fancyhdr
+\pagestyle{plain} 
+
+
+% ============================================================================
+% MARQUAGE DES RÉVISIONS (version 2, 7 octobre 2026)
+% \revmarkstrue  : les passages modifiés apparaissent en bleu, suivis de leur
+%                  code entre crochets [M1], [m4]... renvoyant au rapport de
+%                  relecture (M = commentaire majeur, m = mineur) ou au
+%                  rapport d'audit du code (N = nouveau problème, A = audit).
+% \revmarksfalse : version propre, sans couleurs ni balises.
+% Les balises orange signalent une expérience encore à faire, les balises
+% violettes une décision à valider avec la directrice, les balises vertes
+% une figure à régénérer avec les scripts du projet.
+% ============================================================================
+\newif\ifrevmarks
+\revmarksfalse
+\definecolor{revcolor}{RGB}{0,70,160}
+\newcommand{\revtag}[1]{\ifrevmarks\textsuperscript{\textcolor{red!70!black}{\scriptsize[#1]}}\fi}
+\newcommand{\rev}[2]{\ifrevmarks{\color{revcolor}#2}\revtag{#1}\else#2\fi}
+\newenvironment{revbloc}[1]{\par\ifrevmarks\color{revcolor}\noindent\revtag{#1}\ \fi}{\par}
+\newcommand{\aexp}[1]{\ifrevmarks\textcolor{orange!85!black}{\textbf{[EXPÉRIENCE À FAIRE : #1]}}\fi}
+\newcommand{\adir}[1]{\ifrevmarks\textcolor{violet}{\textbf{[À VALIDER AVEC LA DIRECTRICE : #1]}}\fi}
+\newcommand{\afig}[1]{\ifrevmarks\textcolor{green!45!black}{\textbf{[FIGURE À RÉGÉNÉRER : #1]}}\fi}
+
+% Macros de rédaction
+\newcommand{\pending}[1]{\textcolor{red}{[À COMPLÉTER : #1]}}
+% Cadre de figure provisoire (à remplacer par \includegraphics)
+\newcommand{\phfig}[2][6cm]{%
+  \fbox{\parbox[c][#1][c]{0.92\textwidth}{\centering #2}}}
+
+
+% Titre et Auteurs
+\title{\textbf{Au-delà des heuristiques de dispatching statiques : une évaluation comparative de l'apprentissage par renforcement profond face aux perturbations dans l'exploitation minière à ciel ouvert}}
+
+\author{%
+\begin{tabular}{c}
+Jean-Luc Mupasa Kalunga$^{1,*}$ \qquad Olfa Ferchichi$^{2}$\\[0.5em]
+{\small $^{1}$Faculté des Sciences Informatiques, Université Don Bosco de Lubumbashi (UDBL), Lubumbashi, RDC}\\
+{\small $^{2}$Laboratoire RIADI, ENSI, Université de la Manouba, Tunis, Tunisie}\\[0.3em]
+{\small\texttt{16mk293@esisalama.org; olfaferchichi@yahoo.fr}}
+\end{tabular}%
+}
+\date{} % Pas de date apparente
+
+
+\begin{document}
+
+\maketitle
+
+
+\begin{abstract}
+\begin{revbloc}{m1, m2, M1, M3, v3, T31}
+Le transport par camions et pelles peut représenter jusqu'à 60\,\% des coûts d'exploitation d'une mine à ciel ouvert et reste très sensible aux perturbations. Les travaux d'apprentissage par renforcement appliqués au dispatching des camions évaluent généralement les politiques dans un seul régime, face à des heuristiques simples et à partir d'un seul entraînement, si bien que leur intérêt réel et leur comportement sous perturbation restent mal connus. Cet article compare dix politiques de dispatching dans un simulateur stochastique à événements discrets : six heuristiques, dont une règle fondée sur l'attente prévue et une politique fondée sur un programme linéaire, deux agents d'apprentissage par renforcement tabulaire, Q-Learning et State--Action--Reward--State--Action, et deux agents d'apprentissage par renforcement profond, Deep Q-Network et Proximal Policy Optimization. Les décisions n'ayant pas toutes la même durée, le problème est formulé comme un processus de décision semi-markovien, avec une actualisation par minute. Les agents sont mis au point selon une règle fixée à l'avance, sur des graines distinctes de celles de l'évaluation, et chacun est entraîné avec cinq graines. Trois régimes sont étudiés : conditions nominales, flotte augmentée de moitié et pannes fréquentes des camions ; les agents entraînés en conditions nominales sont aussi évalués sans réentraînement dans les deux régimes perturbés. Chaque combinaison de politique et de régime est évaluée sur 30 réplications appariées, avec des tests non paramétriques corrigés pour les comparaisons multiples et des intervalles de confiance sur les graines d'entraînement. La règle fondée sur l'attente prévue est la plus productive dans les trois régimes. Proximal Policy Optimization la suit de près, à 0,5 à 0,9\,\% en dessous, au niveau de la politique fondée sur un programme linéaire ; il consomme de 1,4 à 2,8\,\% de carburant de moins par tonne et conserve ses performances, sans réentraînement, dans les régimes perturbés et dans deux régimes jamais vus. Deep Q-Network s'effondre sur l'action d'attente dans quatre de ses cinq modèles nominaux, quelle que soit la pénalité d'attente, et les agents tabulaires se dégradent à mesure que l'exploration diminue. Aucun agent ne dépasse donc la meilleure heuristique : l'intérêt de l'apprentissage tient ici au compromis avec le carburant et à la stabilité hors du régime d'entraînement, et il doit être mesuré face à des règles qui tiennent compte des files plutôt que face à des règles statiques.
+\end{revbloc}
+\end{abstract}
+
+
+\noindent\textbf{Mots-clés :} \rev{m1}{Apprentissage par renforcement profond ; Exploitation minière à ciel ouvert ; Dispatching de camions ; Gestion de flotte ; Résilience opérationnelle ; Simulation stochastique ; Proximal policy optimization ; Deep Q-network.}
+
+% ============================================================================
+% Section 1 : Introduction
+% ============================================================================
+\section{Introduction}
+\label{sec:intro}
+
+L'exploitation minière à ciel ouvert constitue une pierre angulaire de la chaîne mondiale d'approvisionnement en matières premières, où la viabilité économique des opérations est indissociable de l'efficacité de systèmes logistiques de grande envergure. Il est par conséquent impératif d'explorer les avancées technologiques récentes pour améliorer la performance et la résilience de ces dispositifs logistiques.
+
+% ---------------------------------------------------------
+\subsection{Contexte industriel}
+% ---------------------------------------------------------
+
+Les mines à ciel ouvert sont des systèmes industriels de très grande échelle dans lesquels le cycle des camions et des pelles constitue l'ossature logistique principale. Ce processus, qui comprend l'excavation, le transport et le déversement des matériaux, n'est pas une simple tâche opérationnelle mais un facteur financier déterminant, représentant jusqu'à 60\,\% des coûts d'exploitation totaux d'un site minier \cite{Afrapoli2017}. Dans l'exploitation minière moderne, la pression pour optimiser ces flux est double : maximiser le débit afin de répondre à la demande mondiale de matières premières, tout en minimisant la consommation d'énergie et les émissions de gaz à effet de serre associées aux flottes de transport diesel.
+
+L'efficacité de ces systèmes est toutefois constamment mise à l'épreuve par une forte variabilité opérationnelle. Dans les environnements miniers réels, les conditions sont loin d'être déterministes. Les pannes d'équipements, les fluctuations de charge utile, les temps de trajet aléatoires causés par la dégradation des pistes et les congestions soudaines du trafic créent ensemble un environnement très instable. La gestion de cette complexité exige une prise de décision en temps réel, capable de concilier la productivité immédiate et la résilience de la flotte.
+
+% ---------------------------------------------------------
+\subsection{Notions utilisées}
+% ---------------------------------------------------------
+
+\begin{revbloc}{m3, m4}
+Cette étude repose sur quelques notions utilisées tout au long de l'article. L'apprentissage par renforcement (Reinforcement Learning, RL) désigne une branche de l'intelligence artificielle dans laquelle un agent autonome apprend un comportement par essais et erreurs, au fil de ses interactions avec un environnement dynamique, de façon à maximiser un signal de récompense cumulée. L'apprentissage par renforcement profond (Deep Reinforcement Learning, DRL) étend le RL en utilisant des réseaux de neurones pour approximer les fonctions de valeur ou les politiques, ce qui permet de traiter des espaces d'états de grande dimension. Le dispatching de camions désigne le processus opérationnel en temps réel consistant à affecter des camions à des points de chargement et de déversement afin d'assurer la synchronisation de la flotte et la productivité ; il est mis en œuvre dans les mines par des systèmes de gestion de flotte (Fleet Management Systems, FMS).
+
+Quatre algorithmes d'apprentissage sont étudiés. Q-Learning et State--Action--Reward--State--Action (SARSA) sont des méthodes tabulaires qui stockent une valeur pour chaque couple état--action. Deep Q-Network (DQN) remplace cette table par un réseau de neurones. Proximal Policy Optimization (PPO) apprend directement une politique au moyen d'une méthode acteur--critique. \rev{T31}{Les six heuristiques de référence sont désignées dans la suite par premier arrivé, premier servi (First-In-First-Out, FIFO), Affectation fixe, Pelle la plus proche, Plus court chemin, temps d'attente minimal des camions (Minimum Truck Waiting Time, MTWT) et LP, une politique fondée sur un programme linéaire ;} leur définition exacte est donnée dans la \cref{sec:baselines-def}. Enfin, le problème de décision est formulé comme un processus de décision markovien (Markov Decision Process, MDP), plus précisément comme un processus de décision semi-markovien (Semi-Markov Decision Process, SMDP), puisque les décisions sont séparées par des durées variables (\cref{sec:smdp}).
+\end{revbloc}
+
+% ---------------------------------------------------------
+\subsection{Objectif et organisation de l'article}
+% ---------------------------------------------------------
+
+\begin{revbloc}{M23, M24}
+L'objectif de ce travail est de déterminer dans quels régimes de fonctionnement une politique de dispatching apprise est préférable à une règle industrielle, et d'expliquer les écarts observés à partir du comportement des politiques. La contribution est évaluative : aucun nouvel algorithme n'est proposé, et l'apport réside dans un protocole de comparaison contrôlé, appliqué à \rev{T31}{dix politiques} et à trois régimes.
+
+Le reste de l'article est organisé comme suit. La \cref{sec:relwork} (\nameref{sec:relwork}) passe en revue la littérature sur le dispatching de camions selon trois paradigmes. La \cref{sec:positioning} (\nameref{sec:positioning}) synthétise cette littérature dans un tableau de positionnement et en déduit la lacune de recherche, le problème étudié, les questions de recherche et les hypothèses. La \cref{sec:contributions} (\nameref{sec:contributions}) présente les contributions et le cadre méthodologique. La \cref{sec:approach} (\nameref{sec:approach}) décrit le système modélisé, le simulateur, la formulation du problème de décision et les agents étudiés. La \cref{sec:design} (\nameref{sec:design}) détaille le protocole expérimental et la \cref{sec:results} (\nameref{sec:results}) les résultats. La \cref{sec:discussion} (\nameref{sec:discussion}) discute ces résultats et leurs limites, et la \cref{sec:conclusion} (\nameref{sec:conclusion}) conclut l'article.
+\end{revbloc}
+
+\adir{nouvelle structure de l'article (M24) : à faire valider avant la traduction anglaise.}
+
+
+\section{Travaux connexes}
+\label{sec:relwork}
+
+L'optimisation des systèmes camions--pelles est au c\oe ur de l'ingénierie minière et de la recherche opérationnelle depuis plus de six décennies. \rev{m22}{Comme le soulignent Newman et al.} \cite{AlexandraNewman2010}, l'évolution de ces systèmes est passée de la planification manuelle à des systèmes de gestion de flotte (FMS) automatisés complexes. Cette section passe en revue la littérature autour de trois grands paradigmes : les heuristiques statiques, la programmation mathématique et le domaine émergent de l'apprentissage par renforcement.
+
+\subsection{Dispatching de camions statique et à base de règles}
+
+Le dispatching à base de règles demeure le paradigme dominant dans les mines en exploitation, car il est transparent, peu coûteux en calcul et facile à intégrer dans les logiciels FMS commerciaux. Les premières revues des stratégies de dispatching informatisées \cite{MohanMunirathinam1994} et l'aperçu ultérieur des stratégies de résolution proposé par Alarie et Gamache \cite{Alarie2002} identifient un petit ensemble de règles de décision récurrentes qui structurent encore aujourd'hui la pratique industrielle.
+
+\begin{revbloc}{M25, Dir. corr. 1}
+Quatre règles sont particulièrement pertinentes pour la présente étude. La règle premier arrivé, premier servi (FIFO) sert en priorité l'unité de chargement qui attend un camion depuis le plus longtemps ; elle équilibre la charge des pelles mais ignore la configuration spatiale de la fosse. L'Affectation fixe attribue chaque camion à une pelle prédéterminée pour toute la durée du poste ; elle stabilise le facteur d'appariement et reste une référence industrielle répandue, mais ne peut pas réallouer la capacité en réponse à des déséquilibres de files. La Pelle la plus proche envoie le camion vers l'unité de chargement la plus proche, ce qui minimise la distance parcourue à vide au prix d'une optimisation purement locale. Le Plus court chemin généralise cette idée en choisissant la destination qui minimise un coût de cycle estimé sur le graphe des pistes. Les définitions exactes retenues dans cette étude figurent dans le \cref{tab:baselines}.
+\end{revbloc}
+
+La performance pratique de ces règles a été évaluée aussi bien sur le terrain qu'en simulation. Subtil et al. \cite{Subtil2011} rapportent une mise en œuvre pratique du dispatching dans une mine à ciel ouvert en exploitation, tandis que Mohtasham et Mirzaei-Nasirabad \cite{MehrnazMohtasham2023} évaluent un progiciel de dispatching commercial dans la mine de cuivre de Sungun et soulignent la sensibilité de la logique à base de règles aux conditions opérationnelles. La simulation à événements discrets a été l'instrument standard de ce type d'évaluation \cite{NecmettinCetin2004, MarceloFioroni2008, Zeng2022, MiladAbolghasemian2020}. Elle montre de façon constante que les règles gloutonnes se dégradent fortement dès que la taille de la flotte dépasse la capacité de chargement de la fosse, car les files d'attente se concentrent sur un sous-ensemble de pelles. \rev{M25, m5, T31}{Les heuristiques retenues ici représentent des logiques différentes : FIFO tient compte de l'état des files, l'Affectation fixe impose une répartition statique et équilibrée, tandis que Pelle la plus proche et Plus court chemin s'appuient sur la proximité spatiale sans tenir compte des files. Deux références plus fortes, de la famille de celles qu'utilisent les systèmes commerciaux, complètent l'ensemble : une règle combinant files et temps de trajet, le temps d'attente minimal des camions \cite{Zeng2022}, et une politique guidée par une couche d'optimisation linéaire en amont \cite{Soumis1989, AmandaSmith2020}.}
+
+\subsection{Optimisation mathématique et métaheuristiques}
+
+Pour dépasser les limites des règles simples, les chercheurs se sont tournés vers la programmation mathématique. Soumis et al. \cite{Soumis1989} ont proposé une approche à plusieurs étapes combinant la programmation linéaire (PL) pour la planification de la production et des modèles d'affectation pour le dispatching en temps réel. Cette structure modulaire reste l'ossature de nombreux FMS modernes. Ahangaran et al. \cite{Ahangaran2012} ont étendu cette approche en développant des modèles spécifiquement dédiés aux flottes de camions de capacités hétérogènes, en utilisant des réseaux de flots pour équilibrer la production.
+
+Cependant, la nature déterministe de la programmation linéaire en nombres entiers mixtes (MILP) entre souvent en conflit avec la réalité stochastique de l'exploitation minière. Ta et al. \cite{ChungTa2013} ont tenté de combler cet écart en incorporant des probabilités d'inactivité des pelles dans des modèles linéaires, en recourant à la théorie des files d'attente pour obtenir de meilleures estimations de production. Malgré ces avancées, les modèles MILP souffrent fréquemment de la malédiction de la dimensionnalité lorsqu'ils sont appliqués à de grandes mines exploitant des dizaines de camions \cite{AmandaSmith2020, ZhongxinWang2022}.
+
+Pour gérer cette complexité, les métaheuristiques ont été largement appliquées au dispatching et à l'acheminement des camions. Souza et al. \cite{Souza2010} ont démontré qu'une heuristique hybride combinant GRASP et VNS pouvait obtenir des solutions quasi optimales en des temps de calcul réduits. Liu et Chai \cite{GuangweiLiu2019} ont utilisé un algorithme génétique pour minimiser la consommation d'énergie liée au transport tout en tenant compte de la résistance variable des pistes dans le temps. Les algorithmes d'optimisation par colonies de fourmis, qui modélisent la sélection probabiliste d'itinéraires par les insectes sociaux au moyen de mécanismes de mise à jour des phéromones, ont été appliqués aux problèmes d'affectation multi-véhicules dans l'exploitation minière de surface, car leur sélection stochastique s'adapte naturellement aux demandes concurrentes sur des tronçons de piste partagés \cite{ShivPrakashUpadhyay2017}. Le recuit simulé, qui accepte des mouvements sous-optimaux avec une probabilité contrôlée par une température afin d'échapper aux optima locaux, a de même été utilisé pour l'ordonnancement dans les environnements à ciel ouvert \cite{BurakOzdemir2019}. Bien que puissantes, les métaheuristiques sont souvent formulées pour optimiser un état donné du système ou un horizon de planification donné. Lorsque des perturbations importantes modifient les conditions de fonctionnement sous-jacentes, le processus d'optimisation doit être répété ou réoptimisé, ce qui peut limiter la réactivité lorsque les décisions doivent être mises à jour à de courtes échelles de temps dans des environnements miniers dynamiques.
+
+\subsection{Approches par apprentissage par renforcement}
+
+Le passage à l'apprentissage par renforcement représente un changement de paradigme : au lieu de résoudre un nouveau problème d'optimisation à chaque époque de décision, un agent apprend une politique qui associe les états du système à des actions \rev{v3}{\cite{RichardSutton2018}}. Les premières applications du RL en logistique, comme celles de Nazari et al. \cite{MohammadrezaNazari2018} pour le problème de tournées de véhicules (VRP) et de Zhang et al. \cite{CongZhang2020} pour l'ordonnancement d'atelier, ont démontré que le DRL pouvait surpasser les heuristiques classiques en apprenant à partir de milliers d'interactions simulées.
+
+Au sein de la famille de l'apprentissage par renforcement, les méthodes diffèrent substantiellement par leur puissance de représentation et leur paradigme d'apprentissage. \rev{m5}{Les méthodes tabulaires, telles que Q-Learning et SARSA \cite{RichardSutton2018},} construisent des fonctions de valeur sur des tables d'états-actions discrets, ce qui les rend transparentes et légères en calcul, mais leur expressivité se dégrade fortement lorsque l'espace d'observation croît avec la taille de la flotte. Les agents DQN répondent à ce problème en approximant la fonction Q par un réseau de neurones et en stabilisant l'entraînement grâce au rejeu d'expériences et au gel du réseau cible, ce qui permet de généraliser à des entrées continues de grande dimension. PPO \cite{JohnSchulman2017} appartient à la famille acteur-critique : elle optimise directement la politique via un objectif de substitution dont la contrainte d'écrêtage empêche les mises à jour catastrophiques des paramètres. Ces quatre algorithmes, du tabulaire au profond et de l'approche fondée sur la valeur au gradient de politique, forment un spectre comparatif naturel et constituent précisément la composante RL du banc d'essai conçu dans cette étude.
+
+Dans le secteur minier, cette transition est plus récente. Hazrathosseini et Afrapoli \cite{Hazrathosseini2024} proposent une revue critique, soulignant que, bien que le RL présente un potentiel considérable pour les FMS intelligents, la plupart des études restent au stade de la preuve de concept. de Carvalho et Dimitrakopoulos \cite{deCarvalho2023} ont appliqué un cadre acteur--critique à la planification de la production, montrant que le RL peut traiter efficacement la dynamique de la flotte tout en mettant à jour les objectifs de production.
+
+Des bancs d'essai récents, tels que Mining-Gym \cite{Banerjee2025}, ont commencé à fournir des environnements standardisés pour tester ces algorithmes. Zhao et al. \cite{Zhao2025} ont proposé une approche hiérarchique d'apprentissage par renforcement multi-agent (MARL) pour un dispatching durable, avec un accent sur l'efficacité énergétique, tandis que Pei et al. \cite{Pei2025} et Rosales et Diaz \cite{FranciscoRosales2025} ont exploré le dispatching par apprentissage et le dispatching interprétable pour le transport minier autonome. L'usage d'une aide à la décision fondée sur le RL pour l'ordonnancement industriel hiérarchique dépasse le secteur minier : \rev{v3}{Szatmári et al.~\cite{KingaSzatmari2025} passent en revue} des architectures multi-niveaux similaires dans la conduite de procédés chimiques, ce qui suggère que les schémas de conception émergeant dans la recherche sur le dispatching minier ont une large pertinence inter-domaines. Une limite commune à ces études est toutefois leur focalisation sur les conditions nominales. La plupart des agents RL sont entraînés et testés dans des environnements stables ; peu d'études évaluent explicitement le comportement d'un agent DQN ou PPO face à des pannes d'équipements fréquentes ou à des pics de congestion inattendus.
+
+% ============================================================================
+% Section 3 : Positionnement et problématique
+% ============================================================================
+\section{Positionnement et problématique}
+\label{sec:positioning}
+
+\begin{revbloc}{M24}
+Le \cref{tab:litterature} situe l'étude par rapport aux familles de travaux examinées dans la \cref{sec:relwork} ; les sous-sections suivantes en déduisent la lacune de recherche, le problème étudié, les questions de recherche et les hypothèses.
+\end{revbloc}
+
+\begin{table}[H]
+\centering
+
+\caption{Positionnement de l'étude proposée par rapport à des approches représentatives de dispatching de camions.}
+\label{tab:litterature}
+
+\renewcommand{\arraystretch}{1.35}
+\setlength{\tabcolsep}{3.2pt}
+\footnotesize
+
+\begin{tabularx}{\textwidth}{
+>{\raggedright\arraybackslash}p{3.0cm}
+>{\centering\arraybackslash}p{1.9cm}
+>{\centering\arraybackslash}p{2.2cm}
+>{\centering\arraybackslash}p{1.7cm}
+>{\centering\arraybackslash}p{1.6cm}
+>{\centering\arraybackslash}p{2.0cm}
+>{\raggedright\arraybackslash}X
+}
+
+\toprule
+
+\textbf{Approche} &
+\makecell{\textbf{Optimisation}\\\textbf{formelle}} &
+\textbf{Apprentissage} &
+\makecell{\textbf{Tests de}\\\textbf{perturbation}} &
+\textbf{Références} &
+\makecell{\textbf{Protocole de}\\\textbf{réplication}} &
+\textbf{Objet de l'évaluation} \\
+
+\midrule
+
+Revues sur le dispatching et la gestion de flotte
+\cite{AlexandraNewman2010,MohanMunirathinam1994,Alarie2002,Hazrathosseini2024,Afrapoli2017}
+&
+s.o.
+&
+s.o.
+&
+Non
+&
+s.o.
+&
+s.o.
+&
+Panorama des modèles et algorithmes
+\\
+
+\addlinespace
+
+Dispatching à base de règles, terrain et simulation
+\cite{Subtil2011,MehrnazMohtasham2023,NecmettinCetin2004,MarceloFioroni2008,MiladAbolghasemian2020}
+&
+Non
+&
+Non
+&
+Non
+&
+Pratique actuelle
+&
+Limité
+&
+Validation sur le terrain ou par événements discrets
+\\
+
+\addlinespace
+
+Comparaison de règles selon la taille de la flotte
+\cite{Zeng2022}
+&
+Algorithme génétique
+&
+Non
+&
+Congestion
+&
+4 à 6 règles
+&
+Limité
+&
+Comparaison de stratégies d'allocation
+\\
+
+\addlinespace
+
+Programmation mathématique
+\cite{Soumis1989,Ahangaran2012,ChungTa2013,AmandaSmith2020,ZhongxinWang2022}
+&
+Oui (PL / MILP)
+&
+Non
+&
+Non
+&
+0 à 2
+&
+Limité
+&
+Optimalité en conditions stables
+\\
+
+\addlinespace
+
+Métaheuristiques et simulation-optimisation
+\cite{Souza2010,GuangweiLiu2019,ShivPrakashUpadhyay2017,BurakOzdemir2019}
+&
+Oui (recherche heuristique)
+&
+Non
+&
+Fondé sur des scénarios
+&
+MILP ou 1 à 2 règles
+&
+Limité
+&
+Solutions de planification quasi optimales
+\\
+
+\addlinespace
+
+Dispatching par apprentissage, autres domaines
+\cite{MohammadrezaNazari2018,CongZhang2020,KingaSzatmari2025}
+&
+Non
+&
+RL profond et hiérarchique
+&
+Non
+&
+Heuristiques classiques
+&
+Oui
+&
+Performance en tournées et ordonnancement
+\\
+
+\addlinespace
+
+Apprentissage par renforcement dans le secteur minier
+\cite{deCarvalho2023,Banerjee2025,Zhao2025,Pei2025,FranciscoRosales2025}
+&
+Non
+&
+Acteur--critique, MARL, RL interprétable
+&
+Non
+&
+0 à 3
+&
+Limité
+&
+Dispatching de type preuve de concept
+\\
+
+\addlinespace
+
+\textbf{Étude proposée}
+&
+\rev{m17}{\textbf{Non (heuristiques comme références)}}
+&
+\textbf{RL tabulaire et profond (Q-Learning, SARSA, DQN, PPO)}
+&
+\textbf{Congestion et pannes}
+&
+\rev{T31}{\textbf{6 heuristiques, dont MTWT et LP}}
+&
+\rev{M3, T31}{\textbf{30 réplications appariées, 5 graines d'entraînement}}
+&
+\textbf{Résilience opérationnelle sur trois régimes}
+\\
+
+\bottomrule
+
+\end{tabularx}
+\end{table}
+
+% ---------------------------------------------------------
+\subsection{Lacunes de la recherche}
+\label{sec:gap}
+% ---------------------------------------------------------
+
+\begin{revbloc}{M24 (fusion §1.3, §2.4, §3)}
+La littérature examinée et le \cref{tab:litterature} font apparaître quatre lacunes complémentaires.
+
+Premièrement, les trois paradigmes passés en revue sont rarement comparés entre eux. Les travaux à base de règles comparent les règles de dispatching entre elles \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, la programmation mathématique compare un optimiseur à une règle ou à une formulation en nombres entiers mixtes \cite{Soumis1989, AmandaSmith2020}, et les travaux fondés sur l'apprentissage comparent un agent à un petit nombre de règles de référence \cite{deCarvalho2023, Zhao2025}. Lorsque des comparaisons entre familles existent, les algorithmes sont évalués sur des environnements, des récompenses ou des configurations de flotte différents, ce qui empêche d'attribuer une différence observée à la logique de dispatching elle-même.
+
+Deuxièmement, le régime de fonctionnement est généralement traité comme un contexte fixe plutôt que comme un facteur expérimental. Les revues sur la gestion de flotte fondée sur le RL observent que la plupart des contributions restent au stade de la preuve de concept et sont évaluées dans des environnements stables \cite{Hazrathosseini2024}, et les études qui prennent en compte des perturbations n'en considèrent généralement qu'un seul type, le plus souvent la congestion \cite{Zeng2022}. Un classement rapporté est donc conditionnel à un seul point de fonctionnement.
+
+Troisièmement, la solidité des références est souvent insuffisante. Les études fondées sur l'apprentissage rapportent des améliorations par rapport à deux ou trois règles de référence \cite{Zhao2025}, et parfois par rapport à aucune \cite{deCarvalho2023}. Lorsque la règle de comparaison est faible, une amélioration n'établit que peu de choses sur la valeur pratique de la politique apprise.
+
+Quatrièmement, le protocole inférentiel est rarement documenté. Le nombre de réplications, le contrôle des graines aléatoires et les corrections pour comparaisons multiples sont rarement rapportés dans la littérature sur le dispatching minier \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, alors que la littérature sur l'évaluation des agents d'apprentissage par renforcement a montré que ces choix modifient les conclusions \cite{Henderson2018, Agarwal2021}.
+\end{revbloc}
+
+% ---------------------------------------------------------
+\subsection{Problème de recherche}
+\label{sec:problem-statement}
+% ---------------------------------------------------------
+
+\begin{revbloc}{M24}
+Le défi central du dispatching est l'affectation dynamique, en temps réel, des camions aux points de chargement et de déversement afin d'optimiser un objectif combinant débit, temps d'inactivité et consommation d'énergie. Les systèmes de gestion de flotte sont déployés dans les mines depuis plusieurs décennies \cite{Afrapoli2017, AlexandraNewman2010}, et les règles de décision qui les sous-tendent sont bien documentées \cite{MohanMunirathinam1994, Alarie2002}. Lorsqu'une perturbation survient, telle qu'une panne ou une congestion, elle peut se propager dans le réseau de transport sous forme de files d'attente et de sous-utilisation des équipements ; des études à événements discrets montrent ainsi que l'attente en file augmente avec la taille de la flotte dès que la capacité de chargement est approchée \cite{Zeng2022, NecmettinCetin2004}.
+
+La question pratique n'est donc pas seulement de savoir si un dispatching adaptatif améliore la productivité en conditions stables, mais si le choix d'une politique reste le bon lorsque le régime de fonctionnement change. Le problème est étudié à deux niveaux.
+
+\begin{quote}
+\textbf{Problème P1 -- Décision de dispatching en temps réel.}
+Étant donné l'état courant de la mine, affecter le camion qui vient de se libérer à un couple pelle--point de déversement, ou le faire patienter, de manière à maximiser le tonnage livré sur un poste tout en limitant l'attente en file et la consommation de carburant.
+\end{quote}
+
+\begin{quote}
+\textbf{Problème P2 -- Choix d'une politique selon le régime.}
+Étant donné un ensemble de politiques de dispatching et un ensemble de régimes de fonctionnement, déterminer quelle politique est la plus performante dans chaque régime, si le classement obtenu en conditions nominales se maintient sous perturbation, et si une politique apprise en conditions nominales conserve sa performance lorsqu'elle est déployée sans réentraînement dans un autre régime.
+\end{quote}
+
+Le problème P1 est formalisé dans la \cref{sec:smdp}. Le problème P2 est traité par le protocole expérimental de la \cref{sec:design}.
+\end{revbloc}
+
+% ---------------------------------------------------------
+\subsection{Questions de recherche et hypothèses}
+\label{sec:rq}
+% ---------------------------------------------------------
+
+\begin{revbloc}{M23}
+L'évaluation empirique répond à quatre questions de recherche :
+
+\begin{description}[leftmargin=1.2cm,labelwidth=1.0cm]
+  \item[QR1] Quelle politique atteint la productivité la plus élevée dans chaque régime, et ce classement se maintient-il d'un régime à l'autre ?
+  \item[QR2] Comment la productivité et l'attente en file évoluent-elles conjointement selon la politique et le régime ?
+  \item[QR3] Une politique apprise en conditions nominales conserve-t-elle sa performance lorsqu'elle est déployée sans réentraînement dans un régime perturbé, par rapport à une politique entraînée dans ce régime ?
+  \item[QR4] Le classement selon la consommation spécifique de carburant suit-il le classement de productivité ?
+\end{description}
+
+Les QR1 et QR2 sont traitées dans les \cref{sec:productivity,sec:waiting,sec:behaviour,sec:pareto}, la QR3 dans la \cref{sec:robustness} et la QR4 dans la \cref{sec:sustainability}. La significativité statistique de chaque comparaison est examinée dans la \cref{sec:stats}.
+
+Trois hypothèses réfutables, formulées avant l'analyse des résultats, guident l'étude :
+
+\begin{itemize}
+  \item \textbf{H1 :} en conditions nominales, les politiques d'apprentissage par renforcement profond obtiennent une productivité supérieure à celle de la meilleure heuristique.
+  \item \textbf{H2 :} aucune politique ne domine dans les trois régimes : le classement dépend du régime, ce qui se traduit par une interaction significative entre politique et régime.
+  \item \textbf{H3 :} une productivité élevée ne s'accompagne pas nécessairement d'une faible attente en file, de sorte que plusieurs politiques forment un compromis entre ces deux critères.
+\end{itemize}
+\end{revbloc}
+
+% ---------------------------------------------------------
+\subsection{Revendications et limites de portée}
+% ---------------------------------------------------------
+
+\begin{revbloc}{M26, M27}
+La contribution de cet article est évaluative plutôt qu'algorithmique : aucun nouvel algorithme d'apprentissage par renforcement n'est proposé. Elle ne repose pas non plus sur l'existence d'un environnement de simulation minier, puisque des environnements comparables existent déjà, tels que Mining-Gym \cite{Banerjee2025}. Elle réside dans la combinaison de plusieurs éléments rarement réunis : \rev{T31}{dix politiques de familles différentes, dont deux références fortes,} dans un même environnement, plusieurs régimes de fonctionnement traités comme un facteur expérimental, une évaluation de politiques apprises sans réentraînement \rev{v3}{(faite aussi par Pei et al.~\cite{Pei2025} pour le transport autonome)}, un protocole de réplication appariée avec des tests corrigés, et une analyse du comportement des politiques qui explique les écarts observés.
+
+Trois limites de portée découlent de ce positionnement et sont discutées dans la \cref{sec:limitations}. L'évaluation est menée en simulation, de sorte que les ordres de grandeur rapportés décrivent une performance relative dans l'environnement simulé proposé plutôt que des prédictions à l'échelle d'un site. Les agents sont des contrôleurs uniques qui décident pour tous les camions, de sorte que les formulations multi-agents \cite{Zhao2025} sortent de l'espace comparé. Enfin, les trois régimes représentent des perturbations stylisées, conçues pour être interprétables et reproductibles.
+\end{revbloc}
+
+\adir{vérifier ce que propose exactement Mining-Gym (perturbations, références) et ajuster la colonne correspondante du \cref{tab:litterature} (M26).}
+
+
+% ============================================================================
+% Section 4 : Contributions et cadre méthodologique
+% ============================================================================
+\section{Contributions et cadre méthodologique}
+\label{sec:contributions}
+
+\subsection{Contributions}
+
+\begin{revbloc}{M23, M24, M26, M16}
+Ce travail apporte quatre contributions.
+
+\begin{itemize}
+  \item \textbf{C1. Un protocole d'évaluation sur plusieurs régimes.} Un simulateur stochastique compatible avec l'interface Gymnasium est associé à un protocole de mesure qui traite le régime de fonctionnement comme un facteur expérimental, évalue chaque politique sur 30 réplications appariées et applique des tests appariés corrigés pour les comparaisons multiples.
+  \item \textbf{C2. Une comparaison de \rev{T31}{dix} politiques de familles différentes.} \rev{T31}{Six heuristiques, dont une règle fondée sur l'attente prévue (MTWT) et une politique fondée sur un programme linéaire (LP),} deux agents d'apprentissage tabulaire et deux agents d'apprentissage profond sont évalués dans le même environnement, avec les mêmes actions, les mêmes graines et les mêmes indicateurs.
+  \item \textbf{C3. Une analyse du comportement des politiques.} La répartition des cycles entre les pelles et l'usage de l'action d'attente, mesurés sur toutes les réplications, expliquent les écarts de productivité et d'attente entre politiques.
+  \item \textbf{C4. Une mise en évidence de la dépendance au régime.} \rev{T31}{Le classement des politiques est comparé d'un régime à l'autre, l'interaction entre politique et régime est testée,} et une évaluation sans réentraînement montre dans quelle mesure une politique apprise en conditions nominales conserve sa performance sous perturbation.
+\end{itemize}
+\end{revbloc}
+
+\subsection{Cadre méthodologique}
+
+\begin{revbloc}{M24}
+La \cref{fig:framework} résume les étapes de l'étude. (1) Le système de transport est modélisé et implémenté dans un simulateur stochastique (\cref{sec:system,sec:simulator}). (2) La décision de dispatching est formulée comme un processus de décision semi-markovien doté d'une récompense multi-objectif (\cref{sec:smdp,sec:reward}). (3) Les quatre agents d'apprentissage sont entraînés et les \rev{T31}{six} heuristiques sont implémentées (\cref{sec:agents,sec:baselines-def}). (4) Toutes les politiques sont évaluées dans trois régimes sur 30 réplications appariées, et les agents nominaux sont en outre évalués sans réentraînement dans les régimes perturbés (\cref{sec:design}). (5) Les résultats sont analysés par des tests statistiques appariés et par une analyse du comportement des politiques (\cref{sec:results}).
+\end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/framework.png}
+\caption{Cadre méthodologique de l'étude.}
+\label{fig:framework}
+\end{figure}
+
+\adir{la directrice a demandé une figure récapitulative des étapes, sans logos (réunions des 16 août et 22 septembre).}
+
+
+% ============================================================================
+% Section 5 : Approche proposée
+% ============================================================================
+\section{Approche proposée : modèle, simulateur et agents étudiés}
+\label{sec:approach}
+
+\rev{M23}{Cette section décrit le système modélisé, le simulateur, la formulation du problème de décision, la fonction de récompense, les agents d'apprentissage et les heuristiques de référence. Toutes les valeurs indiquées sont celles de l'implémentation évaluée.}
+
+\subsection{Système de transport par camions et pelles}
+\label{sec:system}
+
+La mine est modélisée comme un système de transport en boucle fermée composé de trois entités physiques :
+
+\begin{enumerate}
+  \item \textbf{Unités de chargement (pelles) :} ressources fixes caractérisées par leur durée de chargement. Chaque pelle sert un camion à la fois ; un camion qui arrive pendant un chargement attend que la pelle se libère.
+  \item \textbf{Unités de transport (camions) :} une flotte homogène de camions de 140 tonnes, caractérisés par leurs vitesses à vide et en charge et par leur consommation de carburant.
+  \item \textbf{Unités de déversement (verses) :} les destinations des matériaux. Comme les pelles, elles servent un camion à la fois.
+\end{enumerate}
+
+\rev{M11, N5}{Le système est soumis à des pannes de camions. À la fin de chaque cycle, un camion tombe en panne avec une probabilité fixe (2\,\% ou 10\,\% selon le régime) et reste immobilisé pendant une durée tirée uniformément entre 10 et 30 minutes. Les pelles et les verses ne tombent pas en panne dans la présente étude.}
+
+\subsection{Réseau routier stochastique}
+
+L'infrastructure de la mine est représentée par un graphe orienté $G = (V, E)$, où $V$ regroupe le parc de stationnement, une intersection, les pelles et les verses, et où $E$ représente les pistes reliant ces points. \rev{M11}{Chaque arête porte une distance, une pente et un état de surface. Le temps de trajet $T(e)$ d'une arête $e$ suit une loi log-normale centrée sur le temps moyen $\bar T(e)$ :}
+
+\begin{equation}
+T(e) \sim \mathrm{Lognormal}\big(\mu_e, \sigma^2\big), \qquad \mu_e = \ln \bar T(e) - \tfrac{\sigma^2}{2}, \qquad \sigma = 0{,}12 ,
+\end{equation}
+
+\rev{M11}{où $\bar T(e)$ dépend de la distance, de la vitesse de base (26~km/h en charge, 32~km/h à vide), d'une pénalité de 3\,\% par point de pente et de l'état de la piste. À chaque passage sur une arête, l'état de la piste se dégrade de 0,02 avec une probabilité de 5\,\% (plancher de 0,6) ; les pistes sont remises à neuf au début de chaque poste. L'ensemble des paramètres est rassemblé dans le \cref{tab:simparams}.}
+
+\subsection{Environnement de simulation}
+\label{sec:simulator}
+
+Le simulateur est conforme à l'interface Gymnasium \cite{MarkTowers2025}, ce qui garantit sa compatibilité avec Stable-Baselines3 \cite{AntoninRaffin2021}. L'architecture logicielle est illustrée dans la \cref{fig:simulation}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{"figures/Architecture_logicielle_du_projet_EN_v2.drawio.png"}
+\caption{Architecture logicielle modulaire du cadre d'évaluation.}
+\label{fig:simulation}
+\end{figure}
+
+\afig{dans draw.io, corriger le module « Simulation Engine » (« Time-step haulage physics » devient « Discrete-event simulation ; decision at the dump ») et le module « Energy Consumption » (« Fuel use from power demand ; idling, uphill hauling, braking » devient « Grade-dependent fuel curves measured on a Cat 785D ; idling at 11.3 L/h »), pour rester cohérent avec le texte (M11, v3).}
+
+\begin{revbloc}{M11, A, v3}
+L'architecture comprend les modules suivants :
+
+\begin{itemize}
+  \item \textbf{Moteur de simulation à événements discrets :} une décision est demandée chaque fois qu'un camion devient disponible, au parc pour son premier cycle, puis à la verse où il vient de déverser. Un cycle va du lieu du camion à la pelle choisie, puis à la verse choisie, et se termine à la verse après le déversement et une panne éventuelle. La décision lance seulement le trajet à vide. La file et le chargement sont simulés à l'arrivée du camion à la pelle, la file et le déversement à son arrivée à la verse, et ces événements sont traités dans l'ordre chronologique de toute la flotte. Les pelles et les verses servent donc les camions dans leur ordre d'arrivée (premier arrivé, premier servi). L'horloge avance d'événement en événement jusqu'au prochain camion disponible.
+  \item \textbf{Module de réseau routier :} représentation de la mine sous forme de graphe, calcul des itinéraires par l'algorithme de Dijkstra et tirage des temps de trajet.
+  \item \textbf{Module de consommation de carburant :} \rev{v3, M20}{le camion de référence est le Cat 785D (charge cible de 133~t, charge nominale de 145~t \cite{Caterpillar2019,Caterpillar785D2025}). Au ralenti (files, chargements, déversements, pannes, attentes volontaires), il consomme 11,3~L/h, valeur mesurée sur un 785D en exploitation \cite{Kubler2015}. En roulage, la consommation au kilomètre suit les courbes mesurées par la même étude en fonction de la pente, en charge et à vide, majorée selon l'état de la piste. Appliquées telles quelles, ces courbes donnent 211~L/h par camion pour l'Affectation fixe, au-delà du maximum publié pour ce camion (135,6~L/h \cite{Caterpillar2019}) : toutes les pistes du simulateur montent, retour compris, et il ne représente ni descente ni roue libre. Elles sont donc multipliées par un facteur de 0,447, choisi sur les graines de sélection pour que l'Affectation fixe consomme 95~L/h, milieu de la plage « usage moyen » publiée \cite{Caterpillar2019}. Le niveau moyen vient ainsi du constructeur, et la répartition entre ralenti, charge et pente vient des mesures. La surconsommation sur piste dégradée reste une hypothèse non calibrée (\cref{sec:limitations}).}
+  \item \textbf{Aléas :} la graine d'un épisode engendre un flux aléatoire indépendant par processus (trajets, chargements et déversements, dégradation des pistes) et un flux de pannes par camion. Deux politiques jouées avec la même graine partagent ainsi les mêmes aléas (nombres aléatoires communs) : en particulier, le $k$-ième cycle d'un camion donné subit la même panne, de même durée, quelle que soit la politique.
+  \item \textbf{Interface d'apprentissage :} l'API \texttt{reset}--\texttt{step} de Gymnasium, par laquelle l'agent observe l'état, choisit une action et reçoit une récompense.
+  \item \textbf{Modules d'indicateurs et de banc d'essai :} calcul des indicateurs de la \cref{sec:metrics} pour toutes les politiques, avec les mêmes graines.
+\end{itemize}
+\end{revbloc}
+
+\begin{table}[H]
+\centering
+\caption{\rev{M11}{Paramètres du simulateur.}}
+\label{tab:simparams}
+\footnotesize
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm}X}
+\toprule
+\textbf{Élément} & \textbf{Valeur} \\
+\midrule
+Topologie & 7 nœuds : parc, intersection, 3 pelles, 2 verses ; arêtes orientées, liaisons directes pelle--verse \\
+Distances & parc--intersection 0,8~km ; intersection--pelles 1,5 / 1,8 / 2,2~km ; intersection--verses 2,8 / 3,2~km ; pelle--verse $0{,}8\times$ (somme des deux distances précédentes) \\
+Pentes & accès aux pelles 4 / 5 / 6\,\% ; accès aux verses 6 / 8\,\% ; pente de retour réduite de 2 à 3 points (minimum 1\,\%) \\
+Vitesses & 26~km/h en charge, 32~km/h à vide ; facteur $\max(0{,}55\,;\,1-0{,}03\times\text{pente})\times$ état de la piste ; minimum 5~km/h \\
+Temps de trajet & log-normal autour du temps moyen, $\sigma=0{,}12$ ; minimum 0,2~min \\
+Chargement & log-normal, moyenne 2,0~min, écart-type 0,3~min (capacité d'une pelle $\approx 30$ chargements/h, soit $\approx 4\,200$~t/h) \\
+Déversement & log-normal, moyenne 1,0~min, écart-type 0,2~min \\
+Dégradation des pistes & probabilité 5\,\% par passage de perdre 0,02 d'état (plancher 0,6) ; remise à neuf à chaque poste \\
+Pannes & camions uniquement ; probabilité par cycle 2\,\% (nominal, forte charge) ou 10\,\% (fortes pannes) ; réparation $\mathcal{U}(10,30)$~min \\
+Camions, poste & 140~t par camion ; poste de 480~min ; un cycle n'est compté que s'il se termine avant la fin du poste \\
+Carburant & \rev{v3}{roulage : $0{,}447 \times f(x) \times (1+0{,}5\times(1-\text{état}))$~L/km, avec, pour une pente $x$ (fraction), $f(x) = 7{,}638 + 80{,}825\,x + 603{,}87\,x^2 - 803{,}8\,x^3$ en charge et $f(x) = 4{,}562 + 6{,}809\,x + 727{,}7\,x^2 - 1661\,x^3$ à vide \cite{Kubler2015} ; ralenti 11,3~L/h \cite{Kubler2015}} \\
+Aléas & \rev{v3}{un flux aléatoire indépendant par processus et un flux de pannes par camion, engendrés par la graine de l'épisode (nombres aléatoires communs entre politiques)} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Formulation sous forme de processus de décision semi-markovien}
+\label{sec:smdp}
+
+\begin{revbloc}{M9, M24, Dir. 30/09}
+Le problème P1 est formulé comme un processus de décision markovien \cite{Puterman1994, RichardSutton2018} défini par le n-uplet $(S, A, P, R, \gamma)$. Comme les décisions sont déclenchées par des événements (la libération d'un camion) et séparées par des durées variables, il s'agit plus précisément d'un processus de décision semi-markovien \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. La \cref{fig:mdp} illustre la boucle d'interaction ; le \cref{tab:mdp} résume les composantes.
+\end{revbloc}
+
+\subsubsection{Espace d'états}
+
+\begin{revbloc}{M1, N1, N2, N3, v3}
+L'état $S_t$ est un vecteur de 23 composantes, normalisées dans $[0,1]$, qui décrit le système vu par le camion qui décide (\cref{tab:state}). Sa taille vaut $3S + 2D + SD + 4$ et ne dépend pas du nombre de camions : 23 composantes avec 12 comme avec 18 camions. Un agent entraîné dans un régime peut donc être évalué dans un autre sans réentraînement (\cref{sec:protocol}).
+
+Le bloc des attentes prévues par route donne, pour chacun des six couples pelle--verse, l'attente que subirait le camion qui décide s'il prenait cette route : la file prévue à son arrivée à la pelle, puis la file prévue à son arrivée à la verse après un chargement moyen. Les prévisions tiennent compte des camions déjà en route. C'est exactement l'information qu'utilise la règle du temps d'attente minimal des camions (MTWT, \cref{sec:baselines-def}). Ce bloc a été ajouté pendant la mise au point des agents (\cref{sec:tuning}) : sans lui, l'agent devait apprendre seul la combinaison non linéaire $\max(0, \text{libération} - \text{arrivée})$ que calcule MTWT.
+\end{revbloc}
+
+\begin{table}[H]
+\centering
+\caption{\rev{M1, N1, N2, v3}{Composition du vecteur d'état ($S = 3$ pelles, $D = 2$ verses).}}
+\label{tab:state}
+\footnotesize
+\begin{tabularx}{\textwidth}{lcX}
+\toprule
+\textbf{Bloc} & \textbf{Taille} & \textbf{Contenu et normalisation} \\
+\midrule
+Attente aux pelles & 3 & temps avant que chaque pelle soit libre, camions en route compris, divisé par 480~min \\
+Attente aux verses & 2 & même grandeur pour chaque verse \\
+Camions par pelle & 3 & camions engagés vers chaque pelle (en route, en file ou en chargement), divisé par 24 \\
+Distances & 3 & distance du camion qui décide à chaque pelle, divisée par 10~km \\
+Attente prévue par route & 6 & attente prévue du camion qui décide sur chaque route pelle--verse (file à la pelle et file à la verse), divisée par 30~min et plafonnée à 1 \\
+Position & 3 & lieu du camion qui décide (parc ou l'une des deux verses), codage one-hot \\
+Camion qui décide & 2 & tonnage livré depuis le début du poste / 3\,500~t ; carburant consommé / 1\,085~L \\
+Temps & 1 & temps écoulé dans le poste, divisé par 480~min \\
+\midrule
+Total & 23 & indépendant du nombre de camions \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection{Espace d'actions}
+
+L'action $A_t$ est demandée chaque fois qu'un camion devient disponible. Chaque action code une affectation de cycle complète : un couple pelle--verse $(\text{Pelle}_j, \text{Verse}_k)$, ou une action d'attente (ATTENDRE). Avec $S=3$ pelles et $D=2$ verses :
+\begin{equation}
+  |A| = S \times D + 1 = 7,
+  \quad A_t \in \{0, 1, \dots, 6\},
+\end{equation}
+où l'action $a \in \{0,\dots,5\}$ correspond à $\text{Pelle}_{\lfloor a/D \rfloor}$ et $\text{Verse}_{a \bmod D}$. \rev{M11}{L'action 6 immobilise le camion jusqu'au prochain événement du système (libération d'un camion, d'une pelle ou d'une verse), dans la limite de 5~minutes et pendant au moins 0,2~minute.} \rev{M16, v3}{Aucun masque d'actions n'est utilisé : les sept actions sont toujours permises, pour tous les agents.}
+
+\subsubsection{Fonction de transition et actualisation}
+\label{sec:discount}
+
+La fonction de transition $P(S_{t+1} \mid S_t, A_t)$ est définie implicitement par le simulateur : temps de trajet, durées de chargement et de déversement, dégradation des pistes et pannes. La même action prise dans le même état peut donc conduire à des états successeurs différents.
+
+\begin{revbloc}{M9, v3}
+\textbf{Durée des décisions.} Deux décisions successives sont séparées par une durée $\Delta t_t$ variable : de 0,2~min après une ATTENDRE courte à plusieurs minutes, selon le moment où le prochain camion se libère. Sur un poste, les durées des décisions couvrent exactement les 480~minutes.
+
+\textbf{Actualisation par minute.} Une récompense obtenue après une décision qui a duré $\Delta t_t$ minutes est actualisée par $\gamma_{\min}^{\Delta t_t}$, et non par un facteur $\gamma$ fixe à chaque décision \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. Le retour actualisé à partir de la décision $t$ s'écrit donc
+\begin{equation}
+G_t = \sum_{l \geq 0} \Big( \prod_{m=0}^{l-1} \gamma_{\min}^{\Delta t_{t+m}} \Big) R_{t+l}
+    = \sum_{l \geq 0} \gamma_{\min}^{\,\tau_{t+l} - \tau_t} R_{t+l} ,
+\label{eq:smdp-return}
+\end{equation}
+où $\tau_t$ est l'heure de la décision $t$ dans le poste. Le temps qui compte devient celui de la mine, et non le nombre de décisions.
+
+\textbf{Aucun paramètre nouveau.} Le facteur par minute est déduit du $\gamma$ de chaque algorithme par $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, où $\bar{\Delta} = 1{,}89$~min est l'intervalle moyen entre deux décisions de l'Affectation fixe en conditions nominales. Une décision de durée moyenne est donc actualisée exactement comme avec un facteur par décision. Avec $\gamma = 0{,}995$, l'horizon effectif reste en moyenne d'environ 200 décisions, soit environ 377~minutes en conditions nominales. Il ne dépend pas de la taille de la flotte, alors qu'avec une actualisation par décision il raccourcirait en minutes quand les décisions deviennent plus fréquentes, par exemple en forte charge.
+
+\textbf{Pourquoi.} Avec une actualisation par décision, une décision qui dure 0,2~min et un cycle vers la pelle la plus éloignée retardent autant la suite, alors que l'un dure cent fois plus que l'autre. La mise au point des agents a montré deux conséquences mesurées de ce défaut (\cref{sec:tuning}). Les agents à valeurs dérivaient vers la pelle la plus éloignée, puisqu'un long trajet ne retarde pas la production suivante en nombre de décisions. Quand un cycle rapportait en moyenne une valeur négative, enchaîner des attentes de 0,2~min repoussait ce coût de nombreuses décisions pour quelques minutes seulement. L'actualisation par minute corrige la cause commune de ces deux défauts sans modifier la récompense.
+
+\textbf{Mise en œuvre.} Pour Q-Learning et SARSA, la cible devient $R_t + \gamma_{\min}^{\Delta t_t}\, Q(S_{t+1}, \cdot)$. Pour DQN, la mémoire de rejeu conserve le facteur $\gamma_{\min}^{\Delta t}$ de chaque transition, que Stable-Baselines3 utilise dans la cible. Pour PPO, l'estimation généralisée de l'avantage utilise un facteur par pas :
+\begin{equation}
+\delta_t = R_t + \gamma_{\min}^{\Delta t_t} V(S_{t+1}) - V(S_t), \qquad
+\hat{A}_t = \delta_t + \gamma_{\min}^{\Delta t_t}\, \lambda\, \hat{A}_{t+1} .
+\end{equation}
+Le prolongement de la valeur à la fin du poste utilise le même facteur. Un test vérifie que, si toutes les décisions duraient exactement 1,89~min, les quatre algorithmes apprendraient exactement ce qu'ils apprennent avec l'actualisation par décision : mêmes poids des réseaux pour PPO et DQN, mêmes tables pour Q-Learning et SARSA.
+
+\textbf{Approximations.} Elles sont au nombre de deux. D'une part, la récompense d'un pas est comptée au début du pas, sans actualisation à l'intérieur de celui-ci, ce qui est l'usage pour un processus semi-markovien à récompense par transition. D'autre part, pour PPO, la normalisation de la récompense estime l'échelle des retours avec le $\gamma$ par décision. Elle ne sert qu'à mettre la récompense à l'échelle et n'entre pas dans la cible. Enfin, l'actualisation par minute suppose un seul environnement simulé par entraînement.
+
+\textbf{Attribution du mérite.} Un agent unique décide successivement pour tous les camions. La récompense d'un pas porte sur les cycles terminés pendant ce pas, quel que soit le camion (\cref{sec:reward}) : l'attribution du mérite d'une décision à un camion particulier n'est donc pas explicite.
+\end{revbloc}
+
+\begin{table}[H]
+\centering
+\caption{Composantes du processus de décision semi-markovien.}
+\label{tab:mdp}
+\small
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Composante} & \textbf{Notation} & \textbf{Description} \\
+\midrule
+Environnement & $\mathcal{E}$ & \rev{M11, v3}{Simulateur à événements discrets : 3 pelles, 2 verses, $N$ camions, poste de 480~min (\cref{tab:simparams}).} \\
+État       & $S_t \in [0,1]^{23}$ & \rev{M1, v3}{Attentes aux pelles et aux verses, camions par pelle, distances, attente prévue par route, position, tonnage et carburant du camion qui décide, temps du poste (\cref{tab:state}).} \\
+Action     & $A_t \in \{0,\dots,6\}$    & Affectation à l'un des 6 couples pelle--verse ou ATTENDRE (indice 6). \\
+Transition & $P(S_{t+1}\mid S_t,A_t)$   & Simulateur stochastique : trajets log-normaux, chargements et déversements, dégradation des pistes, pannes. \\
+Récompense & $R_t$                      & \rev{v3}{Somme des récompenses des cycles terminés pendant le pas, et coût d'une ATTENDRE (\cref{eq:reward}).} \\
+Actualisation & $\gamma_{\min}^{\Delta t_t}$ & \rev{M9, v3}{Par minute de simulation ; $\gamma_{\min} = \gamma^{1/1{,}89}$ (\cref{sec:discount}).} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/mdp_formulation.png}
+\caption{Formulation du problème de dispatching de camions sous forme de processus de décision.}
+\label{fig:mdp}
+\end{figure}
+
+\rev{m6}{\ifrevmarks\small Fichier renommé \texttt{mdp\_formulation.png} ; son contenu est déjà en anglais.\fi}
+
+\afig{dans draw.io : la flèche de récompense dit « Tonnage, balance, fuel, waiting » ; remplacer par « Production, balance, distance, waiting (paid at cycle end) ». La flèche d'action dit « Truck -> shovel assignment » ; remplacer par « Shovel--dump pair or WAIT ». Ajouter sur la flèche de l'état la durée de la décision « $\Delta t$ (per-minute discount) » (v3).}
+
+\subsection{Fonction de récompense multi-objectif}
+\label{sec:reward}
+
+\begin{revbloc}{M10, M16, v3}
+L'objectif de l'agent est de maximiser la récompense cumulée actualisée sur un poste (\cref{eq:smdp-return}). La récompense d'un cycle $c$, décidé pour le camion $i$, vaut :
+
+\begin{equation}
+r_c = w_1\, r^{\mathrm{prod}}_c - w_2\, p^{\mathrm{éq}}_c - w_3\, c^{\mathrm{dist}}_c - w_4\, p^{\mathrm{att}}_c ,
+\label{eq:reward}
+\end{equation}
+
+avec $w_1 = 1$, $w_2 = 0{,}1$, $w_3 = 0{,}05$ et $w_4 = 0{,}3$, et où :
+
+\begin{itemize}
+  \item $r^{\mathrm{prod}}_c = q_c / Q$ est la production du cycle, rapportée à la capacité $Q = 140$~t : elle vaut 1 si le cycle se termine avant la fin du poste et 0 sinon ;
+  \item $p^{\mathrm{éq}}_c = \frac{1}{100}\,\mathrm{Var}_j\big(\omega_j\big)$ pénalise le déséquilibre entre pelles, où $\omega_j$ est le temps restant, en minutes, avant que la pelle $j$ soit libre au moment de la décision ;
+  \item $c^{\mathrm{dist}}_c = \big(d(x_i, j) + d(j, k)\big)/5$ est la distance du cycle en kilomètres, divisée par 5, où $x_i$ est le lieu du camion (parc ou verse), $j$ la pelle et $k$ la verse choisies ; le retour à vide est le premier trajet du cycle suivant ;
+  \item $p^{\mathrm{att}}_c = \min\big((W^{\mathrm{pelle}}_c + W^{\mathrm{verse}}_c)/30\,;\,1\big)$ pénalise l'attente en file réellement subie pendant le cycle, en minutes, divisée par 30 et plafonnée à 1.
+\end{itemize}
+
+\textbf{Moment du versement.} La récompense d'un cycle n'est connue qu'à sa fin, puisque les files dépendent des arrivées des autres camions. Elle est versée au pas pendant lequel le cycle se termine. La récompense $R_t$ d'un pas est donc la somme des récompenses des cycles terminés depuis la décision précédente, quel que soit le camion, augmentée du coût d'une ATTENDRE si c'est l'action choisie. À la fin du poste, les cycles en cours sont menés à terme : la somme des $R_t$ sur un poste est la somme des récompenses de tous ses cycles. Une version où la récompense était estimée et versée au moment de la décision a été essayée puis rejetée pendant la mise au point (\cref{sec:tuning}).
+
+\textbf{Coût d'une attente volontaire.} Pour l'action ATTENDRE, de durée $\delta_t$, la récompense vaut
+\begin{equation}
+R^{\mathrm{att}}_t = - w_4 \min(\delta_t/30\,;\,1) - w_1\, \frac{\delta_t}{23{,}2} .
+\label{eq:wait-reward}
+\end{equation}
+Le second terme est le coût d'opportunité de l'immobilité : la production perdue par un camion arrêté, en cycles, où 23,2~min est la durée moyenne d'un cycle de l'Affectation fixe en conditions nominales. Il est pondéré par $w_1$, car il s'exprime dans la même unité que la production, et n'ajoute donc aucun poids à régler. Sans lui, une attente de 0,2~min ne coûterait qu'environ 0,002 et attendre serait presque gratuit. Les politiques qui n'attendent jamais, dont toutes les heuristiques, ne sont pas concernées par ce terme.
+
+\textbf{Ordre de grandeur.} Avec ces normalisations, la récompense cumulée d'un poste est proche du nombre de cycles terminés, diminué principalement du coût de distance. Pour l'Affectation fixe en conditions nominales (moyenne sur les 10 graines de sélection, \cref{sec:protocol}), 241,5 cycles livrés donnent une récompense de 218,7, dont $-19{,}3$ pour la distance, $-2{,}1$ pour l'équilibre et $-1{,}4$ pour l'attente.
+
+\textbf{Récompense non modifiée.} La récompense a été fixée avant la campagne. Une variante qui étendait le coût d'opportunité à tous les cycles a été essayée pendant la mise au point, puis abandonnée (\cref{sec:tuning}). Le défaut qu'elle visait a été corrigé par l'actualisation par minute (\cref{sec:discount}), sans changer la récompense.
+\end{revbloc}
+
+Les poids privilégient la production tout en conservant une pénalité d'attente. La sensibilité des agents à $w_4$ est examinée dans l'étude d'ablation (\cref{sec:ablation}).
+
+\subsection{Agents d'apprentissage étudiés}
+\label{sec:agents}
+
+\subsubsection{Proximal Policy Optimization}
+
+PPO \cite{JohnSchulman2017} est un algorithme acteur--critique qui optimise directement la politique. Son objectif utilise une fonction de substitution écrêtée afin d'éviter des mises à jour de politique trop importantes :
+
+\begin{equation}
+L^{\mathrm{CLIP}}(\theta) = \hat{\mathbb{E}}_t \Big[ \min \big( r_t(\theta)\hat{A}_t,\ \mathrm{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t \big) \Big],
+\qquad r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\mathrm{old}}}(a_t \mid s_t)} ,
+\end{equation}
+
+\rev{Bibliographie, v3}{où l'avantage $\hat{A}_t$ est estimé par la méthode d'estimation généralisée de l'avantage (Generalized Advantage Estimation, GAE) \cite{Schulman2016GAE}, avec le facteur par minute de la \cref{sec:discount}.} L'acteur et le critique sont deux perceptrons multicouches distincts comportant chacun deux couches cachées de 128 neurones et une activation tangente hyperbolique, valeur par défaut de Stable-Baselines3 pour PPO ; la couche de sortie de l'acteur définit une distribution sur les 7 actions. \rev{v3}{La récompense est normalisée pendant l'entraînement (\texttt{VecNormalize} de Stable-Baselines3, observations non normalisées, puisqu'elles sont déjà dans $[0,1]$). Un seul environnement simulé est utilisé.}
+
+\begin{revbloc}{M12, v3}
+Les hyperparamètres sont rassemblés dans le \cref{tab:hyper}. Pour PPO et DQN, le taux d'apprentissage et, selon l'algorithme, le coefficient d'entropie ou la durée de l'exploration ont été choisis par un réglage de même taille pour les deux agents : quatre configurations chacun, 200\,000 pas, graine d'entraînement 1, critère de productivité sur les graines de sélection. Le facteur $\gamma = 0{,}995$ et la normalisation de la récompense de PPO ont été retenus pendant la mise au point des agents (\cref{sec:tuning}). Le même $\gamma$ a été donné à DQN, mais pas la normalisation : sa mémoire de rejeu conserverait des récompenses normalisées avec des statistiques qui changent pendant l'entraînement. Pour Q-Learning et SARSA, le taux d'apprentissage et le nombre d'intervalles de discrétisation ont été choisis par un réglage de même taille (quatre configurations chacun, budget complet). Leur facteur $\gamma = 0{,}99$ n'a pas été réglé : la règle de mise au point le laissait en dehors de la grille. Les autres valeurs reprennent les valeurs par défaut de Stable-Baselines3 et les réglages usuels \cite{JohnSchulman2017, Mnih2015}.
+
+Les budgets d'entraînement sont exprimés dans des unités différentes : les méthodes tabulaires sont entraînées pendant 30\,000 épisodes, chaque épisode comptant environ 250 décisions, et les agents profonds pendant 2~millions de décisions, soit environ 8\,000 postes. Les deux budgets ne sont pas directement comparables.
+\end{revbloc}
+
+\begin{table}[H]
+\centering
+\caption{\rev{M12, v3}{Hyperparamètres des algorithmes d'apprentissage. Les valeurs choisies par un réglage sont en gras.}}
+\label{tab:hyper}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Hyperparamètre} & \textbf{PPO} & \textbf{DQN} & \textbf{Q-Learning} & \textbf{SARSA} \\
+\midrule
+Représentation                 & MLP [128, 128] & MLP [128, 128] & \multicolumn{2}{c}{table, 6 variables (\cref{sec:tabular})} \\
+Activation                     & Tanh$^{a}$     & ReLU$^{a}$     & s.o. & s.o. \\
+Intervalles de discrétisation  & s.o. & s.o. & \textbf{6} & \textbf{6} \\
+Taux d'apprentissage $\alpha$  & $\mathbf{1\times10^{-4}}$ & $\mathbf{3\times10^{-4}}$ & \textbf{0,2} & \textbf{0,1} \\
+Facteur $\gamma$ (décision de 1,89~min) & 0,995 & 0,995 & 0,99 & 0,99 \\
+Actualisation                  & \multicolumn{4}{c}{par minute, $\gamma_{\min} = \gamma^{1/1{,}89}$ (\cref{sec:discount})} \\
+Normalisation de la récompense & oui & non & non & non \\
+Taille de lot                  & 64             & 64             & s.o. & s.o. \\
+$n_{\mathrm{steps}}$ / $n_{\mathrm{epochs}}$ & 1\,024 / 10 & s.o. & s.o. & s.o. \\
+GAE $\lambda$ / écrêtage $\epsilon$ & 0,95 / 0,2 & s.o. & s.o. & s.o. \\
+Coefficient d'entropie         & \textbf{0}     & s.o. & s.o. & s.o. \\
+Tampon de rejeu / échauffement & s.o. & 200\,000 / 1\,000 & s.o. & s.o. \\
+Mise à jour du réseau cible    & s.o. & tous les 1\,000 pas & s.o. & s.o. \\
+Exploration $\varepsilon$      & s.o. & $1\to0{,}02$, \textbf{10\,\%} des pas & \multicolumn{2}{c}{$1\to0{,}01$, sur les épisodes} \\
+Budget d'entraînement          & 2\,000\,000 pas & 2\,000\,000 pas & 30\,000 épisodes & 30\,000 épisodes \\
+\bottomrule
+\end{tabular}
+\\[4pt]
+\raggedright
+\footnotesize $^{a}$\,Valeur par défaut de la bibliothèque SB3 : Tanh pour les algorithmes on-policy (PPO) ; ReLU pour les algorithmes off-policy (DQN).\\
+\end{table}
+
+\subsubsection{Deep Q-Network}
+
+\rev{Bibliographie, M14, v3}{DQN \cite{Mnih2015} approxime la fonction de valeur action $Q(s,a)$ par un réseau de neurones, et stabilise l'apprentissage par un tampon de rejeu d'expériences et un réseau cible mis à jour périodiquement. Avec l'actualisation par minute, la mise à jour vise la cible}
+\begin{equation}
+y = r + \gamma_{\min}^{\Delta t} \max_{a'} Q_{\theta^-}(s', a') ,
+\end{equation}
+\rev{v3}{où $\Delta t$ est la durée de la décision, conservée avec chaque transition dans le tampon de rejeu.} Le réseau comporte deux couches cachées de 128 neurones avec une activation ReLU. \rev{v3}{L'exploration suit une stratégie $\varepsilon$-gloutonne dont le taux décroît linéairement de 1,0 à 0,02 sur les 10\,\% premiers pas d'entraînement.}
+
+\subsubsection{Agents tabulaires : Q-Learning et SARSA}
+\label{sec:tabular}
+
+\begin{revbloc}{M8, v3}
+Q-Learning \cite{WatkinsDayan1992} et SARSA \cite{RummeryNiranjan1994} stockent une valeur pour chaque couple état--action dans une table. L'état de 23 composantes étant trop grand pour une table, il est réduit à six variables. Les cinq premières sont les temps d'attente aux 3 pelles et aux 2 verses, découpés en 6 intervalles égaux entre 0 et 9,6~min (au-delà, la valeur sature). La sixième est l'indice de la pelle la plus proche du camion qui décide (0 à 2). Une variante qui la remplaçait par la route de plus petite attente prévue (0 à 5), c'est-à-dire l'information qu'utilise MTWT, a été essayée et n'a pas été retenue (\cref{sec:tuning}). L'espace discrétisé compte donc $6^5 \times 3 = 23\,328$ états. Lorsqu'un état est absent de la table, l'action 0 est jouée par défaut ; la part des décisions concernées est mesurée pendant l'évaluation. Cette représentation ne dépend pas du nombre de camions.
+
+Q-Learning met à jour la valeur de l'action à partir de la meilleure action suivante (méthode hors politique), tandis que SARSA utilise l'action effectivement choisie ensuite (méthode sur politique). Avec l'actualisation par minute, la mise à jour s'écrit
+\begin{equation}
+Q(s,a) \leftarrow Q(s,a) + \alpha \big[ r + \gamma_{\min}^{\Delta t}\, Q(s',a') - Q(s,a) \big] ,
+\end{equation}
+où $a'$ est l'action de plus grande valeur en $s'$ pour Q-Learning, et l'action choisie en $s'$ pour SARSA. Les deux agents utilisent $\gamma = 0{,}99$ et une exploration $\varepsilon$-gloutonne décroissant linéairement de 1,0 à 0,01 sur 30\,000 épisodes. Q-Learning utilise $\alpha = 0{,}2$ et SARSA $\alpha = 0{,}1$, valeurs choisies par le réglage (\cref{sec:tuning}). La comparaison entre agents tabulaires et profonds doit donc être lue avec la représentation et le budget de calcul retenus ici.
+\end{revbloc}
+
+Les Algorithmes~\ref{alg:ppo}, \ref{alg:dqn} et \ref{alg:qlearning} formalisent les méthodes d'apprentissage sous forme de pseudocode ; la ligne qui distingue SARSA de Q-Learning est indiquée à la fin de l'Algorithme~\ref{alg:qlearning}. \rev{v3}{Dans les trois, $\Delta t_t$ est la durée de la décision $t$, donnée par le simulateur, et $\gamma_{\min} = \gamma^{1/1{,}89}$.}
+
+\begin{algorithm}[H]
+\caption{PPO pour le dispatching de camions miniers}
+\label{alg:ppo}
+\begin{algorithmic}[1]
+\Require Environnement minier $\mathcal{E}$ ; acteur $\pi_\theta$ et critique $V_\phi$ (MLP $[128,128]$, Tanh)
+\Require $\alpha{=}10^{-4}$, $\gamma{=}0{,}995$, $\lambda_{\text{GAE}}{=}0{,}95$, $\epsilon_{\text{clip}}{=}0{,}2$, $N{=}1024$, $T_{\max}{=}2{\times}10^6$
+\State Initialiser $\theta$, $\phi$ aléatoirement ; $\gamma_{\min}\leftarrow\gamma^{1/1{,}89}$
+\For{$k = 1,2,\ldots,\lfloor T_{\max}/N\rfloor$}
+  \For{$t = 1,\ldots,N$} \Comment{Collecter le déroulement}
+    \State Observer $s_t$ (\cref{tab:state})
+    \State Échantillonner $a_t \sim \pi_\theta(\cdot\mid s_t)$, $\;a_t\in\{0,\ldots,6\}$ (couple pelle--verse ou \textsc{attendre})
+    \State Exécuter $a_t$ ; recevoir $r_t$ (cycles terminés pendant le pas, \cref{eq:reward}), $s_{t+1}$ et la durée $\Delta t_t$
+    \State Normaliser $r_t$ ; stocker $\bigl(s_t,\,a_t,\,r_t,\,\gamma_{\min}^{\Delta t_t},\,\log\pi_\theta(a_t\mid s_t)\bigr)$
+  \EndFor
+  \State Calculer les avantages : $\hat{A}_t = \delta_t + \gamma_{\min}^{\Delta t_t}\lambda_{\text{GAE}}\hat{A}_{t+1}$,
+         $\;\delta_t = r_t + \gamma_{\min}^{\Delta t_t} V_\phi(s_{t+1}) - V_\phi(s_t)$
+  \For{chaque époque, mini-lots de taille 64}
+    \State $r_t(\theta)\leftarrow \pi_\theta(a_t\mid s_t)/\pi_{\theta_k}(a_t\mid s_t)$
+    \State Maximiser $L^{\text{CLIP}}(\theta)=\mathbb{E}\bigl[\min\bigl(r_t\hat{A}_t,\;\mathrm{clip}(r_t,1{-}\epsilon_{\text{clip}},1{+}\epsilon_{\text{clip}})\hat{A}_t\bigr)\bigr]$
+    \State Minimiser $L^{V}(\phi)=\mathbb{E}\bigl[(V_\phi(s_t)-R_t^{\text{target}})^2\bigr]$
+  \EndFor
+\EndFor
+\Ensure Politique entraînée $\pi_\theta^*$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{DQN pour le dispatching de camions miniers}
+\label{alg:dqn}
+\begin{algorithmic}[1]
+\Require $\mathcal{E}$ ; réseaux $Q_\theta$, $Q_{\theta^-}$ (MLP $[128,128]$, ReLU) ; tampon de rejeu $\mathcal{B}$ (200\,000)
+\Require $\alpha{=}3{\times}10^{-4}$, $\gamma{=}0{,}995$, $\varepsilon{:}\;1{,}0\!\to\!0{,}02$ (linéaire sur $10\,\%$ des pas)
+\State Initialiser $\theta$ aléatoirement ; $\theta^-\leftarrow\theta$ ; $\mathcal{B}\leftarrow\emptyset$ ; $\gamma_{\min}\leftarrow\gamma^{1/1{,}89}$
+\For{chaque pas $t = 1,2,\ldots,T_{\max}$}
+  \State Avec prob.\ $\varepsilon$ : $a_t\sim\text{Uniform}(\mathcal{A})$ ; sinon $a_t\leftarrow\arg\max_a Q_\theta(s_t,a)$
+  \State Exécuter $a_t$ ; observer $r_t$, $s_{t+1}$, $\Delta t_t$ ; stocker $(s_t,a_t,r_t,s_{t+1},\gamma_{\min}^{\Delta t_t})$ dans $\mathcal{B}$
+  \State Échantillonner un mini-lot $\{(s_i,a_i,r_i,s'_i,d_i)\}$ depuis $\mathcal{B}$
+  \State $y_i \leftarrow r_i + d_i\max_{a'}Q_{\theta^-}(s'_i,a')$ \Comment{Cible actualisée par la durée de la décision}
+  \State Minimiser $\frac{1}{B}\sum_i\bigl(Q_\theta(s_i,a_i)-y_i\bigr)^2$
+  \If{$t \bmod 1000 = 0$} $\theta^-\leftarrow\theta$ \EndIf \Comment{Synchroniser le réseau cible}
+\EndFor
+\Ensure $\pi(s)=\arg\max_a Q_\theta(s,a)$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Q-Learning pour le dispatching de camions miniers (référence tabulaire)}
+\label{alg:qlearning}
+\begin{algorithmic}[1]
+\Require $\mathcal{E}$ ; $\alpha{=}0{,}2$ (SARSA : 0,1), $\gamma{=}0{,}99$, $\varepsilon{:}\;1{,}0\!\to\!0{,}01$ (linéaire sur 30\,000 épisodes)
+\State Initialiser $Q(s,a)\leftarrow 0$ pour tout $(s,a)$ (état réduit à 6 variables, 6 intervalles) ; $\gamma_{\min}\leftarrow\gamma^{1/1{,}89}$
+\For{épisode $= 1, \ldots, 30\,000$}
+  \State $s_0\leftarrow\texttt{reset}(\mathcal{E})$
+  \While{l'épisode n'est pas terminé}
+    \State Avec prob.\ $\varepsilon$ : $a_t\sim\text{Uniform}(\mathcal{A})$ ; sinon $a_t\leftarrow\arg\max_a Q(s_t,a)$
+    \State Exécuter $a_t$ ; observer $r_t$, $s_{t+1}$, $\Delta t_t$
+    \State $Q(s_t,a_t)\leftarrow Q(s_t,a_t)+\alpha\bigl[r_t+\gamma_{\min}^{\Delta t_t}\max_{a'}Q(s_{t+1},a')-Q(s_t,a_t)\bigr]$
+    \State $s_t\leftarrow s_{t+1}$
+  \EndWhile
+  \State Décroître $\varepsilon$ linéairement
+\EndFor
+\Ensure $\pi^*(s)=\arg\max_a Q(s,a)$
+\Statex \textbf{Note (SARSA) :} remplacer $\max_{a'}Q(s_{t+1},a')$ par $Q(s_{t+1},a_{t+1})$ pour des mises à jour on-policy.
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Heuristiques de référence}
+\label{sec:baselines-def}
+
+\begin{revbloc}{M25, M16, Dir. corr. 1, A, v3}
+Les six règles de référence sont définies dans le \cref{tab:baselines} telles qu'elles sont implémentées. Aucune n'utilise l'action ATTENDRE. Elles se répartissent en trois groupes.
+
+\textbf{Règles tenant compte des files et des trajets.} La règle du temps d'attente minimal des camions (MTWT) envoie le camion à la pelle où il attendra le moins à son arrivée, en combinant le temps de trajet moyen et la libération prévue de chaque pelle, camions déjà en route compris ; elle choisit la verse de la même façon. Elle représente les règles des systèmes commerciaux de gestion de flotte \cite{Zeng2022}. La politique fondée sur un programme linéaire (LP) suit le principe de DISPATCH \cite{Soumis1989} : un programme linéaire fixe, en début de poste, des taux de flux cibles sur chaque route pelle--verse ; à chaque décision, le camion est envoyé sur la route la plus en retard sur son plan. Le programme maximise la production sous des contraintes de capacité des pelles et des verses, de conservation des camions et d'heures-camions disponibles, en limitant l'utilisation planifiée de chaque ressource à une valeur $u \leq 1$. Avec $u = 1$, le plan sature la pelle la plus proche, ce qui est optimal sans aléa mais crée une file sans limite avec des durées aléatoires. La valeur $u = 0{,}7$ a été choisie parmi sept candidats sur les graines de sélection, jamais sur celles de l'évaluation, et sert pour les trois régimes. Ces deux règles n'utilisent que des grandeurs moyennes (temps de trajet, durées de service, probabilité de panne), jamais les aléas de l'épisode.
+
+\textbf{Règles tenant compte des files seulement, ou d'aucune information.} La règle FIFO sert d'abord la pelle qui attend un camion depuis le plus longtemps (\cref{sec:relwork}) ; si toutes les pelles sont occupées, elle choisit celle qui se libérera le plus tôt, camions en route compris. Elle ne tient pas compte des trajets : une pelle libre dans une minute mais lointaine passe avant une pelle proche libre dans deux minutes. L'Affectation fixe attache chaque camion à une pelle et à une verse pendant tout le poste, sans réaffectation.
+
+\textbf{Règles géométriques.} La Pelle la plus proche et le Plus court chemin ignorent les files. Comme la décision est prise à la verse, ils comparent toutes les pelles. Mais la pelle 1 est la plus proche du parc et des deux verses : la Pelle la plus proche y envoie toute la flotte pendant tout le poste, et sa production est plafonnée par la capacité d'une seule pelle (environ 4\,200~t/h). Le Plus court chemin, dont le coût compte aussi le trajet pelle--verse, envoie environ 72\,\% de ses cycles à cette pelle. Ces deux règles sont des bornes basses, et non des représentants de la pratique industrielle.
+\end{revbloc}
+
+\begin{table}[H]
+\centering
+\caption{\rev{M25, Dir. corr. 1, v3}{Définition des heuristiques de référence telles qu'implémentées.}}
+\label{tab:baselines}
+\small
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Politique} & \textbf{Règle appliquée lorsque le camion $i$ devient disponible} \\
+\midrule
+MTWT & Pour chaque pelle $j$ : arrivée prévue $a_j = t + $ trajet moyen à vide ; attente prévue $\max(0,\ \text{libération prévue de } j - a_j)$. Choisir la pelle de plus petite attente (à égalité, la plus tôt atteinte), puis la verse de la même façon, depuis la fin prévue du chargement. \\
+LP (programme linéaire) & En début de poste, taux de flux cibles $x_{jk}$ (cycles/h) maximisant la production, utilisation planifiée $\leq u = 0{,}7$. À chaque décision : la route dont le nombre de cycles lancés est le plus en retard sur $x_{jk}$, à l'heure d'arrivée prévue à la pelle ; à égalité, la pelle la plus proche. \\
+FIFO & Affecter le camion à la pelle qui attend un camion depuis le plus longtemps (si toutes sont occupées, celle qui se libérera le plus tôt), et de même pour la verse, indépendamment des distances. \\
+Affectation fixe & Affecter le camion $i$ à la pelle $i \bmod 3$ et à la verse $i \bmod 2$ pendant tout le poste, sans réaffectation. \\
+Pelle la plus proche & Affecter le camion à la pelle la plus proche de sa position sur le graphe, puis à la verse la plus proche de cette pelle, sans tenir compte des files. \\
+Plus court chemin & Affecter le camion au couple pelle--verse qui minimise le coût $C = 0{,}5\,T + 0{,}3\,D + 0{,}2\,E/6{,}49$ des trajets camion--pelle et pelle--verse, où $T$, $D$ et $E$ sont le temps moyen, la distance et la consommation, calculés par l'algorithme de Dijkstra ; la division par 6,49 annule l'effet de la calibration du carburant sur les décisions. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Architecture du système et coût de calcul}
+\label{sec:compute}
+
+L'architecture découple la logique d'apprentissage de la simulation, ce qui permet de tester différents agents de manière interchangeable (\cref{fig:simulation,fig:mdp}). L'agent sélectionne une action $a_t$ à partir de l'état $s_t$ ; l'environnement applique l'affectation et renvoie l'état suivant et la récompense ; le module d'évaluation calcule les indicateurs pour \rev{v3}{les dix politiques (six heuristiques et quatre agents)} dans les trois régimes.
+
+\begin{revbloc}{M28, m20, m24, v3}
+Toutes les mesures sont faites sur le processeur d'un ordinateur portable à 8 cœurs, sans carte graphique.
+\begin{itemize}
+  \item \textbf{Entraînement :} un entraînement complet en conditions nominales, avec quatre entraînements en même temps sur la machine, a duré 223~min pour PPO, 168~min pour DQN, 253~min pour Q-Learning et 241~min pour SARSA. Chaque entraînement utilise un seul environnement simulé, exigence de l'actualisation par minute (\cref{sec:discount}). Collecter avec quatre environnements en parallèle n'accélérerait PPO que d'un facteur 1,47 et changerait le modèle obtenu (4\,096 pas par mise à jour au lieu de 1\,024) : ce choix n'a pas été retenu. L'entraînement est déterministe pour une graine donnée. \rev{T31}{La campagne complète compte 90 entraînements : 60 pour les résultats principaux (4 algorithmes, 3 régimes, 5 graines) et 30 pour l'étude d'ablation. Elle a duré 5 jours et 9 heures, du 22 au 27 octobre 2026, quatre entraînements à la fois, soit 515 heures d'entraînement cumulées. Pendant la campagne, la machine servant aussi à d'autres calculs, la durée d'un entraînement a varié de 142 à 1\,322~min selon l'agent et le moment ; les durées ci-dessus, mesurées pendant la mise au point, sont plus représentatives. L'évaluation unique (6\,540 épisodes) a duré 4~h~18 sur 4 processus.}
+  \item \textbf{Évaluation :} chaque épisode d'évaluation ne dépend que de la politique et de sa graine, grâce aux flux aléatoires séparés (\cref{sec:simulator}). Les épisodes sont donc répartis entre plusieurs processus, avec exactement les mêmes résultats qu'en séquentiel, graine par graine. Sur 150 épisodes, 4 processus divisent la durée par 2 ; 8 processus font moins bien que 4, car chacun doit d'abord charger PyTorch.
+  \item \textbf{Inférence :} la latence d'une décision, construction de l'état comprise, est inférieure à 1~milliseconde pour toutes les politiques : de 0,48 à 0,71~ms pour PPO et de 0,36 à 0,49~ms pour DQN, de 12 à 24 camions. Comme l'état a une taille fixe, elle dépend peu de la taille de la flotte. Elle est négligeable devant la durée d'un cycle de transport, mais son adéquation aux contraintes d'un système de gestion de flotte commercial n'a pas été évaluée.
+  \item \textbf{Mémoire :} \rev{T31}{un modèle PPO occupe 501~Ko (plus 2~Ko pour les statistiques de normalisation de la récompense), un modèle DQN 344~Ko, et une table de Q-Learning ou de SARSA de 0,6 à 1,3~Mo selon le nombre d'états visités pendant l'entraînement.}
+\end{itemize}
+\end{revbloc}
+
+\adir{revue cible à choisir après les résultats (premier choix proposé : Computers \& Operations Research) ; Cluster Computing est hors du champ de l'article (M28).}
+
+
+% ============================================================================
+% Section 6 : Plan expérimental
+% ============================================================================
+\section{Plan expérimental}
+\label{sec:design}
+
+Cette section détaille les régimes de fonctionnement, le protocole d'entraînement et d'évaluation, les indicateurs et le cadre statistique.
+
+\subsection{Régimes de fonctionnement}
+\label{sec:scenarios}
+
+Trois régimes sont définis (\cref{tab:scenarios,fig:scenarios}). Chaque épisode correspond à un poste de 8~heures (480~minutes).
+
+\begin{revbloc}{M15}
+Pour situer chaque régime par rapport à la capacité de chargement, nous utilisons le facteur d'appariement \cite{BurtCaccetta2014} :
+\begin{equation}
+\mathrm{MF} = \frac{N \times t_{\mathrm{chargement}}}{S \times t_{\mathrm{cycle}}} ,
+\label{eq:mf}
+\end{equation}
+où $N$ est le nombre de camions, $S$ le nombre de pelles, $t_{\mathrm{chargement}} = 2$~min la durée moyenne de chargement et $t_{\mathrm{cycle}} \approx 22{,}7$~min la durée moyenne d'un cycle hors attente et hors panne, mesurée avec l'Affectation fixe. Un facteur inférieur à 1 indique que les pelles attendent les camions. Il vaut environ 0,35 en conditions nominales et 0,52 en forte charge : même avec 18 camions, la flotte reste en dessous de la capacité des trois pelles, qui peuvent charger ensemble environ 12\,600~t/h. Le régime de forte charge augmente donc la pression sur les files, mais ne constitue pas une sursaturation de la flotte ; seule une politique qui concentre les camions sur une seule pelle peut saturer celle-ci.
+\end{revbloc}
+
+\begin{table}[H]
+\centering
+\caption{Paramètres des trois régimes de fonctionnement.}
+\label{tab:scenarios}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccl}
+\toprule
+\textbf{Régime} & \textbf{Camions} & \textbf{Pelles} & \textbf{Verses} & \textbf{Pannes par cycle} & \textbf{MF} & \textbf{Caractéristique} \\
+\midrule
+Nominal        & 12 & 3 & 2 & 2\,\%  & \rev{M15}{0,35} & Conditions de référence \\
+Forte charge   & 18 & 3 & 2 & 2\,\%  & \rev{M15}{0,52} & \rev{M15}{Flotte augmentée de 50\,\%} \\
+Fortes pannes  & 12 & 3 & 2 & 10\,\% & \rev{M15}{0,35} & Pannes de camions fréquentes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/fig3_scenarios.png}
+\caption{Configuration des trois régimes de fonctionnement.}
+\label{fig:scenarios}
+\end{figure}
+
+\subsection{Protocole d'entraînement et d'évaluation}
+\label{sec:protocol}
+
+\begin{revbloc}{M1, M7, m19, A, v3}
+\textbf{Trois ensembles de graines disjoints.} Les graines d'évaluation (42 à 71) donnent les 30 réplications de chaque résultat. Les graines de sélection (20\,000 à 20\,009) ont servi à tous les choix faits avant la campagne : réglage des hyperparamètres, choix de $u$ pour la politique LP et mise au point des agents (\cref{sec:tuning}). Les graines d'entraînement (1 à 5) initialisent les agents ; l'agent de graine $s$ joue ses épisodes d'entraînement sur les graines $s \times 10^6, s \times 10^6 + 1, \ldots$, qui ne croisent jamais les deux autres ensembles. Un test vérifie, pour les quatre algorithmes, que toutes les graines utilisées pendant un entraînement sont des graines d'entraînement. Aucun choix n'a été fait sur les graines d'évaluation, et aucun agent n'y a été évalué avant la campagne finale ; rien n'a été modifié après avoir vu ses résultats.
+
+\textbf{Agents spécialisés.} Chaque agent d'apprentissage est entraîné dans chacun des trois régimes avec 5 graines d'entraînement : 2~millions de pas pour PPO et DQN, 30\,000 épisodes pour Q-Learning et SARSA, soit 60 entraînements. Les résultats principaux comparent, dans chaque régime, les agents entraînés dans ce régime aux six heuristiques.
+
+\textbf{Évaluation sans réentraînement.} Pour mesurer la capacité d'une politique apprise à supporter un changement de régime, les agents entraînés en conditions nominales sont en outre évalués, sans aucun réentraînement, en forte charge et en fortes pannes, sur les mêmes graines que les agents spécialisés. C'est possible pour les quatre agents, puisque l'état a la même taille quel que soit le nombre de camions (\cref{sec:smdp}). Les agents nominaux sont aussi évalués dans deux régimes intermédiaires jamais vus : 15 camions avec 2\,\% de pannes, et 12 camions avec 5\,\% de pannes.
+
+\textbf{Étude d'ablation.} La sensibilité au poids de la pénalité d'attente est mesurée en conditions nominales pour $w_4 \in \{0 ; 0{,}1 ; 0{,}5\}$, la valeur retenue $w_4 = 0{,}3$ étant celle des agents nominaux. Elle porte sur PPO et DQN, avec les mêmes 5 graines d'entraînement, soit 30 entraînements de plus. PPO est l'agent principal de l'étude, et DQN celui dont le comportement dépend le plus de l'action ATTENDRE (\cref{sec:tuning}). Q-Learning et SARSA, dont la convergence est insuffisante, en sont exclus. Ce choix a été fixé avant la campagne.
+
+\textbf{Évaluation.} Toutes les politiques sont évaluées sur les mêmes 30 réplications. Les agents choisissent l'action de plus grande valeur, sans exploration : mode déterministe pour PPO, $\varepsilon = 0$ pour DQN et choix glouton pour les agents tabulaires.
+
+\textbf{Deux sources de variabilité.} Les 30 réplications mesurent la variabilité due à l'environnement ; les 5 graines d'entraînement mesurent celle due à l'apprentissage. Les deux sont rapportées séparément (\cref{sec:proto}).
+\end{revbloc}
+
+\subsection{Mise au point des agents}
+\label{sec:tuning}
+
+\begin{revbloc}{M7, M12, v3}
+Avec une première procédure de réglage (une grille de quatre configurations à 200\,000 pas), les agents faisaient moins bien qu'une politique au hasard. Plusieurs essais ont alors été faits pour comprendre et améliorer l'apprentissage. Multiplier les essais jusqu'à ce que l'apprentissage par renforcement dépasse les heuristiques serait un biais : chaque essai est une chance de tomber par hasard sur une version favorable. Cette section décrit donc la règle suivie et rapporte \emph{tous} les essais, y compris ceux qui ont échoué.
+
+\textbf{Règle.} Elle a été écrite et datée avant les essais qu'elle encadre, et complétée avant chaque nouvelle étape :
+\begin{itemize}
+  \item tous les essais se font en conditions nominales, avec la graine d'entraînement 1, et sont jugés sur la productivité moyenne de la politique sans exploration sur les graines de sélection ; les graines d'évaluation ne servent jamais ;
+  \item chaque étape est fixée à l'avance, avec son critère de décision, et une variante n'est retenue que si elle fait mieux que la version qu'elle remplacerait ;
+  \item tout ce qui est retenu pour PPO s'applique à DQN quand cela a un sens, et les agents tabulaires reçoivent un réglage de même taille ;
+  \item la liste des étapes est close : après la dernière, les agents partent en campagne quel que soit leur résultat, et ce résultat est présenté tel quel, même si les heuristiques restent devant.
+\end{itemize}
+Chaque essai est enregistré avec sa configuration et le commit du code utilisé, et peut être refait par une seule commande.
+
+\textbf{Essais.} Le \cref{tab:tuning} les rapporte dans l'ordre. Les repères sur les mêmes graines sont : MTWT 4\,443~t/h, LP 4\,412, FIFO 4\,246, Affectation fixe 4\,226, politique au hasard 4\,167, Pelle la plus proche 3\,915.
+\end{revbloc}
+
+\begin{table}[H]
+\centering
+\caption{\rev{v3}{Essais de la mise au point des agents (productivité en t/h sur les graines de sélection 20\,000 à 20\,009, conditions nominales, graine d'entraînement 1). Entre parenthèses : la part des décisions ATTENDRE ou la part des cycles envoyés à une seule pelle, quand elle est remarquable.}}
+\label{tab:tuning}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.6cm}}
+\toprule
+\textbf{N\textsuperscript{o}} & \textbf{Essai} & \textbf{Résultat} & \textbf{Décision} \\
+\midrule
+\multicolumn{4}{l}{\emph{Actualisation par décision}} \\
+0 & Réglage de PPO et DQN, 200\,000 pas & PPO 3\,953 (99\,\% pelle 1) ; DQN 3\,992 & point de départ \\
+1, 2, 4 & Récompense estimée et versée à la décision, avec ou sans coût des minutes en file & PPO 3\,915 à 3\,981 ; DQN 4\,106 à 4\,191 (ATTENDRE 52 à 65\,\%) & rejetée \\
+3 & PPO, budget complet, récompense versée à la fin du cycle & PPO 4\,260 & gardée \\
+5 & Attente prévue par route dans l'état (23 composantes) & PPO 4\,345 & retenue \\
+6 & Récompense normalisée et $\gamma = 0{,}995$ & PPO 4\,405 (ATTENDRE 36\,\%) & retenue \\
+7 & Contrôle de DQN, budget complet, $\gamma = 0{,}995$ & DQN 3\,593 (99\,\% pelle 3) & gardé, sans variante \\
+8, 9 & Q-Learning et SARSA, configuration initiale & Q-Learning 3\,955 (62\,\% pelle 3) ; SARSA 3\,535 (98\,\% pelle 3) & point de départ \\
+\midrule
+\multicolumn{4}{l}{\emph{Coût d'opportunité étendu à tous les cycles (abandonné)}} \\
+10--13 & Même configuration, récompense modifiée & PPO 210 (ATTENDRE 99,8\,\%) ; DQN 3\,532 (ATTENDRE 94,8\,\%) ; Q-Learning 4\,099 ; SARSA 4\,134 & abandonné \\
+\midrule
+\multicolumn{4}{l}{\emph{Actualisation par minute}} \\
+14--17 & Même configuration que les essais 6 à 9 & PPO 4\,414 (ATTENDRE 0\,\%) ; DQN 121 (ATTENDRE 99,8\,\%) ; Q-Learning 3\,974 ; SARSA 3\,602 (100\,\% pelle 3) & PPO et DQN figés \\
+16--23 & Réglage tabulaire : $\alpha \in \{0{,}1 ; 0{,}2\}$ × \{6 ; 8\} intervalles & Q-Learning 3\,369 à \textbf{4\,181} ($\alpha = 0{,}2$, 6 int.) ; SARSA 3\,481 à \textbf{3\,626} ($\alpha = 0{,}1$, 6 int.), 98 à 100\,\% pelle 3 & meilleures configurations \\
+24, 25 & Sixième variable de l'état : route de plus petite attente prévue & Q-Learning 4\,062 ; SARSA 3\,505 (95\,\% pelle 3) & rejetée \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{revbloc}{v3}
+\textbf{Ce qui a été retenu, et pourquoi.} Chaque changement retenu se justifie indépendamment de son score. Le bloc des attentes prévues par route donne à l'agent la même information que MTWT. La normalisation de la récompense et un horizon plus long sont des pratiques usuelles pour PPO. L'actualisation par minute corrige la formulation du problème (\cref{sec:discount}). Pendant la même période, les heuristiques de référence ont été renforcées : prévision des camions en route pour MTWT et FIFO, et ajout de la politique LP. La comparaison est donc devenue plus difficile pour l'apprentissage par renforcement.
+
+\textbf{Le défaut trouvé, et la variante abandonnée.} Avec l'actualisation par décision, les trois agents à valeurs (DQN, Q-Learning, SARSA) dérivaient vers la pelle la plus éloignée, et leur productivité baissait à mesure que l'exploration diminuait. Une mesure sans réentraînement en a montré la cause. Aller toujours à la pelle 3 plutôt qu'à la pelle 1 fait perdre 9\,\% de productivité, mais ne change presque pas la récompense par décision (0,813 contre 0,820), car un cycle rapporte 1 quelle que soit sa durée. Une première correction, décidée avec la directrice de recherche, étendait le coût d'opportunité à tous les cycles (durée du cycle divisée par 23,2~min). La récompense d'un poste n'en changeait que d'une constante, et la dérive a disparu (essais 10 à 13). Mais un cycle rapportait alors en moyenne une valeur négative. Avec une actualisation par décision, repousser une récompense négative la rend moins coûteuse, et intercaler des attentes de 0,2~min devenait le moyen de la repousser. PPO a ainsi appris à attendre dans 99,8\,\% de ses décisions. Les deux défauts ont donc la même cause : une actualisation par décision alors que les décisions n'ont pas la même durée. Cette variante a été abandonnée, la récompense est revenue à sa définition précédente, et l'actualisation par minute a été introduite pour les quatre algorithmes, sans autre changement. Ces deux décisions ont été prises après avoir vu des résultats sur les graines de sélection : elles sont déclarées comme telles.
+
+\textbf{L'effondrement de DQN.} Avec l'actualisation par minute, DQN choisit ATTENDRE dans 99,8\,\% de ses décisions (essai 15). Rejoué de façon gloutonne, le modèle final produit 840~t par poste, alors que les derniers postes d'entraînement, joués avec mises à jour et exploration, produisaient de 25\,620 à 30\,660~t. Notre interprétation, cohérente avec cette mesure mais non démontrée, est la suivante. Une attente de 0,2~min ne repousse la production suivante que de 0,2~min : sa valeur est donc presque égale à celle de la meilleure action, ce qui est juste. L'écart devient alors plus petit que l'erreur d'approximation du réseau. Dès que cette erreur place l'attente en tête, le modèle attend, et une attente en entraîne d'autres. PPO, qui apprend une politique et non des valeurs à comparer, n'est pas touché. Le test d'équivalence de la \cref{sec:discount} exclut une erreur d'implémentation. Conformément à la règle, DQN part en campagne dans cette version.
+
+\textbf{Les agents tabulaires.} Le réglage a retenu $\alpha = 0{,}2$ pour Q-Learning et $\alpha = 0{,}1$ pour SARSA, avec 6 intervalles dans les deux cas. Donner à l'état discret la route que choisirait MTWT, au lieu de la pelle la plus proche, a fait perdre environ 120~t/h aux deux algorithmes (essais 24 et 25), et n'a pas corrigé la concentration de SARSA sur la pelle 3. Dans les dix essais tabulaires avec l'actualisation par minute (16 à 25), la productivité mesurée pendant l'entraînement part d'environ 4\,160~t/h, quand l'exploration est presque aléatoire, puis baisse à mesure que l'exploration diminue. Le meilleur agent tabulaire (4\,181~t/h) égale à peine la politique aléatoire (4\,167~t/h). Nous le présentons comme un défaut de convergence de l'approche tabulaire sur ce problème, avec l'état réduit et le budget retenus, et non comme une limite de ces algorithmes en général.
+\end{revbloc}
+
+\subsection{Indicateurs}
+\label{sec:metrics}
+
+\begin{revbloc}{M2, M21, M15, m18}
+Dans cette étude, la résilience opérationnelle désigne la capacité d'une politique à conserver son débit et à contenir l'attente en file lorsque le système passe des conditions nominales à des conditions perturbées. Elle est mesurée par les indicateurs suivants, calculés pour chaque réplication.
+
+\begin{enumerate}
+  \item \textbf{Productivité :} tonnage livré par heure (t/h), et productivité par camion (t/h/camion), qui permet de comparer des régimes dont la flotte n'a pas la même taille.
+  \item \textbf{Attente en file :} temps total passé par un camion en file d'attente aux pelles et aux verses pendant le poste, moyenné sur les camions (min par camion et par poste). Ce n'est pas une attente par cycle : \rev{T31}{avec environ 20 cycles par camion en conditions nominales, 11~min d'attente en file par poste correspondent à environ 0,6~min par cycle.}
+  \item \textbf{Temps d'immobilisation total :} somme, par camion et par poste, de l'attente en file, de l'immobilisation pour panne et du temps passé à attendre volontairement par l'action ATTENDRE.
+  \item \textbf{Utilisation des camions :} part du poste pendant laquelle les camions roulent, chargent ou déversent (\%). Le temps d'activité du dernier cycle qui dépasse la fin du poste est exclu.
+  \item \textbf{Utilisation des pelles :} part du poste pendant laquelle les pelles chargent (\%).
+  \item \textbf{Consommation spécifique :} carburant consommé par tonne livrée (L/t).
+  \item \textbf{Nombre de cycles terminés} et \textbf{récompense cumulée} avec les poids de référence.
+  \item \textbf{Ratio de robustesse :} rapport entre la performance dans un régime perturbé et la performance nominale :
+  \begin{equation}
+  \mathrm{RR}(p,s) = \frac{\mathrm{Performance}(p,s)}{\mathrm{Performance}(p,\mathrm{nominal})} .
+  \label{eq:rr}
+  \end{equation}
+  En forte charge, ce ratio est calculé sur la productivité par camion, faute de quoi il refléterait surtout l'ajout de camions.
+\end{enumerate}
+\end{revbloc}
+
+\subsection{Protocole statistique}
+\label{sec:proto}
+
+\begin{revbloc}{M3, M4, M5, M6, M7, M22, v3}
+\textbf{Unité statistique.} Pour les comparaisons appariées, l'unité d'analyse est la réplication : chaque couple (politique, régime) fournit exactement 30 valeurs, une par graine d'évaluation. Pour un agent, la valeur d'une réplication est la moyenne de ses 5 modèles (un par graine d'entraînement) sur cette graine.
+
+\textbf{Appariement.} La même graine est utilisée par toutes les politiques dans une réplication donnée, et le simulateur utilise un flux aléatoire séparé par processus et un flux de pannes par camion (\cref{sec:simulator}). Deux politiques jouées avec la même graine subissent donc les mêmes aléas : en particulier, le $k$-ième cycle d'un camion donné a la même panne, de même durée, quelle que soit la politique. Les observations sont appariées par graine, et les réplications sont traitées comme des blocs. Les temps de trajet et de service restent tirés dans l'ordre des événements, qui dépend des décisions : l'appariement est fort, sans être parfait.
+
+\textbf{Tests.} Dans chaque régime, le test de Friedman \cite{Friedman1937} vérifie l'existence d'un effet de la politique. Les comparaisons par paires utilisent le test des rangs signés de Wilcoxon \cite{Wilcoxon1945}, bilatéral, avec une correction de Holm \cite{Holm1979} sur la famille des comparaisons rapportées dans chaque régime \cite{Demsar2006}. \rev{v3}{Ces comparaisons ont été fixées avant la campagne : chacun des quatre agents est comparé à MTWT, meilleure heuristique sur les graines de sélection, et à l'Affectation fixe, référence industrielle répandue (\cref{sec:relwork}), soit huit comparaisons par régime et par indicateur. La dépendance au régime est testée sur les trois régimes principaux seulement.} La dépendance du classement au régime (H2) est testée par un modèle linéaire de la productivité par camion comprenant la politique, les blocs (régime, graine) et l'interaction entre politique et régime.
+
+\textbf{Tailles d'effet et intervalles.} Les différences sont rapportées en unités physiques, avec un intervalle de confiance bootstrap apparié à 95\,\% (10\,000 rééchantillonnages des différences par graine) \cite{EfronTibshirani1993}. Le $d$ de Cohen est rapporté à titre descriptif ; dans un simulateur, la variabilité entre réplications est faible, si bien qu'un $d$ élevé ne signifie pas un effet pratique important. Les valeurs $p$ inférieures à 0,001 sont rapportées sous la forme $p<0{,}001$.
+
+\textbf{Variabilité d'entraînement.} Pour chaque agent et chaque régime, le score d'un modèle est sa moyenne sur les 30 graines d'évaluation. Les 5 modèles sont résumés par leur moyenne interquartile (IQM), avec un intervalle de confiance à 95\,\% par bootstrap stratifié par régime, ainsi que par le plus mauvais et le meilleur modèle \cite{Agarwal2021}. La probabilité d'amélioration $P(X > Y)$ entre deux agents est aussi rapportée. Pour l'agrégat sur les trois régimes, les scores sont divisés par la moyenne de l'Affectation fixe du même régime. Les courbes d'apprentissage sont la moyenne des 5 modèles évalués, avec un intervalle bootstrap point par point ; elles sont lues dans les journaux d'entraînement de ces modèles, et non dans des entraînements séparés.
+\end{revbloc}
+
+\subsection{Paramètres de reproductibilité}
+
+\begin{revbloc}{M3, A}
+La simulation est implémentée en Python 3.11.11 avec Gymnasium 1.2.3 \cite{MarkTowers2025}, Stable-Baselines3 2.8.0 \cite{AntoninRaffin2021} et PyTorch 2.5.1, sur processeur. Les poids de récompense ($w_1 = 1$, $w_2 = 0{,}1$, $w_3 = 0{,}05$, $w_4 = 0{,}3$) sont constants dans toutes les expériences, sauf dans l'étude d'ablation. \rev{v3}{Le facteur d'actualisation par minute est déduit de $\gamma$ et n'est jamais réglé (\cref{sec:discount}).} Les résultats par réplication, à raison d'une ligne par politique, régime et graine, sont fournis avec le code.
+\end{revbloc}
+
+\rev{N11, v3}{Tous les agents de cette version sont entraînés pendant la même campagne, avec le même simulateur et la même récompense. Chaque modèle est accompagné d'un fichier de métadonnées (version du code, hyperparamètres, durée d'entraînement), la configuration utilisée est archivée avec les résultats, et chaque essai de la mise au point peut être refait par une seule commande.}
+
+
+% ============================================================================
+% Section 7 : Résultats
+% ============================================================================
+\section{Résultats}
+\label{sec:results}
+
+\begin{revbloc}{T31}
+Cette section présente la productivité, l'attente, le comportement des politiques, les compromis entre critères, la robustesse et le transfert sans réentraînement, puis la significativité statistique, la variabilité, la convergence et l'étude d'ablation. Toutes les valeurs proviennent de l'évaluation unique de la campagne finale, sur les graines 42 à 71. Pour un agent, chaque réplication est d'abord moyennée sur ses 5 modèles (graines d'entraînement) : la moyenne et l'écart-type rapportés portent alors sur les 30 réplications, comme pour une heuristique. La variabilité entre modèles est rapportée à part (\cref{tab:runs,sec:stability}).
+\end{revbloc}
+
+\subsection{Productivité}
+\label{sec:productivity}
+
+\begin{revbloc}{T31}
+Le \cref{tab:productivity} rapporte la productivité moyenne des dix politiques dans les trois régimes, ainsi que la productivité par camion.
+
+\begin{table}[H]
+\centering
+\caption{Productivité (moyenne $\pm$ écart-type sur 30 réplications ; pour un agent, moyenne de ses 5 modèles) et productivité par camion. N : nominal ; FC : forte charge ; FP : fortes pannes. En gras : la plus élevée de chaque régime.}
+\label{tab:productivity}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccc|ccc@{}}
+\toprule
+ & \multicolumn{3}{c|}{\textbf{Productivité (t/h)}} & \multicolumn{3}{c}{\textbf{Par camion (t/h/camion)}} \\
+\textbf{Politique} & \textbf{N} & \textbf{FC} & \textbf{FP} & \textbf{N} & \textbf{FC} & \textbf{FP} \\
+\midrule
+FIFO                 & 4\,244,3 $\pm$ 51 & 6\,224,2 $\pm$ 68 & 4\,000,5 $\pm$ 79 & 353,7 & 345,8 & 333,4 \\
+Affectation fixe     & 4\,246,1 $\pm$ 45 & 6\,204,9 $\pm$ 49 & 3\,999,3 $\pm$ 69 & 353,8 & 344,7 & 333,3 \\
+Pelle la plus proche & 3\,893,2 $\pm$ 50 & 4\,023,2 $\pm$ 39 & 3\,754,3 $\pm$ 69 & 324,4 & 223,5 & 312,9 \\
+Plus court chemin    & 4\,026,2 $\pm$ 47 & 4\,657,9 $\pm$ 177 & 3\,857,6 $\pm$ 57 & 335,5 & 258,8 & 321,5 \\
+MTWT                 & \textbf{4\,437,4 $\pm$ 55} & \textbf{6\,365,3 $\pm$ 64} & \textbf{4\,183,7 $\pm$ 79} & \textbf{369,8} & \textbf{353,6} & \textbf{348,6} \\
+LP                   & 4\,404,2 $\pm$ 70 & 6\,351,3 $\pm$ 66 & 4\,149,8 $\pm$ 88 & 367,0 & 352,9 & 345,8 \\
+\midrule
+Q-Learning           & 4\,088,2 $\pm$ 47 & 5\,787,9 $\pm$ 55 & 3\,839,8 $\pm$ 73 & 340,7 & 321,6 & 320,0 \\
+SARSA                & 3\,573,3 $\pm$ 55 & 5\,409,8 $\pm$ 47 & 3\,353,1 $\pm$ 65 & 297,8 & 300,5 & 279,4 \\
+DQN                  & 1\,287,0 $\pm$ 79 & 984,5 $\pm$ 10 & 1\,578,5 $\pm$ 64 & 107,2 & 54,7 & 131,5 \\
+PPO                  & 4\,414,7 $\pm$ 51 & 6\,310,0 $\pm$ 62 & 4\,163,9 $\pm$ 77 & 367,9 & 350,6 & 347,0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Le même trio en tête dans les trois régimes.} MTWT est la politique la plus productive dans chaque régime : 4\,437~t/h en conditions nominales, 6\,365~t/h en forte charge et 4\,184~t/h en fortes pannes. PPO et LP la suivent de près, à moins de 1\,\% : PPO est à 23~t/h ($-0{,}5\,\%$), 55~t/h ($-0{,}9\,\%$) et 20~t/h ($-0{,}5\,\%$) de MTWT. Viennent ensuite FIFO et l'Affectation fixe, presque à égalité, à 2 à 4\,\% de MTWT selon le régime. Aucun agent d'apprentissage ne dépasse la meilleure heuristique, dans aucun régime.
+
+\textbf{Les autres agents sont sous l'Affectation fixe.} Q-Learning perd de 158 à 417~t/h face à l'Affectation fixe selon le régime, et SARSA de 646 à 795~t/h. DQN produit de 985 à 1\,579~t/h en moyenne : quatre de ses cinq modèles nominaux s'effondrent sur l'action ATTENDRE (\cref{sec:behaviour,sec:stability}).
+
+\textbf{Les règles de distance plafonnent.} Pelle la plus proche et Plus court chemin envoient la plus grande partie de la flotte vers la pelle la plus proche (\cref{sec:behaviour}). En forte charge, leur productivité par camion chute de 31\,\% et 23\,\%, contre 2 à 6\,\% pour les politiques qui répartissent la flotte.
+\end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{figures/barplot_productivite_scenarios.png}
+\caption{Productivité moyenne par politique et par régime. Les barres d'erreur indiquent les intervalles de confiance bootstrap à 95\,\% sur les 30 réplications.}
+\label{fig:productivity}
+\end{figure}
+
+\begin{revbloc}{T31}
+Le \cref{tab:cycles_reward} rapporte le nombre de cycles terminés et la récompense cumulée. Le classement selon la récompense suit celui de la productivité, à une inversion près entre deux politiques très proches en conditions nominales (FIFO et l'Affectation fixe) et en forte charge (PPO et FIFO). La récompense de DQN est négative : ses attentes répétées accumulent la pénalité d'ATTENDRE et le coût d'opportunité.
+
+\begin{table}[H]
+\centering
+\caption{Nombre moyen de cycles terminés par poste et récompense cumulée, sur 30 réplications (N : nominal, FC : forte charge, FP : fortes pannes).}
+\label{tab:cycles_reward}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabularx}{\textwidth}{@{}l*{6}{>{\centering\arraybackslash}X}@{}}
+\toprule
+\multirow{2}{*}{\textbf{Politique}}
+  & \multicolumn{3}{c}{\textbf{Cycles terminés}}
+  & \multicolumn{3}{c}{\textbf{Récompense cumulée}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+  & \textbf{N} & \textbf{FC} & \textbf{FP}
+  & \textbf{N}   & \textbf{FC}   & \textbf{FP} \\
+\midrule
+FIFO                 & 242,5 & 355,7 & 228,6 & 220,6 & 322,6 & 208,0 \\
+Affectation fixe     & 242,6 & 354,6 & 228,5 & 219,8 & 320,6 & 207,0 \\
+Pelle la plus proche & 222,5 & 229,9 & 214,5 & 192,5 & 152,0 & 186,9 \\
+Plus court chemin    & 230,1 & 266,2 & 220,4 & 199,4 & 196,1 & 192,2 \\
+MTWT                 & \textbf{253,6} & \textbf{363,7} & \textbf{239,1} & \textbf{230,9} & \textbf{330,3} & \textbf{217,7} \\
+LP                   & 251,7 & 362,9 & 237,1 & 227,0 & 329,7 & 213,9 \\
+\midrule
+Q-Learning           & 233,6 & 330,7 & 219,4 & 200,5 & 281,0 & 190,1 \\
+SARSA                & 204,2 & 309,1 & 191,6 & 175,9 & 265,1 & 158,7 \\
+DQN                  & 73,5 & 56,3 & 90,2 & $-$148,6 & $-$417,4 & $-$105,5 \\
+PPO                  & 252,3 & 360,6 & 237,9 & 228,3 & 320,9 & 215,5 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\end{revbloc}
+
+\subsection{Attente en file et immobilisation}
+\label{sec:waiting}
+
+\begin{revbloc}{T31}
+Le \cref{tab:waiting} distingue l'attente en file, qui mesure la congestion, de l'attente volontaire (action ATTENDRE) et du temps d'immobilisation total, qui y ajoute les réparations. Tous sont exprimés en minutes par camion et par poste.
+
+\begin{table}[H]
+\centering
+\caption{Attente en file (moyenne $\pm$ écart-type sur 30 réplications), attente volontaire (ATT.) et immobilisation totale (file + réparation + ATTENDRE), en minutes par camion et par poste.}
+\label{tab:waiting}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccc|ccc|ccc@{}}
+\toprule
+ & \multicolumn{3}{c|}{\textbf{Nominal}} & \multicolumn{3}{c|}{\textbf{Forte charge}} & \multicolumn{3}{c}{\textbf{Fortes pannes}} \\
+\textbf{Politique} & \textbf{File} & \textbf{Att.} & \textbf{Totale} & \textbf{File} & \textbf{Att.} & \textbf{Totale} & \textbf{File} & \textbf{Att.} & \textbf{Totale} \\
+\midrule
+FIFO                 & 12,9 $\pm$ 1,7 & 0,0 & 20,6 & 21,5 $\pm$ 2,6 & 0,0 & 29,2 & 11,1 $\pm$ 1,9 & 0,0 & 46,5 \\
+Affectation fixe     & 11,3 $\pm$ 1,4 & 0,0 & 18,9 & 19,0 $\pm$ 2,1 & 0,0 & 26,7 & 10,6 $\pm$ 1,3 & 0,0 & 45,9 \\
+Pelle la plus proche & 62,1 $\pm$ 5,5 & 0,0 & 69,3 & 188,3 $\pm$ 8,0 & 0,0 & 193,9 & 52,8 $\pm$ 5,2 & 0,0 & 86,3 \\
+Plus court chemin    & 61,4 $\pm$ 5,4 & 0,0 & 68,7 & 152,9 $\pm$ 14,8 & 0,0 & 159,0 & 52,1 $\pm$ 5,1 & 0,0 & 86,4 \\
+MTWT                 & 12,2 $\pm$ 1,3 & 0,0 & 20,2 & 21,4 $\pm$ 2,4 & 0,0 & 29,2 & 10,8 $\pm$ 1,3 & 0,0 & 47,5 \\
+LP                   & 18,9 $\pm$ 1,9 & 0,0 & 27,0 & 21,1 $\pm$ 1,4 & 0,0 & 28,9 & 18,3 $\pm$ 1,6 & 0,0 & 54,9 \\
+\midrule
+Q-Learning           & 18,8 $\pm$ 1,1 & 9,6 & 35,8 & 37,6 $\pm$ 2,0 & 8,0 & 52,8 & 20,4 $\pm$ 1,5 & 7,1 & 61,6 \\
+SARSA                & 36,8 $\pm$ 1,9 & 0,2 & 43,8 & 45,6 $\pm$ 2,1 & 0,1 & 52,5 & 36,6 $\pm$ 2,2 & 5,6 & 72,1 \\
+DQN                  & 19,5 $\pm$ 1,3 & 319,5 & 341,4 & 15,2 $\pm$ 0,3 & 395,0 & 411,5 & 16,9 $\pm$ 1,4 & 273,0 & 304,6 \\
+PPO                  & 16,7 $\pm$ 1,1 & 0,0 & 24,7 & 22,6 $\pm$ 1,2 & 5,5 & 35,9 & 14,2 $\pm$ 1,1 & 0,0 & 50,9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Congestion.} L'Affectation fixe a l'attente en file la plus faible des politiques qui produisent normalement, dans les trois régimes (11,3, 19,0 et 10,6~min), suivie de près par MTWT et FIFO. PPO attend un peu plus en file que MTWT (16,7 contre 12,2~min en conditions nominales) pour une productivité presque égale. Les deux règles de distance cumulent 52 à 188~min de file, car elles concentrent la flotte devant une pelle.
+
+\textbf{Attente volontaire.} Les six heuristiques n'utilisent jamais ATTENDRE. PPO ne l'utilise presque pas, sauf en forte charge, où elle représente 26\,\% de ses décisions mais seulement 5,5~min par camion, car ces attentes sont courtes. Q-Learning attend dans 33 à 46\,\% de ses décisions (7 à 10~min par camion). Les camions de DQN passent de 273 à 395~min par poste en attente volontaire, soit 57 à 82\,\% du poste : c'est l'effondrement décrit dans la \cref{sec:tuning}. Leur attente en file, faible, n'est donc pas un signe d'efficacité : ces camions roulent peu.
+
+\textbf{Fortes pannes.} L'attente en file y est un peu plus faible qu'en conditions nominales pour la plupart des politiques, puisque moins de camions sont disponibles en même temps. La hausse de l'immobilisation totale (environ 26 à 28~min par camion pour les heuristiques qui répartissent la flotte) vient des réparations.
+\end{revbloc}
+
+
+\subsection{Comportement d'affectation des politiques}
+\label{sec:behaviour}
+
+\begin{revbloc}{T31}
+Le \cref{tab:behaviour} décrit la répartition des cycles entre les trois pelles et la part des décisions consacrées à l'action ATTENDRE. La répartition entre pelles n'est pas enregistrée par l'évaluation : elle est obtenue en rejouant les mêmes épisodes avec le journal des cycles. Chaque épisode rejoué a été vérifié identique à celui de l'évaluation (productivité, attente en file et carburant) ; rien n'a été choisi sur ces épisodes.
+
+\begin{table}[H]
+\centering
+\caption{Répartition des cycles entre les pelles 1, 2 et 3 (\%) et part des décisions ATTENDRE (\%), moyennes sur 30 réplications (et sur les 5 modèles d'un agent).}
+\label{tab:behaviour}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc|cc|cc}
+\toprule
+ & \multicolumn{2}{c|}{\textbf{Nominal}} & \multicolumn{2}{c|}{\textbf{Forte charge}} & \multicolumn{2}{c}{\textbf{Fortes pannes}} \\
+\textbf{Politique} & \textbf{P1 / P2 / P3} & \textbf{Att.} & \textbf{P1 / P2 / P3} & \textbf{Att.} & \textbf{P1 / P2 / P3} & \textbf{Att.} \\
+\midrule
+FIFO                 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 \\
+Affectation fixe     & 36 / 33 / 31 & 0 & 36 / 33 / 31 & 0 & 36 / 34 / 31 & 0 \\
+Pelle la plus proche & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 \\
+Plus court chemin    & 74 / 26 / 0 & 0 & 71 / 29 / 0 & 0 & 72 / 28 / 0 & 0 \\
+MTWT                 & 50 / 35 / 15 & 0 & 42 / 36 / 22 & 0 & 49 / 37 / 14 & 0 \\
+LP                   & 60 / 40 / 0 & 0 & 42 / 42 / 17 & 0 & 64 / 36 / 0 & 0 \\
+\midrule
+Q-Learning           & 36 / 34 / 31 & 42 & 39 / 28 / 34 & 46 & 36 / 34 / 30 & 33 \\
+SARSA                & 0 / 0 / 99 & 2 & 1 / 30 / 69 & 1 & 0 / 1 / 99 & 15 \\
+DQN                  & 46 / 27 / 27 & 79 & 44 / 15 / 42 & 99 & 50 / 43 / 7 & 96 \\
+PPO                  & 59 / 36 / 4 & 0 & 46 / 36 / 18 & 26 & 56 / 37 / 7 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Trois profils se dégagent parmi les heuristiques. Les règles de distance concentrent la flotte : Pelle la plus proche envoie tous ses cycles à la pelle 1, et Plus court chemin de 71 à 74\,\%. FIFO et l'Affectation fixe répartissent les cycles presque à parts égales, et envoient donc près d'un tiers des cycles à la pelle 3, la plus éloignée. MTWT et LP privilégient les pelles 1 et 2 et n'utilisent la pelle 3 que lorsque les deux autres sont chargées, surtout en forte charge (22 et 17\,\%). PPO suit le même profil que MTWT, mais utilise encore moins la pelle 3 : 4\,\% contre 15\,\% en conditions nominales, 7\,\% contre 14\,\% en fortes pannes. Ses cycles sont donc plus courts, ce qui explique sa consommation plus faible par tonne (\cref{sec:sustainability}).
+
+Les agents à valeurs ont des comportements extrêmes. SARSA envoie 99\,\% de ses cycles à la pelle 3 en conditions nominales et en fortes pannes, comme pendant la mise au point. Q-Learning répartit ses cycles entre les trois pelles, mais attend dans 33 à 46\,\% de ses décisions. DQN attend dans 79 à 99\,\% de ses décisions. Son seul modèle nominal qui fonctionne (graine 2, 3\,932~t/h) envoie 99\,\% de ses cycles à la pelle 1 : il reproduit la Pelle la plus proche (3\,893~t/h), et non une politique nouvelle.
+\end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/behaviour_30_replications.png}
+\caption{Répartition des cycles entre les pelles (barres empilées) et part des décisions ATTENDRE, par politique et par régime, moyennes sur 30 réplications (et sur les 5 modèles d'un agent spécialisé).}
+\label{fig:behavioral}
+\end{figure}
+
+\subsection{Compromis entre productivité, attente en file et carburant}
+\label{sec:pareto}
+
+\begin{revbloc}{T31}
+Le \cref{tab:pareto} indique, pour chaque régime, les politiques non dominées au sens de Pareto pour deux couples de critères : productivité et attente en file, puis productivité et carburant par tonne.
+
+\begin{table}[H]
+\centering
+\caption{Politiques non dominées au sens de Pareto dans chaque régime. DQN, non dominé en forte charge sur le premier couple parce que ses camions roulent peu, est signalé entre parenthèses.}
+\label{tab:pareto}
+\small
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+\textbf{Régime} & \textbf{Productivité et attente en file} & \textbf{Productivité et carburant par tonne} \\
+\midrule
+Nominal & Affectation fixe (4\,246~t/h ; 11,3~min), MTWT (4\,437 ; 12,2) & Pelle la plus proche (3\,893~t/h ; 0,235~L/t), LP (4\,404 ; 0,235), PPO (4\,415 ; 0,237), MTWT (4\,437 ; 0,244) \\
+Forte charge & Affectation fixe (6\,205 ; 19,0), LP (6\,351 ; 21,1), MTWT (6\,365 ; 21,4), (DQN : 985 ; 15,2) & PPO (6\,310 ; 0,248), MTWT (6\,365 ; 0,253) \\
+Fortes pannes & Affectation fixe (3\,999 ; 10,6), MTWT (4\,184 ; 10,8) & Pelle la plus proche (3\,754 ; 0,235), LP (4\,150 ; 0,236), PPO (4\,164 ; 0,242), MTWT (4\,184 ; 0,245) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Entre productivité et attente en file, le compromis est minime : MTWT produit 4,5\,\% de plus que l'Affectation fixe pour moins d'une minute de file en plus par camion ; avec l'Affectation fixe, et LP en forte charge, elle domine toutes les autres politiques. Entre productivité et carburant, en revanche, plusieurs politiques forment le front : PPO et LP consomment moins que MTWT par tonne, pour une productivité légèrement inférieure. En forte charge, PPO est la politique la plus économe en carburant par tonne. Ces fronts sont définis à l'intérieur de chaque régime.
+\end{revbloc}
+
+
+\subsection{Robustesse et transfert sans réentraînement}
+\label{sec:robustness}
+
+\begin{revbloc}{T31}
+Les ratios de robustesse du \cref{tab:robustness} comparent, pour les agents, des modèles entraînés dans chaque régime : ils mesurent la performance après réentraînement. La capacité d'un même modèle à supporter un changement de régime est mesurée par l'évaluation sans réentraînement (\cref{tab:transfer}).
+
+L'indice d'augmentation de l'attente en file dans le régime $s$ est défini par :
+\begin{equation}
+\Delta_{\mathrm{file}}^{s} = \frac{W_{s} - W_{\mathrm{nominal}}}{W_{\mathrm{nominal}}} \times 100 ,
+\label{eq:delta_wait}
+\end{equation}
+où $W$ est l'attente en file moyenne par camion et par poste.
+
+\begin{table}[H]
+\centering
+\caption{Robustesse par rapport aux conditions nominales. En forte charge (FC), le ratio porte sur la productivité par camion ; en fortes pannes (FP), sur la productivité. Les augmentations portent sur l'attente en file et, pour comparaison, sur l'immobilisation totale.}
+\label{tab:robustness}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc|cc|c}
+\toprule
+ & \multicolumn{2}{c|}{\textbf{Ratio de robustesse}} & \multicolumn{2}{c|}{$\boldsymbol{\Delta_{\mathrm{file}}}$ \textbf{(\%)}} & \textbf{Immob. totale} \\
+\textbf{Politique} & \textbf{FC (par camion)} & \textbf{FP} & \textbf{FC} & \textbf{FP} & \textbf{FC (\%)} \\
+\midrule
+FIFO                 & 0,978 & 0,943 & +67,5 & $-$13,8 & +41,7 \\
+Affectation fixe     & 0,974 & 0,942 & +68,8 & $-$6,2 & +40,8 \\
+Pelle la plus proche & 0,689 & 0,964 & +203,4 & $-$14,9 & +179,9 \\
+Plus court chemin    & 0,771 & 0,958 & +148,8 & $-$15,1 & +131,5 \\
+MTWT                 & 0,956 & 0,943 & +75,5 & $-$11,4 & +44,0 \\
+LP                   & 0,961 & 0,942 & +12,0 & $-$2,9 & +7,0 \\
+\midrule
+Q-Learning           & 0,944 & 0,939 & +100,3 & +8,8 & +47,3 \\
+SARSA                & 1,009 & 0,938 & +23,8 & $-$0,5 & +19,9 \\
+DQN                  & 0,510 & 1,227 & $-$21,9 & $-$13,3 & +20,5 \\
+PPO                  & 0,953 & 0,943 & +35,6 & $-$15,1 & +45,1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+En forte charge, les politiques qui répartissent la flotte gardent de 94 à 98\,\% de leur productivité par camion ; les deux règles de distance n'en gardent que 69 et 77\,\%. En fortes pannes, toutes les politiques qui fonctionnent perdent de 4 à 6\,\% de productivité, et leurs ratios sont presque identiques (0,938 à 0,964) : les pannes de camions touchent toutes les politiques de la même façon. Les ratios de DQN (0,510 et 1,227) et de SARSA en forte charge (1,009) reflètent surtout des niveaux nominaux très bas ou très variables d'un modèle à l'autre, et non une robustesse.
+\end{revbloc}
+
+\begin{revbloc}{T31}
+\begin{table}[H]
+\centering
+\caption{Évaluation sans réentraînement : agents entraînés en conditions nominales (transférés) et agents entraînés dans le régime évalué (spécialisés), sur les mêmes graines. Productivité en t/h, moyenne des 5 modèles ; $\Delta$ = transféré $-$ spécialisé, avec intervalle de confiance bootstrap apparié à 95\,\% sur les 30 réplications.}
+\label{tab:transfer}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Régime} & \textbf{Agent} & \textbf{Spécialisé} & \textbf{Transféré} & \textbf{$\Delta$ (t/h) [IC 95\,\%]} & \textbf{$\Delta$ (\%)} \\
+\midrule
+Fortes pannes & PPO        & 4\,163,9 & 4\,163,5 & $-$0,5 [$-$6,2 ; 5,0] & 0,0 \\
+              & DQN        & 1\,578,5 & 1\,226,2 & $-$352,3 [$-$368,0 ; $-$329,2] & $-$22,3 \\
+              & Q-Learning & 3\,839,8 & 3\,871,6 & +31,7 [22,9 ; 40,4] & +0,8 \\
+              & SARSA      & 3\,353,1 & 3\,419,2 & +66,0 [51,7 ; 79,5] & +2,0 \\
+\midrule
+Forte charge  & PPO        & 6\,310,0 & 6\,257,9 & $-$52,1 [$-$67,1 ; $-$37,6] & $-$0,8 \\
+              & DQN        & 984,5    & 1\,802,3 & +817,7 [724,7 ; 908,4] & +83,1 \\
+              & Q-Learning & 5\,787,9 & 5\,757,0 & $-$30,9 [$-$49,6 ; $-$10,8] & $-$0,5 \\
+              & SARSA      & 5\,409,8 & 4\,035,7 & $-$1\,374,1 [$-$1\,393,0 ; $-$1\,355,1] & $-$25,4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{PPO transfère presque sans perte.} En fortes pannes, le PPO nominal fait exactement comme le PPO spécialisé ($-0{,}5$~t/h, intervalle contenant 0). En forte charge, il perd 0,8\,\% ; il reste devant l'Affectation fixe (+53~t/h [28 ; 78]) et derrière MTWT ($-108$~t/h [$-130$ ; $-85$]). Il n'utilise jamais ATTENDRE, alors que le PPO spécialisé en forte charge l'utilise dans 26\,\% de ses décisions. Dans les deux régimes intermédiaires jamais vus, le PPO nominal se place de même juste derrière MTWT : $-61$~t/h avec 15 camions, $-19$~t/h avec 5\,\% de pannes, et devant l'Affectation fixe de 118 et 165~t/h.
+
+\textbf{Les autres agents.} Q-Learning transfère avec un écart inférieur à 1\,\%. SARSA transfère bien en fortes pannes mais perd 25\,\% en forte charge. Le DQN nominal transféré fait mieux que le DQN spécialisé en forte charge (+83\,\%), parce que le DQN spécialisé s'effondre encore plus : cet écart ne mesure pas une capacité de transfert.
+
+Sauf pour SARSA en forte charge, réentraîner un agent dans le régime perturbé n'apporte donc presque rien dans cette étude : les pannes de camions et une flotte plus grande ne changent pas la logique de dispatching qu'un agent nominal a apprise.
+\end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/robustness_heatmap.png}
+\caption{Variation par rapport aux conditions nominales, en \%. Gauche : productivité (par camion en forte charge). Droite : attente en file. Le bleu indique une amélioration et le rouge une dégradation.}
+\label{fig:heatmap}
+\end{figure}
+
+\subsection{Significativité statistique}
+\label{sec:stats}
+
+\begin{revbloc}{T31}
+Le test de Friedman met en évidence un effet de la politique sur la productivité dans chacun des trois régimes ($\chi^2(9) = 263{,}4$ en conditions nominales, 263,0 en forte charge et 263,2 en fortes pannes ; $p<0{,}001$). Le modèle linéaire de la productivité par camion révèle une interaction significative entre politique et régime ($F(18, 783) = 1\,211{,}1$, $p<0{,}001$, $\eta^2_p = 0{,}97$).
+
+Le \cref{tab:stats} rapporte les huit comparaisons fixées avant la campagne (\cref{sec:proto}). Toutes sont significatives après correction de Holm ($p<0{,}001$). PPO est significativement en dessous de MTWT dans les trois régimes, de 20 à 55~t/h, et significativement au-dessus de l'Affectation fixe, de 105 à 169~t/h. Les trois autres agents sont en dessous des deux références dans tous les régimes. Le $d$ de Cohen est très grand pour DQN et les agents tabulaires ($|d| > 2$) : il traduit des écarts de plusieurs centaines de t/h face à une faible variabilité d'une réplication à l'autre. Pour PPO face à MTWT, $d$ vaut de $-0{,}25$ à $-0{,}88$ : l'écart est réel, mais petit en pratique (moins de 1\,\% de la productivité).
+
+\begin{table}[H]
+\centering
+\caption{Comparaisons par paires de la productivité, fixées avant la campagne : différence moyenne appariée (t/h) avec intervalle de confiance bootstrap à 95\,\%, $d$ de Cohen. Test de Wilcoxon apparié, bilatéral, avec correction de Holm sur les huit comparaisons de chaque régime : $p<0{,}001$ pour toutes.}
+\label{tab:stats}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcc|cc|cc@{}}
+\toprule
+ & \multicolumn{2}{c|}{\textbf{Nominal}} & \multicolumn{2}{c|}{\textbf{Forte charge}} & \multicolumn{2}{c}{\textbf{Fortes pannes}} \\
+\textbf{Comparaison} & \textbf{Différence [IC 95\,\%]} & \textbf{$d$} & \textbf{Différence [IC 95\,\%]} & \textbf{$d$} & \textbf{Différence [IC 95\,\%]} & \textbf{$d$} \\
+\midrule
+PPO $-$ MTWT        & $-$22,8 [$-$31,2 ; $-$14,2] & $-$0,43 & $-$55,3 [$-$75,4 ; $-$35,5] & $-$0,88 & $-$19,7 [$-$28,0 ; $-$11,2] & $-$0,25 \\
+DQN $-$ MTWT        & $-$3\,150,5 [$-$3\,177,0 ; $-$3\,113,3] & $-$46,0 & $-$5\,380,8 [$-$5\,403,5 ; $-$5\,357,9] & $-$117,4 & $-$2\,605,2 [$-$2\,629,0 ; $-$2\,582,0] & $-$36,1 \\
+Q-Learning $-$ MTWT & $-$349,2 [$-$366,3 ; $-$332,0] & $-$6,79 & $-$577,4 [$-$596,9 ; $-$557,0] & $-$9,70 & $-$343,8 [$-$357,0 ; $-$331,1] & $-$4,51 \\
+SARSA $-$ MTWT      & $-$864,2 [$-$879,6 ; $-$848,4] & $-$15,7 & $-$955,5 [$-$971,4 ; $-$938,0] & $-$17,0 & $-$830,6 [$-$848,2 ; $-$811,4] & $-$11,4 \\
+PPO $-$ Aff. fixe   & +168,6 [158,1 ; 179,0] & 3,52 & +105,1 [86,9 ; 122,9] & 1,89 & +164,6 [152,4 ; 177,2] & 2,24 \\
+DQN $-$ Aff. fixe   & $-$2\,959,1 [$-$2\,984,3 ; $-$2\,922,2] & $-$45,9 & $-$5\,220,4 [$-$5\,238,3 ; $-$5\,201,6] & $-$147,5 & $-$2\,420,8 [$-$2\,445,3 ; $-$2\,398,7] & $-$36,3 \\
+Q-Learning $-$ Aff. fixe & $-$157,9 [$-$172,7 ; $-$144,0] & $-$3,43 & $-$417,0 [$-$438,8 ; $-$394,0] & $-$8,03 & $-$159,5 [$-$170,0 ; $-$149,3] & $-$2,24 \\
+SARSA $-$ Aff. fixe & $-$672,8 [$-$688,7 ; $-$657,1] & $-$13,4 & $-$795,1 [$-$810,3 ; $-$780,4] & $-$16,5 & $-$646,2 [$-$664,4 ; $-$628,4] & $-$9,61 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Ces comparaisons portent sur la performance attendue de chaque algorithme : pour chaque réplication, un agent est représenté par la moyenne de ses 5 modèles. Elles ne disent pas qu'un modèle pris au hasard ferait de même : pour DQN, un modèle sur cinq reproduit la Pelle la plus proche et les autres s'effondrent (\cref{tab:runs,tab:behaviour}).
+\end{revbloc}
+
+\subsection{Variabilité entre réplications et entre modèles}
+\label{sec:stability}
+
+\begin{revbloc}{T31}
+\textbf{Entre réplications.} Pour un modèle donné, le coefficient de variation de la productivité sur les 30 réplications est faible pour toutes les politiques qui fonctionnent : de 0,8 à 2,5\,\% selon la politique et le régime. Il ne dépasse 3\,\% que pour Plus court chemin en forte charge (3,8\,\%) et pour DQN (3,2 à 12,5\,\%).
+
+\textbf{Entre modèles.} Le \cref{tab:runs} donne la productivité de chacun des 5 modèles de chaque agent. PPO est très reproductible : ses 5 modèles sont à moins de 10~t/h les uns des autres en conditions nominales, 21~t/h en fortes pannes et 211~t/h en forte charge. Les agents tabulaires varient davantage (jusqu'à 436~t/h d'écart). DQN est bimodal : dans chaque régime, un ou deux modèles produisent de 2\,900 à 4\,200~t/h et les autres moins de 1\,200~t/h, la plupart moins de 400~t/h. La moyenne de DQN décrit donc un mélange de modèles qui fonctionnent et de modèles effondrés, et non un niveau typique.
+
+\begin{table}[H]
+\centering
+\caption{Productivité de chacun des 5 modèles de chaque agent (graines d'entraînement 1 à 5, dans l'ordre), en t/h, moyenne sur les 30 réplications.}
+\label{tab:runs}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Agent} & \textbf{Nominal} & \textbf{Forte charge} & \textbf{Fortes pannes} \\
+\midrule
+Q-Learning & 4\,171 / 4\,057 / 4\,123 / 4\,096 / 3\,994 & 5\,776 / 5\,928 / 5\,919 / 5\,521 / 5\,796 & 3\,861 / 3\,820 / 3\,837 / 3\,874 / 3\,807 \\
+SARSA      & 3\,601 / 3\,493 / 3\,577 / 3\,606 / 3\,589 & 5\,322 / 5\,495 / 5\,394 / 5\,201 / 5\,637 & 3\,418 / 3\,369 / 3\,372 / 3\,456 / 3\,150 \\
+DQN        & 194 / 3\,932 / 934 / 210 / 1\,164 & 52 / 315 / 75 / 4\,166 / 315 & 210 / 210 / 1\,049 / 3\,484 / 2\,940 \\
+PPO        & 4\,414 / 4\,418 / 4\,416 / 4\,409 / 4\,416 & 6\,375 / 6\,322 / 6\,365 / 6\,324 / 6\,164 & 4\,162 / 4\,176 / 4\,157 / 4\,155 / 4\,170 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Agrégés à la manière d'Agarwal et al.~\cite{Agarwal2021}, normalisés par l'Affectation fixe et regroupés sur les trois régimes, les IQM des agents valent 1,037 pour PPO [1,035 ; 1,037], 0,956 pour Q-Learning [0,949 ; 0,961], 0,850 pour SARSA [0,842 ; 0,857] et 0,187 pour DQN [0,065 ; 0,438]. La probabilité qu'un modèle PPO fasse mieux qu'un modèle DQN ou Q-Learning dans un même régime vaut 1.
+\end{revbloc}
+
+\subsection{Convergence}
+\label{sec:convergence}
+
+\begin{revbloc}{T31}
+La \cref{fig:convergence} montre la productivité des épisodes d'entraînement, en moyenne sur les 5 modèles avec un intervalle de confiance à 95\,\%. Ces épisodes sont joués avec l'exploration, si bien que la courbe d'un agent à valeurs (DQN, Q-Learning, SARSA) ne coïncide pas avec la performance de sa politique gloutonne évaluée plus haut.
+
+\begin{itemize}
+  \item \textbf{PPO} progresse dès le début et atteint un plateau vers 10\,\% du budget, puis reste stable : en conditions nominales, de 4\,243~t/h au premier intervalle à 4\,409~t/h à 10\,\% et 4\,423~t/h à la fin. Il en va de même dans les deux régimes perturbés.
+  \item \textbf{DQN} part du niveau de la politique au hasard, quand l'exploration est totale (environ 4\,170~t/h en conditions nominales), puis baisse quand l'exploration diminue, jusqu'à environ 3\,460~t/h à la fin. Joué sans exploration, le modèle final fait bien pire (1\,287~t/h en moyenne) : les rares actions au hasard suffisent, pendant l'entraînement, à faire sortir les camions des attentes répétées.
+  \item \textbf{Q-Learning et SARSA} baissent eux aussi à mesure que l'exploration diminue. Q-Learning descend de 4\,169 à environ 4\,060~t/h à mi-parcours, puis remonte légèrement (4\,108~t/h à la fin). SARSA baisse jusqu'à la fin (3\,559~t/h). Ni l'un ni l'autre ne dépasse le niveau atteint au début avec une exploration presque totale, c'est-à-dire celui de la politique au hasard. Ce défaut de convergence, déjà observé pendant la mise au point, est confirmé sur les 5 modèles et les trois régimes.
+\end{itemize}
+\end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/learning_curves_campagne.png}
+\caption{Productivité des épisodes d'entraînement (exploration comprise) en fonction de l'avancement de l'entraînement, moyenne sur les 5 modèles avec intervalle de confiance à 95\,\%, par agent et par régime.}
+\label{fig:convergence}
+\end{figure}
+
+\subsection{Étude d'ablation}
+\label{sec:ablation}
+
+\begin{revbloc}{T31}
+L'étude d'ablation porte sur le poids de la pénalité d'attente $w_4$, en conditions nominales, avec 5 modèles par valeur pour PPO et DQN (\cref{tab:ablation}). La ligne $w_4 = 0{,}3$ reprend les modèles nominaux des résultats principaux.
+
+\begin{table}[H]
+\centering
+\caption{Étude d'ablation sur le poids de la pénalité d'attente $w_4$, régime nominal, 5 modèles par valeur. Productivité moyenne (t/h), plage des 5 modèles, part des décisions ATTENDRE (\%), et pour DQN le nombre de modèles effondrés (productivité inférieure à 1\,500~t/h).}
+\label{tab:ablation}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l|ccc|cccc@{}}
+\toprule
+ & \multicolumn{3}{c|}{\textbf{PPO}} & \multicolumn{4}{c}{\textbf{DQN}} \\
+\textbf{$w_4$} & \textbf{Productivité} & \textbf{Plage} & \textbf{Att. (\%)} & \textbf{Productivité} & \textbf{Plage} & \textbf{Att. (\%)} & \textbf{Effondrés} \\
+\midrule
+0          & 4\,416,9 & 4\,411 -- 4\,423 & 0,6 & 1\,587,7 & 210 -- 3\,785 & 67,1 & 3 / 5 \\
+0,1        & 4\,410,8 & 4\,405 -- 4\,417 & 4,3 & 2\,267,4 & 210 -- 3\,789 & 66,4 & 2 / 5 \\
+0,3 (réf.) & 4\,414,7 & 4\,409 -- 4\,418 & 0,0 & 1\,287,0 & 194 -- 3\,932 & 79,3 & 4 / 5 \\
+0,5        & 4\,411,4 & 4\,401 -- 4\,421 & 0,1 & 2\,016,9 & 0 -- 3\,720 & 80,7 & 2 / 5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+PPO est insensible à $w_4$ : sa productivité ne varie que de 4\,411 à 4\,417~t/h, et il n'utilise presque jamais ATTENDRE. DQN s'effondre pour toutes les valeurs de $w_4$, y compris sans pénalité d'attente, avec 2 à 4 modèles effondrés sur 5. Avec $w_4 = 0{,}5$, deux modèles attendent pendant tout le poste et ne transportent aucune tonne ; leur carburant par tonne n'est pas défini. L'effondrement de DQN ne vient donc pas du poids de la pénalité d'attente, ce qui est cohérent avec l'explication proposée dans la \cref{sec:tuning} : il tient à l'écart de valeur, très faible, entre ATTENDRE et la meilleure affectation.
+\end{revbloc}
+
+\paragraph{Sensibilité aux hyperparamètres.}
+\begin{revbloc}{T31}
+Les hyperparamètres de PPO et de DQN ont été choisis sur une grille de quatre configurations chacun, et ceux des agents tabulaires sur une grille de même taille, selon la procédure de la \cref{sec:tuning}. Les essais correspondants sont rapportés dans le \cref{tab:tuning}. Aucune autre sensibilité aux hyperparamètres n'a été mesurée.
+\end{revbloc}
+
+% ============================================================================
+% Section 8 : Discussion
+% ============================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+Cette section interprète les résultats au regard des questions de recherche, discute les implications pour l'exploitation et la durabilité, puis les limites de l'étude.
+
+\subsection{Réponses aux questions de recherche}
+
+\begin{revbloc}{T31}
+\textbf{QR1.} MTWT atteint la productivité la plus élevée dans les trois régimes, et la tête du classement est stable : MTWT, puis PPO et LP à moins de 1\,\%, puis FIFO et l'Affectation fixe. Ce qui change d'un régime à l'autre, c'est le bas du classement : les règles de distance s'effondrent en forte charge, et les agents qui fonctionnent mal (DQN, SARSA) varient fortement. L'interaction significative entre politique et régime vient de ces politiques, et non d'un changement de tête.
+
+\textbf{QR2.} Productivité et attente en file vont de pair. Les politiques les plus productives sont aussi celles qui attendent le moins en file, et le front de Pareto se réduit à l'Affectation fixe et MTWT (et LP en forte charge), avec un écart de moins d'une minute de file par camion. Ce qui sépare les politiques est la façon dont elles tiennent compte des files : les politiques qui les ignorent (règles de distance) ou qui apprennent mal à les utiliser (agents tabulaires, DQN) sont dominées partout.
+
+\textbf{QR3.} Oui pour PPO : le modèle nominal, déployé sans réentraînement, fait aussi bien que le modèle spécialisé en fortes pannes et perd 0,8\,\% en forte charge. Il garde sa place, juste derrière MTWT et devant l'Affectation fixe, dans les deux régimes perturbés et dans les deux régimes intermédiaires jamais vus. Q-Learning transfère aussi, au niveau bas qui est le sien. SARSA perd 25\,\% en forte charge.
+
+\textbf{QR4.} Non. Le classement selon le carburant par tonne ne suit pas celui de la productivité. Pelle la plus proche, LP et PPO consomment le moins par tonne en conditions nominales et en fortes pannes, et PPO le moins en forte charge. FIFO et l'Affectation fixe, pourtant parmi les plus productives, consomment de 8 à 14\,\% de plus par tonne que PPO selon le régime.
+\end{revbloc}
+
+Le \cref{tab:hypotheses} résume le statut des trois hypothèses.
+
+\begin{table}[H]
+\caption{Validation des hypothèses de recherche, formulées avant l'analyse des résultats.}
+\label{tab:hypotheses}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{@{}lXXl@{}}
+\toprule
+\textbf{Hyp.} & \textbf{Énoncé} & \textbf{Éléments clés} & \textbf{Verdict} \\
+\midrule
+H1 & En conditions nominales, les agents profonds dépassent la meilleure heuristique en productivité. & \rev{T31}{PPO est à $-22{,}8$~t/h ($-0{,}5\,\%$) de MTWT, DQN à $-3\,150$~t/h ; $p<0{,}001$ après correction (\cref{tab:stats}). Moyenne sur 5 modèles par agent.} & \rev{T31}{\textbf{Réfutée}} \\[4pt]
+H2 & Aucune politique ne domine dans les trois régimes. & \rev{T31}{MTWT est la plus productive dans les trois régimes. L'interaction entre politique et régime est significative ($F(18,783)=1\,211$, $p<0{,}001$), mais elle vient du bas du classement.} & \rev{T31}{\textbf{Réfutée}} \\[4pt]
+H3 & Une productivité élevée ne s'accompagne pas nécessairement d'une faible attente en file. & \rev{T31}{Front réduit à l'Affectation fixe et MTWT (et LP en forte charge), avec moins d'une minute d'écart de file. En revanche, un compromis net existe entre productivité et carburant par tonne (analyse ajoutée, non prévue par l'hypothèse).} & \rev{T31}{\textbf{Non validée}} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Interprétation}
+
+\begin{revbloc}{T31}
+\begin{itemize}
+  \item \textbf{Connaître les files est ce qui compte.} Les trois politiques en tête utilisent toutes une estimation de l'attente à venir : MTWT choisit la route de plus faible attente prévue, LP suit un plan de flux calculé sur les capacités, et PPO observe l'attente prévue par route, ajoutée à l'état pendant la mise au point (\cref{sec:tuning}). Il est donc cohérent que PPO atteigne presque le niveau de MTWT : il dispose de la même information, et ne fait pas mieux que la règle qui l'exploite directement. Cette lecture est une interprétation ; aucune expérience de l'étude ne retire cette information à PPO une fois la mise au point terminée.
+  \item \textbf{PPO échange un peu de productivité contre du carburant.} La récompense de PPO pénalise la distance parcourue ($w_3$). PPO consomme de 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT, pour 0,5 à 0,9\,\% de productivité en moins, en envoyant moins de cycles à la pelle la plus éloignée (\cref{tab:behaviour}) : un compromis cohérent avec cette pénalité, que MTWT, qui ne regarde que l'attente, ne fait pas.
+  \item \textbf{L'échec de DQN est reproductible et ne dépend pas de $w_4$.} Quatre modèles nominaux sur cinq s'effondrent sur l'action ATTENDRE, et l'effondrement persiste pour toutes les valeurs de $w_4$, y compris sans pénalité d'attente. Pendant l'entraînement, l'exploration masque cet effondrement : les épisodes d'entraînement produisent environ 3\,460~t/h, la politique gloutonne 1\,287~t/h en moyenne. Avec un seul modèle par agent, le résultat de DQN aurait dépendu de la graine : 3\,932~t/h avec la graine 2, dont le modèle reproduit la Pelle la plus proche, 194~t/h avec la graine 1.
+  \item \textbf{Les agents tabulaires ne convergent pas.} Leur productivité baisse quand l'exploration diminue, dans les trois régimes et pour les 5 modèles. Une représentation de six variables discrétisées ne semble pas suffire à distinguer les situations où un détour vers une autre pelle paie.
+  \item \textbf{Évaluer sur plusieurs régimes reste nécessaire,} même si la tête du classement ne change pas ici : c'est en forte charge que les règles de distance et SARSA perdent le plus, et une évaluation limitée aux conditions nominales ne l'aurait pas montré.
+\end{itemize}
+\end{revbloc}
+
+\subsection{Implications pour l'exploitation}
+
+\begin{revbloc}{T31}
+Les résultats portent sur la performance relative des politiques dans l'environnement simulé proposé, et leur transposition à un site réel exigerait une calibration et une validation préalables. Sous cette réserve, trois enseignements se dégagent. Premièrement, une règle qui tient compte de l'attente prévue aux pelles, comme MTWT, est une référence très exigeante : dans cette étude, aucun agent d'apprentissage ne la dépasse, et les comparaisons limitées à des règles plus simples, comme l'Affectation fixe, surestiment l'intérêt de l'apprentissage. Deuxièmement, l'intérêt d'un agent comme PPO tient ici moins à la productivité qu'au compromis avec le carburant et à la stabilité de son comportement hors du régime d'entraînement : en conditions nominales, il économise environ 7~litres pour 1\,000~tonnes par rapport à MTWT, pour environ 23~t/h de moins. Troisièmement, un agent d'apprentissage devrait d'abord être utilisé comme aide à la décision, ses recommandations étant validées par un répartiteur, et évalué sur plusieurs régimes contrastés avant tout déploiement.
+
+Le passage à de grandes flottes de 50 à 200 camions reste une perspective importante. La représentation de l'état utilisée ici ne dépend pas du nombre de camions, mais elle dépend du nombre de pelles et de verses, qui fixe aussi l'espace d'actions. Des réseaux de neurones sur graphe ou des formulations multi-agents \cite{Zhao2025} pourraient lever cette dépendance. Un préentraînement sur des historiques de dispatching suivi d'un ajustement en simulation pourrait réduire l'écart entre simulation et réalité ; ces pistes restent à évaluer.
+\end{revbloc}
+
+\subsection{Durabilité}
+\label{sec:sustainability}
+
+\begin{revbloc}{T31}
+Le \cref{tab:efficiency} rapporte l'utilisation des camions et des pelles, et le \cref{tab:fuel} la consommation de carburant.
+
+\begin{table}[H]
+\centering
+\caption{Utilisation des camions (temps d'activité dans le poste) et des pelles (temps de chargement), en \%, moyennes sur 30 réplications.}
+\label{tab:efficiency}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccc|ccc}
+\toprule
+ & \multicolumn{3}{c|}{\textbf{Utilisation des camions (\%)}} & \multicolumn{3}{c}{\textbf{Utilisation des pelles (\%)}} \\
+\textbf{Politique} & \textbf{N} & \textbf{FC} & \textbf{FP} & \textbf{N} & \textbf{FC} & \textbf{FP} \\
+\midrule
+FIFO                 & 95,7 & 93,9 & 90,3 & 34,6 & 50,7 & 32,7 \\
+Affectation fixe     & \textbf{96,1} & \textbf{94,4} & \textbf{90,4} & 34,6 & 50,7 & 32,7 \\
+Pelle la plus proche & 85,6 & 59,6 & 82,0 & 31,9 & 33,0 & 30,7 \\
+Plus court chemin    & 85,7 & 66,9 & 82,0 & 32,8 & 38,1 & 31,5 \\
+MTWT                 & 95,8 & 93,9 & 90,1 & \textbf{36,1} & \textbf{52,1} & \textbf{34,2} \\
+LP                   & 94,4 & 94,0 & 88,6 & 35,8 & 51,7 & 33,9 \\
+\midrule
+Q-Learning           & 92,5 & 89,0 & 87,2 & 33,4 & 47,3 & 31,3 \\
+SARSA                & 90,9 & 89,1 & 85,0 & 29,3 & 44,3 & 27,5 \\
+DQN                  & 28,9 & 14,3 & 36,6 & 10,7 & 8,1 & 13,0 \\
+PPO                  & 94,9 & 92,5 & 89,4 & 36,0 & 51,1 & 34,0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Consommation de carburant : par tonne transportée (L/t, moyenne $\pm$ écart-type sur 30 réplications) et par camion et par heure (L/h). En gras : la plus faible consommation par tonne de chaque régime.}
+\label{tab:fuel}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc|ccc@{}}
+\toprule
+ & \multicolumn{3}{c|}{\textbf{Par tonne (L/t)}} & \multicolumn{3}{c}{\textbf{Par camion (L/h)}} \\
+\textbf{Politique} & \textbf{N} & \textbf{FC} & \textbf{FP} & \textbf{N} & \textbf{FC} & \textbf{FP} \\
+\midrule
+FIFO                 & $0{,}268\pm0{,}002$ & $0{,}268\pm0{,}002$ & $0{,}271\pm0{,}003$ & 94,9 & 92,7 & 90,4 \\
+Affectation fixe     & $0{,}270\pm0{,}001$ & $0{,}272\pm0{,}001$ & $0{,}272\pm0{,}001$ & 95,4 & 93,8 & 90,6 \\
+Pelle la plus proche & \boldmath{$0{,}235\pm0{,}002$} & $0{,}256\pm0{,}002$ & \boldmath{$0{,}235\pm0{,}003$} & 76,2 & 57,3 & 73,6 \\
+Plus court chemin    & $0{,}239\pm0{,}004$ & $0{,}254\pm0{,}003$ & $0{,}240\pm0{,}004$ & 80,3 & 65,8 & 77,1 \\
+MTWT                 & $0{,}244\pm0{,}003$ & $0{,}253\pm0{,}005$ & $0{,}245\pm0{,}004$ & 90,1 & 89,4 & 85,5 \\
+LP                   & $0{,}235\pm0{,}002$ & $0{,}253\pm0{,}001$ & $0{,}236\pm0{,}002$ & 86,3 & 89,2 & 81,6 \\
+\midrule
+Q-Learning           & $0{,}271\pm0{,}002$ & $0{,}279\pm0{,}001$ & $0{,}275\pm0{,}002$ & 92,4 & 89,5 & 87,9 \\
+SARSA                & $0{,}304\pm0{,}003$ & $0{,}303\pm0{,}002$ & $0{,}313\pm0{,}004$ & 90,6 & 91,0 & 87,4 \\
+DQN                  & $0{,}565\pm0{,}059$ & $1{,}874\pm0{,}120$ & $0{,}546\pm0{,}005$ & 35,1 & 22,5 & 42,5 \\
+PPO                  & $0{,}237\pm0{,}001$ & \boldmath{$0{,}248\pm0{,}002$} & $0{,}242\pm0{,}001$ & 87,2 & 87,0 & 83,9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+  \item \textbf{Utilisation.} Les politiques qui répartissent la flotte gardent les camions actifs de 88 à 96\,\% du poste. Les règles de distance tombent à 60 et 67\,\% en forte charge, leurs camions attendant devant la même pelle. L'utilisation des pelles reste inférieure à 53\,\% pour toutes les politiques, ce qui confirme que la flotte n'atteint pas la capacité de chargement, même en forte charge (\cref{sec:scenarios}).
+  \item \textbf{Consommation par tonne.} PPO consomme moins que MTWT dans les trois régimes : $-0{,}0067$~L/t ($-2{,}8\,\%$) en conditions nominales, $-0{,}0046$ ($-1{,}8\,\%$) en forte charge et $-0{,}0034$ ($-1{,}4\,\%$) en fortes pannes. Face à l'Affectation fixe, l'écart atteint $-12{,}2$, $-8{,}8$ et $-11{,}0\,\%$. Ces six différences sont significatives (test de Wilcoxon apparié, correction de Holm sur les huit comparaisons, $p<0{,}001$). FIFO et l'Affectation fixe consomment le plus par tonne parmi les politiques productives : elles envoient un tiers des cycles à la pelle la plus éloignée.
+  \item \textbf{Un indicateur à lire avec la productivité.} Pelle la plus proche consomme le moins par tonne en conditions nominales et en fortes pannes, parce que ses camions font des trajets courts et que l'attente en file coûte peu (11,3~L/h au ralenti) ; elle produit pourtant 12\,\% de moins que MTWT. La consommation par tonne de DQN est très élevée parce que ses camions tournent au ralenti pour peu de tonnes transportées.
+  \item \textbf{Portée de ces chiffres.} Le niveau moyen de consommation est calé sur le constructeur (95~L/h pour l'Affectation fixe sur les graines de sélection, 95,4~L/h ici), et la répartition entre ralenti, charge et pente vient de mesures sur un Cat 785D (\cref{sec:simulator}). Les écarts entre politiques dépendent donc surtout de la longueur des trajets et du temps passé au ralenti. Les tailles d'effet sont très grandes parce que la consommation varie très peu d'une réplication à l'autre : elles ne disent rien de l'importance pratique de l'écart. Comme la combustion du diesel est la principale source d'émissions directes des flottes de transport, une baisse de la consommation par tonne se traduirait en principe par une baisse des émissions du même ordre ; aucune émission n'a cependant été calculée.
+\end{itemize}
+\end{revbloc}
+
+\subsection{Limites}
+\label{sec:limitations}
+
+\begin{revbloc}{M7, M8, M9, M11, M12, M25, N1--N5, v3, T31}
+\begin{itemize}
+  \item \textbf{Simulation et absence de validation sur site :} l'étude repose entièrement sur un simulateur dont la structure n'est pas calibrée sur des données réelles. Un graphe de sept nœuds, trois pelles et deux verses représente la mine. Les conditions météorologiques, le comportement des opérateurs, les incidents routiers et les décisions de maintenance ne sont pas représentés. Le modèle de carburant repose sur des mesures faites sur un seul camion \cite{Kubler2015}, ramenées à une moyenne publiée par un facteur qui compense l'absence de descente dans le simulateur ; la surconsommation sur piste dégradée est une hypothèse.
+  \item \textbf{Pannes :} seuls les camions tombent en panne, au plus une fois par cycle, selon un processus stationnaire. Les pannes de pelles ne sont pas représentées. Avec un facteur d'appariement de 0,35, la perte d'une pelle retirerait d'un coup un tiers de la capacité de chargement : elle testerait la capacité de réaffectation des politiques bien plus que la panne d'un camion. C'est une perspective naturelle de ce travail.
+  \item \textbf{Nombres aléatoires communs partiels :} les pannes sont tirées dans un flux propre à chaque camion et sont identiques entre politiques ; les temps de trajet et de service sont tirés dans des flux partagés par tous les camions, dans l'ordre des événements, qui dépend des décisions. L'appariement entre politiques est donc fort, sans être parfait.
+  \item \textbf{Formulation et actualisation :} un agent unique décide successivement pour tous les camions, et la récompense d'un pas porte sur les cycles terminés pendant ce pas, quel que soit le camion : l'attribution du mérite à une décision n'est pas explicite. L'actualisation par minute repose sur deux approximations (récompense comptée au début du pas ; échelle de la normalisation de PPO estimée avec le $\gamma$ par décision) et impose un seul environnement simulé par entraînement. Le facteur par minute est rapporté à l'intervalle moyen de l'Affectation fixe en conditions nominales (1,89~min) ; une autre référence donnerait un autre horizon en minutes.
+  \item \textbf{Mise au point des agents :} elle a été faite en conditions nominales, avec une seule graine d'entraînement, sur des grilles de quatre configurations par algorithme, au budget réduit de 200\,000 pas pour PPO et DQN et au budget complet pour les agents tabulaires. Le facteur $\gamma$ des agents tabulaires n'a pas été réglé. Deux décisions ont été prises après avoir vu des résultats sur les graines de sélection : la variante de la récompense, puis son abandon au profit de l'actualisation par minute (\cref{sec:tuning}). Elles ont été prises avec une règle écrite à l'avance pour la suite et ne touchent pas aux graines d'évaluation, mais elles restent des choix informés par les données.
+  \item \textbf{DQN :} dans la version retenue, DQN s'effondre sur l'action ATTENDRE dans 4 modèles nominaux sur 5, et pour toutes les valeurs de $w_4$ étudiées. Ses résultats décrivent cette configuration, et non l'algorithme en général. Des variantes connues pour réduire l'erreur d'estimation des valeurs, comme la normalisation de la récompense, une architecture \emph{dueling} ou un double réseau, n'ont pas été essayées, puisque la règle de mise au point l'interdisait.
+  \item \textbf{Agents tabulaires :} ils n'utilisent qu'une représentation réduite à six variables, et leur politique se dégrade à mesure que l'exploration diminue, pour les 5 modèles et dans les trois régimes (\cref{sec:convergence}). Leur performance est une borne inférieure de ce que permettent ces algorithmes.
+  \item \textbf{Variabilité d'entraînement :} 5 graines d'entraînement par agent et par régime permettent de rapporter la variabilité entre modèles, mais restent peu nombreuses \cite{Henderson2018, Agarwal2021}. Pour DQN, dont les modèles se répartissent entre deux niveaux très différents, la proportion de modèles effondrés (4 sur 5 en conditions nominales) est estimée avec une grande incertitude.
+  \item \textbf{Comportement par rejeu :} la répartition des cycles entre les pelles (\cref{tab:behaviour}) est obtenue en rejouant les épisodes de l'évaluation, qui ne l'enregistrait pas. Chaque épisode rejoué a été vérifié identique, et rien n'a été choisi sur ces épisodes ; les graines d'évaluation ont néanmoins été jouées deux fois.
+  \item \textbf{Références :} MTWT n'anticipe pas les camions qui seront affectés après la décision en cours. Le plan de la politique LP est calculé une fois par poste, à partir de grandeurs moyennes, et son plafond d'utilisation est choisi une seule fois pour tous les régimes. Des systèmes industriels réoptimisent plus souvent et utilisent des règles plus élaborées.
+  \item \textbf{Espace d'actions et algorithmes :} l'agent choisit parmi un ensemble discret de couples pelle--verse ; d'autres algorithmes, tels que Soft Actor-Critic \cite{Haarnoja2018, SampsonNwachukwu2025}, Advantage Actor-Critic ou des approches multi-agents \cite{Zhao2025}, n'ont pas été comparés.
+  \item \textbf{Taille du système et transfert :} trois pelles, deux verses et 12 à 18 camions sont loin des grandes exploitations. L'évaluation sans réentraînement ne porte que sur des changements de taille de flotte et de taux de pannes, pas sur un changement de réseau routier ou de nombre de pelles, qui modifierait la taille de l'état et de l'espace d'actions. Les résultats décrivent une performance relative dans ce cadre.
+\end{itemize}
+\end{revbloc}
+
+% ============================================================================
+% Section 9 : Conclusion
+% ============================================================================
+\section{Conclusion et travaux futurs}
+\label{sec:conclusion}
+
+\begin{revbloc}{T31}
+Cette étude a examiné si des politiques de dispatching apprises par renforcement font mieux que des règles de référence dans une mine à ciel ouvert, et si leur avantage se maintient lorsque le régime de fonctionnement change. Dix politiques, six heuristiques et quatre agents d'apprentissage, ont été comparées dans un même simulateur à événements discrets et dans trois régimes, sur 30 réplications appariées, avec 5 modèles par agent, une mise au point faite sur des graines distinctes de l'évaluation selon une règle fixée à l'avance, et des comparaisons fixées avant la campagne.
+
+Trois résultats principaux se dégagent. Premièrement, aucun agent ne dépasse la meilleure heuristique : MTWT, qui affecte chaque camion à la route de plus faible attente prévue, est la plus productive dans les trois régimes. PPO la suit de près, à 0,5 à 0,9\,\% en dessous, au niveau d'une politique fondée sur un programme linéaire, et dépasse nettement l'Affectation fixe. Deuxièmement, PPO consomme de 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT, et ses performances se maintiennent presque sans perte lorsqu'il est déployé sans réentraînement en forte charge, en fortes pannes et dans deux régimes intermédiaires jamais vus. Troisièmement, les autres agents échouent de façon reproductible : DQN s'effondre sur l'action d'attente dans la plupart de ses modèles, quelle que soit la pénalité d'attente, et les agents tabulaires se dégradent à mesure que l'exploration diminue.
+
+Ces résultats suggèrent que l'intérêt de l'apprentissage par renforcement pour le dispatching doit être mesuré face à des règles qui tiennent compte des files, et non face à des règles statiques, et qu'il réside ici moins dans la productivité que dans le compromis avec le carburant et la stabilité hors du régime d'entraînement. Ils restent conditionnels au simulateur utilisé, qui n'a pas été calibré sur des données de site.
+
+Les travaux futurs porteront sur des variantes de DQN qui réduisent l'erreur d'estimation des valeurs, sur une récompense qui intègre explicitement le carburant, sur la représentation des pannes de pelles et sur des réseaux plus grands, avec des représentations indépendantes du nombre de pelles. À plus long terme, une validation sur un jumeau numérique calibré avec des données opérationnelles permettra d'évaluer l'effet réel sur la productivité et la consommation de carburant.
+\end{revbloc}
+
+\newpage
+
+% ============================================================================
+% Sections finales
+% ============================================================================
+\section*{Disponibilité des données}
+
+\rev{M3}{Les résultats par réplication (une ligne par politique, régime et graine), ainsi que les journaux de simulation, sont disponibles auprès de l'auteur correspondant sur demande raisonnable et seront déposés avec le code.}
+
+\section*{Disponibilité du code}
+
+Le code source du simulateur, les scripts d'entraînement et d'évaluation et la liste des graines utilisées pour les 30 réplications (graines 42 à 71) sont accessibles sur GitHub à l'adresse \url{https://github.com/Juan-Lucas/memoire-master-rl-logistique}.
+
+\rev{T28, v3}{Les hyperparamètres, les régimes, les poids de la récompense et les graines sont lus dans les fichiers YAML du répertoire \texttt{configs/}, qui sont archivés avec chaque jeu de résultats. Les essais de la mise au point des agents peuvent être refaits par le module \texttt{experiments.agent\_trials}.}
+
+\section*{Contributions des auteurs}
+
+\textbf{Jean-Luc MUPASA KALUNGA :} conceptualisation, méthodologie, logiciel, validation, analyse formelle, investigation, rédaction (première version), visualisation.
+
+\textbf{Dr Olfa FERCHICHI :} supervision, conceptualisation, méthodologie, rédaction (relecture et édition), administration du projet.
+
+\section*{Conflit d'intérêts}
+
+Les auteurs déclarent n'avoir aucun intérêt financier concurrent connu ni aucune relation personnelle susceptible d'avoir influencé les travaux rapportés dans cet article.
+
+% Bibliographie
+\bibliographystyle{plain}
+\bibliography{RL_references}
+
+\adir{style bibliographique : utiliser le modèle de la revue cible (sn-jnl pour Springer) ; corriger les entrées de \texttt{RL\_references.bib} signalées dans le rapport de relecture (section 5.4).}
+
+% ============================================================================
+% Annexe de travail : journal des modifications (affichée seulement avec \revmarkstrue)
+% ============================================================================
+\ifrevmarks
+\clearpage
+\appendix
+\section*{Annexe de travail : journal des modifications de la version 2}
+\addcontentsline{toc}{section}{Journal des modifications}
+
+Cette annexe disparaît dans la version propre (\texttt{\textbackslash revmarksfalse}). Elle relie chaque modification aux points du rapport de relecture (M, m) et du rapport d'audit du code (N, A).
+
+\footnotesize
+\begin{longtable}{p{2.2cm}p{4.3cm}p{8.6cm}}
+\toprule
+\textbf{Point} & \textbf{Où} & \textbf{Modification} \\
+\midrule
+\endhead
+M1 & Résumé, §6.2, §7.5, tableaux \ref{tab:state} et \ref{tab:transfer} & Le protocole « sans réentraînement » était faux : chaque agent est entraîné dans chaque régime. Protocole décrit tel qu'il est, et ajout d'une vraie évaluation sans réentraînement en fortes pannes (et en forte charge pour les agents tabulaires). \\
+M2 & §6.3, §7.2, tableau \ref{tab:waiting} & L'« attente par cycle » était une immobilisation cumulée par camion et par poste, pannes et attentes volontaires comprises. Séparation de l'attente en file et de l'immobilisation totale. \\
+M3 & §6.4, §7.6, tableau \ref{tab:stats} & Chaque réplication figurait deux fois dans le fichier de résultats. Toutes les valeurs $p$, intervalles et tests recalculés sur 30 réplications. \\
+M4, M6 & §6.4 & Tests appariés (Friedman, Wilcoxon, Holm) à la place de Welch, Kruskal--Wallis et Dunn ; suppression de l'affirmation erronée sur Games--Howell ; description honnête des graines communes. \\
+M5 & §7.6 & Test de l'interaction entre politique et régime. \\
+M7 & §6.2, §7.7, §7.8, limites & Une seule graine d'entraînement : QR5 supprimée, comparaisons présentées comme entre modèles. Expériences à faire signalées. \\
+M8 & §5.6.3 & Description exacte de la représentation tabulaire (v3 : 6 variables, 23\,328 états). \\
+M9 & §5.4 & Formulation semi-markovienne, horizon effectif chiffré, attribution du mérite, références. \\
+M10 & §5.5 & Formules exactes de la récompense et explication de son ordre de grandeur. \\
+M11 & §5.1 à §5.3, tableau \ref{tab:simparams} & Paramètres du simulateur ; moteur décrit comme piloté par les événements ; pannes limitées aux camions. \\
+M12 & §5.6, §7.9 & Suppression de « soigneusement réglés » ; inégalité de réglage reconnue. \\
+M13 & §7.9, tableau \ref{tab:ablation} & Interprétation prudente ; ajout de DQN ; déterminisme de l'entraînement. \\
+M14 & §5.6.2, §8.2 & Hypothèse du tampon de rejeu mentionnée une seule fois. \\
+M15 & §6.1, §7.1, §7.5 & Facteur d'appariement ; suppression de « sursaturation » ; productivité et ratio de robustesse par camion. \\
+M16, C3 & §5.7, §7.3, tableau \ref{tab:behaviour} & Pelle la plus proche et Plus court chemin envoient 100\,\% des cycles à la pelle 1 dans tous les régimes ; analyse sur 30 réplications. \\
+M17, M18 & §7.1, §7.5, §8, §9 & Affirmations corrigées (classement par récompense, résilience de DQN, appel à abandonner les règles statiques, « confirme »). \\
+M19 & §7.4, tableau \ref{tab:pareto} & Fronts de Pareto par régime. \\
+M20, M22 & §8.4 & Économie de carburant corrigée (2,4~L et non 53~L pour 1\,000~t) ; mise en garde sur les tailles d'effet et la calibration. \\
+M21 & §6.3 & Définition de la résilience opérationnelle. \\
+M23 & §3.3, §4.1, §5 & Quatre questions de recherche et trois hypothèses ; contributions recentrées ; section 5 renommée. \\
+M24 & Structure & Problématique après la revue de littérature ; contributions et cadre méthodologique séparés ; formulation intégrée à l'approche. \\
+M25, Dir. corr. 1 & §5.7, tableau \ref{tab:baselines} & Heuristiques décrites telles qu'implémentées ; l'Affectation fixe n'a pas de réaffectation de secours. \\
+M26 & §3.4 & Nouveauté formulée comme une combinaison ; Mining-Gym cité. \\
+M27 & §3.4, §8.3 & Portée industrielle réduite et au conditionnel. \\
+M28 & §5.8 & Coût de calcul et parallélisation. \\
+m1, m2 & Résumé, mots-clés & Résumé d'environ 240 mots, sans abréviation, sans valeur $p$ ; mots-clés sans PPO ni DQN. \\
+m3, m4, m5 & Ensemble & Abréviations définies dans l'introduction ; italiques supprimées dans le texte courant ; parenthèses d'exemples remplacées par « tels que ». \\
+m6, m7 & Figures & Noms de fichiers sans espaces ; figures de productivité et de robustesse régénérées à partir des résultats de la campagne (v3 : figures de décomposition de l'attente et du front de Pareto remplacées par les tableaux correspondants) ; textes des figures \ref{fig:simulation} et \ref{fig:behavioral} à corriger. \\
+m12, m13, m14 & §7 & Chiffres arrondis dans le texte ; chiffres du texte alignés sur les tableaux. \\
+m15, m16, m17 & Tableaux & Abréviation PCC supprimée ; colonne L/t retirée du tableau de productivité ; ligne « Étude proposée » du tableau de positionnement corrigée. \\
+m19, m20 & §6.2, §5.8 & Mode d'évaluation déterministe ; latence précisée. \\
+m21, m22 & §1, §2 & Renvois croisés ; accord « Comme le soulignent Newman et al. ». \\
+m24 & §5.8, §7.8 & « stagne » ; phrase sur les cycles de 1\,024 pas et « standards de la recherche à fort impact » supprimées. \\
+m26, m27 & Source, auteurs & Commentaires internes retirés ; auteur correspondant identifié. \\
+N1--N3 & §5.4 & Composantes constantes de l'état et saturation du tonnage signalées. \\
+N5 & §5.1, limites & Pas de panne de pelle. \\
+N11 & §6.5 & Version de la récompense de DQN à vérifier. \\
+Bibliographie & RL\_references.bib & Ajout de Mnih 2015, Watkins et Dayan 1992, Rummery et Niranjan 1994, Schulman 2016, Puterman 1994, Bradtke et Duff 1995, Sutton, Precup et Singh 1999, Henderson 2018, Agarwal 2021, Demšar 2006, Friedman 1937, Wilcoxon 1945, Holm 1979, Efron et Tibshirani 1993, Burt et Caccetta 2014. \\
+\bottomrule
+\end{longtable}
+\normalsize
+\fi
+
+\end{document}

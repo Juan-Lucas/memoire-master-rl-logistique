@@ -1,4 +1,4 @@
-"""Tests de non-regression pour le simulateur minier."""
+"""Tests de base de l'environnement minier et de la politique FIFO."""
 
 from __future__ import annotations
 
@@ -32,6 +32,11 @@ class TestMineEnv(unittest.TestCase):
         )
         env.reset(seed=123)
 
+        # Les deux camions décident au parc ; le premier cycle se termine pendant le
+        # second ``step`` (moteur à événements, T15), qui en verse la récompense.
+        _obs, reward, terminated, truncated, info = env.step(0)
+        self.assertEqual(info["total_cycles"], 0)
+        self.assertEqual(reward, 0.0)
         _obs, reward, terminated, truncated, info = env.step(0)
 
         self.assertFalse(terminated)
@@ -39,6 +44,7 @@ class TestMineEnv(unittest.TestCase):
         self.assertGreater(info["total_tonnage_t"], 0.0)
         self.assertEqual(info["total_cycles"], 1)
         self.assertTrue(math.isfinite(reward))
+        self.assertNotEqual(reward, 0.0)
 
     def test_wait_action_only_waits(self) -> None:
         env = MineEnv(

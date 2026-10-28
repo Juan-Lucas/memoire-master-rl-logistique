@@ -1,10 +1,35 @@
-# Data
-/data/
+# Data : hors de git, sauf les résultats de la campagne finale (≈ 4 Mo), qui sont la seule
+# trace de l'évaluation unique sur les graines 42 à 71 : CSV, analyses, configurations
+# archivées et métadonnées des 90 modèles. Les modèles eux-mêmes (≈ 266 Mo) et les
+# journaux d'entraînement restent en local.
+/data/*
+!/data/results_v2/
+/data/results_v2/*
+!/data/results_v2/campagne/
+/data/results_v2/campagne/*
+!/data/results_v2/campagne/benchmark_*.csv
+!/data/results_v2/campagne/analyses/
+!/data/results_v2/campagne/analyses_*/
+!/data/results_v2/campagne/configs_*/
+!/data/results_v2/campagne/*_seed[0-9]/
+/data/results_v2/campagne/*_seed[0-9]/*
+!/data/results_v2/campagne/*_seed[0-9]/metadata.json
+
+# Articles PDF de la bibliographie (droits d'auteur : conservés en local seulement)
+references/**/*.pdf
+
+# Sorties de compilation LaTeX et configuration de l'IDE
+$build/
+.idea/
+.vscode/
 
 # Documentation personnelle (usage interne — non publiée sur GitHub)
-# Seul docs/glossaire.md reste visible pour les lecteurs
+# Restent visibles : le glossaire, et le plan et le journal des corrections (trace de
+# toutes les décisions de la v2 à la v3, auxquels l'article et le README renvoient).
 docs/*
 !docs/glossaire.md
+!docs/plan_correction_code.md
+!docs/journal_corrections.md
 
 # Mac OS-specific storage files
 .DS_Store

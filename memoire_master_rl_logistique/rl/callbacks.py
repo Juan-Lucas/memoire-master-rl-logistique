@@ -1,8 +1,4 @@
-"""Callbacks personnalisés pour l'entraînement PPO.
-
-Enregistre les métriques clés (KPIs) à intervalles réguliers
-pour produire les learning curves (Section 4.6 du mémoire).
-"""
+"""Callback d'entraînement (PPO et DQN) qui enregistre les KPIs de chaque épisode."""
 
 from __future__ import annotations
 
@@ -12,7 +8,15 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 
 class KPILoggerCallback(BaseCallback):
-    """Enregistre les KPIs de l'environnement minier dans un CSV."""
+    """Enregistre tonnage, attente et carburant de chaque épisode terminé.
+
+    Les moyennes cumulées sont envoyées au logger tous les ``log_freq`` pas ;
+    le détail par épisode est écrit dans ``log_path`` en fin d'entraînement.
+
+    Depuis T30, chaque épisode garde aussi le nombre de pas d'entraînement écoulés à sa fin
+    (``timesteps`` : l'axe commun des courbes de plusieurs graines, car les épisodes n'ont
+    pas tous la même longueur) et sa récompense cumulée (``reward``, fournie par ``Monitor``).
+    """
 
     def __init__(
         self,
@@ -27,6 +31,7 @@ class KPILoggerCallback(BaseCallback):
         self._episode_tonnages: list[float] = []
         self._episode_waits: list[float] = []
         self._episode_fuels: list[float] = []
+        self._episode_timesteps: list[int] = []
 
     def _on_step(self) -> bool:
         infos = self.locals.get("infos", [])
@@ -38,6 +43,8 @@ class KPILoggerCallback(BaseCallback):
                 self._episode_tonnages.append(info.get("total_tonnage_t", 0.0))
                 self._episode_waits.append(info.get("total_wait_min", 0.0))
                 self._episode_fuels.append(info.get("total_fuel_l", 0.0))
+                self._episode_timesteps.append(self.num_timesteps)
+                self._episode_rewards.append(info.get("episode", {}).get("r", float("nan")))
 
         if self.num_timesteps % self.log_freq == 0 and self._episode_tonnages:
             avg_tonnage = sum(self._episode_tonnages) / len(self._episode_tonnages)
@@ -59,15 +66,38 @@ class KPILoggerCallback(BaseCallback):
 
         return True
 
+    @property
+    def episodes(self) -> int:
+        """Nombre d'épisodes terminés enregistrés."""
+        return len(self._episode_tonnages)
+
+    def restore(self, path: Path) -> None:
+        """Reprend les épisodes d'un journal écrit par ``write`` (reprise d'un entraînement)."""
+        with path.open(encoding="utf-8") as f:
+            next(f)  # en-tête
+            for line in f:
+                _, steps, ton, wait, fuel, reward = line.strip().split(",")
+                self._episode_timesteps.append(int(steps))
+                self._episode_tonnages.append(float(ton))
+                self._episode_waits.append(float(wait))
+                self._episode_fuels.append(float(fuel))
+                self._episode_rewards.append(float(reward))
+
     def _on_training_end(self) -> None:
-        self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        with self.log_path.open("w", encoding="utf-8") as f:
-            f.write("episode,tonnage_t,wait_min,fuel_l\n")
-            for i, (ton, wait, fuel) in enumerate(
-                zip(
-                    self._episode_tonnages,
-                    self._episode_waits,
-                    self._episode_fuels,
-                )
-            ):
-                f.write(f"{i},{ton:.2f},{wait:.2f},{fuel:.2f}\n")
+        self.write(self.log_path)
+
+    def write(self, path: Path) -> None:
+        """Écrit le détail par épisode dans ``path`` (CSV)."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as f:
+            f.write("episode,timesteps,tonnage_t,wait_min,fuel_l,reward\n")
+            rows = zip(
+                self._episode_timesteps,
+                self._episode_tonnages,
+                self._episode_waits,
+                self._episode_fuels,
+                self._episode_rewards,
+                strict=True,
+            )
+            for i, (steps, ton, wait, fuel, reward) in enumerate(rows):
+                f.write(f"{i},{steps},{ton:.2f},{wait:.2f},{fuel:.2f},{reward:.4f}\n")

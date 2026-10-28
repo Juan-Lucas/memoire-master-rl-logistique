@@ -1,6 +1,7 @@
-"""Évaluation de l'agent PPO entraîné et des baselines.
+"""Évaluation de l'agent PPO entraîné et des heuristiques de référence.
 
-Produit les métriques de performance (Section 4.7 du mémoire) :
+Ce module n'est pas utilisé pour les résultats de l'article (voir
+``experiments/run_benchmark.py``). Métriques :
 - Productivité horaire (t/h)
 - Temps d'attente moyen par camion (min)
 - Consommation spécifique (L/t)
@@ -9,18 +10,17 @@ Produit les métriques de performance (Section 4.7 du mémoire) :
 
 from __future__ import annotations
 
-import time
 from pathlib import Path
 
 import numpy as np
-from stable_baselines3 import PPO
 
 from memoire_master_rl_logistique.baselines.fifo_policy import FIFOPolicy
 from memoire_master_rl_logistique.baselines.fixed_policy import FixedAssignmentPolicy
 from memoire_master_rl_logistique.baselines.nearest_policy import NearestShovelPolicy
 from memoire_master_rl_logistique.baselines.shortest_path_policy import ShortestPathPolicy
 from memoire_master_rl_logistique.env.mine_env import MineEnv
-from memoire_master_rl_logistique.simulation.kpi import compute_kpis
+from memoire_master_rl_logistique.rl.model_loading import load_model
+from memoire_master_rl_logistique.simulation.kpi import fleet_kpis
 
 
 def evaluate_policy(
@@ -43,22 +43,7 @@ def evaluate_policy(
             if terminated or truncated:
                 break
 
-        total_tonnage = sum(t.total_tonnage_t for t in env.trucks)
-        total_wait = sum(t.total_wait_min for t in env.trucks)
-        total_active = sum(t.total_active_min for t in env.trucks)
-        total_fuel = sum(t.total_fuel_l for t in env.trucks)
-
-        total_cycles = sum(t.cycles_completed for t in env.trucks)
-
-        kpis = compute_kpis(
-            episode_minutes=env.episode_minutes,
-            truck_count=env.truck_count,
-            total_tonnage_t=total_tonnage,
-            total_wait_min=total_wait,
-            total_active_min=total_active,
-            total_fuel_l=total_fuel,
-            total_cycles=total_cycles,
-        )
+        kpis = fleet_kpis(env.trucks, env.shovels, env.episode_minutes)
         kpis["total_reward"] = total_reward
         all_kpis.append(kpis)
 
@@ -66,35 +51,11 @@ def evaluate_policy(
     for key in all_kpis[0]:
         values = [k[key] for k in all_kpis]
         avg_kpis[f"{key}_mean"] = float(np.mean(values))
-        avg_kpis[f"{key}_std"] = float(np.std(values))
+        # Écart-type d'échantillon (ddof=1) : les épisodes sont un échantillon, pas la population.
+        avg_kpis[f"{key}_std"] = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
 
     avg_kpis["policy_name"] = policy_name
     return avg_kpis
-
-
-def benchmark_policy_inference(
-    policy_fn,
-    n_calls: int = 1000,
-    warmup_calls: int = 100,
-) -> dict[str, float]:
-    """Mesure la latence d'une politique sur plusieurs appels."""
-    for _ in range(warmup_calls):
-        policy_fn(None, None)
-
-    latencies_ms = []
-    for _ in range(n_calls):
-        t0 = time.perf_counter()
-        policy_fn(None, None)
-        latencies_ms.append((time.perf_counter() - t0) * 1_000)
-
-    arr = np.array(latencies_ms, dtype=float)
-    return {
-        "n_calls": int(n_calls),
-        "mean_ms": float(np.mean(arr)),
-        "std_ms": float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0,
-        "min_ms": float(np.min(arr)),
-        "max_ms": float(np.max(arr)),
-    }
 
 
 def evaluate_ppo(
@@ -104,15 +65,23 @@ def evaluate_ppo(
     shovel_count: int = 3,
     dump_count: int = 2,
     episode_minutes: float = 480.0,
+    allow_legacy: bool = False,
 ) -> dict[str, float]:
-    """Évalue l'agent PPO entraîné."""
+    """Évalue l'agent PPO entraîné (``model_path`` : le .zip ou son dossier).
+
+    Le modèle est refusé si ses métadonnées ne correspondent pas à l'environnement.
+    """
     env = MineEnv(
         truck_count=truck_count,
         shovel_count=shovel_count,
         dump_count=dump_count,
         episode_minutes=episode_minutes,
     )
-    model = PPO.load(model_path)
+    model_dir = Path(model_path)
+    model = load_model(
+        model_dir if model_dir.is_dir() else model_dir.parent, "PPO", env,
+        allow_legacy=allow_legacy,
+    )
 
     def ppo_policy(obs, info):
         action, _ = model.predict(obs, deterministic=True)
@@ -128,9 +97,8 @@ def evaluate_all_baselines(
     dump_count: int = 2,
     episode_minutes: float = 480.0,
 ) -> list[dict[str, float]]:
-    """Évalue toutes les baselines et retourne les résultats.
-    
-    Baselines conformes à la Section 4.7.1 du mémoire :
+    """Évalue toutes les heuristiques de référence et retourne les résultats.
+
     - FIFO (First In, First Out)
     - Nearest Shovel (Pelle la plus proche)
     - Shortest Path (Chemin le plus court)
@@ -259,14 +227,6 @@ def main() -> None:
             f"\nModèle PPO non trouvé ({model_path}). "
             "Lancez d'abord l'entraînement."
         )
-
-    print("\n=== Benchmark d'inférence (latence) ===")
-    dummy_policy = lambda obs, info: 0
-    inference_metrics = benchmark_policy_inference(dummy_policy, n_calls=1000)
-    print(
-        f"  Latence moyenne: {inference_metrics['mean_ms']:.3f} ms "
-        f"± {inference_metrics['std_ms']:.3f} ms"
-    )
 
 
 if __name__ == "__main__":
