@@ -100,7 +100,7 @@ Jean-Luc Mupasa Kalunga$^{1,*}$ \qquad Olfa Ferchichi$^{2}$\\[0.5em]
 
 \begin{abstract}
 \begin{revbloc}{m1, m2, M1, M3, v3, T31}
-Truck--shovel haulage can account for up to 60\% of the operating costs of an open-pit mine and is highly sensitive to disruptions. Reinforcement learning studies of truck dispatching usually evaluate a single training run, in a single operating regime, against static heuristics, so the actual value of learning remains unclear. We compare ten dispatching policies in a stochastic discrete-event simulator: six heuristics, including a minimum-predicted-waiting-time rule and a linear-programming policy, two tabular agents, Q-Learning and State--Action--Reward--State--Action, and two deep agents, Deep Q-Network and Proximal Policy Optimization. The problem is formulated as a semi-Markov decision process with per-minute discounting. The agents are tuned under a rule fixed in advance, on seeds distinct from the evaluation seeds, and trained with five seeds each. All policies are evaluated over 30 paired replications in three regimes (nominal conditions, a 50\% larger fleet and frequent breakdowns), and agents trained under nominal conditions are also tested without retraining in disrupted and unseen regimes. The predicted-waiting-time rule is the most productive in every regime. Proximal Policy Optimization comes within 0.5--0.9\% of it, on par with the linear-programming policy, uses 1.4--2.8\% less fuel per tonne and transfers to new regimes almost without loss. Deep Q-Network collapses onto the waiting action in four of its five models, and the tabular agents degrade as exploration decreases. No agent outperforms the best heuristic: here, the value of learning lies in fuel efficiency and robustness, and learned dispatchers should be benchmarked against queue-aware rules rather than static ones.
+Truck--shovel haulage can account for up to 60\% of the operating costs of an open-pit mine and is highly sensitive to disruptions. Reinforcement learning studies of truck dispatching usually evaluate a single training run, in a single operating regime, against static heuristics, so the actual value of learning remains unclear. We compare ten dispatching policies in a stochastic discrete-event simulator: six heuristics, including a rule that minimises predicted waiting time and a linear programming policy, two tabular agents, Q-Learning and State--Action--Reward--State--Action, and two deep agents, Deep Q-Network and Proximal Policy Optimization. The problem is formulated as a semi-Markov decision process with discounting per minute. The agents are tuned under a rule fixed in advance, on seeds distinct from the evaluation seeds, and trained with five seeds each. All policies are evaluated over 30 paired replications in three regimes (nominal conditions, a 50\% larger fleet and frequent breakdowns), and agents trained under nominal conditions are also tested without retraining in disrupted and unseen regimes. This rule is the most productive in every regime. Proximal Policy Optimization comes within 0.5--0.9\% of it, on par with the linear programming policy, uses 1.4--2.8\% less fuel per tonne and transfers to new regimes almost without loss. Deep Q-Network collapses onto the waiting action in four of its five models, and the tabular agents degrade as exploration decreases. No agent outperforms the best heuristic: here, the value of learning lies in fuel efficiency and robustness, and learned dispatchers should be benchmarked against rules that account for queues rather than static ones.
 \end{revbloc}
 \end{abstract}
 
@@ -113,13 +113,13 @@ Truck--shovel haulage can account for up to 60\% of the operating costs of an op
 \section{Introduction}
 \label{sec:intro}
 
-Open-pit mining is a cornerstone of the global raw-material supply chain, where the economic viability of operations is inseparable from the efficiency of large-scale logistics systems. It is therefore essential to explore recent technological advances to improve the performance and resilience of these logistics systems.
+Open-pit mining is a cornerstone of the global supply chain of raw materials, where the economic viability of operations is inseparable from the efficiency of large logistics systems. It is therefore essential to explore recent technological advances to improve the performance and resilience of these logistics systems.
 
 % ---------------------------------------------------------
 \subsection{Industrial context}
 % ---------------------------------------------------------
 
-Open-pit mines are very large industrial systems in which the truck--shovel cycle forms the main logistics backbone. This process, which covers excavation, haulage and dumping of material, is not merely an operational task but a decisive financial factor, accounting for up to 60\% of the total operating costs of a mine site \cite{Afrapoli2017}. In modern mining, the pressure to optimise these flows is twofold: maximising throughput to meet global demand for raw materials, while minimising the energy consumption and greenhouse-gas emissions of diesel haulage fleets.
+Open-pit mines are very large industrial systems in which the truck--shovel cycle forms the main logistics backbone. This process, which covers excavation, haulage and dumping of material, is not merely an operational task but a decisive financial factor, accounting for up to 60\% of the total operating costs of a mine site \cite{Afrapoli2017}. In modern mining, the pressure to optimise these flows is twofold: maximising throughput to meet global demand for raw materials, while minimising the energy consumption and greenhouse gas emissions of diesel haulage fleets.
 
 The efficiency of these systems is, however, constantly challenged by high operational variability. In real mining environments, conditions are far from deterministic. Equipment breakdowns, payload fluctuations, random travel times caused by road degradation and sudden traffic congestion together create a highly unstable environment. Managing this complexity requires real-time decision making that balances immediate productivity and fleet resilience.
 
@@ -140,7 +140,7 @@ Four learning algorithms are studied. Q-Learning and State--Action--Reward--Stat
 \begin{revbloc}{M23, M24}
 The objective of this work is to determine in which operating regimes a learned dispatching policy is preferable to an industrial rule, and to explain the observed differences from the behaviour of the policies. The contribution is evaluative: no new algorithm is proposed, and the contribution lies in a controlled comparison protocol applied to \rev{T31}{ten policies} and three regimes.
 
-The rest of the article is organised as follows. \Cref{sec:relwork} (\nameref{sec:relwork}) reviews the truck-dispatching literature along three paradigms. \Cref{sec:positioning} (\nameref{sec:positioning}) summarises this literature in a positioning table and derives the research gap, the problem studied, the research questions and the hypotheses. \Cref{sec:contributions} (\nameref{sec:contributions}) presents the contributions and the methodological framework. \Cref{sec:approach} (\nameref{sec:approach}) describes the modelled system, the simulator, the formulation of the decision problem and the agents studied. \Cref{sec:design} (\nameref{sec:design}) details the experimental protocol and \cref{sec:results} (\nameref{sec:results}) the results. \Cref{sec:discussion} (\nameref{sec:discussion}) discusses these results and their limitations, and \cref{sec:conclusion} (\nameref{sec:conclusion}) concludes the article.
+The rest of the article is organised as follows. \Cref{sec:relwork} (\nameref{sec:relwork}) reviews the literature on truck dispatching along three paradigms. \Cref{sec:positioning} (\nameref{sec:positioning}) summarises this literature in a positioning table and derives the research gap, the problem studied, the research questions and the hypotheses. \Cref{sec:contributions} (\nameref{sec:contributions}) presents the contributions and the methodological framework. \Cref{sec:approach} (\nameref{sec:approach}) describes the modelled system, the simulator, the formulation of the decision problem and the agents studied. \Cref{sec:design} (\nameref{sec:design}) details the experimental protocol and \cref{sec:results} (\nameref{sec:results}) the results. \Cref{sec:discussion} (\nameref{sec:discussion}) discusses these results and their limitations, and \cref{sec:conclusion} (\nameref{sec:conclusion}) concludes the article.
 \end{revbloc}
 
 \adir{new structure of the article (M24).}
@@ -151,23 +151,23 @@ The rest of the article is organised as follows. \Cref{sec:relwork} (\nameref{se
 
 The optimisation of truck--shovel systems has been at the heart of mining engineering and operations research for more than six decades. \rev{m22}{As Newman et al. point out} \cite{AlexandraNewman2010}, these systems have evolved from manual planning to complex automated fleet management systems (FMS). This section reviews the literature along three main paradigms: static heuristics, mathematical programming and the emerging field of reinforcement learning.
 
-\subsection{Static and rule-based truck dispatching}
+\subsection{Truck dispatching with static rules}
 
-Rule-based dispatching remains the dominant paradigm in operating mines, because it is transparent, computationally cheap and easy to integrate into commercial FMS software. Early reviews of computerised dispatching strategies \cite{MohanMunirathinam1994} and the later overview of solution strategies by Alarie and Gamache \cite{Alarie2002} identify a small set of recurring decision rules that still shape industrial practice today.
+Dispatching by rules remains the dominant paradigm in operating mines, because it is transparent, computationally cheap and easy to integrate into commercial FMS software. Early reviews of computerised dispatching strategies \cite{MohanMunirathinam1994} and the later overview of solution strategies by Alarie and Gamache \cite{Alarie2002} identify a small set of recurring decision rules that still shape industrial practice today.
 
 \begin{revbloc}{M25, Dir. corr. 1}
-Four rules are particularly relevant to this study. The First-In-First-Out (FIFO) rule gives priority to the loading unit that has been waiting for a truck the longest; it balances shovel workload but ignores the spatial layout of the pit. Fixed Assignment allocates each truck to a predetermined shovel for the whole shift; it stabilises the match factor and remains a widespread industrial reference, but cannot reallocate capacity in response to queue imbalances. Nearest Shovel sends the truck to the closest loading unit, which minimises empty travel distance at the price of a purely local optimisation. Shortest Path generalises this idea by choosing the destination that minimises an estimated cycle cost on the haul-road graph. The exact definitions used in this study are given in \cref{tab:baselines}.
+Four rules are particularly relevant to this study. The First-In-First-Out (FIFO) rule gives priority to the loading unit that has been waiting for a truck the longest; it balances shovel workload but ignores the spatial layout of the pit. Fixed Assignment allocates each truck to a predetermined shovel for the whole shift; it stabilises the match factor and remains a widespread industrial reference, but cannot reallocate capacity in response to queue imbalances. Nearest Shovel sends the truck to the closest loading unit, which minimises empty travel distance at the price of a purely local optimisation. Shortest Path generalises this idea by choosing the destination that minimises an estimated cycle cost on the graph of haul roads. The exact definitions used in this study are given in \cref{tab:baselines}.
 \end{revbloc}
 
-The practical performance of these rules has been assessed both in the field and in simulation. Subtil et al. \cite{Subtil2011} report a practical implementation of dispatching in an operating open-pit mine, while Mohtasham and Mirzaei-Nasirabad \cite{MehrnazMohtasham2023} evaluate a commercial dispatching package at the Sungun copper mine and stress the sensitivity of rule-based logic to operating conditions. Discrete-event simulation has been the standard instrument for this kind of evaluation \cite{NecmettinCetin2004, MarceloFioroni2008, Zeng2022, MiladAbolghasemian2020}. It consistently shows that greedy rules degrade sharply once the fleet size exceeds the loading capacity of the pit, because queues concentrate on a subset of shovels. \rev{M25, m5, T31}{The heuristics retained here represent different logics: FIFO takes the state of the queues into account, Fixed Assignment imposes a static and balanced allocation, while Nearest Shovel and Shortest Path rely on spatial proximity without considering queues. Two stronger references, of the kind used by commercial systems, complete the set: a rule combining queues and travel times, Minimum Truck Waiting Time \cite{Zeng2022}, and a policy guided by an upstream linear-optimisation layer \cite{Soumis1989, AmandaSmith2020}.}
+The practical performance of these rules has been assessed both in the field and in simulation. Subtil et al. \cite{Subtil2011} report a practical implementation of dispatching in an operating open-pit mine, while Mohtasham and Mirzaei-Nasirabad \cite{MehrnazMohtasham2023} evaluate a commercial dispatching package at the Sungun copper mine and stress the sensitivity of dispatching rules to operating conditions. Discrete-event simulation has been the standard instrument for this kind of evaluation \cite{NecmettinCetin2004, MarceloFioroni2008, Zeng2022, MiladAbolghasemian2020}. It consistently shows that greedy rules degrade sharply once the fleet size exceeds the loading capacity of the pit, because queues concentrate on a subset of shovels. \rev{M25, m5, T31}{The heuristics retained here represent different logics: FIFO takes the state of the queues into account, Fixed Assignment imposes a static and balanced allocation, while Nearest Shovel and Shortest Path rely on spatial proximity without considering queues. Two stronger references, of the kind used by commercial systems, complete the set: a rule combining queues and travel times, Minimum Truck Waiting Time \cite{Zeng2022}, and a policy guided by an upstream linear optimisation layer \cite{Soumis1989, AmandaSmith2020}.}
 
 \subsection{Mathematical optimisation and metaheuristics}
 
-To overcome the limits of simple rules, researchers turned to mathematical programming. Soumis et al. \cite{Soumis1989} proposed a multi-stage approach combining linear programming (LP) for production planning with assignment models for real-time dispatching. This modular structure remains the backbone of many modern FMS. Ahangaran et al. \cite{Ahangaran2012} extended this approach by developing models dedicated to truck fleets of heterogeneous capacities, using network flows to balance production.
+To overcome the limits of simple rules, researchers turned to mathematical programming. Soumis et al. \cite{Soumis1989} proposed a multistage approach combining linear programming (LP) for production planning with assignment models for real-time dispatching. This modular structure remains the backbone of many modern FMS. Ahangaran et al. \cite{Ahangaran2012} extended this approach by developing models dedicated to truck fleets of heterogeneous capacities, using network flows to balance production.
 
 However, the deterministic nature of mixed-integer linear programming (MILP) often conflicts with the stochastic reality of mining. Ta et al. \cite{ChungTa2013} attempted to bridge this gap by incorporating shovel idle probabilities into linear models, using queueing theory to obtain better production estimates. Despite these advances, MILP models frequently suffer from the curse of dimensionality when applied to large mines operating dozens of trucks \cite{AmandaSmith2020, ZhongxinWang2022}.
 
-To handle this complexity, metaheuristics have been widely applied to truck dispatching and routing. Souza et al. \cite{Souza2010} showed that a hybrid heuristic combining GRASP and VNS could obtain near-optimal solutions in short computing times. Liu and Chai \cite{GuangweiLiu2019} used a genetic algorithm to minimise haulage energy consumption while accounting for time-varying road resistance. Ant colony optimisation algorithms, which model the probabilistic route selection of social insects through pheromone update mechanisms, have been applied to multi-vehicle assignment problems in surface mining, as their stochastic selection naturally adapts to competing demands on shared road segments \cite{ShivPrakashUpadhyay2017}. Simulated annealing, which accepts sub-optimal moves with a temperature-controlled probability in order to escape local optima, has likewise been used for scheduling in open-pit environments \cite{BurakOzdemir2019}. Although powerful, metaheuristics are often formulated to optimise a given system state or planning horizon. When major disruptions change the underlying operating conditions, the optimisation must be repeated or re-run, which may limit responsiveness when decisions must be updated on short time scales in dynamic mining environments.
+To handle this complexity, metaheuristics have been widely applied to truck dispatching and routing. Souza et al. \cite{Souza2010} showed that a hybrid heuristic combining GRASP and VNS could obtain near-optimal solutions in short computing times. Liu and Chai \cite{GuangweiLiu2019} used a genetic algorithm to minimise haulage energy consumption while accounting for road resistance that varies over time. Ant colony optimisation algorithms, which model the probabilistic route selection of social insects through pheromone update mechanisms, have been applied to assignment problems with several vehicles in surface mining, as their stochastic selection naturally adapts to competing demands on shared road segments \cite{ShivPrakashUpadhyay2017}. Simulated annealing, which accepts suboptimal moves with a probability controlled by a temperature in order to escape local optima, has likewise been used for scheduling in open-pit environments \cite{BurakOzdemir2019}. Although powerful, metaheuristics are often formulated to optimise a given system state or planning horizon. When major disruptions change the underlying operating conditions, the optimisation must be repeated or rerun, which may limit responsiveness when decisions must be updated on short time scales in dynamic mining environments.
 
 \subsection{Reinforcement learning approaches}
 
@@ -177,7 +177,7 @@ Within the reinforcement learning family, methods differ substantially in repres
 
 In mining, this transition is more recent. Hazrathosseini and Afrapoli \cite{Hazrathosseini2024} provide a critical review, stressing that, although RL holds considerable potential for intelligent FMS, most studies remain at the proof-of-concept stage. De Carvalho and Dimitrakopoulos \cite{deCarvalho2023} applied an actor--critic framework to production scheduling, showing that RL can handle fleet dynamics while updating production targets.
 
-Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide standardised environments for testing these algorithms. Zhao et al. \cite{Zhao2025} proposed a hierarchical multi-agent reinforcement learning (MARL) approach to sustainable dispatching with an emphasis on energy efficiency, while Pei et al. \cite{Pei2025} and Rosales and Diaz \cite{FranciscoRosales2025} explored learned dispatching and interpretable dispatching for autonomous mine haulage. The use of RL-based decision support for hierarchical industrial scheduling extends beyond mining: \rev{v3}{Szatmári et al.~\cite{KingaSzatmari2025} review} similar multi-level architectures in chemical process control, which suggests that the design patterns emerging in mining-dispatching research are relevant across domains. A common limitation of these studies, however, is their focus on nominal conditions. Most RL agents are trained and tested in stable environments; few studies explicitly evaluate how a DQN or PPO agent behaves under frequent equipment breakdowns or unexpected congestion peaks.
+Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide standardised environments for testing these algorithms. Zhao et al. \cite{Zhao2025} proposed a hierarchical multi-agent reinforcement learning (MARL) approach to sustainable dispatching with an emphasis on energy efficiency, while Pei et al. \cite{Pei2025} and Rosales and Diaz \cite{FranciscoRosales2025} explored learned dispatching and interpretable dispatching for autonomous mine haulage. The use of reinforcement learning for decision support for hierarchical industrial scheduling extends beyond mining: \rev{v3}{Szatmári et al.~\cite{KingaSzatmari2025} review} similar hierarchical architectures in chemical process control, which suggests that the design patterns emerging in research on mine dispatching are relevant across domains. A common limitation of these studies, however, is their focus on nominal conditions. Most RL agents are trained and tested in stable environments; few studies explicitly evaluate how a DQN or PPO agent behaves under frequent equipment breakdowns or unexpected congestion peaks.
 
 % ============================================================================
 % Section 3: Positioning and problem statement
@@ -192,7 +192,7 @@ Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide s
 \begin{table}[H]
 \centering
 
-\caption{Positioning of the proposed study with respect to representative truck-dispatching approaches.}
+\caption{Positioning of the proposed study with respect to representative approaches to truck dispatching.}
 \label{tab:litterature}
 
 \renewcommand{\arraystretch}{1.35}
@@ -239,7 +239,7 @@ Overview of models and algorithms
 
 \addlinespace
 
-Rule-based dispatching, field and simulation
+Dispatching rules, field and simulation
 \cite{Subtil2011,MehrnazMohtasham2023,NecmettinCetin2004,MarceloFioroni2008,MiladAbolghasemian2020}
 &
 No
@@ -293,14 +293,14 @@ Optimality under stable conditions
 
 \addlinespace
 
-Metaheuristics and simulation-optimisation
+Metaheuristics and optimisation by simulation
 \cite{Souza2010,GuangweiLiu2019,ShivPrakashUpadhyay2017,BurakOzdemir2019}
 &
 Yes (heuristic search)
 &
 No
 &
-Scenario-based
+Scenarios
 &
 MILP or 1 to 2 rules
 &
@@ -311,7 +311,7 @@ Near-optimal planning solutions
 
 \addlinespace
 
-Learning-based dispatching, other domains
+Learned dispatching, other domains
 \cite{MohammadrezaNazari2018,CongZhang2020,KingaSzatmari2025}
 &
 No
@@ -375,13 +375,13 @@ Proof-of-concept dispatching
 \begin{revbloc}{M24 (merger of §1.3, §2.4, §3)}
 The literature reviewed and \cref{tab:litterature} reveal four complementary gaps.
 
-First, the three paradigms reviewed are rarely compared with one another. Rule-based studies compare dispatching rules with each other \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, mathematical programming compares an optimiser with a rule or with a mixed-integer formulation \cite{Soumis1989, AmandaSmith2020}, and learning-based studies compare an agent with a small number of baseline rules \cite{deCarvalho2023, Zhao2025}. When cross-family comparisons exist, the algorithms are evaluated on different environments, rewards or fleet configurations, which prevents attributing an observed difference to the dispatching logic itself.
+First, the three paradigms reviewed are rarely compared with one another. Studies of dispatching rules compare them with each other \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, mathematical programming compares an optimiser with a rule or with a mixed-integer formulation \cite{Soumis1989, AmandaSmith2020}, and learning studies compare an agent with a small number of baseline rules \cite{deCarvalho2023, Zhao2025}. When comparisons across families exist, the algorithms are evaluated on different environments, rewards or fleet configurations, which prevents attributing an observed difference to the dispatching logic itself.
 
-Second, the operating regime is usually treated as a fixed context rather than as an experimental factor. Reviews of RL-based fleet management observe that most contributions remain at the proof-of-concept stage and are evaluated in stable environments \cite{Hazrathosseini2024}, and studies that do consider disruptions usually consider only one type, most often congestion \cite{Zeng2022}. A reported ranking is therefore conditional on a single operating point.
+Second, the operating regime is usually treated as a fixed context rather than as an experimental factor. Reviews of fleet management with reinforcement learning observe that most contributions remain at the proof-of-concept stage and are evaluated in stable environments \cite{Hazrathosseini2024}, and studies that do consider disruptions usually consider only one type, most often congestion \cite{Zeng2022}. A reported ranking is therefore conditional on a single operating point.
 
-Third, the strength of the baselines is often insufficient. Learning-based studies report improvements over two or three baseline rules \cite{Zhao2025}, and sometimes over none \cite{deCarvalho2023}. When the comparison rule is weak, an improvement establishes little about the practical value of the learned policy.
+Third, the strength of the baselines is often insufficient. Learning studies report improvements over two or three baseline rules \cite{Zhao2025}, and sometimes over none \cite{deCarvalho2023}. When the comparison rule is weak, an improvement establishes little about the practical value of the learned policy.
 
-Fourth, the inferential protocol is rarely documented. The number of replications, the control of random seeds and corrections for multiple comparisons are rarely reported in the mining-dispatching literature \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, whereas the literature on the evaluation of reinforcement learning agents has shown that these choices change the conclusions \cite{Henderson2018, Agarwal2021}.
+Fourth, the inferential protocol is rarely documented. The number of replications, the control of random seeds and corrections for multiple comparisons are rarely reported in the literature on mine dispatching \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, whereas the literature on the evaluation of reinforcement learning agents has shown that these choices change the conclusions \cite{Henderson2018, Agarwal2021}.
 \end{revbloc}
 
 % ---------------------------------------------------------
@@ -390,7 +390,7 @@ Fourth, the inferential protocol is rarely documented. The number of replication
 % ---------------------------------------------------------
 
 \begin{revbloc}{M24}
-The central challenge of dispatching is the dynamic, real-time assignment of trucks to loading and dumping points so as to optimise an objective combining throughput, idle time and energy consumption. Fleet management systems have been deployed in mines for several decades \cite{Afrapoli2017, AlexandraNewman2010}, and the decision rules behind them are well documented \cite{MohanMunirathinam1994, Alarie2002}. When a disruption occurs, such as a breakdown or congestion, it can propagate through the haulage network as queues and equipment under-utilisation; discrete-event studies thus show that queueing increases with fleet size as soon as loading capacity is approached \cite{Zeng2022, NecmettinCetin2004}.
+The central challenge of dispatching is the dynamic, real-time assignment of trucks to loading and dumping points so as to optimise an objective combining throughput, idle time and energy consumption. Fleet management systems have been deployed in mines for several decades \cite{Afrapoli2017, AlexandraNewman2010}, and the decision rules behind them are well documented \cite{MohanMunirathinam1994, Alarie2002}. When a disruption occurs, such as a breakdown or congestion, it can propagate through the haulage network as queues and equipment underutilisation; discrete-event studies thus show that queueing increases with fleet size as soon as loading capacity is approached \cite{Zeng2022, NecmettinCetin2004}.
 
 The practical question is therefore not only whether adaptive dispatching improves productivity under stable conditions, but whether the choice of a policy remains the right one when the operating regime changes. The problem is studied at two levels.
 
@@ -438,9 +438,9 @@ Three falsifiable hypotheses, formulated before the analysis of the results, gui
 % ---------------------------------------------------------
 
 \begin{revbloc}{M26, M27}
-The contribution of this article is evaluative rather than algorithmic: no new reinforcement learning algorithm is proposed. Nor does it rest on the existence of a mining simulation environment, since comparable environments already exist, such as Mining-Gym \cite{Banerjee2025}. It lies in the combination of several elements rarely brought together: \rev{T31}{ten policies from different families, including two strong baselines,} in the same environment, several operating regimes treated as an experimental factor, an evaluation of learned policies without retraining \rev{v3}{(also carried out by Pei et al.~\cite{Pei2025} for autonomous haulage)}, a paired-replication protocol with corrected tests, and an analysis of policy behaviour that explains the observed differences.
+The contribution of this article is evaluative rather than algorithmic: no new reinforcement learning algorithm is proposed. Nor does it rest on the existence of a mining simulation environment, since comparable environments already exist, such as Mining-Gym \cite{Banerjee2025}. It lies in the combination of several elements rarely brought together: \rev{T31}{ten policies from different families, including two strong baselines,} in the same environment, several operating regimes treated as an experimental factor, an evaluation of learned policies without retraining \rev{v3}{(also carried out by Pei et al.~\cite{Pei2025} for autonomous haulage)}, a protocol of paired replications with corrected tests, and an analysis of policy behaviour that explains the observed differences.
 
-Three scope limitations follow from this positioning and are discussed in \cref{sec:limitations}. The evaluation is carried out in simulation, so the reported magnitudes describe relative performance in the proposed simulated environment rather than site-level predictions. The agents are single controllers that decide for all trucks, so multi-agent formulations \cite{Zhao2025} fall outside the compared space. Finally, the three regimes represent stylised disruptions, designed to be interpretable and reproducible.
+Three scope limitations follow from this positioning and are discussed in \cref{sec:limitations}. The evaluation is carried out in simulation, so the reported magnitudes describe relative performance in the proposed simulated environment rather than predictions for a real site. The agents are single controllers that decide for all trucks, so multi-agent formulations \cite{Zhao2025} fall outside the compared space. Finally, the three regimes represent stylised disruptions, designed to be interpretable and reproducible.
 \end{revbloc}
 
 \adir{check exactly what Mining-Gym offers (disruptions, baselines) and adjust the corresponding column of \cref{tab:litterature} (M26).}
@@ -458,7 +458,7 @@ Three scope limitations follow from this positioning and are discussed in \cref{
 This work makes four contributions.
 
 \begin{itemize}
-  \item \textbf{C1. A multi-regime evaluation protocol.} A stochastic simulator compatible with the Gymnasium interface is combined with a measurement protocol that treats the operating regime as an experimental factor, evaluates each policy over 30 paired replications and applies paired tests corrected for multiple comparisons.
+  \item \textbf{C1. An evaluation protocol across several regimes.} A stochastic simulator compatible with the Gymnasium interface is combined with a measurement protocol that treats the operating regime as an experimental factor, evaluates each policy over 30 paired replications and applies paired tests corrected for multiple comparisons.
   \item \textbf{C2. A comparison of \rev{T31}{ten} policies from different families.} \rev{T31}{Six heuristics, including a rule based on predicted waiting time (MTWT) and a policy based on a linear program (LP),} two tabular learning agents and two deep learning agents are evaluated in the same environment, with the same actions, the same seeds and the same indicators.
   \item \textbf{C3. An analysis of policy behaviour.} The allocation of cycles among shovels and the use of the waiting action, measured over all replications, explain the differences in productivity and queueing between policies.
   \item \textbf{C4. Evidence on regime dependence.} The ranking of policies is compared across regimes, the interaction between policy and regime is tested, and an evaluation without retraining shows to what extent a policy learned under nominal conditions keeps its performance under disruption.
@@ -496,7 +496,7 @@ The mine is modelled as a closed-loop haulage system made up of three physical e
 
 \begin{enumerate}
   \item \textbf{Loading units (shovels):} fixed resources characterised by their loading time. Each shovel serves one truck at a time; a truck arriving during a loading waits until the shovel is free.
-  \item \textbf{Haulage units (trucks):} a homogeneous fleet of 140-tonne trucks, characterised by their empty and loaded speeds and their fuel consumption.
+  \item \textbf{Haulage units (trucks):} a homogeneous fleet of trucks of 140 tonnes, characterised by their empty and loaded speeds and their fuel consumption.
   \item \textbf{Dumping units (dumps):} the destinations of the material. Like shovels, they serve one truck at a time.
 \end{enumerate}
 
@@ -532,7 +532,7 @@ The architecture comprises the following modules:
 \begin{itemize}
   \item \textbf{Discrete-event simulation engine:} a decision is requested whenever a truck becomes available, at the parking area for its first cycle, then at the dump where it has just unloaded. A cycle goes from the truck's location to the chosen shovel, then to the chosen dump, and ends at the dump after unloading and a possible breakdown. The decision only starts the empty trip. Queueing and loading are simulated when the truck arrives at the shovel, queueing and dumping when it arrives at the dump, and these events are processed in the chronological order of the whole fleet. Shovels and dumps therefore serve trucks in their order of arrival (first come, first served). The clock advances from event to event until the next available truck.
   \item \textbf{Road network module:} graph representation of the mine, route computation with Dijkstra's algorithm and sampling of travel times.
-  \item \textbf{Fuel consumption module:} \rev{v3, M20}{the reference truck is the Cat 785D (target payload 133~t, rated payload 145~t \cite{Caterpillar2019,Caterpillar785D2025}). When idling (queues, loading, dumping, breakdowns, voluntary waiting), it consumes 11.3~L/h, a value measured on an operating 785D \cite{Kubler2015}. When travelling, consumption per kilometre follows the curves measured in the same study as a function of grade, loaded and empty, increased according to road condition. Applied as is, these curves give 211~L/h per truck for Fixed Assignment, above the published maximum for this truck (135.6~L/h \cite{Caterpillar2019}): all roads in the simulator climb, return trips included, and it represents neither descent nor coasting. They are therefore multiplied by a factor of 0.447, chosen on the selection seeds so that Fixed Assignment consumes 95~L/h, the middle of the published ``medium'' range \cite{Caterpillar2019}. The average level thus comes from the manufacturer, and the split between idling, load and grade comes from measurements. Over-consumption on degraded roads remains an uncalibrated assumption, discussed in \cref{sec:limitations}.}
+  \item \textbf{Fuel consumption module:} \rev{v3, M20}{the reference truck is the Cat 785D (target payload 133~t, rated payload 145~t \cite{Caterpillar2019,Caterpillar785D2025}). When idling (queues, loading, dumping, breakdowns, voluntary waiting), it consumes 11.3~L/h, a value measured on an operating 785D \cite{Kubler2015}. When travelling, consumption per kilometre follows the curves measured in the same study as a function of grade, loaded and empty, increased according to road condition. Applied as is, these curves give 211~L/h per truck for Fixed Assignment, above the published maximum for this truck (135.6~L/h \cite{Caterpillar2019}): all roads in the simulator climb, return trips included, and it represents neither descent nor coasting. They are therefore multiplied by a factor of 0.447, chosen on the selection seeds so that Fixed Assignment consumes 95~L/h, the middle of the published ``medium'' range \cite{Caterpillar2019}. The average level thus comes from the manufacturer, and the split between idling, load and grade comes from measurements. Overconsumption on degraded roads remains an uncalibrated assumption, discussed in \cref{sec:limitations}.}
   \item \textbf{Randomness:} the seed of an episode generates an independent random stream per process (travel, loading and dumping, road degradation) and one breakdown stream per truck. Two policies played with the same seed thus share the same random events (common random numbers): in particular, the $k$-th cycle of a given truck suffers the same breakdown, of the same duration, whatever the policy.
   \item \textbf{Learning interface:} the Gymnasium \texttt{reset}--\texttt{step} API, through which the agent observes the state, chooses an action and receives a reward.
   \item \textbf{Indicator and benchmark modules:} computation of the indicators of \cref{sec:metrics} for all policies, with the same seeds.
@@ -557,7 +557,7 @@ Loading & log-normal, mean 2.0~min, standard deviation 0.3~min (capacity of one 
 Dumping & log-normal, mean 1.0~min, standard deviation 0.2~min \\
 Road degradation & probability 5\% per pass of losing 0.02 of condition (floor 0.6); restored at each shift \\
 Breakdowns & trucks only; probability per cycle 2\% (nominal, high load) or 10\% (frequent breakdowns); repair $\mathcal{U}(10,30)$~min \\
-Trucks, shift & 140~t per truck; 480-min shift; a cycle is counted only if it ends before the end of the shift \\
+Trucks, shift & 140~t per truck; shift of 480~min; a cycle is counted only if it ends before the end of the shift \\
 Fuel & \rev{v3}{travel: $0.447 \times f(x) \times (1+0.5\times(1-\text{condition}))$~L/km, where, for a grade $x$ (fraction), $f(x) = 7.638 + 80.825\,x + 603.87\,x^2 - 803.8\,x^3$ loaded and $f(x) = 4.562 + 6.809\,x + 727.7\,x^2 - 1661\,x^3$ empty \cite{Kubler2015}; idling 11.3~L/h \cite{Kubler2015}} \\
 Randomness & \rev{v3}{one independent random stream per process and one breakdown stream per truck, generated from the episode seed (common random numbers across policies)} \\
 \bottomrule
@@ -619,7 +619,7 @@ The transition function $P(S_{t+1} \mid S_t, A_t)$ is defined implicitly by the 
 \begin{revbloc}{M9, v3}
 \textbf{Duration of decisions.} Two successive decisions are separated by a variable duration $\Delta t_t$: from 0.2~min after a short WAIT to several minutes, depending on when the next truck becomes available. Over a shift, the durations of the decisions cover exactly the 480~minutes.
 
-\textbf{Per-minute discounting.} A reward obtained after a decision that lasted $\Delta t_t$ minutes is discounted by $\gamma_{\min}^{\Delta t_t}$, rather than by a fixed factor $\gamma$ at each decision \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. The discounted return from decision $t$ is therefore
+\textbf{Discounting per minute.} A reward obtained after a decision that lasted $\Delta t_t$ minutes is discounted by $\gamma_{\min}^{\Delta t_t}$, rather than by a fixed factor $\gamma$ at each decision \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. The discounted return from decision $t$ is therefore
 \begin{equation}
 G_t = \sum_{l \geq 0} \Big( \prod_{m=0}^{l-1} \gamma_{\min}^{\Delta t_{t+m}} \Big) R_{t+l}
     = \sum_{l \geq 0} \gamma_{\min}^{\,\tau_{t+l} - \tau_t} R_{t+l} ,
@@ -627,18 +627,18 @@ G_t = \sum_{l \geq 0} \Big( \prod_{m=0}^{l-1} \gamma_{\min}^{\Delta t_{t+m}} \Bi
 \end{equation}
 where $\tau_t$ is the time of decision $t$ in the shift. The time that counts becomes mine time, not the number of decisions.
 
-\textbf{No new parameter.} The per-minute factor is derived from the $\gamma$ of each algorithm through $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, where $\bar{\Delta} = 1.89$~min is the mean interval between two decisions of Fixed Assignment under nominal conditions. A decision of average duration is therefore discounted exactly as with a per-decision factor. With $\gamma = 0.995$, the effective horizon remains on average about 200 decisions, i.e.\ about 377~minutes under nominal conditions. It does not depend on fleet size, whereas with per-decision discounting it would shrink in minutes when decisions become more frequent, for instance under high load.
+\textbf{No new parameter.} The factor per minute is derived from the $\gamma$ of each algorithm through $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, where $\bar{\Delta} = 1.89$~min is the mean interval between two decisions of Fixed Assignment under nominal conditions. A decision of average duration is therefore discounted exactly as with a factor per decision. With $\gamma = 0.995$, the effective horizon remains on average about 200 decisions, i.e.\ about 377~minutes under nominal conditions. It does not depend on fleet size, whereas with discounting per decision it would shrink in minutes when decisions become more frequent, for instance under high load.
 
-\textbf{Why.} With per-decision discounting, a decision lasting 0.2~min and a cycle to the farthest shovel delay what follows equally, although one lasts a hundred times longer than the other. Agent tuning, reported in \cref{sec:tuning}, revealed two measured consequences of this flaw. Value-based agents drifted towards the farthest shovel, since a long trip does not delay the next production in number of decisions. When a cycle yielded a negative value on average, chaining waits of 0.2~min pushed this cost back by many decisions for only a few minutes. Per-minute discounting fixes the common cause of both flaws without changing the reward.
+\textbf{Why.} With discounting per decision, a decision lasting 0.2~min and a cycle to the farthest shovel delay what follows equally, although one lasts a hundred times longer than the other. Agent tuning, reported in \cref{sec:tuning}, revealed two measured consequences of this flaw. Value-based agents drifted towards the farthest shovel, since a long trip does not delay the next production in number of decisions. When a cycle yielded a negative value on average, chaining waits of 0.2~min pushed this cost back by many decisions for only a few minutes. Discounting per minute fixes the common cause of both flaws without changing the reward.
 
-\textbf{Implementation.} For Q-Learning and SARSA, the target becomes $R_t + \gamma_{\min}^{\Delta t_t}\, Q(S_{t+1}, \cdot)$. For DQN, the replay buffer stores the factor $\gamma_{\min}^{\Delta t}$ of each transition, which Stable-Baselines3 uses in the target. For PPO, generalised advantage estimation uses a per-step factor:
+\textbf{Implementation.} For Q-Learning and SARSA, the target becomes $R_t + \gamma_{\min}^{\Delta t_t}\, Q(S_{t+1}, \cdot)$. For DQN, the replay buffer stores the factor $\gamma_{\min}^{\Delta t}$ of each transition, which Stable-Baselines3 uses in the target. For PPO, generalised advantage estimation uses a factor per step:
 \begin{equation}
 \delta_t = R_t + \gamma_{\min}^{\Delta t_t} V(S_{t+1}) - V(S_t), \qquad
 \hat{A}_t = \delta_t + \gamma_{\min}^{\Delta t_t}\, \lambda\, \hat{A}_{t+1} .
 \end{equation}
-Bootstrapping the value at the end of the shift uses the same factor. A test checks that, if all decisions lasted exactly 1.89~min, the four algorithms would learn exactly what they learn with per-decision discounting: same network weights for PPO and DQN, same tables for Q-Learning and SARSA.
+Bootstrapping the value at the end of the shift uses the same factor. A test checks that, if all decisions lasted exactly 1.89~min, the four algorithms would learn exactly what they learn with discounting per decision: same network weights for PPO and DQN, same tables for Q-Learning and SARSA.
 
-\textbf{Approximations.} There are two. First, the reward of a step is counted at the start of the step, without discounting within it, which is customary for a semi-Markov process with per-transition rewards. Second, for PPO, reward normalisation estimates the scale of returns with the per-decision $\gamma$. It only rescales the reward and does not enter the target. Finally, per-minute discounting assumes a single simulated environment per training run.
+\textbf{Approximations.} There are two. First, the reward of a step is counted at the start of the step, without discounting within it, which is customary for a semi-Markov process with rewards per transition. Second, for PPO, reward normalisation estimates the scale of returns with the $\gamma$ per decision. It only rescales the reward and does not enter the target. Finally, discounting per minute assumes a single simulated environment per training run.
 
 \textbf{Credit assignment.} A single agent decides successively for all trucks. The reward of a step covers the cycles completed during that step, whatever the truck, as defined in \cref{sec:reward}: the credit of a decision to a particular truck is therefore not explicit.
 \end{revbloc}
@@ -652,7 +652,7 @@ Bootstrapping the value at the end of the shift uses the same factor. A test che
 \toprule
 \textbf{Component} & \textbf{Notation} & \textbf{Description} \\
 \midrule
-Environment & $\mathcal{E}$ & \rev{M11, v3}{Discrete-event simulator: 3 shovels, 2 dumps, $N$ trucks, 480-min shift (\cref{tab:simparams}).} \\
+Environment & $\mathcal{E}$ & \rev{M11, v3}{Discrete-event simulator: 3 shovels, 2 dumps, $N$ trucks, shift of 480~min (\cref{tab:simparams}).} \\
 State       & $S_t \in [0,1]^{23}$ & \rev{M1, v3}{Waiting at shovels and dumps, trucks per shovel, distances, predicted waiting per route, position, tonnage and fuel of the deciding truck, shift time (\cref{tab:state}).} \\
 Action     & $A_t \in \{0,\dots,6\}$    & Assignment to one of the 6 shovel--dump pairs or WAIT (index 6). \\
 Transition & $P(S_{t+1}\mid S_t,A_t)$   & Stochastic simulator: log-normal travel, loading and dumping, road degradation, breakdowns. \\
@@ -665,7 +665,7 @@ Discounting & $\gamma_{\min}^{\Delta t_t}$ & \rev{M9, v3}{Per simulated minute; 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/mdp_formulation.png}
-\caption{Formulation of the truck-dispatching problem as a decision process.}
+\caption{Formulation of the truck dispatching problem as a decision process.}
 \label{fig:mdp}
 \end{figure}
 
@@ -702,7 +702,7 @@ The second term is the opportunity cost of idleness: the production lost by a st
 
 \textbf{Order of magnitude.} With these normalisations, the cumulative reward of a shift is close to the number of completed cycles, reduced mainly by the distance cost. For Fixed Assignment under nominal conditions, averaged over the 10 selection seeds of \cref{sec:protocol}, 241.5 delivered cycles give a reward of 218.7, of which $-19.3$ for distance, $-2.1$ for balance and $-1.4$ for waiting.
 
-\textbf{Unchanged reward.} The reward was fixed before the campaign. A variant that extended the opportunity cost to all cycles was tried during the tuning of \cref{sec:tuning} and then abandoned. The flaw it targeted was fixed by the per-minute discounting of \cref{sec:discount}, without changing the reward.
+\textbf{Unchanged reward.} The reward was fixed before the campaign. A variant that extended the opportunity cost to all cycles was tried during the tuning of \cref{sec:tuning} and then abandoned. The flaw it targeted was fixed by the discounting per minute of \cref{sec:discount}, without changing the reward.
 \end{revbloc}
 
 The weights favour production while keeping a waiting penalty. The sensitivity of the agents to $w_4$ is examined in the ablation study of \cref{sec:ablation}.
@@ -719,7 +719,7 @@ L^{\mathrm{CLIP}}(\theta) = \hat{\mathbb{E}}_t \Big[ \min \big( r_t(\theta)\hat{
 \qquad r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\mathrm{old}}}(a_t \mid s_t)} ,
 \end{equation}
 
-\rev{Bibliography, v3}{where the advantage $\hat{A}_t$ is estimated with generalised advantage estimation (GAE) \cite{Schulman2016GAE}, using the per-minute factor of \cref{sec:discount}.} The actor and the critic are two separate multilayer perceptrons, each with two hidden layers of 128 neurons and a hyperbolic tangent activation, the Stable-Baselines3 default for PPO; the output layer of the actor defines a distribution over the 7 actions. \rev{v3}{The reward is normalised during training (Stable-Baselines3 \texttt{VecNormalize}; observations are not normalised, since they already lie in $[0,1]$). A single simulated environment is used.}
+\rev{Bibliography, v3}{where the advantage $\hat{A}_t$ is estimated with generalised advantage estimation (GAE) \cite{Schulman2016GAE}, using the factor per minute of \cref{sec:discount}.} The actor and the critic are two separate multilayer perceptrons, each with two hidden layers of 128 neurons and a hyperbolic tangent activation, the Stable-Baselines3 default for PPO; the output layer of the actor defines a distribution over the 7 actions. \rev{v3}{The reward is normalised during training (Stable-Baselines3 \texttt{VecNormalize}; observations are not normalised, since they already lie in $[0,1]$). A single simulated environment is used.}
 
 \begin{revbloc}{M12, v3}
 The hyperparameters are gathered in \cref{tab:hyper}. For PPO and DQN, the learning rate and, depending on the algorithm, the entropy coefficient or the exploration duration were chosen by a tuning of the same size for both agents: four configurations each, 200{,}000 steps, training seed 1, productivity criterion on the selection seeds. The factor $\gamma = 0.995$ and PPO's reward normalisation were retained during the agent tuning of \cref{sec:tuning}. DQN was given the same $\gamma$, but not the normalisation: its replay buffer would store rewards normalised with statistics that change during training. For Q-Learning and SARSA, the learning rate and the number of discretisation intervals were chosen by a tuning of the same size (four configurations each, full budget). Their factor $\gamma = 0.99$ was not tuned: the tuning rule kept it outside the grid. The other values follow the Stable-Baselines3 defaults and usual settings \cite{JohnSchulman2017, Mnih2015}.
@@ -741,7 +741,7 @@ Representation                 & MLP [128, 128] & MLP [128, 128] & \multicolumn{
 Activation                     & Tanh$^{a}$     & ReLU$^{a}$     & n/a & n/a \\
 Discretisation intervals       & n/a & n/a & \textbf{6} & \textbf{6} \\
 Learning rate $\alpha$         & $\mathbf{1\times10^{-4}}$ & $\mathbf{3\times10^{-4}}$ & \textbf{0.2} & \textbf{0.1} \\
-Factor $\gamma$ (1.89-min decision) & 0.995 & 0.995 & 0.99 & 0.99 \\
+Factor $\gamma$ (decision of 1.89~min) & 0.995 & 0.995 & 0.99 & 0.99 \\
 Discounting                    & \multicolumn{4}{c}{per minute, $\gamma_{\min} = \gamma^{1/1.89}$, see \cref{sec:discount}} \\
 Reward normalisation           & yes & no & no & no \\
 Batch size                     & 64             & 64             & n/a & n/a \\
@@ -761,7 +761,7 @@ Training budget                & 2{,}000{,}000 steps & 2{,}000{,}000 steps & 30{
 
 \subsubsection{Deep Q-Network}
 
-\rev{Bibliography, M14, v3}{DQN \cite{Mnih2015} approximates the action-value function $Q(s,a)$ with a neural network, and stabilises learning with an experience replay buffer and a periodically updated target network. With per-minute discounting, the update targets}
+\rev{Bibliography, M14, v3}{DQN \cite{Mnih2015} approximates the action-value function $Q(s,a)$ with a neural network, and stabilises learning with an experience replay buffer and a periodically updated target network. With discounting per minute, the update targets}
 \begin{equation}
 y = r + \gamma_{\min}^{\Delta t} \max_{a'} Q_{\theta^-}(s', a') ,
 \end{equation}
@@ -771,13 +771,13 @@ y = r + \gamma_{\min}^{\Delta t} \max_{a'} Q_{\theta^-}(s', a') ,
 \label{sec:tabular}
 
 \begin{revbloc}{M8, v3}
-Q-Learning \cite{WatkinsDayan1992} and SARSA \cite{RummeryNiranjan1994} store one value for each state--action pair in a table. The 23-component state being too large for a table, it is reduced to six variables. The first five are the waiting times at the 3 shovels and the 2 dumps, split into 6 equal intervals between 0 and 9.6~min (beyond which the value saturates). The sixth is the index of the shovel nearest to the deciding truck (0 to 2). A variant that replaced it with the route of smallest predicted waiting time (0 to 5), i.e.\ the information used by MTWT, was tried during the tuning of \cref{sec:tuning} and not retained. The discretised space therefore contains $6^5 \times 3 = 23{,}328$ states. When a state is absent from the table, action 0 is played by default; the share of decisions concerned is measured during evaluation. This representation does not depend on the number of trucks.
+Q-Learning \cite{WatkinsDayan1992} and SARSA \cite{RummeryNiranjan1994} store one value for each state--action pair in a table. The state of 23 components being too large for a table, it is reduced to six variables. The first five are the waiting times at the 3 shovels and the 2 dumps, split into 6 equal intervals between 0 and 9.6~min (beyond which the value saturates). The sixth is the index of the shovel nearest to the deciding truck (0 to 2). A variant that replaced it with the route of smallest predicted waiting time (0 to 5), i.e.\ the information used by MTWT, was tried during the tuning of \cref{sec:tuning} and not retained. The discretised space therefore contains $6^5 \times 3 = 23{,}328$ states. When a state is absent from the table, action 0 is played by default; the share of decisions concerned is measured during evaluation. This representation does not depend on the number of trucks.
 
-Q-Learning updates the value of the action from the best next action (off-policy method), whereas SARSA uses the action actually chosen next (on-policy method). With per-minute discounting, the update reads
+Q-Learning updates the value of the action from the best next action (off-policy method), whereas SARSA uses the action actually chosen next (on-policy method). With discounting per minute, the update reads
 \begin{equation}
 Q(s,a) \leftarrow Q(s,a) + \alpha \big[ r + \gamma_{\min}^{\Delta t}\, Q(s',a') - Q(s,a) \big] ,
 \end{equation}
-where $a'$ is the highest-valued action in $s'$ for Q-Learning, and the action chosen in $s'$ for SARSA. Both agents use $\gamma = 0.99$ and an $\varepsilon$-greedy exploration decreasing linearly from 1.0 to 0.01 over 30{,}000 episodes. Q-Learning uses $\alpha = 0.2$ and SARSA $\alpha = 0.1$, values chosen by the tuning of \cref{sec:tuning}. The comparison between tabular and deep agents should therefore be read with the representation and computing budget retained here.
+where $a'$ is the action of highest value in $s'$ for Q-Learning, and the action chosen in $s'$ for SARSA. Both agents use $\gamma = 0.99$ and an $\varepsilon$-greedy exploration decreasing linearly from 1.0 to 0.01 over 30{,}000 episodes. Q-Learning uses $\alpha = 0.2$ and SARSA $\alpha = 0.1$, values chosen by the tuning of \cref{sec:tuning}. The comparison between tabular and deep agents should therefore be read with the representation and computing budget retained here.
 \end{revbloc}
 
 Algorithms~\ref{alg:ppo}, \ref{alg:dqn} and \ref{alg:qlearning} formalise the learning methods as pseudocode; the line that distinguishes SARSA from Q-Learning is indicated at the end of Algorithm~\ref{alg:qlearning}. \rev{v3}{In all three, $\Delta t_t$ is the duration of decision $t$, given by the simulator, and $\gamma_{\min} = \gamma^{1/1.89}$.}
@@ -888,10 +888,10 @@ The architecture decouples the learning logic from the simulation, which makes i
 \begin{revbloc}{M28, m20, m24, v3}
 All measurements are made on the CPU of an 8-core laptop, without a graphics card.
 \begin{itemize}
-  \item \textbf{Training:} a full training run under nominal conditions, with four training runs at the same time on the machine, took 223~min for PPO, 168~min for DQN, 253~min for Q-Learning and 241~min for SARSA. Each run uses a single simulated environment, as required by the per-minute discounting of \cref{sec:discount}. Collecting with four environments in parallel would speed PPO up by a factor of only 1.47 and would change the resulting model (4{,}096 steps per update instead of 1{,}024): this option was not retained. Training is deterministic for a given seed. \rev{T31}{The full campaign comprises 90 training runs: 60 for the main results (4 algorithms, 3 regimes, 5 seeds) and 30 for the ablation study. It took 5 days and 9 hours, from 22 to 27 October 2026, four runs at a time, i.e.\ 515 cumulative training hours. During the campaign, as the machine was also used for other computations, the duration of a run varied from 142 to 1{,}322~min depending on the agent and the time; the durations above, measured during tuning, are more representative. The single evaluation (6{,}540 episodes) took 4~h~18 on 4 processes.}
+  \item \textbf{Training:} a full training run under nominal conditions, with four training runs at the same time on the machine, took 223~min for PPO, 168~min for DQN, 253~min for Q-Learning and 241~min for SARSA. Each run uses a single simulated environment, as required by the discounting per minute of \cref{sec:discount}. Collecting with four environments in parallel would speed PPO up by a factor of only 1.47 and would change the resulting model (4{,}096 steps per update instead of 1{,}024): this option was not retained. Training is deterministic for a given seed. \rev{T31}{The full campaign comprises 90 training runs: 60 for the main results (4 algorithms, 3 regimes, 5 seeds) and 30 for the ablation study. It took 5 days and 9 hours, from 22 to 27 October 2026, four runs at a time, i.e.\ 515 cumulative training hours. During the campaign, as the machine was also used for other computations, the duration of a run varied from 142 to 1{,}322~min depending on the agent and the time; the durations above, measured during tuning, are more representative. The single evaluation (6{,}540 episodes) took 4~h~18 on 4 processes.}
   \item \textbf{Evaluation:} each evaluation episode depends only on the policy and its seed, thanks to the separate random streams described in \cref{sec:simulator}. Episodes are therefore distributed over several processes, with exactly the same results as sequentially, seed by seed. On 150 episodes, 4 processes halve the duration; 8 processes do worse than 4, because each must first load PyTorch.
   \item \textbf{Inference:} the latency of a decision, state construction included, is below 1~millisecond for all policies: from 0.48 to 0.71~ms for PPO and from 0.36 to 0.49~ms for DQN, from 12 to 24 trucks. Since the state has a fixed size, it depends little on fleet size. It is negligible compared with the duration of a haulage cycle, but its suitability for the constraints of a commercial fleet management system has not been assessed.
-  \item \textbf{Memory:} \rev{T31}{a PPO model takes 501~KB (plus 2~KB for the reward-normalisation statistics), a DQN model 344~KB, and a Q-Learning or SARSA table 0.6 to 1.3~MB depending on the number of states visited during training.}
+  \item \textbf{Memory:} \rev{T31}{a PPO model takes 501~KB (plus 2~KB for the statistics of reward normalisation), a DQN model 344~KB, and a Q-Learning or SARSA table 0.6 to 1.3~MB depending on the number of states visited during training.}
 \end{itemize}
 \end{revbloc}
 
@@ -917,7 +917,7 @@ To situate each regime with respect to loading capacity, we use the match factor
 \mathrm{MF} = \frac{N \times t_{\mathrm{load}}}{S \times t_{\mathrm{cycle}}} ,
 \label{eq:mf}
 \end{equation}
-where $N$ is the number of trucks, $S$ the number of shovels, $t_{\mathrm{load}} = 2$~min the mean loading time and $t_{\mathrm{cycle}} \approx 22.7$~min the mean cycle duration excluding waiting and breakdowns, measured with Fixed Assignment. A factor below 1 indicates that shovels wait for trucks. It is about 0.35 under nominal conditions and 0.52 under high load: even with 18 trucks, the fleet remains below the capacity of the three shovels, which together can load about 12{,}600~t/h. The high-load regime therefore increases pressure on queues, but does not oversaturate the fleet; only a policy that concentrates trucks on a single shovel can saturate it.
+where $N$ is the number of trucks, $S$ the number of shovels, $t_{\mathrm{load}} = 2$~min the mean loading time and $t_{\mathrm{cycle}} \approx 22.7$~min the mean cycle duration excluding waiting and breakdowns, measured with Fixed Assignment. A factor below 1 indicates that shovels wait for trucks. It is about 0.35 under nominal conditions and 0.52 under high load: even with 18 trucks, the fleet remains below the capacity of the three shovels, which together can load about 12{,}600~t/h. The high load regime therefore increases pressure on queues, but does not oversaturate the fleet; only a policy that concentrates trucks on a single shovel can saturate it.
 \end{revbloc}
 
 \begin{table}[H]
@@ -956,7 +956,7 @@ Frequent breakdowns  & 12 & 3 & 2 & 10\% & \rev{M15}{0.35} & Frequent truck brea
 
 \textbf{Ablation study.} Sensitivity to the weight of the waiting penalty is measured under nominal conditions for $w_4 \in \{0; 0.1; 0.5\}$, the retained value $w_4 = 0.3$ being that of the nominal agents. It covers PPO and DQN, with the same 5 training seeds, i.e.\ 30 additional training runs. PPO is the main agent of the study, and DQN the one whose behaviour depends most on the WAIT action, as shown in \cref{sec:tuning}. Q-Learning and SARSA, whose convergence is insufficient, are excluded. This choice was fixed before the campaign.
 
-\textbf{Evaluation.} All policies are evaluated on the same 30 replications. The agents choose the highest-valued action, without exploration: deterministic mode for PPO, $\varepsilon = 0$ for DQN and greedy choice for the tabular agents.
+\textbf{Evaluation.} All policies are evaluated on the same 30 replications. The agents choose the action of highest value, without exploration: deterministic mode for PPO, $\varepsilon = 0$ for DQN and greedy choice for the tabular agents.
 
 \textbf{Two sources of variability.} The 30 replications measure the variability due to the environment; the 5 training seeds measure that due to learning. Both are reported separately, as specified in \cref{sec:proto}.
 \end{revbloc}
@@ -981,7 +981,7 @@ Each trial is recorded with its configuration and the commit of the code used, a
 
 \begin{table}[H]
 \centering
-\caption{Agent-tuning trials on the selection seeds (t/h). In brackets: share of WAIT decisions or of cycles sent to a single shovel.}
+\caption{Trials of agent tuning on the selection seeds (t/h). In brackets: share of WAIT decisions or of cycles sent to a single shovel.}
 \label{tab:tuning}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -989,7 +989,7 @@ Each trial is recorded with its configuration and the commit of the code used, a
 \toprule
 \textbf{No.} & \textbf{Trial} & \textbf{Result} & \textbf{Decision} \\
 \midrule
-\multicolumn{4}{l}{\emph{Per-decision discounting}} \\
+\multicolumn{4}{l}{\emph{Discounting per decision}} \\
 0 & Tuning of PPO and DQN, 200{,}000 steps & PPO 3{,}953 (99\% shovel 1); DQN 3{,}992 & starting point \\
 1, 2, 4 & Reward estimated and paid at the decision, with or without a cost of queue minutes & PPO 3{,}915 to 3{,}981; DQN 4{,}106 to 4{,}191 (WAIT 52 to 65\%) & rejected \\
 3 & PPO, full budget, reward paid at the end of the cycle & PPO 4{,}260 & kept \\
@@ -1001,7 +1001,7 @@ Each trial is recorded with its configuration and the commit of the code used, a
 \multicolumn{4}{l}{\emph{Opportunity cost extended to all cycles (abandoned)}} \\
 10--13 & Same configuration, modified reward & PPO 210 (WAIT 99.8\%); DQN 3{,}532 (WAIT 94.8\%); Q-Learning 4{,}099; SARSA 4{,}134 & abandoned \\
 \midrule
-\multicolumn{4}{l}{\emph{Per-minute discounting}} \\
+\multicolumn{4}{l}{\emph{Discounting per minute}} \\
 14--17 & Same configuration as trials 6 to 9 & PPO 4{,}414 (WAIT 0\%); DQN 121 (WAIT 99.8\%); Q-Learning 3{,}974; SARSA 3{,}602 (100\% shovel 3) & PPO and DQN frozen \\
 16--23 & Tabular tuning: $\alpha \in \{0.1; 0.2\}$ × \{6; 8\} intervals & Q-Learning 3{,}369 to \textbf{4{,}181} ($\alpha = 0.2$, 6 int.); SARSA 3{,}481 to \textbf{3{,}626} ($\alpha = 0.1$, 6 int.), 98 to 100\% shovel 3 & best configurations \\
 24, 25 & Sixth state variable: route of smallest predicted waiting & Q-Learning 4{,}062; SARSA 3{,}505 (95\% shovel 3) & rejected \\
@@ -1010,13 +1010,13 @@ Each trial is recorded with its configuration and the commit of the code used, a
 \end{table}
 
 \begin{revbloc}{v3}
-\textbf{What was retained, and why.} Each retained change is justified independently of its score. The block of predicted waiting per route gives the agent the same information as MTWT. Reward normalisation and a longer horizon are common practice for PPO. Per-minute discounting corrects the formulation of the problem, as explained in \cref{sec:discount}. Over the same period, the reference heuristics were strengthened: prediction of trucks en route for MTWT and FIFO, and addition of the LP policy. The comparison has therefore become harder for reinforcement learning.
+\textbf{What was retained, and why.} Each retained change is justified independently of its score. The block of predicted waiting per route gives the agent the same information as MTWT. Reward normalisation and a longer horizon are common practice for PPO. Discounting per minute corrects the formulation of the problem, as explained in \cref{sec:discount}. Over the same period, the reference heuristics were strengthened: prediction of trucks en route for MTWT and FIFO, and addition of the LP policy. The comparison has therefore become harder for reinforcement learning.
 
-\textbf{The flaw found, and the abandoned variant.} With per-decision discounting, the three value-based agents (DQN, Q-Learning, SARSA) drifted towards the farthest shovel, and their productivity decreased as exploration diminished. A measurement without retraining revealed the cause. Always going to shovel 3 rather than shovel 1 loses 9\% of productivity, but hardly changes the reward per decision (0.813 versus 0.820), because a cycle yields 1 whatever its duration. A first correction, decided with the research supervisor, extended the opportunity cost to all cycles (cycle duration divided by 23.2~min). The reward of a shift changed only by a constant, and the drift disappeared (trials 10 to 13). But a cycle then yielded a negative value on average. With per-decision discounting, postponing a negative reward makes it less costly, and inserting waits of 0.2~min became the way to postpone it. PPO thus learned to wait in 99.8\% of its decisions. Both flaws therefore have the same cause: per-decision discounting while decisions do not last the same time. This variant was abandoned, the reward returned to its previous definition, and per-minute discounting was introduced for the four algorithms, with no other change. These two decisions were taken after seeing results on the selection seeds: they are declared as such.
+\textbf{The flaw found, and the abandoned variant.} With discounting per decision, the three value-based agents (DQN, Q-Learning, SARSA) drifted towards the farthest shovel, and their productivity decreased as exploration diminished. A measurement without retraining revealed the cause. Always going to shovel 3 rather than shovel 1 loses 9\% of productivity, but hardly changes the reward per decision (0.813 versus 0.820), because a cycle yields 1 whatever its duration. A first correction, decided with the research supervisor, extended the opportunity cost to all cycles (cycle duration divided by 23.2~min). The reward of a shift changed only by a constant, and the drift disappeared (trials 10 to 13). But a cycle then yielded a negative value on average. With discounting per decision, postponing a negative reward makes it less costly, and inserting waits of 0.2~min became the way to postpone it. PPO thus learned to wait in 99.8\% of its decisions. Both flaws therefore have the same cause: discounting per decision while decisions do not last the same time. This variant was abandoned, the reward returned to its previous definition, and discounting per minute was introduced for the four algorithms, with no other change. These two decisions were taken after seeing results on the selection seeds: they are declared as such.
 
-\textbf{The collapse of DQN.} With per-minute discounting, DQN chooses WAIT in 99.8\% of its decisions (trial 15). Replayed greedily, the final model produces 840~t per shift, whereas the last training shifts, played with updates and exploration, produced 25{,}620 to 30{,}660~t. Our interpretation, consistent with this measurement but not demonstrated, is the following. A wait of 0.2~min delays the next production by only 0.2~min: its value is therefore almost equal to that of the best action, which is correct. The gap then becomes smaller than the approximation error of the network. As soon as this error puts waiting first, the model waits, and one wait leads to others. PPO, which learns a policy rather than values to compare, is not affected. The equivalence test of \cref{sec:discount} rules out an implementation error. In accordance with the rule, DQN goes into the campaign in this version.
+\textbf{The collapse of DQN.} With discounting per minute, DQN chooses WAIT in 99.8\% of its decisions (trial 15). Replayed greedily, the final model produces 840~t per shift, whereas the last training shifts, played with updates and exploration, produced 25{,}620 to 30{,}660~t. Our interpretation, consistent with this measurement but not demonstrated, is the following. A wait of 0.2~min delays the next production by only 0.2~min: its value is therefore almost equal to that of the best action, which is correct. The gap then becomes smaller than the approximation error of the network. As soon as this error puts waiting first, the model waits, and one wait leads to others. PPO, which learns a policy rather than values to compare, is not affected. The equivalence test of \cref{sec:discount} rules out an implementation error. In accordance with the rule, DQN goes into the campaign in this version.
 
-\textbf{The tabular agents.} Tuning retained $\alpha = 0.2$ for Q-Learning and $\alpha = 0.1$ for SARSA, with 6 intervals in both cases. Giving the discrete state the route MTWT would choose, instead of the nearest shovel, cost both algorithms about 120~t/h (trials 24 and 25), and did not correct the concentration of SARSA on shovel 3. In the ten tabular trials with per-minute discounting (16 to 25), the productivity measured during training starts at about 4{,}160~t/h, when exploration is almost random, then decreases as exploration diminishes. The best tabular agent (4{,}181~t/h) barely matches the random policy (4{,}167~t/h). We present this as a convergence failure of the tabular approach on this problem, with the reduced state and budget retained, not as a limitation of these algorithms in general.
+\textbf{The tabular agents.} Tuning retained $\alpha = 0.2$ for Q-Learning and $\alpha = 0.1$ for SARSA, with 6 intervals in both cases. Giving the discrete state the route MTWT would choose, instead of the nearest shovel, cost both algorithms about 120~t/h (trials 24 and 25), and did not correct the concentration of SARSA on shovel 3. In the ten tabular trials with discounting per minute (16 to 25), the productivity measured during training starts at about 4{,}160~t/h, when exploration is almost random, then decreases as exploration diminishes. The best tabular agent (4{,}181~t/h) barely matches the random policy (4{,}167~t/h). We present this as a convergence failure of the tabular approach on this problem, with the reduced state and budget retained, not as a limitation of these algorithms in general.
 \end{revbloc}
 
 \subsection{Indicators}
@@ -1052,7 +1052,7 @@ In this study, operational resilience refers to the ability of a policy to maint
 
 \textbf{Tests.} In each regime, the Friedman test \cite{Friedman1937} checks for an effect of the policy. Pairwise comparisons use the two-sided Wilcoxon signed-rank test \cite{Wilcoxon1945}, with a Holm correction \cite{Holm1979} over the family of comparisons reported in each regime \cite{Demsar2006}. \rev{v3}{These comparisons were fixed before the campaign: each of the four agents is compared with MTWT, the best heuristic on the selection seeds, and with Fixed Assignment, a widespread industrial reference according to \cref{sec:relwork}, i.e.\ eight comparisons per regime and per indicator. Regime dependence is tested on the three main regimes only.} The dependence of the ranking on the regime (H2) is tested with a linear model of productivity per truck including the policy, the blocks (regime, seed) and the interaction between policy and regime.
 
-\textbf{Effect sizes and intervals.} Differences are reported in physical units, with a 95\% paired bootstrap confidence interval (10{,}000 resamples of the per-seed differences) \cite{EfronTibshirani1993}. Cohen's $d$ is reported for descriptive purposes; in a simulator, variability between replications is low, so a large $d$ does not mean a large practical effect. $p$-values below 0.001 are reported as $p<0.001$.
+\textbf{Effect sizes and intervals.} Differences are reported in physical units, with a 95\% paired bootstrap confidence interval (10{,}000 resamples of the differences per seed) \cite{EfronTibshirani1993}. Cohen's $d$ is reported for descriptive purposes; in a simulator, variability between replications is low, so a large $d$ does not mean a large practical effect. $p$-values below 0.001 are reported as $p<0.001$.
 
 \textbf{Training variability.} For each agent and each regime, the score of a model is its mean over the 30 evaluation seeds. The 5 models are summarised by their interquartile mean (IQM), with a 95\% confidence interval from a bootstrap stratified by regime, and by the worst and best model \cite{Agarwal2021}. The probability of improvement $P(X > Y)$ between two agents is also reported. For the aggregate over the three regimes, scores are divided by the mean of Fixed Assignment in the same regime. Learning curves are the mean of the 5 evaluated models, with a pointwise bootstrap interval; they are read from the training logs of these models, not from separate training runs.
 \end{revbloc}
@@ -1060,7 +1060,7 @@ In this study, operational resilience refers to the ability of a policy to maint
 \subsection{Reproducibility parameters}
 
 \begin{revbloc}{M3, A}
-The simulation is implemented in Python 3.11.11 with Gymnasium 1.2.3 \cite{MarkTowers2025}, Stable-Baselines3 2.8.0 \cite{AntoninRaffin2021} and PyTorch 2.5.1, on CPU. The reward weights ($w_1 = 1$, $w_2 = 0.1$, $w_3 = 0.05$, $w_4 = 0.3$) are constant in all experiments, except in the ablation study. \rev{v3}{The per-minute discount factor is derived from $\gamma$ and is never tuned, as explained in \cref{sec:discount}.} The per-replication results, one row per policy, regime and seed, are provided with the code.
+The simulation is implemented in Python 3.11.11 with Gymnasium 1.2.3 \cite{MarkTowers2025}, Stable-Baselines3 2.8.0 \cite{AntoninRaffin2021} and PyTorch 2.5.1, on CPU. The reward weights ($w_1 = 1$, $w_2 = 0.1$, $w_3 = 0.05$, $w_4 = 0.3$) are constant in all experiments, except in the ablation study. \rev{v3}{The discount factor per minute is derived from $\gamma$ and is never tuned, as explained in \cref{sec:discount}.} The results per replication, one row per policy, regime and seed, are provided with the code.
 \end{revbloc}
 
 \rev{N11, v3}{All agents of this version are trained during the same campaign, with the same simulator and the same reward. Each model comes with a metadata file (code version, hyperparameters, training time), the configuration used is archived with the results, and each tuning trial can be rerun with a single command.}
@@ -1073,7 +1073,7 @@ The simulation is implemented in Python 3.11.11 with Gymnasium 1.2.3 \cite{MarkT
 \label{sec:results}
 
 \begin{revbloc}{T31}
-This section presents productivity, queueing, policy behaviour, trade-offs between criteria, robustness and transfer without retraining, then statistical significance, variability, convergence and the ablation study. All values come from the single evaluation of the final campaign, on seeds 42 to 71. For an agent, each replication is first averaged over its 5 models (training seeds): the reported mean and standard deviation then refer to the 30 replications, as for a heuristic. Variability between models is reported separately, in \cref{tab:runs,sec:stability}. In the tables, N, HL and FB denote the nominal, high-load and frequent-breakdown regimes.
+This section presents productivity, queueing, policy behaviour, trade-offs between criteria, robustness and transfer without retraining, then statistical significance, variability, convergence and the ablation study. All values come from the single evaluation of the final campaign, on seeds 42 to 71. For an agent, each replication is first averaged over its 5 models (training seeds): the reported mean and standard deviation then refer to the 30 replications, as for a heuristic. Variability between models is reported separately, in \cref{tab:runs,sec:stability}. In the tables, N, HL and FB denote the nominal, high load and frequent breakdown regimes.
 \end{revbloc}
 
 \subsection{Productivity}
@@ -1265,7 +1265,7 @@ Frequent breakdowns & Fixed Assignment (3,999; 10.6), MTWT (4,184; 10.8) & Neare
 \end{tabularx}
 \end{table}
 
-Between productivity and queueing time, the trade-off is minimal: MTWT produces 4.5\% more than Fixed Assignment for less than one extra minute of queueing per truck; together with Fixed Assignment, and LP under high load, it dominates all other policies. Between productivity and fuel, by contrast, several policies form the front: PPO and LP use less fuel per tonne than MTWT, for slightly lower productivity. Under high load, PPO is the most fuel-efficient policy per tonne. These fronts are defined within each regime.
+Between productivity and queueing time, the trade-off is minimal: MTWT produces 4.5\% more than Fixed Assignment for less than one extra minute of queueing per truck; together with Fixed Assignment, and LP under high load, it dominates all other policies. Between productivity and fuel, by contrast, several policies form the front: PPO and LP use less fuel per tonne than MTWT, for slightly lower productivity. Under high load, PPO is the policy that uses the least fuel per tonne. These fronts are defined within each regime.
 \end{revbloc}
 
 \subsection{Robustness and transfer without retraining}
@@ -1307,7 +1307,7 @@ PPO                  & 0.953 & 0.943 & +35.6 & $-$15.1 & +45.1 \\
 \end{tabular}
 \end{table}
 
-Under high load, the policies that spread the fleet keep 94 to 98\% of their productivity per truck; the two distance rules keep only 69 and 77\%. Under frequent breakdowns, all policies that work lose 4 to 6\% of productivity, and their ratios are almost identical (0.938 to 0.964): truck breakdowns affect all policies in the same way. The ratios of DQN (0.510 and 1.227) and of SARSA under high load (1.009) mainly reflect very low or highly model-dependent nominal levels, not robustness.
+Under high load, the policies that spread the fleet keep 94 to 98\% of their productivity per truck; the two distance rules keep only 69 and 77\%. Under frequent breakdowns, all policies that work lose 4 to 6\% of productivity, and their ratios are almost identical (0.938 to 0.964): truck breakdowns affect all policies in the same way. The ratios of DQN (0.510 and 1.227) and of SARSA under high load (1.009) mainly reflect nominal levels that are very low or vary strongly from one model to another, not robustness.
 \end{revbloc}
 
 \begin{revbloc}{T31}
@@ -1468,7 +1468,7 @@ The ablation study concerns the weight of the waiting penalty $w_4$, under nomin
 
 \begin{table}[H]
 \centering
-\caption{Ablation on the waiting-penalty weight $w_4$ (nominal regime, 5 models per value). Collapsed: DQN models below 1{,}500~t/h.}
+\caption{Ablation on the weight $w_4$ of the waiting penalty (nominal regime, 5 models per value). Collapsed: DQN models below 1{,}500~t/h.}
 \label{tab:ablation}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -1548,7 +1548,7 @@ H3 & High productivity does not necessarily come with low queueing time. & \rev{
 \begin{revbloc}{T31}
 The results concern the relative performance of the policies in the proposed simulated environment, and transferring them to a real site would require prior calibration and validation. With this caveat, three lessons emerge. First, a rule that accounts for predicted waiting at shovels, such as MTWT, is a very demanding baseline: in this study, no learning agent outperforms it, and comparisons limited to simpler rules, such as Fixed Assignment, overestimate the value of learning. Second, the value of an agent such as PPO lies here less in productivity than in the trade-off with fuel and in the stability of its behaviour outside the training regime: under nominal conditions, it saves about 7~litres per 1,000~tonnes compared with MTWT, for about 23~t/h less. Third, a learning agent should first be used as decision support, its recommendations being validated by a dispatcher, and evaluated across several contrasting regimes before any deployment.
 
-Scaling to large fleets of 50 to 200 trucks remains an important perspective. The state representation used here does not depend on the number of trucks, but it depends on the number of shovels and dumps, which also fixes the action space. Graph neural networks or multi-agent formulations \cite{Zhao2025} could remove this dependence. Pre-training on dispatching histories followed by fine-tuning in simulation could reduce the gap between simulation and reality; these avenues remain to be evaluated.
+Scaling to large fleets of 50 to 200 trucks remains an important perspective. The state representation used here does not depend on the number of trucks, but it depends on the number of shovels and dumps, which also fixes the action space. Graph neural networks or multi-agent formulations \cite{Zhao2025} could remove this dependence. Pretraining on dispatching histories followed by fine-tuning in simulation could reduce the gap between simulation and reality; these avenues remain to be evaluated.
 \end{revbloc}
 
 \subsection{Sustainability}
@@ -1620,16 +1620,16 @@ PPO                  & $0.237\pm0.001$ & \boldmath{$0.248\pm0.002$} & $0.242\pm0
 
 \begin{revbloc}{M7, M8, M9, M11, M12, M25, N1--N5, v3, T31}
 \begin{itemize}
-  \item \textbf{Simulation and lack of site validation:} the study relies entirely on a simulator whose structure is not calibrated on real data. A seven-node graph, three shovels and two dumps represent the mine. Weather conditions, operator behaviour, road incidents and maintenance decisions are not represented. The fuel model relies on measurements made on a single truck \cite{Kubler2015}, scaled to a published average by a factor that compensates for the absence of descents in the simulator; over-consumption on degraded roads is an assumption.
+  \item \textbf{Simulation and lack of site validation:} the study relies entirely on a simulator whose structure is not calibrated on real data. A graph of seven nodes, three shovels and two dumps represent the mine. Weather conditions, operator behaviour, road incidents and maintenance decisions are not represented. The fuel model relies on measurements made on a single truck \cite{Kubler2015}, scaled to a published average by a factor that compensates for the absence of descents in the simulator; overconsumption on degraded roads is an assumption.
   \item \textbf{Breakdowns:} only trucks break down, at most once per cycle, following a stationary process. Shovel breakdowns are not represented. With a match factor of 0.35, losing a shovel would remove a third of the loading capacity at once: it would test the reallocation ability of the policies far more than a truck breakdown. This is a natural extension of this work.
   \item \textbf{Partial common random numbers:} breakdowns are drawn from a stream specific to each truck and are identical across policies; travel and service times are drawn from streams shared by all trucks, in the order of events, which depends on the decisions. The pairing between policies is therefore strong, but not perfect.
-  \item \textbf{Formulation and discounting:} a single agent decides successively for all trucks, and the reward of a step covers the cycles completed during that step, whatever the truck: credit assignment to a decision is not explicit. Per-minute discounting relies on two approximations (reward counted at the start of the step; scale of PPO's normalisation estimated with the per-decision $\gamma$) and requires a single simulated environment per training run. The per-minute factor is referred to the mean interval of Fixed Assignment under nominal conditions (1.89~min); another reference would give another horizon in minutes.
-  \item \textbf{Agent tuning:} it was carried out under nominal conditions, with a single training seed, on grids of four configurations per algorithm, at the reduced budget of 200{,}000 steps for PPO and DQN and at the full budget for the tabular agents. The factor $\gamma$ of the tabular agents was not tuned. Two decisions were taken after seeing results on the selection seeds: the reward variant, then its abandonment in favour of per-minute discounting, reported in \cref{sec:tuning}. They were taken under a rule written in advance for what followed and do not touch the evaluation seeds, but they remain data-informed choices.
-  \item \textbf{DQN:} in the retained version, DQN collapses onto the WAIT action in 4 nominal models out of 5, and for all values of $w_4$ studied. Its results describe this configuration, not the algorithm in general. Variants known to reduce value-estimation error, such as reward normalisation, a dueling architecture or a double network, were not tried, since the tuning rule forbade it.
+  \item \textbf{Formulation and discounting:} a single agent decides successively for all trucks, and the reward of a step covers the cycles completed during that step, whatever the truck: credit assignment to a decision is not explicit. Discounting per minute relies on two approximations (reward counted at the start of the step; scale of PPO's normalisation estimated with the $\gamma$ per decision) and requires a single simulated environment per training run. The factor per minute is referred to the mean interval of Fixed Assignment under nominal conditions (1.89~min); another reference would give another horizon in minutes.
+  \item \textbf{Agent tuning:} it was carried out under nominal conditions, with a single training seed, on grids of four configurations per algorithm, at the reduced budget of 200{,}000 steps for PPO and DQN and at the full budget for the tabular agents. The factor $\gamma$ of the tabular agents was not tuned. Two decisions were taken after seeing results on the selection seeds: the reward variant, then its abandonment in favour of discounting per minute, reported in \cref{sec:tuning}. They were taken under a rule written in advance for what followed and do not touch the evaluation seeds, but they remain choices informed by data.
+  \item \textbf{DQN:} in the retained version, DQN collapses onto the WAIT action in 4 nominal models out of 5, and for all values of $w_4$ studied. Its results describe this configuration, not the algorithm in general. Variants known to reduce the error of value estimation, such as reward normalisation, a dueling architecture or a double network, were not tried, since the tuning rule forbade it.
   \item \textbf{Tabular agents:} they use only a representation reduced to six variables, and their policy degrades as exploration diminishes, for the 5 models and in the three regimes, as shown in \cref{sec:convergence}. Their performance is a lower bound of what these algorithms allow.
   \item \textbf{Training variability:} 5 training seeds per agent and per regime make it possible to report the variability between models, but remain few \cite{Henderson2018, Agarwal2021}. For DQN, whose models split between two very different levels, the proportion of collapsed models (4 out of 5 under nominal conditions) is estimated with large uncertainty.
   \item \textbf{Behaviour by replay:} the allocation of cycles among shovels (\cref{tab:behaviour}) is obtained by replaying the episodes of the evaluation, which did not record it. Each replayed episode was checked to be identical, and nothing was chosen on these episodes; the evaluation seeds were nevertheless played twice.
-  \item \textbf{Baselines:} MTWT does not anticipate the trucks that will be assigned after the current decision. The plan of the LP policy is computed once per shift, from mean quantities, and its utilisation cap is chosen once for all regimes. Industrial systems re-optimise more often and use more elaborate rules.
+  \item \textbf{Baselines:} MTWT does not anticipate the trucks that will be assigned after the current decision. The plan of the LP policy is computed once per shift, from mean quantities, and its utilisation cap is chosen once for all regimes. Industrial systems reoptimise more often and use more elaborate rules.
   \item \textbf{Action space and algorithms:} the agent chooses among a discrete set of shovel--dump pairs; other algorithms, such as Soft Actor-Critic \cite{Haarnoja2018, SampsonNwachukwu2025}, Advantage Actor-Critic or multi-agent approaches \cite{Zhao2025}, were not compared.
   \item \textbf{System size and transfer:} three shovels, two dumps and 12 to 18 trucks are far from large operations. The evaluation without retraining only covers changes in fleet size and breakdown rate, not a change of road network or number of shovels, which would change the size of the state and of the action space. The results describe relative performance within this framework.
 \end{itemize}
@@ -1646,9 +1646,9 @@ This study examined whether dispatching policies learned by reinforcement do bet
 
 Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with a policy based on a linear program, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, and its performance holds almost without loss when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: DQN collapses onto the waiting action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes.
 
-These results suggest that the value of reinforcement learning for dispatching should be measured against queue-aware rules rather than static ones, and that it lies here less in productivity than in the trade-off with fuel and in stability outside the training regime. They remain conditional on the simulator used, which has not been calibrated on site data.
+These results suggest that the value of reinforcement learning for dispatching should be measured against rules that account for queues rather than static ones, and that it lies here less in productivity than in the trade-off with fuel and in stability outside the training regime. They remain conditional on the simulator used, which has not been calibrated on site data.
 
-Future work will address DQN variants that reduce value-estimation error, a reward that explicitly includes fuel, the representation of shovel breakdowns and larger networks, with representations independent of the number of shovels. In the longer term, validation on a digital twin calibrated with operational data will make it possible to assess the actual effect on productivity and fuel consumption.
+Future work will address DQN variants that reduce the error of value estimation, a reward that explicitly includes fuel, the representation of shovel breakdowns and larger networks, with representations independent of the number of shovels. In the longer term, validation on a digital twin calibrated with operational data will make it possible to assess the actual effect on productivity and fuel consumption.
 \end{revbloc}
 
 \newpage
@@ -1658,13 +1658,13 @@ Future work will address DQN variants that reduce value-estimation error, a rewa
 % ============================================================================
 \section*{Data availability}
 
-\rev{M3}{The per-replication results (one row per policy, regime and seed), as well as the simulation logs, are available from the corresponding author on reasonable request and will be deposited with the code.}
+\rev{M3}{The results per replication (one row per policy, regime and seed), as well as the simulation logs, are available from the corresponding author on reasonable request and will be deposited with the code.}
 
 \section*{Code availability}
 
 The source code of the simulator, the training and evaluation scripts and the list of seeds used for the 30 replications (seeds 42 to 71) are available on GitHub at \url{https://github.com/Juan-Lucas/memoire-master-rl-logistique}.
 
-\rev{T28, v3}{The hyperparameters, regimes, reward weights and seeds are read from the YAML files of the \texttt{configs/} directory, which are archived with each set of results. The agent-tuning trials can be rerun with the \texttt{experiments.agent\_trials} module.}
+\rev{T28, v3}{The hyperparameters, regimes, reward weights and seeds are read from the YAML files of the \texttt{configs/} directory, which are archived with each set of results. The trials of agent tuning can be rerun with the \texttt{experiments.agent\_trials} module.}
 
 \section*{Author contributions}
 
