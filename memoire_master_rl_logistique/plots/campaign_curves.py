@@ -39,7 +39,7 @@ def plot_campaign_curves(curves: pd.DataFrame, out_path: Path) -> None:
     """Un panneau par régime ; une courbe (moyenne et bande IC 95 %) par agent."""
     scenarios = [s for s in SCENARIO_ORDER if s in set(curves["scenario"])]
     agents = [a for a in AGENT_ORDER if a in set(curves["algorithm"])]
-    fig, axes = plt.subplots(1, len(scenarios), figsize=(5.2 * len(scenarios), 4.2),
+    fig, axes = plt.subplots(1, len(scenarios), figsize=(4.1 * len(scenarios), 3.8),
                              squeeze=False)
     for ax, scenario in zip(axes[0], scenarios):
         for agent in agents:
@@ -47,14 +47,17 @@ def plot_campaign_curves(curves: pd.DataFrame, out_path: Path) -> None:
             if not curve.empty:
                 plot_band(ax, curve.sort_values("progress_pct"), AGENT_COLORS[agent], agent,
                           x="progress_pct")
-        ax.set_title(SCENARIO_LABELS.get(scenario, scenario))
+        ax.set_title(SCENARIO_LABELS.get(scenario, scenario), fontsize=12)
         ax.set_xlabel(tr("Avancement de l'entraînement (% du budget)",
-                         "Training progress (% of budget)"))
+                         "Training progress (% of budget)"), fontsize=11)
+        ax.tick_params(labelsize=10)
         ax.grid(True, alpha=0.3)
-    axes[0][0].set_ylabel(tr("Productivité des épisodes d'entraînement (t/h)",
-                             "Productivity of training episodes (t/h)"))
-    axes[0][0].legend(fontsize=7, loc="lower left")
-    fig.tight_layout()
+    # Libellé court : la légende de l'article précise qu'il s'agit des épisodes d'entraînement.
+    axes[0][0].set_ylabel(tr("Productivité (t/h)", "Productivity (t/h)"), fontsize=11)
+    # Légende commune sous les panneaux : dans un panneau, elle recouvrait les courbes.
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=2, fontsize=10, frameon=False)
+    fig.tight_layout(rect=(0, 0.14, 1, 1))
     save_figure(fig, out_path)
 
 
