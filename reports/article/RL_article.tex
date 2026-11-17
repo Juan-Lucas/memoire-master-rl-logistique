@@ -452,6 +452,8 @@ Three scope limitations follow from this positioning and are discussed in \cref{
 \section{Contributions and methodological framework}
 \label{sec:contributions}
 
+This section states the contributions of the study, then presents the methodological framework that links them, from the modelling of the haulage system to the analysis of the results.
+
 \subsection{Contributions}
 
 \begin{revbloc}{M23, M24, M26, M16}
@@ -709,6 +711,8 @@ The weights favour production while keeping a waiting penalty. The sensitivity o
 
 \subsection{Learning agents studied}
 \label{sec:agents}
+
+Four learning agents are compared, from tabular methods to deep networks, and from methods that learn the value of actions to a method that learns the policy directly. PPO and DQN observe the full state of 23 components, whereas Q-Learning and SARSA use a reduced and discretised state. The hyperparameters of the four agents are given in \cref{tab:hyper}.
 
 \subsubsection{Proximal Policy Optimization}
 

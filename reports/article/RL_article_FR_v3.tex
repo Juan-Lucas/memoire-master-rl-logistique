@@ -454,6 +454,8 @@ Trois limites de portée découlent de ce positionnement et sont discutées dans
 \section{Contributions et cadre méthodologique}
 \label{sec:contributions}
 
+Cette section énonce les contributions de l'étude, puis présente le cadre méthodologique qui les relie, de la modélisation du système de transport à l'analyse des résultats.
+
 \subsection{Contributions}
 
 \begin{revbloc}{M23, M24, M26, M16}
@@ -713,6 +715,8 @@ Les poids privilégient la production tout en conservant une pénalité d'attent
 
 \subsection{Agents d'apprentissage étudiés}
 \label{sec:agents}
+
+Quatre agents d'apprentissage sont comparés, des méthodes tabulaires aux réseaux profonds, et des méthodes qui apprennent la valeur des actions à une méthode qui apprend directement la politique. PPO et DQN observent l'état complet de 23 composantes, alors que Q-Learning et SARSA utilisent un état réduit et discrétisé. Les hyperparamètres des quatre agents sont donnés dans le \cref{tab:hyper}.
 
 \subsubsection{Proximal Policy Optimization}
 
