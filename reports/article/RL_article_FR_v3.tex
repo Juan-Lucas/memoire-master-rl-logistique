@@ -45,7 +45,6 @@
 
 % Configuration des légendes et tableaux
 \captionsetup{font=small,labelfont=bf}
-\newcommand{\tabnote}[1]{\par\smallskip\begin{minipage}{\linewidth}\footnotesize\textit{Note.} #1\end{minipage}} % Légendes petites et labels en gras
 \setlist[itemize]{leftmargin=1.5em,itemsep=2pt,topsep=4pt}
 \setlist[enumerate]{leftmargin=1.7em,itemsep=2pt,topsep=4pt}
 \renewcommand{\arraystretch}{1.15} % Espacement vertical des tableaux
@@ -986,7 +985,7 @@ Chaque essai est enregistré avec sa configuration et le commit du code utilisé
 
 \begin{table}[H]
 \centering
-\caption{Essais de la mise au point des agents.}
+\caption{Essais de la mise au point des agents sur les graines de sélection (t/h). Entre parenthèses : part des décisions ATTENDRE ou des cycles envoyés à une seule pelle.}
 \label{tab:tuning}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -1012,7 +1011,6 @@ Chaque essai est enregistré avec sa configuration et le commit du code utilisé
 24, 25 & Sixième variable de l'état : route de plus petite attente prévue & Q-Learning 4\,062 ; SARSA 3\,505 (95\,\% pelle 3) & rejetée \\
 \bottomrule
 \end{tabularx}
-\tabnote{Productivité en t/h sur les graines de sélection 20\,000 à 20\,009, conditions nominales, graine d'entraînement 1. Entre parenthèses : part des décisions ATTENDRE ou des cycles envoyés à une seule pelle, quand elle est remarquable.}
 \end{table}
 
 \begin{revbloc}{v3}
@@ -1079,7 +1077,7 @@ La simulation est implémentée en Python 3.11.11 avec Gymnasium 1.2.3 \cite{Mar
 \label{sec:results}
 
 \begin{revbloc}{T31}
-Cette section présente la productivité, l'attente, le comportement des politiques, les compromis entre critères, la robustesse et le transfert sans réentraînement, puis la significativité statistique, la variabilité, la convergence et l'étude d'ablation. Toutes les valeurs proviennent de l'évaluation unique de la campagne finale, sur les graines 42 à 71. Pour un agent, chaque réplication est d'abord moyennée sur ses 5 modèles (graines d'entraînement) : la moyenne et l'écart-type rapportés portent alors sur les 30 réplications, comme pour une heuristique. La variabilité entre modèles est rapportée à part (\cref{tab:runs,sec:stability}).
+Cette section présente la productivité, l'attente, le comportement des politiques, les compromis entre critères, la robustesse et le transfert sans réentraînement, puis la significativité statistique, la variabilité, la convergence et l'étude d'ablation. Toutes les valeurs proviennent de l'évaluation unique de la campagne finale, sur les graines 42 à 71. Pour un agent, chaque réplication est d'abord moyennée sur ses 5 modèles (graines d'entraînement) : la moyenne et l'écart-type rapportés portent alors sur les 30 réplications, comme pour une heuristique. La variabilité entre modèles est rapportée à part (\cref{tab:runs,sec:stability}). Dans les tableaux, N, FC et FP désignent les régimes nominal, de forte charge et de fortes pannes.
 \end{revbloc}
 
 \subsection{Productivité}
@@ -1090,7 +1088,7 @@ Le \cref{tab:productivity} rapporte la productivité moyenne des dix politiques 
 
 \begin{table}[H]
 \centering
-\caption{Productivité par politique et par régime.}
+\caption{Productivité et productivité par camion par politique et par régime (t/h). Moyenne $\pm$ écart-type sur 30 réplications ; en gras : la plus élevée de chaque régime.}
 \label{tab:productivity}
 \footnotesize\setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}lccc|ccc@{}}
@@ -1111,7 +1109,6 @@ DQN                  & 1\,287,0 $\pm$ 79 & 984,5 $\pm$ 10 & 1\,578,5 $\pm$ 64 & 
 PPO                  & 4\,414,7 $\pm$ 51 & 6\,310,0 $\pm$ 62 & 4\,163,9 $\pm$ 77 & 367,9 & 350,6 & 347,0 \\
 \bottomrule
 \end{tabular}
-\tabnote{Moyenne $\pm$ écart-type sur 30 réplications ; pour un agent, moyenne de ses 5 modèles. N : nominal ; FC : forte charge ; FP : fortes pannes. En gras : la plus élevée de chaque régime.}
 \end{table}
 
 \textbf{Le même trio en tête dans les trois régimes.} MTWT est la politique la plus productive dans chaque régime : 4\,437~t/h en conditions nominales, 6\,365~t/h en forte charge et 4\,184~t/h en fortes pannes. PPO et LP la suivent de près, à moins de 1\,\% : PPO est à 23~t/h ($-0{,}5\,\%$), 55~t/h ($-0{,}9\,\%$) et 20~t/h ($-0{,}5\,\%$) de MTWT. Viennent ensuite FIFO et l'Affectation fixe, presque à égalité, à 2 à 4\,\% de MTWT selon le régime. Aucun agent d'apprentissage ne dépasse la meilleure heuristique, dans aucun régime.
@@ -1126,7 +1123,7 @@ La \cref{fig:productivity} représente ces productivités avec leurs intervalles
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\textwidth]{figures/barplot_productivite_scenarios.png}
-\caption{Productivité moyenne par politique et par régime.}
+\caption{Productivité moyenne par politique et par régime. Les barres d'erreur indiquent les intervalles de confiance bootstrap à 95\,\%.}
 \label{fig:productivity}
 \end{figure}
 
@@ -1135,7 +1132,7 @@ Le \cref{tab:cycles_reward} rapporte le nombre de cycles terminés et la récomp
 
 \begin{table}[H]
 \centering
-\caption{Cycles terminés et récompense cumulée.}
+\caption{Cycles terminés par poste et récompense cumulée par politique et par régime (moyennes sur 30 réplications).}
 \label{tab:cycles_reward}
 \small
 \setlength{\tabcolsep}{4pt}
@@ -1162,7 +1159,6 @@ DQN                  & 73,5 & 56,3 & 90,2 & $-$148,6 & $-$417,4 & $-$105,5 \\
 PPO                  & 252,3 & 360,6 & 237,9 & 228,3 & 320,9 & 215,5 \\
 \bottomrule
 \end{tabularx}
-\tabnote{Moyennes par poste sur 30 réplications. N : nominal ; FC : forte charge ; FP : fortes pannes.}
 \end{table}
 \end{revbloc}
 
@@ -1174,7 +1170,7 @@ Le \cref{tab:waiting} distingue l'attente en file, qui mesure la congestion, de 
 
 \begin{table}[H]
 \centering
-\caption{Attente en file, attente volontaire et immobilisation.}
+\caption{Attente en file, attente volontaire (Att.) et immobilisation totale, en minutes par camion et par poste.}
 \label{tab:waiting}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -1196,7 +1192,6 @@ DQN                  & 19,5 $\pm$ 1,3 & 319,5 & 341,4 & 15,2 $\pm$ 0,3 & 395,0 &
 PPO                  & 16,7 $\pm$ 1,1 & 0,0 & 24,7 & 22,6 $\pm$ 1,2 & 5,5 & 35,9 & 14,2 $\pm$ 1,1 & 0,0 & 50,9 \\
 \bottomrule
 \end{tabular}
-\tabnote{Minutes par camion et par poste. File : moyenne $\pm$ écart-type sur 30 réplications. Att. : attente volontaire (décisions ATTENDRE). Totale : file + réparation + ATTENDRE.}
 \end{table}
 
 \textbf{Congestion.} L'Affectation fixe a l'attente en file la plus faible des politiques qui produisent normalement, dans les trois régimes (11,3, 19,0 et 10,6~min), suivie de près par MTWT et FIFO. PPO attend un peu plus en file que MTWT (16,7 contre 12,2~min en conditions nominales) pour une productivité presque égale. Les deux règles de distance cumulent 52 à 188~min de file, car elles concentrent la flotte devant une pelle.
@@ -1215,7 +1210,7 @@ Le \cref{tab:behaviour} décrit la répartition des cycles entre les trois pelle
 
 \begin{table}[H]
 \centering
-\caption{Répartition des cycles entre les pelles et part des décisions ATTENDRE.}
+\caption{Répartition des cycles entre les pelles P1 à P3 et part des décisions ATTENDRE (Att.), par politique et par régime (\%).}
 \label{tab:behaviour}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -1237,7 +1232,6 @@ DQN                  & 46 / 27 / 27 & 79 & 44 / 15 / 42 & 99 & 50 / 43 / 7 & 96 
 PPO                  & 59 / 36 / 4 & 0 & 46 / 36 / 18 & 26 & 56 / 37 / 7 & 0 \\
 \bottomrule
 \end{tabular}
-\tabnote{En \%, moyennes sur 30 réplications et, pour un agent, sur ses 5 modèles. P1, P2, P3 : pelles 1, 2 et 3 ; Att. : part des décisions ATTENDRE.}
 \end{table}
 
 Trois profils se dégagent parmi les heuristiques. Les règles de distance concentrent la flotte : Pelle la plus proche envoie tous ses cycles à la pelle 1, et Plus court chemin de 71 à 74\,\%. FIFO et l'Affectation fixe répartissent les cycles presque à parts égales, et envoient donc près d'un tiers des cycles à la pelle 3, la plus éloignée. MTWT et LP privilégient les pelles 1 et 2 et n'utilisent la pelle 3 que lorsque les deux autres sont chargées, surtout en forte charge (22 et 17\,\%). PPO suit le même profil que MTWT, mais utilise encore moins la pelle 3 : 4\,\% contre 15\,\% en conditions nominales, 7\,\% contre 14\,\% en fortes pannes. Ses cycles sont donc plus courts, ce qui explique sa consommation plus faible par tonne (\cref{sec:sustainability}).
@@ -1258,11 +1252,11 @@ La \cref{fig:behavioral} montre la même répartition pour chaque politique et c
 \label{sec:pareto}
 
 \begin{revbloc}{T31}
-Le \cref{tab:pareto} indique, pour chaque régime, les politiques non dominées au sens de Pareto pour deux couples de critères : productivité et attente en file, puis productivité et carburant par tonne.
+Le \cref{tab:pareto} indique, pour chaque régime, les politiques non dominées au sens de Pareto pour deux couples de critères : productivité et attente en file, puis productivité et carburant par tonne. DQN, non dominé en forte charge sur le premier couple seulement parce que ses camions roulent peu, est signalé entre parenthèses.
 
 \begin{table}[H]
 \centering
-\caption{Politiques non dominées au sens de Pareto dans chaque régime.}
+\caption{Politiques non dominées au sens de Pareto dans chaque régime. Entre parenthèses : productivité (t/h) et attente en file (min) ou carburant par tonne (L/t).}
 \label{tab:pareto}
 \small
 \begin{tabularx}{\textwidth}{l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
@@ -1274,7 +1268,6 @@ Forte charge & Affectation fixe (6\,205 ; 19,0), LP (6\,351 ; 21,1), MTWT (6\,36
 Fortes pannes & Affectation fixe (3\,999 ; 10,6), MTWT (4\,184 ; 10,8) & Pelle la plus proche (3\,754 ; 0,235), LP (4\,150 ; 0,236), PPO (4\,164 ; 0,242), MTWT (4\,184 ; 0,245) \\
 \bottomrule
 \end{tabularx}
-\tabnote{DQN, non dominé en forte charge sur le premier couple parce que ses camions roulent peu, est signalé entre parenthèses.}
 \end{table}
 
 Entre productivité et attente en file, le compromis est minime : MTWT produit 4,5\,\% de plus que l'Affectation fixe pour moins d'une minute de file en plus par camion ; avec l'Affectation fixe, et LP en forte charge, elle domine toutes les autres politiques. Entre productivité et carburant, en revanche, plusieurs politiques forment le front : PPO et LP consomment moins que MTWT par tonne, pour une productivité légèrement inférieure. En forte charge, PPO est la politique la plus économe en carburant par tonne. Ces fronts sont définis à l'intérieur de chaque régime.
@@ -1296,7 +1289,7 @@ où $W$ est l'attente en file moyenne par camion et par poste.
 
 \begin{table}[H]
 \centering
-\caption{Robustesse par rapport aux conditions nominales.}
+\caption{Robustesse par rapport aux conditions nominales. En forte charge, le ratio porte sur la productivité par camion.}
 \label{tab:robustness}
 \small
 \setlength{\tabcolsep}{4pt}
@@ -1318,7 +1311,6 @@ DQN                  & 0,510 & 1,227 & $-$21,9 & $-$13,3 & +20,5 \\
 PPO                  & 0,953 & 0,943 & +35,6 & $-$15,1 & +45,1 \\
 \bottomrule
 \end{tabular}
-\tabnote{FC : forte charge, ratio sur la productivité par camion ; FP : fortes pannes, ratio sur la productivité. Les augmentations portent sur l'attente en file et, pour comparaison, sur l'immobilisation totale.}
 \end{table}
 
 En forte charge, les politiques qui répartissent la flotte gardent de 94 à 98\,\% de leur productivité par camion ; les deux règles de distance n'en gardent que 69 et 77\,\%. En fortes pannes, toutes les politiques qui fonctionnent perdent de 4 à 6\,\% de productivité, et leurs ratios sont presque identiques (0,938 à 0,964) : les pannes de camions touchent toutes les politiques de la même façon. Les ratios de DQN (0,510 et 1,227) et de SARSA en forte charge (1,009) reflètent surtout des niveaux nominaux très bas ou très variables d'un modèle à l'autre, et non une robustesse.
@@ -1327,7 +1319,7 @@ En forte charge, les politiques qui répartissent la flotte gardent de 94 à 98\
 \begin{revbloc}{T31}
 \begin{table}[H]
 \centering
-\caption{Évaluation sans réentraînement.}
+\caption{Évaluation sans réentraînement : agents transférés et spécialisés (t/h). $\Delta$ = transféré $-$ spécialisé, avec intervalle de confiance bootstrap apparié à 95\,\%.}
 \label{tab:transfer}
 \small
 \setlength{\tabcolsep}{4pt}
@@ -1346,7 +1338,6 @@ Forte charge  & PPO        & 6\,310,0 & 6\,257,9 & $-$52,1 [$-$67,1 ; $-$37,6] &
               & SARSA      & 5\,409,8 & 4\,035,7 & $-$1\,374,1 [$-$1\,393,0 ; $-$1\,355,1] & $-$25,4 \\
 \bottomrule
 \end{tabular}
-\tabnote{Transférés : agents entraînés en conditions nominales ; spécialisés : agents entraînés dans le régime évalué ; mêmes graines. Productivité en t/h, moyenne des 5 modèles. $\Delta$ = transféré $-$ spécialisé, avec intervalle de confiance bootstrap apparié à 95\,\% sur les 30 réplications.}
 \end{table}
 
 \textbf{PPO transfère presque sans perte.} En fortes pannes, le PPO nominal fait exactement comme le PPO spécialisé ($-0{,}5$~t/h, intervalle contenant 0). En forte charge, il perd 0,8\,\% ; il reste devant l'Affectation fixe (+53~t/h [28 ; 78]) et derrière MTWT ($-108$~t/h [$-130$ ; $-85$]). Il n'utilise jamais ATTENDRE, alors que le PPO spécialisé en forte charge l'utilise dans 26\,\% de ses décisions. Dans les deux régimes intermédiaires jamais vus, le PPO nominal se place de même juste derrière MTWT : $-61$~t/h avec 15 camions, $-19$~t/h avec 5\,\% de pannes, et devant l'Affectation fixe de 118 et 165~t/h.
@@ -1361,7 +1352,7 @@ La \cref{fig:heatmap} montre ces variations, en \%, pour toutes les politiques :
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/robustness_heatmap.png}
-\caption{Variation par rapport aux conditions nominales.}
+\caption{Variation par rapport aux conditions nominales (\%).}
 \label{fig:heatmap}
 \end{figure}
 
@@ -1375,7 +1366,7 @@ Le \cref{tab:stats} rapporte les huit comparaisons fixées avant la campagne (\c
 
 \begin{table}[H]
 \centering
-\caption{Comparaisons par paires de la productivité.}
+\caption{Comparaisons par paires de la productivité : différence moyenne appariée, intervalle de confiance bootstrap à 95\,\% et $d$ de Cohen.}
 \label{tab:stats}
 \small
 \setlength{\tabcolsep}{5pt}
@@ -1411,7 +1402,6 @@ Le \cref{tab:stats} rapporte les huit comparaisons fixées avant la campagne (\c
  & SARSA $-$ Aff. fixe & $-$646,2 & [$-$664,4 ; $-$628,4] & $-$9,61 \\
 \bottomrule
 \end{tabular}
-\tabnote{Comparaisons fixées avant la campagne. Différence moyenne appariée (t/h) avec intervalle de confiance bootstrap à 95\,\%, et $d$ de Cohen. Test de Wilcoxon apparié, bilatéral, avec correction de Holm sur les huit comparaisons de chaque régime : $p<0{,}001$ pour toutes.}
 \end{table}
 
 Ces comparaisons portent sur la performance attendue de chaque algorithme : pour chaque réplication, un agent est représenté par la moyenne de ses 5 modèles. Elles ne disent pas qu'un modèle pris au hasard ferait de même : pour DQN, un modèle sur cinq reproduit la Pelle la plus proche et les autres s'effondrent (\cref{tab:runs,tab:behaviour}).
@@ -1427,7 +1417,7 @@ Ces comparaisons portent sur la performance attendue de chaque algorithme : pour
 
 \begin{table}[H]
 \centering
-\caption{Productivité de chaque modèle, par graine d'entraînement.}
+\caption{Productivité de chaque modèle par graine d'entraînement et par régime (t/h, moyennes sur 30 réplications).}
 \label{tab:runs}
 \small
 \setlength{\tabcolsep}{4pt}
@@ -1451,7 +1441,6 @@ Ces comparaisons portent sur la performance attendue de chaque algorithme : pour
  & PPO & 4\,162 & 4\,176 & 4\,157 & 4\,155 & 4\,170 & 21 \\
 \bottomrule
 \end{tabular}
-\tabnote{t/h, moyenne sur les 30 réplications. Max $-$ min : écart entre le meilleur et le moins bon modèle.}
 \end{table}
 
 Agrégés à la manière d'Agarwal et al.~\cite{Agarwal2021}, normalisés par l'Affectation fixe et regroupés sur les trois régimes, les IQM des agents valent 1,037 pour PPO [1,035 ; 1,037], 0,956 pour Q-Learning [0,949 ; 0,961], 0,850 pour SARSA [0,842 ; 0,857] et 0,187 pour DQN [0,065 ; 0,438]. La probabilité qu'un modèle PPO fasse mieux qu'un modèle DQN ou Q-Learning dans un même régime vaut 1.
@@ -1473,7 +1462,7 @@ La \cref{fig:convergence} montre la productivité des épisodes d'entraînement,
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/learning_curves_campagne.png}
-\caption{Productivité des épisodes d'entraînement.}
+\caption{Productivité des épisodes d'entraînement, moyenne sur les 5 modèles.}
 \label{fig:convergence}
 \end{figure}
 
@@ -1485,7 +1474,7 @@ L'étude d'ablation porte sur le poids de la pénalité d'attente $w_4$, en cond
 
 \begin{table}[H]
 \centering
-\caption{Ablation sur le poids de la pénalité d'attente $w_4$.}
+\caption{Ablation sur le poids de la pénalité d'attente $w_4$ (régime nominal, 5 modèles par valeur). Effondrés : modèles DQN sous 1\,500~t/h.}
 \label{tab:ablation}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -1500,7 +1489,6 @@ L'étude d'ablation porte sur le poids de la pénalité d'attente $w_4$, en cond
 0,5        & 4\,411,4 & 4\,401 -- 4\,421 & 0,1 & 2\,016,9 & 0 -- 3\,720 & 80,7 & 2 / 5 \\
 \bottomrule
 \end{tabular}
-\tabnote{Régime nominal, 5 modèles par valeur. Productivité : moyenne en t/h ; plage : plus faible et plus élevée des 5 modèles. Att. : part des décisions ATTENDRE. Effondrés : modèles DQN sous 1\,500~t/h.}
 \end{table}
 
 PPO est insensible à $w_4$ : sa productivité ne varie que de 4\,411 à 4\,417~t/h, et il n'utilise presque jamais ATTENDRE. DQN s'effondre pour toutes les valeurs de $w_4$, y compris sans pénalité d'attente, avec 2 à 4 modèles effondrés sur 5. Avec $w_4 = 0{,}5$, deux modèles attendent pendant tout le poste et ne transportent aucune tonne ; leur carburant par tonne n'est pas défini. L'effondrement de DQN ne vient donc pas du poids de la pénalité d'attente, ce qui est cohérent avec l'explication proposée dans la \cref{sec:tuning} : il tient à l'écart de valeur, très faible, entre ATTENDRE et la meilleure affectation.
@@ -1576,7 +1564,7 @@ Le \cref{tab:efficiency} rapporte l'utilisation des camions et des pelles, et le
 
 \begin{table}[H]
 \centering
-\caption{Utilisation des camions et des pelles.}
+\caption{Utilisation des camions (temps d'activité) et des pelles (temps de chargement), en \%. En gras : la plus élevée de chaque colonne.}
 \label{tab:efficiency}
 \footnotesize\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lccc|ccc}
@@ -1597,12 +1585,11 @@ DQN                  & 28,9 & 14,3 & 36,6 & 10,7 & 8,1 & 13,0 \\
 PPO                  & 94,9 & 92,5 & 89,4 & 36,0 & 51,1 & 34,0 \\
 \bottomrule
 \end{tabular}
-\tabnote{En \%, moyennes sur 30 réplications. Camions : temps d'activité dans le poste ; pelles : temps de chargement. En gras : la plus élevée de chaque colonne.}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Consommation de carburant.}
+\caption{Consommation de carburant par tonne (L/t) et par camion-heure (L/h), par politique et par régime. En gras : la plus faible par tonne de chaque régime.}
 \label{tab:fuel}
 \footnotesize\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lccc|ccc@{}}
@@ -1623,7 +1610,6 @@ DQN                  & $0{,}565\pm0{,}059$ & $1{,}874\pm0{,}120$ & $0{,}546\pm0{
 PPO                  & $0{,}237\pm0{,}001$ & \boldmath{$0{,}248\pm0{,}002$} & $0{,}242\pm0{,}001$ & 87,2 & 87,0 & 83,9 \\
 \bottomrule
 \end{tabular}
-\tabnote{Par tonne transportée : moyenne $\pm$ écart-type sur 30 réplications. En gras : la plus faible consommation par tonne de chaque régime.}
 \end{table}
 
 \begin{itemize}

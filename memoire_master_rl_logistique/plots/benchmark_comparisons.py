@@ -83,8 +83,11 @@ def pareto_front(cost: np.ndarray, gain: np.ndarray) -> np.ndarray:
     return ~dominated
 
 
-def plot_grouped_bars(summary: pd.DataFrame, ylabel: str, title: str, out_path: Path) -> None:
-    """Barres groupées : une famille par politique, une barre par régime, avec IC 95 %."""
+def plot_grouped_bars(summary: pd.DataFrame, ylabel: str, out_path: Path) -> None:
+    """Barres groupées : une famille par politique, une barre par régime, avec IC 95 %.
+
+    Sans titre dans l'image : la légende de l'article le donne. La légende des régimes est
+    placée au-dessus du graphique, pour ne recouvrir aucune barre."""
     policies = order_policies(summary["policy"].unique())
     scenarios = [s for s in SCENARIO_ORDER if s in set(summary["scenario"])]
     table = summary.set_index(["policy", "scenario"])
@@ -102,9 +105,10 @@ def plot_grouped_bars(summary: pd.DataFrame, ylabel: str, title: str, out_path: 
 
     ax.set_xticks(x)
     ax.set_xticklabels([policy_label(p) for p in policies], rotation=20, ha="right")
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-    ax.legend(title=tr("Régime", "Regime"))
+    ax.tick_params(labelsize=11)
+    ax.set_ylabel(ylabel, fontsize=12)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=len(scenarios),
+              frameon=False, fontsize=11)
     ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
@@ -157,12 +161,8 @@ def main(csv_path: str | Path, out_dir: str | Path, overwrite: bool = False,
     wait_label = WAIT_LABELS[wait_col]
     wait = summarise(df, wait_col)
 
-    plot_grouped_bars(prod, tr("Productivité (t/h)", "Productivity (t/h)"),
-                      tr("Productivité moyenne par politique et par régime (IC 95 %)",
-                         "Mean productivity by policy and regime (95% CI)"), bars_prod)
-    plot_grouped_bars(wait, wait_label,
-                      tr("Attente par politique et par régime (IC 95 %)",
-                         "Queueing time by policy and regime (95% CI)"), bars_wait)
+    plot_grouped_bars(prod, tr("Productivité (t/h)", "Productivity (t/h)"), bars_prod)
+    plot_grouped_bars(wait, wait_label, bars_wait)
     plot_pareto(prod, wait, pareto, wait_label)
 
     outputs = [bars_prod, bars_wait, pareto]

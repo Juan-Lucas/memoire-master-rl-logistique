@@ -39,7 +39,7 @@ def plot_behaviour(summary: pd.DataFrame, out_path: Path) -> None:
     scenarios = [s for s in SCENARIO_ORDER if s in set(summary["scenario"])]
     policies = order_policies(summary["policy"].unique())
 
-    fig, axes = plt.subplots(1, len(scenarios), figsize=(5 * len(scenarios), 4.5),
+    fig, axes = plt.subplots(1, len(scenarios), figsize=(3.7 * len(scenarios), 4.6),
                              sharey=True, squeeze=False)
     for ax, scenario in zip(axes[0], scenarios):
         data = summary[summary["scenario"] == scenario].set_index("policy").loc[policies]
@@ -49,22 +49,21 @@ def plot_behaviour(summary: pd.DataFrame, out_path: Path) -> None:
                     label=col.removeprefix("share_").removesuffix("_pct"))
             left += data[col]
         for i, wait in enumerate(data["wait_share_pct"]):
-            ax.text(103, i, tr(f"ATT {wait:.0f} %", f"WAIT {wait:.0f}%"), va="center", fontsize=8)
-        ax.set_xlim(0, 125)
+            ax.text(103, i, tr(f"ATT {wait:.0f} %", f"WAIT {wait:.0f}%"), va="center", fontsize=11)
+        ax.set_xlim(0, 135)
         ax.set_xticks([0, 25, 50, 75, 100])
-        ax.set_xlabel(tr("Part des cycles par pelle (%)", "Share of cycles per shovel (%)"))
-        ax.set_title(SCENARIO_LABELS.get(scenario, scenario))
+        ax.tick_params(labelsize=11)
+        ax.set_xlabel(tr("Part des cycles par pelle (%)", "Share of cycles per shovel (%)"),
+                      fontsize=11)
+        ax.set_title(SCENARIO_LABELS.get(scenario, scenario), fontsize=12)
         ax.invert_yaxis()
     axes[0][0].set_yticks(range(len(policies)))
     axes[0][0].set_yticklabels([policy_label(p) for p in policies])
     handles, labels = axes[0][0].get_legend_handles_labels()
     fig.legend(handles, labels, title=tr("Pelle", "Shovel"), loc="lower center", ncol=len(shares),
-               fontsize=8, bbox_to_anchor=(0.5, -0.02))
+               fontsize=11, title_fontsize=11, bbox_to_anchor=(0.5, -0.02))
 
-    fig.suptitle(tr("Répartition des cycles entre les pelles et part des décisions ATTENDRE "
-                    "(moyennes sur 30 réplications)",
-                    "Allocation of cycles among shovels and share of WAIT decisions "
-                    "(means over 30 replications)"))
+    # Sans titre général : la légende de l'article le donne.
     fig.tight_layout(rect=(0, 0.08, 1, 1))  # place pour la légende sous les panneaux
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)

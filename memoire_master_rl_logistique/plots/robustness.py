@@ -67,8 +67,7 @@ def plot_robustness_heatmap(
         ax.set_xlabel("")
     axes[0].set_ylabel(tr("Politique", "Policy"))
 
-    fig.suptitle(tr("Variation par rapport aux conditions nominales (%)",
-                    "Change with respect to nominal conditions (%)"))
+    # Sans titre général : la légende de l'article le donne ; chaque panneau garde le sien.
     fig.tight_layout()
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)

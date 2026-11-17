@@ -115,6 +115,42 @@ def test_schema_des_regimes(tmp_path):
         sc.main(tmp_path)
 
 
+def test_figures_sans_titre_dans_l_image(tmp_path, monkeypatch):
+    """Convention de l'article : le titre est dans la légende LaTeX, pas dans l'image. Les
+    barres de productivité, la répartition par pelle et la heatmap n'ont pas de titre
+    général ; la légende des régimes des barres est au-dessus du graphique."""
+    import matplotlib.pyplot as plt
+
+    from memoire_master_rl_logistique.plots import behaviour as bh
+    from memoire_master_rl_logistique.plots import benchmark_comparisons as bc
+    from memoire_master_rl_logistique.plots import robustness as rb
+
+    monkeypatch.setattr(plt, "close", lambda *args, **kwargs: None)  # garder les figures
+    plt.close("all")
+    try:
+        summary = pd.DataFrame([dict(policy=p, scenario=s, mean=4000.0, ci_low=3990.0,
+                                     ci_high=4010.0)
+                                for p in ("Fixed", "PPO")
+                                for s in ("nominal", "high_load", "high_breakdown")])
+        bc.plot_grouped_bars(summary, "t/h", tmp_path / "bars.png")
+        bars = plt.gcf()
+        assert bars.axes[0].get_title() == ""
+        assert bars.axes[0].get_legend().get_bbox_to_anchor().y0 >= bars.axes[0].bbox.y1 - 1
+
+        shares = pd.DataFrame([dict(policy="Fixed", scenario=s, share_S1_pct=34.0,
+                                    share_S2_pct=33.0, share_S3_pct=33.0, wait_share_pct=0.0)
+                               for s in ("nominal", "high_load", "high_breakdown")])
+        bh.plot_behaviour(shares, tmp_path / "behaviour.png")
+        assert plt.gcf()._suptitle is None
+
+        ratios = pd.DataFrame({"high_load": [0.9], "high_breakdown": [0.95]}, index=["Fixed"])
+        rb.plot_robustness_heatmap(ratios, ratios * 10, tmp_path / "heatmap.png")
+        assert plt.gcf()._suptitle is None
+    finally:
+        monkeypatch.undo()
+        plt.close("all")
+
+
 def test_libelles_des_figures_en_anglais(tmp_path):
     """La version anglaise de l'article a ses propres figures : mêmes données, textes en
     anglais ; revenir au français remet les libellés français."""
