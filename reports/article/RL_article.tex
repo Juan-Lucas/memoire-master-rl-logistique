@@ -108,12 +108,12 @@ Jean-Luc Mupasa Kalunga$^{1,*}$ \qquad Olfa Ferchichi$^{2}$\\[0.5em]
 
 \begin{abstract}
 \begin{revbloc}{m1, m2, M1, M3, v3, T31}
-Truck--shovel haulage can \corr{account for up to 60\% of operating costs in an open-pit mine} and is highly sensitive to disruptions. Reinforcement learning studies of truck dispatching usually evaluate a single training run, in a single operating regime, against static heuristics, so the actual value of learning remains unclear. We compare ten dispatching policies in a stochastic discrete-event simulator: six heuristics, including a rule that minimises predicted waiting time and a linear programming policy, two tabular agents, Q-Learning and State--Action--Reward--State--Action, and two deep agents, Deep Q-Network and Proximal Policy Optimization. The problem is formulated as a semi-Markov decision process with discounting per minute. \corr{Each agent is tuned on separate seeds and trained with five seeds.} All policies are evaluated over 30 paired replications in three regimes (nominal conditions, a 50\% larger fleet and frequent breakdowns), \corr{and nominal agents are tested without retraining} in disrupted and unseen regimes. \corr{The waiting time rule is the most productive in every regime.} Proximal Policy Optimization comes within 0.5--0.9\% of it, on par with the linear programming policy, uses 1.4--2.8\% less fuel per tonne and transfers to new regimes almost without loss. Deep Q-Network collapses onto the waiting action in four of its five models, and the tabular agents degrade as exploration decreases. \corr{No agent outperforms the best heuristic. In this synthetic mine, Proximal Policy Optimization is useful when fuel matters or when fleet size and breakdown rate vary, not for productivity alone, and learned dispatchers should be measured against rules that account for queues.}
+Truck--shovel haulage can \corr{account for up to 60\% of operating costs in an open-pit mine} and is \corr{sensitive} to disruptions. Reinforcement learning studies of truck dispatching usually evaluate a single training run, in a single operating regime, against static heuristics, so the \corr{value of learning remains unclear}. We compare ten dispatching policies in a stochastic discrete-event simulator: six heuristics, including a \corr{rule minimising} predicted waiting time and a linear programming policy, two tabular agents, Q-Learning and State--Action--Reward--State--Action, and two deep agents, Deep Q-Network and Proximal Policy Optimization. \corr{The problem is a semi-Markov decision process with discounting per minute.} \corr{Each agent is tuned on separate seeds and trained with five seeds.} All policies are evaluated over 30 paired replications in three regimes (nominal conditions, a 50\% larger fleet and frequent breakdowns), \corr{and nominal agents are tested without retraining} in \corr{other regimes}. \corr{The waiting time rule is the most productive in every regime.} Proximal Policy Optimization comes within 0.5--0.9\% of it, on par with \corr{linear programming}, uses 1.4--2.8\% less fuel per tonne and \corr{transfers to moderate disruptions almost without loss, but not near shovel saturation}. Deep Q-Network collapses onto the waiting action in four of its five models, and the tabular agents degrade as exploration decreases. \corr{No agent outperforms the best heuristic. In this synthetic mine, Proximal Policy Optimization is useful when fuel matters or when fleet size and breakdown rate vary, not for productivity alone, and learned dispatchers should be measured against rules that account for queues.}
 \end{revbloc}
 \end{abstract}
 
 
-\noindent\textbf{Keywords:} \rev{m1}{Deep reinforcement learning; Open-pit mining; Truck dispatching; Fleet management; Operational resilience; Stochastic simulation; Proximal policy optimization; Deep Q-network.}
+\noindent\textbf{Keywords:} \rev{m1}{Deep reinforcement learning; Open-pit mining; Truck dispatching; Fleet management; \corr{Robustness to disruptions}; Stochastic simulation; Proximal policy optimization; Deep Q-network.}
 
 % ============================================================================
 % Section 1: Introduction
@@ -367,7 +367,7 @@ Proof-of-concept dispatching
 &
 \rev{M3, T31}{\textbf{30 paired replications, 5 training seeds}}
 &
-\textbf{Operational resilience across three regimes}
+\textbf{\corr{Robustness across several regimes}}
 \\
 
 \bottomrule
@@ -481,7 +481,7 @@ This work makes two methodological contributions and reports three empirical fin
 \noindent\textbf{Empirical findings.}
 \begin{itemize}
   \item \textbf{F1. Ranking and regime dependence.} MTWT is the most productive policy in all three regimes; PPO and LP follow within 1\%. The interaction between policy and regime is tested.
-  \item \textbf{F2. Transfer without retraining.} PPO trained under nominal conditions loses 0.8\% of productivity or less when it is deployed without retraining in the two disrupted regimes.
+  \item \textbf{F2. Transfer without retraining.} PPO trained under nominal conditions loses 0.8\% of productivity or less when it is deployed without retraining in the two disrupted regimes. \corr{Near the saturation of the shovels, it falls 3 to 19\% below MTWT.}
   \item \textbf{F3. A fuel trade-off explained by behaviour.} PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT because it sends fewer cycles to the farthest shovel, as the allocation of cycles among shovels shows.
 \end{itemize}
 \end{corrbloc}
@@ -1010,6 +1010,12 @@ Frequent breakdowns  & 12 & 3 & 2 & 10\% & \rev{M15}{0.35} & Frequent truck brea
 \label{fig:scenarios}
 \end{figure}
 
+\begin{corrbloc}
+\textbf{Severity of the main regimes.} The two disrupted regimes are moderate: under high load, the match factor rises from 0.35 to 0.52 and the shovels remain below saturation; under frequent breakdowns, a truck breaks down in 10\% of its cycles instead of 2\%, for 10 to 30~min. They test the robustness of the policies to a change of fleet size and of truck availability, not to a structural change of the mine.
+
+\textbf{More severe disruptions.} Three further regimes, evaluated without retraining over 30 new replications, seeds 72 to 101, together with the nominal regime on the same seeds, test more severe conditions: an outage of shovel 1, the nearest and most used, from 120 to 240~min of the shift, announced to all policies when it starts; and fleets of 29 and 34 trucks, which raise the match factor to 0.85 and 1.0, close to the saturation of the shovels. The PPO models trained under nominal conditions and those trained under high load are both evaluated.
+\end{corrbloc}
+
 \subsection{Training and evaluation protocol}
 \label{sec:protocol}
 
@@ -1089,7 +1095,7 @@ Each trial is recorded with its configuration and the commit of the code used, a
 \label{sec:metrics}
 
 \begin{revbloc}{M2, M21, M15, m18}
-In this study, operational resilience refers to the ability of a policy to maintain its throughput and contain queueing when the system moves from nominal to disrupted conditions. It is measured by the following indicators, computed for each replication.
+\corr{In this study, robustness refers to} the ability of a policy to maintain its throughput and contain queueing when the system moves from nominal to disrupted conditions. It is measured by the following indicators, computed for each replication.
 
 \begin{enumerate}
   \item \textbf{Productivity:} tonnage delivered per hour (t/h), and productivity per truck (t/h/truck), which makes it possible to compare regimes whose fleets differ in size.
@@ -1416,6 +1422,32 @@ Except for SARSA under high load, retraining an agent in the disrupted regime th
 \label{fig:heatmap}
 \end{figure}
 
+\begin{corrbloc}
+\textbf{More severe disruptions.} \Cref{tab:disruptions} reports the additional regimes. During the outage of shovel 1, MTWT remains the most productive policy and loses 5.7\% of its production over the shift, compared with the same replications without outage; FIFO loses about as much, 5.8\%, and PPO 7.2\%, so that its gap to MTWT widens from 0.6 to 2.2\%. The LP policy loses 21.7\%: its plan, computed once at the start of the shift, keeps sending trucks to the broken shovel. After the repair, the throughput of every policy is back within 5\% of its level without outage in the following 30~min. Near saturation, the ranking changes: Fixed Assignment, LP and FIFO overtake MTWT by 3 to 5.5\%, because spreading the fleet evenly matters more than the smallest predicted waiting when every shovel has a queue. PPO, deployed without retraining, falls 3 to 10\% below MTWT with the models trained under high load, and 10 to 19\% with the nominal models: fleets of 29 and 34 trucks lie far outside the 12 or 18 trucks seen in training.
+
+\begin{table}[H]
+\centering
+\caption{Productivity under more severe disruptions, without retraining, seeds 72 to 101 (t/h). Loss: production lost over the shift with the outage of shovel 1, compared with the same replications without outage. In bold: the best in each column.}
+\label{tab:disruptions}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Policy} & \textbf{Reference} & \textbf{Shovel outage} & \textbf{Loss (\%)} & \textbf{MF 0.85} & \textbf{MF 1.0} \\
+\midrule
+FIFO & 4{,}252 & 4{,}007 & 5.8 & 9{,}344 & 10{,}443 \\
+Fixed Assignment & 4{,}254 & 3{,}884 & 8.7 & \textbf{9{,}458} & \textbf{10{,}672} \\
+Nearest Shovel & 3{,}904 & 2{,}946 & 24.5 & 4{,}027 & 4{,}042 \\
+Shortest Path & 4{,}045 & 3{,}032 & 25.1 & 5{,}231 & 5{,}490 \\
+MTWT & \textbf{4{,}443} & \textbf{4{,}190} & \textbf{5.7} & 9{,}016 & 10{,}118 \\
+LP & 4{,}395 & 3{,}442 & 21.7 & 9{,}415 & 10{,}634 \\
+\midrule
+PPO, nominal models & 4{,}416 & 4{,}096 & 7.2 & 8{,}118 & 8{,}200 \\
+PPO, high load models & 4{,}353 & 4{,}034 & 7.3 & 8{,}732 & 9{,}087 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{corrbloc}
+
 \subsection{Statistical significance}
 \label{sec:stats}
 
@@ -1575,7 +1607,7 @@ This section interprets the results in light of the research questions, discusse
 
 \textbf{RQ2.} Productivity and queueing go together. The most productive policies are also those that queue the least, and the Pareto front reduces to Fixed Assignment and MTWT (and LP under high load), with a gap of less than one minute of queueing per truck. What separates the policies is how they take queues into account: the policies that ignore them (distance rules) or learn poorly to use them (tabular agents, DQN) are dominated everywhere.
 
-\textbf{RQ3.} Yes for PPO: the nominal model, deployed without retraining, does as well as the specialised model under frequent breakdowns and loses 0.8\% under high load. It keeps its rank, just behind MTWT and ahead of Fixed Assignment, in the two disrupted regimes and in the two unseen intermediate regimes. Q-Learning also transfers, at its own low level. SARSA loses 25\% under high load.
+\textbf{RQ3.} Yes for PPO: the nominal model, deployed without retraining, does as well as the specialised model under frequent breakdowns and loses 0.8\% under high load. It keeps its rank, just behind MTWT and ahead of Fixed Assignment, in the two disrupted regimes and in the two unseen intermediate regimes. Q-Learning also transfers, at its own low level. SARSA loses 25\% under high load. \corr{This robustness holds for moderate disruptions only: near the saturation of the shovels, PPO deployed without retraining falls 3 to 19\% below MTWT, and rules that spread the fleet overtake MTWT.}
 
 \textbf{RQ4.} No. The ranking by fuel per tonne does not follow the productivity ranking. Nearest Shovel, LP and PPO use the least fuel per tonne under nominal conditions and frequent breakdowns, and PPO the least under high load. FIFO and Fixed Assignment, although among the most productive, use 8 to 14\% more fuel per tonne than PPO depending on the regime.
 \end{revbloc}
@@ -1710,7 +1742,7 @@ PPO                  & $0.237\pm0.001$ & \boldmath{$0.248\pm0.002$} & $0.242\pm0
 \begin{revbloc}{T31}
 \corr{This study examined under which operating conditions deep reinforcement learning provides measurable benefits over strong dispatching heuristics that account for queues in an open-pit mine, and whether these benefits persist when the operating regime changes.} Ten policies, six heuristics and four learning agents, were compared in the same discrete-event simulator and in three regimes, over 30 paired replications, with 5 models per agent, tuning carried out on seeds distinct from the evaluation under a rule fixed in advance, and comparisons fixed before the campaign.
 
-Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with a policy based on a linear program, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, and its performance holds almost without loss when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: DQN collapses onto the waiting action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes. \corr{PPO is therefore useful when fuel consumption matters and when fleet size or breakdown rate vary, not when productivity alone is the objective.}
+Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with a policy based on a linear program, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, and its performance holds almost without loss when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: DQN collapses onto the waiting action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes. \corr{PPO is therefore useful when fuel consumption matters and when fleet size or breakdown rate vary, not when productivity alone is the objective.} \corr{Near the saturation of the shovels, however, rules that spread the fleet overtake MTWT and PPO deployed without retraining loses 3 to 19\% against it: its robustness is established for moderate disruptions only.}
 
 These results suggest that the value of reinforcement learning for dispatching should be measured against rules that account for queues rather than static ones, and that it lies here less in productivity than in the trade-off with fuel and in stability outside the training regime. They remain conditional on the simulator used, which has not been calibrated on site data.
 

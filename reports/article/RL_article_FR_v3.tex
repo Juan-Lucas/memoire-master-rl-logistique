@@ -110,12 +110,12 @@ Jean-Luc Mupasa Kalunga$^{1,*}$ \qquad Olfa Ferchichi$^{2}$\\[0.5em]
 
 \begin{abstract}
 \begin{revbloc}{m1, m2, M1, M3, v3, T31}
-Le transport par camions et pelles peut représenter jusqu'à 60\,\% des coûts d'exploitation d'une mine à ciel ouvert et reste très sensible aux perturbations. Les travaux d'apprentissage par renforcement appliqués au dispatching des camions évaluent généralement un seul entraînement, dans un seul régime, face à des heuristiques statiques, si bien que l'intérêt réel de l'apprentissage reste incertain. Nous comparons dix politiques de dispatching dans un simulateur stochastique à événements discrets : six heuristiques, dont une règle de l'attente prévue minimale et une politique fondée sur un programme linéaire, deux agents tabulaires, Q-Learning et State--Action--Reward--State--Action, et deux agents profonds, Deep Q-Network et Proximal Policy Optimization. Le problème est formulé comme un processus de décision semi-markovien, avec une actualisation par minute. \corr{Chaque agent est mis au point sur des graines distinctes et entraîné avec cinq graines.} Toutes les politiques sont évaluées sur 30 réplications appariées dans trois régimes (conditions nominales, flotte augmentée de 50\,\% et pannes fréquentes), et les agents entraînés en conditions nominales sont aussi testés sans réentraînement dans des régimes perturbés et jamais vus. La règle de l'attente prévue est la plus productive dans tous les régimes. Proximal Policy Optimization se place à 0,5--0,9\,\% en dessous, au niveau de la politique fondée sur un programme linéaire, consomme 1,4 à 2,8\,\% de carburant de moins par tonne et se transfère aux nouveaux régimes presque sans perte. Deep Q-Network s'effondre sur l'action d'attente dans quatre de ses cinq modèles, et les agents tabulaires se dégradent à mesure que l'exploration diminue. \corr{Aucun agent ne dépasse la meilleure heuristique. Dans la mine synthétique évaluée, Proximal Policy Optimization est utile lorsque le carburant compte ou lorsque la taille de la flotte et le taux de pannes varient, et non pour la seule productivité, et les agents appris doivent être comparés à des règles qui tiennent compte des files.}
+Le transport par camions et pelles peut représenter jusqu'à 60\,\% des coûts d'exploitation d'une mine à ciel ouvert et reste très sensible aux perturbations. Les travaux d'apprentissage par renforcement appliqués au dispatching des camions évaluent généralement un seul entraînement, dans un seul régime, face à des heuristiques statiques, si bien que l'intérêt réel de l'apprentissage reste incertain. Nous comparons dix politiques de dispatching dans un simulateur stochastique à événements discrets : six heuristiques, dont une règle de l'attente prévue minimale et une politique fondée sur un programme linéaire, deux agents tabulaires, Q-Learning et State--Action--Reward--State--Action, et deux agents profonds, Deep Q-Network et Proximal Policy Optimization. Le problème est formulé comme un processus de décision semi-markovien, avec une actualisation par minute. \corr{Chaque agent est mis au point sur des graines distinctes et entraîné avec cinq graines.} Toutes les politiques sont évaluées sur 30 réplications appariées dans trois régimes (conditions nominales, flotte augmentée de 50\,\% et pannes fréquentes), et les agents entraînés en conditions nominales sont aussi testés sans réentraînement dans des régimes perturbés et jamais vus. La règle de l'attente prévue est la plus productive dans tous les régimes. Proximal Policy Optimization se place à 0,5--0,9\,\% en dessous, au niveau de la politique fondée sur un programme linéaire, consomme 1,4 à 2,8\,\% de carburant de moins par tonne et \corr{se transfère presque sans perte à des perturbations modérées, mais pas près de la saturation des pelles}. Deep Q-Network s'effondre sur l'action d'attente dans quatre de ses cinq modèles, et les agents tabulaires se dégradent à mesure que l'exploration diminue. \corr{Aucun agent ne dépasse la meilleure heuristique. Dans la mine synthétique évaluée, Proximal Policy Optimization est utile lorsque le carburant compte ou lorsque la taille de la flotte et le taux de pannes varient, et non pour la seule productivité, et les agents appris doivent être comparés à des règles qui tiennent compte des files.}
 \end{revbloc}
 \end{abstract}
 
 
-\noindent\textbf{Mots-clés :} \rev{m1}{Apprentissage par renforcement profond ; Exploitation minière à ciel ouvert ; Dispatching de camions ; Gestion de flotte ; Résilience opérationnelle ; Simulation stochastique ; Proximal policy optimization ; Deep Q-network.}
+\noindent\textbf{Mots-clés :} \rev{m1}{Apprentissage par renforcement profond ; Exploitation minière à ciel ouvert ; Dispatching de camions ; Gestion de flotte ; \corr{Robustesse aux perturbations} ; Simulation stochastique ; Proximal policy optimization ; Deep Q-network.}
 
 % ============================================================================
 % Section 1 : Introduction
@@ -369,7 +369,7 @@ Dispatching de type preuve de concept
 &
 \rev{M3, T31}{\textbf{30 réplications appariées, 5 graines d'entraînement}}
 &
-\textbf{Résilience opérationnelle sur trois régimes}
+\textbf{\corr{Robustesse sur plusieurs régimes}}
 \\
 
 \bottomrule
@@ -483,7 +483,7 @@ Ce travail apporte deux contributions méthodologiques et trois résultats empir
 \noindent\textbf{Résultats empiriques.}
 \begin{itemize}
   \item \textbf{F1. Classement et dépendance au régime.} MTWT est la politique la plus productive dans les trois régimes ; PPO et LP suivent à moins de 1\,\%. L'interaction entre politique et régime est testée.
-  \item \textbf{F2. Transfert sans réentraînement.} PPO entraîné en conditions nominales perd 0,8\,\% de productivité ou moins lorsqu'il est déployé sans réentraînement dans les deux régimes perturbés.
+  \item \textbf{F2. Transfert sans réentraînement.} PPO entraîné en conditions nominales perd 0,8\,\% de productivité ou moins lorsqu'il est déployé sans réentraînement dans les deux régimes perturbés. \corr{Près de la saturation des pelles, il tombe de 3 à 19\,\% sous MTWT.}
   \item \textbf{F3. Un compromis sur le carburant expliqué par le comportement.} PPO consomme 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT parce qu'il envoie moins de cycles vers la pelle la plus éloignée, comme le montre la répartition des cycles entre les pelles.
 \end{itemize}
 \end{corrbloc}
@@ -1014,6 +1014,12 @@ Fortes pannes  & 12 & 3 & 2 & 10\,\% & \rev{M15}{0,35} & Pannes de camions fréq
 \label{fig:scenarios}
 \end{figure}
 
+\begin{corrbloc}
+\textbf{Sévérité des régimes principaux.} Les deux régimes perturbés sont modérés : en forte charge, le facteur d'appariement passe de 0,35 à 0,52 et les pelles restent sous la saturation ; en fortes pannes, un camion tombe en panne dans 10\,\% de ses cycles au lieu de 2\,\%, pendant 10 à 30~min. Ils testent la robustesse des politiques à un changement de taille de flotte et de disponibilité des camions, pas à un changement structurel de la mine.
+
+\textbf{Perturbations plus sévères.} Trois régimes supplémentaires, évalués sans réentraînement sur 30 nouvelles réplications, graines 72 à 101, avec le régime nominal sur les mêmes graines, testent des conditions plus sévères : une panne de la pelle 1, la plus proche et la plus utilisée, de 120 à 240~min de poste, annoncée à toutes les politiques dès qu'elle commence ; et des flottes de 29 et 34 camions, qui portent le facteur d'appariement à 0,85 et 1,0, près de la saturation des pelles. Les modèles PPO entraînés en conditions nominales et ceux entraînés en forte charge sont évalués.
+\end{corrbloc}
+
 \subsection{Protocole d'entraînement et d'évaluation}
 \label{sec:protocol}
 
@@ -1093,7 +1099,7 @@ Chaque essai est enregistré avec sa configuration et le commit du code utilisé
 \label{sec:metrics}
 
 \begin{revbloc}{M2, M21, M15, m18}
-Dans cette étude, la résilience opérationnelle désigne la capacité d'une politique à conserver son débit et à contenir l'attente en file lorsque le système passe des conditions nominales à des conditions perturbées. Elle est mesurée par les indicateurs suivants, calculés pour chaque réplication.
+\corr{Dans cette étude, la robustesse désigne} la capacité d'une politique à conserver son débit et à contenir l'attente en file lorsque le système passe des conditions nominales à des conditions perturbées. Elle est mesurée par les indicateurs suivants, calculés pour chaque réplication.
 
 \begin{enumerate}
   \item \textbf{Productivité :} tonnage livré par heure (t/h), et productivité par camion (t/h/camion), qui permet de comparer des régimes dont la flotte n'a pas la même taille.
@@ -1422,6 +1428,32 @@ La \cref{fig:heatmap} montre ces variations, en \%, pour toutes les politiques :
 \label{fig:heatmap}
 \end{figure}
 
+\begin{corrbloc}
+\textbf{Perturbations plus sévères.} Le \cref{tab:disruptions} présente les régimes supplémentaires. Pendant la panne de la pelle 1, MTWT reste la politique la plus productive et perd 5,7\,\% de sa production sur le poste, par rapport aux mêmes réplications sans panne ; FIFO perd à peu près autant, 5,8\,\%, et PPO 7,2\,\%, si bien que son écart à MTWT passe de 0,6 à 2,2\,\%. La politique LP perd 21,7\,\% : son plan, calculé une fois en début de poste, continue d'envoyer des camions vers la pelle en panne. Après la réparation, le débit de toutes les politiques revient à moins de 5\,\% de son niveau sans panne dans les 30~min qui suivent. Près de la saturation, le classement change : l'Affectation fixe, LP et FIFO dépassent MTWT de 3 à 5,5\,\%, parce que répartir la flotte de façon égale compte davantage que la plus petite attente prévue lorsque toutes les pelles ont une file. PPO, déployé sans réentraînement, tombe de 3 à 10\,\% sous MTWT avec les modèles entraînés en forte charge, et de 10 à 19\,\% avec les modèles nominaux : des flottes de 29 et 34 camions sont très éloignées des 12 ou 18 camions vus à l'entraînement.
+
+\begin{table}[H]
+\centering
+\caption{Productivité sous des perturbations plus sévères, sans réentraînement, graines 72 à 101 (t/h). Perte : production perdue sur le poste avec la panne de la pelle 1, par rapport aux mêmes réplications sans panne. En gras : la meilleure valeur de chaque colonne.}
+\label{tab:disruptions}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Politique} & \textbf{Référence} & \textbf{Panne de pelle} & \textbf{Perte (\%)} & \textbf{MF 0,85} & \textbf{MF 1,0} \\
+\midrule
+FIFO & 4\,252 & 4\,007 & 5{,}8 & 9\,344 & 10\,443 \\
+Affectation fixe & 4\,254 & 3\,884 & 8{,}7 & \textbf{9\,458} & \textbf{10\,672} \\
+Pelle la plus proche & 3\,904 & 2\,946 & 24{,}5 & 4\,027 & 4\,042 \\
+Plus court chemin & 4\,045 & 3\,032 & 25{,}1 & 5\,231 & 5\,490 \\
+MTWT & \textbf{4\,443} & \textbf{4\,190} & \textbf{5{,}7} & 9\,016 & 10\,118 \\
+LP & 4\,395 & 3\,442 & 21{,}7 & 9\,415 & 10\,634 \\
+\midrule
+PPO, modèles nominaux & 4\,416 & 4\,096 & 7{,}2 & 8\,118 & 8\,200 \\
+PPO, modèles forte charge & 4\,353 & 4\,034 & 7{,}3 & 8\,732 & 9\,087 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{corrbloc}
+
 \subsection{Significativité statistique}
 \label{sec:stats}
 
@@ -1580,7 +1612,7 @@ Cette section interprète les résultats au regard des questions de recherche, d
 
 \textbf{QR2.} Productivité et attente en file vont de pair. Les politiques les plus productives sont aussi celles qui attendent le moins en file, et le front de Pareto se réduit à l'Affectation fixe et MTWT (et LP en forte charge), avec un écart de moins d'une minute de file par camion. Ce qui sépare les politiques est la façon dont elles tiennent compte des files : les politiques qui les ignorent (règles de distance) ou qui apprennent mal à les utiliser (agents tabulaires, DQN) sont dominées partout.
 
-\textbf{QR3.} Oui pour PPO : le modèle nominal, déployé sans réentraînement, fait aussi bien que le modèle spécialisé en fortes pannes et perd 0,8\,\% en forte charge. Il garde sa place, juste derrière MTWT et devant l'Affectation fixe, dans les deux régimes perturbés et dans les deux régimes intermédiaires jamais vus. Q-Learning transfère aussi, au niveau bas qui est le sien. SARSA perd 25\,\% en forte charge.
+\textbf{QR3.} Oui pour PPO : le modèle nominal, déployé sans réentraînement, fait aussi bien que le modèle spécialisé en fortes pannes et perd 0,8\,\% en forte charge. Il garde sa place, juste derrière MTWT et devant l'Affectation fixe, dans les deux régimes perturbés et dans les deux régimes intermédiaires jamais vus. Q-Learning transfère aussi, au niveau bas qui est le sien. SARSA perd 25\,\% en forte charge. \corr{Cette robustesse ne vaut que pour des perturbations modérées : près de la saturation des pelles, PPO déployé sans réentraînement tombe de 3 à 19\,\% sous MTWT, et les règles qui répartissent la flotte dépassent MTWT.}
 
 \textbf{QR4.} Non. Le classement selon le carburant par tonne ne suit pas celui de la productivité. Pelle la plus proche, LP et PPO consomment le moins par tonne en conditions nominales et en fortes pannes, et PPO le moins en forte charge. FIFO et l'Affectation fixe, pourtant parmi les plus productives, consomment de 8 à 14\,\% de plus par tonne que PPO selon le régime.
 \end{revbloc}
@@ -1715,7 +1747,7 @@ PPO                  & $0{,}237\pm0{,}001$ & \boldmath{$0{,}248\pm0{,}002$} & $0
 \begin{revbloc}{T31}
 \corr{Cette étude a examiné dans quelles conditions de fonctionnement l'apprentissage par renforcement profond apporte un gain mesurable par rapport à des heuristiques de dispatching solides qui tiennent compte des files dans une mine à ciel ouvert, et si ce gain se maintient lorsque le régime de fonctionnement change.} Dix politiques, six heuristiques et quatre agents d'apprentissage, ont été comparées dans un même simulateur à événements discrets et dans trois régimes, sur 30 réplications appariées, avec 5 modèles par agent, une mise au point faite sur des graines distinctes de l'évaluation selon une règle fixée à l'avance, et des comparaisons fixées avant la campagne.
 
-Trois résultats principaux se dégagent. Premièrement, aucun agent ne dépasse la meilleure heuristique : MTWT, qui affecte chaque camion à la route de plus faible attente prévue, est la plus productive dans les trois régimes. PPO la suit de près, à 0,5 à 0,9\,\% en dessous, au niveau d'une politique fondée sur un programme linéaire, et dépasse nettement l'Affectation fixe. Deuxièmement, PPO consomme de 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT, et ses performances se maintiennent presque sans perte lorsqu'il est déployé sans réentraînement en forte charge, en fortes pannes et dans deux régimes intermédiaires jamais vus. Troisièmement, les autres agents échouent de façon reproductible : DQN s'effondre sur l'action d'attente dans la plupart de ses modèles, quelle que soit la pénalité d'attente, et les agents tabulaires se dégradent à mesure que l'exploration diminue. \corr{PPO est donc utile lorsque la consommation de carburant compte et lorsque la taille de la flotte ou le taux de pannes varient, et non lorsque la productivité est le seul objectif.}
+Trois résultats principaux se dégagent. Premièrement, aucun agent ne dépasse la meilleure heuristique : MTWT, qui affecte chaque camion à la route de plus faible attente prévue, est la plus productive dans les trois régimes. PPO la suit de près, à 0,5 à 0,9\,\% en dessous, au niveau d'une politique fondée sur un programme linéaire, et dépasse nettement l'Affectation fixe. Deuxièmement, PPO consomme de 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT, et ses performances se maintiennent presque sans perte lorsqu'il est déployé sans réentraînement en forte charge, en fortes pannes et dans deux régimes intermédiaires jamais vus. Troisièmement, les autres agents échouent de façon reproductible : DQN s'effondre sur l'action d'attente dans la plupart de ses modèles, quelle que soit la pénalité d'attente, et les agents tabulaires se dégradent à mesure que l'exploration diminue. \corr{PPO est donc utile lorsque la consommation de carburant compte et lorsque la taille de la flotte ou le taux de pannes varient, et non lorsque la productivité est le seul objectif.} \corr{Près de la saturation des pelles, toutefois, les règles qui répartissent la flotte dépassent MTWT et PPO déployé sans réentraînement perd de 3 à 19\,\% face à elle : sa robustesse n'est établie que pour des perturbations modérées.}
 
 Ces résultats suggèrent que l'intérêt de l'apprentissage par renforcement pour le dispatching doit être mesuré face à des règles qui tiennent compte des files, et non face à des règles statiques, et qu'il réside ici moins dans la productivité que dans le compromis avec le carburant et la stabilité hors du régime d'entraînement. Ils restent conditionnels au simulateur utilisé, qui n'a pas été calibré sur des données de site.
 

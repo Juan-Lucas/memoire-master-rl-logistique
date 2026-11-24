@@ -416,7 +416,10 @@ class MineEnv(gym.Env):
         time_min = truck.available_at_min
         self.truck_locations[idx] = shovel.node_id
 
-        cycle.shovel_wait_min = max(0.0, shovel.available_at_min - time_min)
+        # Panne de pelle pendant le poste (M3) : aucun chargement ne commence pendant la panne.
+        start_min = self.variant.shovel_ready_at(cycle.shovel_idx,
+                                                 max(time_min, shovel.available_at_min))
+        cycle.shovel_wait_min = start_min - time_min
         if cycle.shovel_wait_min > 0:
             truck.queue_wait_min += self._in_shift(time_min, cycle.shovel_wait_min)
             truck.total_fuel_l += estimate_idle_fuel_l(cycle.shovel_wait_min, self.fuel)
@@ -596,7 +599,16 @@ class MineEnv(gym.Env):
                              for i in range(self.truck_count) if self.truck_statuses[i] == status)
             for arrival, i in heading:
                 k = getattr(self._cycles[i], attr)
-                free[k] = max(free[k], arrival) + getattr(resources[k], mean)
+                start = max(free[k], arrival)
+                if status == STATUS_TO_SHOVEL:  # panne de pelle connue à cette heure (M3)
+                    start = self.variant.shovel_ready_at(k, start, now=self.current_time_min)
+                free[k] = start + getattr(resources[k], mean)
+        # Pelle en panne et sans camion en route : libre à la fin de la panne. Calcul fait
+        # seulement s'il y a des pannes, pour laisser le simulateur nominal inchangé.
+        if self.variant.shovel_outages:
+            now = self.current_time_min
+            shovels = [self.variant.shovel_ready_at(j, max(t, now), now=now)
+                       for j, t in enumerate(shovels)]
         return shovels, dumps
 
     def route_waits(
