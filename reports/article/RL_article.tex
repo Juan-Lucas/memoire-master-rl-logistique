@@ -185,9 +185,9 @@ The shift to reinforcement learning represents a change of paradigm: instead of 
 
 Within the reinforcement learning family, methods differ substantially in representational power and learning paradigm. \rev{m5}{Tabular methods, such as Q-Learning and SARSA \cite{RichardSutton2018},} build value functions over tables of discrete state--action pairs, which makes them transparent and computationally light, but their expressiveness degrades sharply as the observation space grows with fleet size. DQN agents address this problem by approximating the Q-function with a neural network and stabilising training through experience replay and a frozen target network, which allows them to generalise to high-dimensional continuous inputs. PPO \cite{JohnSchulman2017} belongs to the actor--critic family: it optimises the policy directly through a surrogate objective whose clipping constraint prevents catastrophic parameter updates. These four algorithms, from tabular to deep and from value-based to policy-gradient, form a natural comparative spectrum and constitute the RL component of the testbed designed in this study.
 
-In mining, this transition is more recent. Hazrathosseini and Afrapoli \cite{Hazrathosseini2024} provide a critical review, stressing that, although RL holds considerable potential for intelligent FMS, most studies remain at the proof-of-concept stage. De Carvalho and Dimitrakopoulos \cite{deCarvalho2023} applied an actor--critic framework to production scheduling, showing that RL can handle fleet dynamics while updating production targets. \corr{Deep RL has since been applied to real-time truck dispatching in open-pit mines \cite{Noriega2025}, to dispatching aimed at lowering the carbon emissions of the fleet \cite{Huo2024}, and to the management of unmanned fleets, where a DQN agent fed with travel times estimated from connected sensors reduced truck idle time by 19.2\% on a case from the Sarcheshmeh copper mine \cite{Badakhshan2025}.}
+In mining, this transition is more recent. Hazrathosseini and Afrapoli \cite{Hazrathosseini2024} provide a critical review, stressing that, although RL holds considerable potential for intelligent FMS, most studies remain at the proof-of-concept stage. De Carvalho and Dimitrakopoulos \cite{deCarvalho2023} applied an actor--critic framework to production scheduling, showing that RL can handle fleet dynamics while updating production targets. \corr{Deep RL has since been applied to real-time truck dispatching: Noriega et al. \cite{Noriega2025} train a double DQN dispatcher in a discrete-event simulation of an iron ore mine to meet production and grade targets, and Huo et al. \cite{Huo2024} train a double DQN for each truck and report 10 to 30\% less greenhouse gas per unit of production than fixed schedules. Deep RL has also been applied to the management of unmanned fleets, where a DQN agent fed with travel times estimated from connected sensors reduced truck idle time by 19.2\% on a case from the Sarcheshmeh copper mine \cite{Badakhshan2025}.}
 
-Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide standardised environments for testing these algorithms. Zhao et al. \cite{Zhao2025} proposed a hierarchical multi-agent reinforcement learning (MARL) approach to sustainable dispatching with an emphasis on energy efficiency, while Pei et al. \cite{Pei2025} and Rosales and Diaz \cite{FranciscoRosales2025} explored learned dispatching and interpretable dispatching for autonomous mine haulage. The use of reinforcement learning for decision support for hierarchical industrial scheduling extends beyond mining: \rev{v3}{Szatmári et al.~\cite{KingaSzatmari2025} review} similar hierarchical architectures in chemical process control, which suggests that the design patterns emerging in research on mine dispatching are relevant across domains. \corr{Uncertainty has also been addressed: Deuitch and Sari \cite{Deuitch2026} tune six DQN variants in a simulator with random breakdowns, repair effectiveness, loading times and grades, and compare them with three heuristics, and Shi et al. \cite{Shi2026} schedule trucks under equipment fault uncertainty. The present study compares tabular, value-based and policy-gradient agents with strong heuristics such as MTWT in three regimes, and tests the policies outside the regime they were trained in.}
+Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide standardised environments for testing these algorithms. Zhao et al. \cite{Zhao2025} proposed a hierarchical multi-agent reinforcement learning (MARL) approach to sustainable dispatching with an emphasis on energy efficiency, while Pei et al. \cite{Pei2025} and Rosales and Diaz \cite{FranciscoRosales2025} explored learned dispatching and interpretable dispatching for autonomous mine haulage. The use of reinforcement learning for decision support for hierarchical industrial scheduling extends beyond mining: \rev{v3}{Szatmári et al.~\cite{KingaSzatmari2025} review} similar hierarchical architectures in chemical process control, which suggests that the design patterns emerging in research on mine dispatching are relevant across domains. \corr{Uncertainty has also been addressed: Deuitch and Sari \cite{Deuitch2026} tune six DQN variants in a simulator with random breakdowns, repair effectiveness, loading times and grades, and compare them with three heuristics, and Shi et al. \cite{Shi2026} reassign trucks after equipment failures with a multi-objective particle swarm and a genetic algorithm, which reduces truck waiting time by 30.4\% compared with traditional methods in a coal mine. The present study compares tabular, value-based and policy-gradient agents with strong heuristics such as MTWT in three regimes, and tests the policies outside the regime they were trained in.}
 
 % ============================================================================
 % Section 3: Positioning and problem statement
@@ -202,7 +202,7 @@ Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide s
 \begin{table}[H]
 \centering
 
-\caption{Positioning of the proposed study with respect to representative approaches to truck dispatching.}
+\caption{Positioning of the proposed study with respect to representative approaches to truck dispatching. \corr{Operational variations: uncertain operating parameters without a disrupted regime; Limited: replications or seeds reported without confidence intervals or tests.}}
 \label{tab:litterature}
 
 \renewcommand{\arraystretch}{1.35}
@@ -304,13 +304,13 @@ Optimality under stable conditions
 \addlinespace
 
 Metaheuristics and optimisation by simulation
-\cite{Souza2010,GuangweiLiu2019,ShivPrakashUpadhyay2017,BurakOzdemir2019}
+\cite{Souza2010,GuangweiLiu2019,ShivPrakashUpadhyay2017,BurakOzdemir2019,Shi2026}
 &
 Yes (heuristic search)
 &
 No
 &
-Scenarios
+\corr{Operational variations}
 &
 MILP or 1 to 2 rules
 &
@@ -340,17 +340,17 @@ Routing and scheduling performance
 \addlinespace
 
 Reinforcement learning in mining
-\cite{deCarvalho2023,Banerjee2025,Zhao2025,Pei2025,FranciscoRosales2025}
+\cite{deCarvalho2023,Banerjee2025,Zhao2025,Pei2025,FranciscoRosales2025,Badakhshan2025,Deuitch2026,Noriega2025,Huo2024}
 &
 No
 &
-Actor--critic, MARL, interpretable RL
+Actor--critic, MARL, \corr{DQN,} interpretable RL
 &
-No
+\corr{Equipment failures in three studies \cite{Banerjee2025,Deuitch2026,Huo2024}}
 &
 0 to 3
 &
-Limited
+\corr{Limited; seeds and confidence intervals in \cite{Noriega2025}}
 &
 Proof-of-concept dispatching
 \\
@@ -365,7 +365,7 @@ Proof-of-concept dispatching
 &
 \textbf{Congestion and breakdowns}
 &
-\rev{T31}{\textbf{6 heuristics, incl. MTWT and LP}}
+\rev{T31}{\textbf{6 heuristics, incl. MTWT and \corr{Static LP}}}
 &
 \rev{M3, T31}{\textbf{30 paired replications, 5 training seeds}}
 &
@@ -385,16 +385,16 @@ Proof-of-concept dispatching
 \begin{revbloc}{M24 (merger of §1.3, §2.4, §3)}
 \corr{Existing studies provide limited evidence on whether deep reinforcement learning remains competitive with dispatching baselines that account for queues across operating regimes, particularly when the variability due to training and the stochasticity of the environment are evaluated separately. The literature reviewed and \cref{tab:litterature} break this gap down into four unresolved evaluative questions.}
 
-\corr{First, does the ranking of dispatching policies hold when policies from different families are compared in the same environment?} The three paradigms reviewed are rarely compared with one another. Studies of dispatching rules compare them with each other \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, mathematical programming compares an optimiser with a rule or with a mixed-integer formulation \cite{Soumis1989, AmandaSmith2020}, and learning studies compare an agent with a small number of baseline rules \cite{deCarvalho2023, Zhao2025}. When comparisons across families exist, the algorithms are evaluated on different environments, rewards or fleet configurations, which prevents attributing an observed difference to the dispatching logic itself.
+\corr{First, does the ranking of dispatching policies hold when policies from different families are compared in the same environment?} \corr{In the studies of \cref{tab:litterature}, each paradigm is compared mostly with itself.} Studies of dispatching rules compare them with each other \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, mathematical programming compares an optimiser with a rule or with a mixed-integer formulation \cite{Soumis1989, AmandaSmith2020}, and learning studies compare an agent with a small number of baseline rules \cite{deCarvalho2023, Zhao2025}. When comparisons across families exist, the algorithms are evaluated on different environments, rewards or fleet configurations, which prevents attributing an observed difference to the dispatching logic itself.
 
-\corr{Second, does this ranking hold when the operating regime changes? The regime} is usually treated as a fixed context rather than as an experimental factor. Reviews of fleet management with reinforcement learning observe that most contributions remain at the proof-of-concept stage and are evaluated in stable environments \cite{Hazrathosseini2024}, and studies that do consider disruptions usually consider only one type, most often congestion \cite{Zeng2022}. A reported ranking is therefore conditional on a single operating point.
+\corr{Second, does this ranking hold when the operating regime changes? The regime} \corr{is a fixed context in most studies of \cref{tab:litterature}, rather than an experimental factor. Hazrathosseini and Afrapoli \cite{Hazrathosseini2024} observe that reinforcement learning contributions to fleet management mostly remain at the proof-of-concept stage and are evaluated in stable environments. Among the studies that vary the conditions, Zeng et al. \cite{Zeng2022} vary the fleet size, which creates congestion, Banerjee et al. \cite{Banerjee2025} add equipment failures of increasing severity, Huo et al. \cite{Huo2024} disable a truck during the shift, and Deuitch and Sari \cite{Deuitch2026} add random breakdowns. Elsewhere, a reported ranking is conditional on a single operating point.}
 
-\corr{Third, does a learned policy outperform a rule that already accounts for queues? The baselines are often too weak to answer this question.} Learning studies report improvements over two or three baseline rules \cite{Zhao2025}, and sometimes over none \cite{deCarvalho2023}. When the comparison rule is weak, an improvement establishes little about the practical value of the learned policy.
+\corr{Third, does a learned policy outperform a rule that already accounts for queues? In the learning studies, the baselines seldom account for queues.} \corr{Zhao et al. \cite{Zhao2025} compare their agents with two or three rules, de Carvalho and Dimitrakopoulos \cite{deCarvalho2023} with a conventional planning approach, Banerjee et al. \cite{Banerjee2025} with random and fixed assignment, and Huo et al. \cite{Huo2024} with fixed schedules. Two studies include a rule that accounts for queues: Noriega et al. \cite{Noriega2025} a shortest queue rule, and Rosales and Diaz \cite{FranciscoRosales2025} a heuristic based on waiting time, as the present study does with MTWT.} When the comparison rule is weak, an improvement establishes little about the practical value of the learned policy.
 
-\corr{Fourth, are the observed differences larger than the variability between training runs and between replications?} The inferential protocol is rarely documented. The number of replications, the control of random seeds and corrections for multiple comparisons are rarely reported in the literature on mine dispatching \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, whereas the literature on the evaluation of reinforcement learning agents has shown that these choices change the conclusions \cite{Henderson2018, Agarwal2021}.
+\corr{Fourth, are the observed differences larger than the variability between training runs and between replications?} \corr{In the dispatching studies cited here \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, the number of replications, the control of random seeds and corrections for multiple comparisons are not reported together, and Banerjee et al. \cite{Banerjee2025} average ten runs and leave confidence intervals to future work,} whereas the literature on the evaluation of reinforcement learning agents has shown that these choices change the conclusions \cite{Henderson2018, Agarwal2021}.
 
 \begin{corrbloc}
-\textbf{Closest studies.} Banerjee et al.~\cite{Banerjee2025} compare PPO with random and fixed assignment in six scenarios, from normal operation to severe equipment failures; their results are averaged over ten runs, and confidence intervals are left to future work. Rosales and Diaz~\cite{FranciscoRosales2025} compare a deep Q-learning agent with random and greedy policies and with heuristics based on distance or waiting time. De Carvalho and Dimitrakopoulos~\cite{deCarvalho2023} compare an actor--critic agent with a conventional planning approach in two steps, and Zhao et al.~\cite{Zhao2025} compare their agents with two or three baseline rules. Pei et al.~\cite{Pei2025} evaluate learned dispatching without retraining for autonomous haulage. None of these studies combines a baseline that accounts for queues, several operating regimes and a separate report of the variability due to training, which is the combination evaluated here.
+\textbf{Closest studies.} Banerjee et al.~\cite{Banerjee2025} compare PPO with random and fixed assignment in six scenarios, from normal operation to severe equipment failures; their results are averaged over ten runs, and confidence intervals are left to future work. Rosales and Diaz~\cite{FranciscoRosales2025} compare a deep Q-learning agent with random and greedy policies and with heuristics based on distance or waiting time. De Carvalho and Dimitrakopoulos~\cite{deCarvalho2023} compare an actor--critic agent with a conventional planning approach in two steps, and Zhao et al.~\cite{Zhao2025} compare their agents with two or three baseline rules. Pei et al.~\cite{Pei2025} evaluate learned dispatching without retraining for autonomous haulage. \corr{Noriega et al.~\cite{Noriega2025} train a double DQN dispatcher with five seeds and compare it with a shortest queue rule and a target tracking rule over 20 simulations with confidence intervals, in a single operating regime. Huo et al.~\cite{Huo2024} test a truck failure, a change in shovel grade and pretrained networks, against fixed schedules.} None of these studies combines a baseline that accounts for queues, several operating regimes and a separate report of the variability due to training, which is the combination evaluated here.
 \end{corrbloc}
 \end{revbloc}
 
