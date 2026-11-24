@@ -21,6 +21,7 @@ import pandas as pd
 
 from memoire_master_rl_logistique.plots.common import (
     AGENT_COLORS,
+    AGENT_LINESTYLES,
     SCENARIO_LABELS,
     LANGUAGES,
     set_language,
@@ -46,7 +47,7 @@ def plot_campaign_curves(curves: pd.DataFrame, out_path: Path) -> None:
             curve = curves[(curves["scenario"] == scenario) & (curves["algorithm"] == agent)]
             if not curve.empty:
                 plot_band(ax, curve.sort_values("progress_pct"), AGENT_COLORS[agent], agent,
-                          x="progress_pct")
+                          x="progress_pct", linestyle=AGENT_LINESTYLES[agent])
         ax.set_title(SCENARIO_LABELS.get(scenario, scenario), fontsize=12)
         ax.set_xlabel(tr("Avancement de l'entraînement (% du budget)",
                          "Training progress (% of budget)"), fontsize=11)

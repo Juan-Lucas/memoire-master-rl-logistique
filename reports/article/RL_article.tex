@@ -492,7 +492,7 @@ This work makes two methodological contributions and reports three empirical fin
 \subsection{Methodological framework}
 
 \begin{revbloc}{M24}
-\Cref{fig:framework} summarises the steps of the study. (1) The haulage system is modelled and implemented in a stochastic simulator in \cref{sec:system,sec:simulator}. (2) The dispatching decision is formulated as a semi-Markov decision process with a multi-objective reward in \cref{sec:smdp,sec:reward}. (3) The four learning agents are trained and the \rev{T31}{six} heuristics are implemented in \cref{sec:agents,sec:baselines-def}. (4) All policies are evaluated in three regimes over 30 paired replications, and the nominal agents are also evaluated without retraining in the disrupted regimes, following the protocol of \cref{sec:design}. (5) The results are analysed with paired statistical tests and an analysis of policy behaviour in \cref{sec:results}.
+\Cref{fig:framework} summarises the steps of the study. (1) The haulage system is modelled and implemented in a stochastic simulator in \cref{sec:system,sec:simulator}. (2) The dispatching decision is formulated as an \corr{SMDP} with a multi-objective reward in \cref{sec:smdp,sec:reward}. (3) The four learning agents are trained and the \rev{T31}{six} heuristics are implemented in \cref{sec:agents,sec:baselines-def}. (4) All policies are evaluated in three regimes over 30 paired replications, and the nominal agents are also evaluated without retraining in the disrupted regimes, following the protocol of \cref{sec:design}. (5) The results are analysed with paired statistical tests and an analysis of policy behaviour in \cref{sec:results}.
 \end{revbloc}
 
 \begin{figure}[H]
@@ -664,13 +664,13 @@ Road overconsumption $\times$2 & 1.00 & 0.62 & $-$0.6 [$-$0.8; $-$0.4] & $-$1.4 
 \label{sec:smdp}
 
 \begin{revbloc}{M9, M24, Dir. 30/09}
-Problem P1 is formulated as a Markov decision process \cite{Puterman1994, RichardSutton2018} defined by the tuple $(S, A, P, R, \gamma)$. Since decisions are triggered by events (a truck becoming available) and separated by variable durations, it is more precisely a semi-Markov decision process \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. \Cref{fig:mdp} illustrates the interaction loop; \cref{tab:mdp} summarises the components.
+Problem P1 is formulated as a Markov decision process \cite{Puterman1994, RichardSutton2018} defined by the tuple $(S, A, P, R, \gamma)$. Since decisions are triggered by events (a truck becoming available) and separated by variable durations, it is more precisely a semi-Markov decision process \corr{(SMDP)} \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. \Cref{fig:mdp} illustrates the interaction loop; \cref{tab:mdp} summarises the components.
 \end{revbloc}
 
 \subsubsection{State space}
 
 \begin{revbloc}{M1, N1, N2, N3, v3}
-\corr{\textbf{Simulator state and observation.} The simulator state contains information that the policy does not observe: the breakdown and repair state of each truck, the condition of each road segment, the exact position of the trucks in transit and the remaining service times. The policy observes a vector of 23 components computed from this state. The decision process is therefore partially observable; it is treated as a semi-Markov decision process on the observation, an approximation that is common in dispatching and that the observation is designed to support, since it summarises the future queues through the predicted waiting per route.}
+\corr{\textbf{Simulator state and observation.} The simulator state contains information that the policy does not observe: the breakdown and repair state of each truck, the condition of each road segment, the exact position of the trucks in transit and the remaining service times. The policy observes a vector of 23 components computed from this state. The decision process is therefore partially observable; it is treated as an \corr{SMDP} on the observation, an approximation that is common in dispatching and that the observation is designed to support, since it summarises the future queues through the predicted waiting per route.}
 
 The state $S_t$ is a vector of 23 components, normalised to $[0,1]$, which describes the system as seen by the deciding truck (\cref{tab:state}). Its size is $3S + 2D + SD + 4$ and does not depend on the number of trucks: 23 components with 12 as with 18 trucks. An agent trained in one regime can therefore be evaluated in another without retraining, as done in \cref{sec:protocol}.
 
@@ -741,7 +741,7 @@ where $\tau_t$ is the time of decision $t$ in the shift. The time that counts be
 
 \textbf{Approximations.} There are two. First, the reward of a step is counted at the start of the step, without discounting within it, which is customary for a semi-Markov process with rewards per transition. Second, for PPO, reward normalisation estimates the scale of returns with the $\gamma$ per decision. It only rescales the reward and does not enter the target. Finally, discounting per minute assumes a single simulated environment per training run.
 
-\textbf{Credit assignment.} A single agent decides successively for all trucks. The reward of a step covers the cycles completed during that step, whatever the truck, as defined in \cref{sec:reward}: the credit of a decision to a particular truck is therefore not explicit. \corr{A decision is taken at time $\tau_t$, when a truck becomes available at a dump, and the next one at $\tau_{t+1}$. The reward $R_t$ is the sum of the rewards of the cycles that end in $[\tau_t, \tau_{t+1})$, plus the cost of WAIT if this action was chosen, and it is discounted by $\gamma_{\min}^{\tau_{t+1}-\tau_t}$. The reward of a cycle is thus received at its end, after a delay equal to its duration.}
+\textbf{Credit assignment.} A single agent decides successively for all trucks. The reward of a step covers the cycles completed during that step, whatever the truck, as defined in \cref{sec:reward}: the credit of a decision to a particular truck is therefore not explicit. \corr{A decision is taken at time $\tau_t$, when a truck becomes available at a dump, and the next one at $\tau_{t+1}$. The reward $R_t$ is the sum of the rewards of the cycles whose truck reaches its dump in $(\tau_t, \tau_{t+1}]$, plus the cost of WAIT if this action was chosen; it is counted at $\tau_t$, and what follows $\tau_{t+1}$ is discounted by $\gamma_{\min}^{\tau_{t+1}-\tau_t}$. The reward of a cycle is thus received when its truck reaches the dump, after a delay close to the duration of the cycle (\cref{fig:cycle}).}
 \end{revbloc}
 
 \begin{table}[H]
@@ -794,7 +794,7 @@ with $w_1 = 1$, $w_2 = 0.1$, $w_3 = 0.05$ and $w_4 = 0.3$, and where:
 
 \corr{In $p^{\mathrm{bal}}_c$, $\omega_j$ is in minutes, so that the variance is in min$^2$; the scale of 100~min$^2$ brings the term to the order of 1. Over a nominal shift, the weighted terms of MTWT amount to 253.6 for production, $-2.1$ for balance, $-19.2$ for distance and $-1.5$ for waiting, and those of PPO to 252.3, $-3.3$, $-18.6$ and $-2.0$: production dominates, and distance is the main penalty.}
 
-\textbf{Timing of payment.} The reward of a cycle is known only at its end, since queues depend on the arrivals of the other trucks. It is paid at the step during which the cycle ends. The reward $R_t$ of a step is therefore the sum of the rewards of the cycles completed since the previous decision, whatever the truck, plus the cost of a WAIT if that is the chosen action. At the end of the shift, cycles in progress are completed: the sum of the $R_t$ over a shift is the sum of the rewards of all its cycles. \corr{Their fuel and penalties are counted, but their production term is zero when the dump is reached after 480~min, consistently with the rule of \cref{tab:simparams} that counts only the tonnage delivered before the end of the shift.} A version in which the reward was estimated and paid at the time of the decision was tried and rejected during the tuning of \cref{sec:tuning}.
+\textbf{Timing of payment.} \corr{The reward of a cycle is known only when its truck reaches the dump: queues depend on the arrivals of the other trucks, and the queue at the dump and the dumping time are known on arrival. The cycle is then counted as completed, and its reward is paid at the step during which this arrival occurs, as shown in \cref{fig:cycle}. The reward $R_t$ of a step is therefore the sum of the rewards of the cycles whose truck reached its dump after the decision $\tau_t$,} whatever the truck, plus the cost of a WAIT if that is the chosen action. At the end of the shift, cycles in progress are completed: the sum of the $R_t$ over a shift is the sum of the rewards of all its cycles. \corr{Their fuel and penalties are counted, but their production term is zero when the dump is reached after 480~min, consistently with the rule of \cref{tab:simparams} that counts only the tonnage delivered before the end of the shift.} A version in which the reward was estimated and paid at the time of the decision was tried and rejected during the tuning of \cref{sec:tuning}.
 
 \textbf{Cost of voluntary waiting.} For the WAIT action, of duration $\delta_t$, the reward is
 \begin{equation}
@@ -807,6 +807,13 @@ The second term is the opportunity cost of idleness: the production lost by a st
 
 \textbf{Unchanged reward.} The reward was fixed before the campaign. A variant that extended the opportunity cost to all cycles was tried during the tuning of \cref{sec:tuning} and then abandoned. The flaw it targeted was fixed by the discounting per minute of \cref{sec:discount}, without changing the reward.
 \end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/cycle_timeline}
+\caption{\corr{Chronology of two trucks at the end of a shift, with the decisions of the agent. Illustrative durations; the reward of a cycle enters the step during which its truck reaches the dump.}}
+\label{fig:cycle}
+\end{figure}
 
 The weights favour production while keeping a waiting penalty. The sensitivity of the agents to $w_4$ is examined in the ablation study of \cref{sec:ablation}.
 
@@ -1374,15 +1381,15 @@ PPO                  & 0.953 & 0.943 & +35.6 & $-$15.1 & +45.1 \\
 \toprule
 \textbf{Regime} & \textbf{Agent} & \textbf{Specialised} & \textbf{Transferred} & \textbf{$\Delta$ (t/h) [95\% CI]} & \textbf{$\Delta$ (\%)} \\
 \midrule
-Frequent breakdowns & PPO        & 4,163.9 & 4,163.5 & $-$0.5 [$-$6.2; 5.0] & 0.0 \\
-                    & DQN        & 1,578.5 & 1,226.2 & $-$352.3 [$-$368.0; $-$329.2] & $-$22.3 \\
-                    & Q-Learning & 3,839.8 & 3,871.6 & +31.7 [22.9; 40.4] & +0.8 \\
-                    & SARSA      & 3,353.1 & 3,419.2 & +66.0 [51.7; 79.5] & +2.0 \\
-\midrule
 High load           & PPO        & 6,310.0 & 6,257.9 & $-$52.1 [$-$67.1; $-$37.6] & $-$0.8 \\
                     & DQN        & 984.5   & 1,802.3 & +817.7 [724.7; 908.4] & +83.1 \\
                     & Q-Learning & 5,787.9 & 5,757.0 & $-$30.9 [$-$49.6; $-$10.8] & $-$0.5 \\
                     & SARSA      & 5,409.8 & 4,035.7 & $-$1,374.1 [$-$1,393.0; $-$1,355.1] & $-$25.4 \\
+\midrule
+Frequent breakdowns & PPO        & 4,163.9 & 4,163.5 & $-$0.5 [$-$6.2; 5.0] & 0.0 \\
+                    & DQN        & 1,578.5 & 1,226.2 & $-$352.3 [$-$368.0; $-$329.2] & $-$22.3 \\
+                    & Q-Learning & 3,839.8 & 3,871.6 & +31.7 [22.9; 40.4] & +0.8 \\
+                    & SARSA      & 3,353.1 & 3,419.2 & +66.0 [51.7; 79.5] & +2.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1875,7 +1882,7 @@ PPO                  & $0.237\pm0.001$ & \boldmath{$0.248\pm0.002$} & $0.242\pm0
 \begin{revbloc}{T31}
 \corr{This study examined under which operating conditions deep reinforcement learning provides measurable benefits over strong dispatching heuristics that account for queues in an open-pit mine, and whether these benefits persist when the operating regime changes.} Ten policies, six heuristics and four learning agents, were compared in the same discrete-event simulator and in three regimes, over 30 paired replications, with 5 models per agent, tuning carried out on seeds distinct from the evaluation under a rule fixed in advance, and comparisons fixed before the campaign.
 
-Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with \corr{Static LP}, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT\corr{, an advantage that a variant of MTWT weighing fuel removes in two regimes out of three}, and \corr{it loses at most 0.8\% of productivity} when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: \corr{the DQN configuration evaluated} collapses onto the waiting action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes. \corr{PPO therefore approaches the best rule and transfers to moderate disruptions, but its fuel advantage largely disappears against a rule that also weighs fuel.} \corr{Near the saturation of the shovels, however, rules that spread the fleet overtake MTWT and PPO deployed without retraining loses 3 to 19\% against it: its robustness is established for moderate disruptions only.}
+Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with \corr{Static LP}, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT\corr{, an advantage that a variant of MTWT weighing fuel removes in two regimes out of three}, and \corr{it loses at most 0.8\% of productivity} when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: \corr{the DQN configuration evaluated} collapses onto the \corr{WAIT} action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes. \corr{PPO therefore approaches the best rule and transfers to moderate disruptions, but its fuel advantage largely disappears against a rule that also weighs fuel.} \corr{Near the saturation of the shovels, however, rules that spread the fleet overtake MTWT and PPO deployed without retraining loses 3 to 19\% against it: its robustness is established for moderate disruptions only.}
 
 \corr{In this setting, PPO is never more productive than MTWT. It is a credible alternative when a loss of productivity of 1 to 2\% is acceptable, when disruptions remain moderate and when the fleet stays within the sizes seen in training; it then needs no retraining. Its fuel advantage holds against MTWT as it is, but against a variant that weighs fuel only under nominal conditions, at 0.5\%. Its state contains the same predicted waiting times as MTWT, which most likely explains why it reaches this level; whether it would reach it without them was not tested. The value of reinforcement learning for dispatching should therefore be measured against rules that account for queues and, when energy matters, against rules that weigh fuel.}
 

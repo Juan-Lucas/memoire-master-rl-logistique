@@ -32,6 +32,8 @@ from memoire_master_rl_logistique.plots.common import (
 )
 
 SHOVEL_COLORS = ["#1565C0", "#AD1457", "#2E7D32", "#F9A825", "#6A1B9A"]
+# Hachures des pelles : en noir et blanc, les couleurs des pelles ont presque le même gris.
+SHOVEL_HATCHES = ["", "///", "...", "xxx", "\\\\"]
 
 
 def plot_behaviour(summary: pd.DataFrame, out_path: Path) -> None:
@@ -45,8 +47,9 @@ def plot_behaviour(summary: pd.DataFrame, out_path: Path) -> None:
     for ax, scenario in zip(axes[0], scenarios):
         data = summary[summary["scenario"] == scenario].set_index("policy").loc[policies]
         left = pd.Series(0.0, index=data.index)
-        for color, col in zip(SHOVEL_COLORS, shares):
-            ax.barh(range(len(policies)), data[col], left=left, color=color,
+        for color, hatch, col in zip(SHOVEL_COLORS, SHOVEL_HATCHES, shares):
+            ax.barh(range(len(policies)), data[col], left=left, color=color, hatch=hatch,
+                    edgecolor="white", linewidth=0.4,
                     label=col.removeprefix("share_").removesuffix("_pct"))
             left += data[col]
         for i, wait in enumerate(data["wait_share_pct"]):

@@ -174,3 +174,73 @@ def test_libelles_des_figures_en_anglais(tmp_path):
             common.set_language("de")
     finally:
         common.set_language("fr")
+
+
+def test_chronologie_du_cycle_suit_les_regles_du_simulateur():
+    """Schéma du cycle (fig:cycle) : les durées sont illustratives, mais les règles sont
+    celles de env/mine_env.py. Phases contiguës, ATTENDRE de 0,2 à 5 min et terminée par un
+    événement, décision à la fin du déversement, récompense calculée à l'arrivée à la verse
+    et versée au pas (tau_l, tau_l+1], tonnage nul si le déversement finit après 480 min."""
+    from memoire_master_rl_logistique.plots import common
+    from memoire_master_rl_logistique.plots import cycle_timeline as ct
+
+    for phases in ct.TRUCKS.values():
+        assert all(a[1] == b[0] for a, b in zip(phases, phases[1:]))
+        assert all(start < end for start, end, _ in phases)
+    events = {s for phases in ct.TRUCKS.values() for s, _, k in phases if k in ("queue", "load")}
+    for truck, phases in ct.TRUCKS.items():
+        for start, end, kind in phases:
+            if kind == "wait":
+                assert ct.WAIT_BOUNDS_MIN[0] <= end - start <= ct.WAIT_BOUNDS_MIN[1]
+                assert end in events  # ATTENDRE s'arrête au prochain événement
+    times = [t for t, _ in ct.DECISIONS]
+    assert times == sorted(times) and times[-1] < ct.SHIFT_END_MIN
+    for time_min, truck in ct.DECISIONS:
+        phases = ct.TRUCKS[truck]
+        starts_cycle = any(s == time_min for s, _, _ in phases)
+        after_dump = time_min == phases[0][0] or any(
+            e == time_min and k == "dump" for _, e, k in phases)
+        after_wait = any(e == time_min and k == "wait" for _, e, k in phases)
+        assert starts_cycle and (after_dump or after_wait)
+    for time_min, truck in ct.DUMP_ARRIVALS:
+        assert any(e == time_min and k == "travel_loaded" for _, e, k in ct.TRUCKS[truck])
+
+    # à égalité, l'arrivée compte dans le pas qui se termine à cet instant
+    assert ct.step_of(times[1]) == 0 and ct.step_of(times[1] + 0.01) == 1
+    assert ct.step_of(ct.SHIFT_END_MIN - 0.1) == len(times) - 1
+    try:
+        common.set_language("en")
+        rewards = ct.step_rewards()
+    finally:
+        common.set_language("fr")
+    assert rewards[0] == "0"
+    assert "WAIT cost" in rewards[1]
+    assert "truck 1" in rewards[2] and "production 0" not in rewards[2]
+    assert "truck 2" in rewards[3] and "production 0" in rewards[3]
+
+
+@pytest.mark.parametrize("lang", ["fr", "en"])
+def test_chronologie_du_cycle_png_et_pdf(tmp_path, lang):
+    from memoire_master_rl_logistique.plots import common
+    from memoire_master_rl_logistique.plots import cycle_timeline as ct
+
+    try:
+        out = ct.main(tmp_path, lang=lang)
+        assert out.name == "cycle_timeline.png" and out.stat().st_size > 0
+        assert out.with_suffix(".pdf").read_bytes().startswith(b"%PDF")
+        with pytest.raises(FileExistsError):
+            ct.main(tmp_path, lang=lang)
+    finally:
+        common.set_language("fr")
+
+
+def test_figures_lisibles_en_noir_et_blanc():
+    """En niveaux de gris, couleurs proches : régimes et pelles se distinguent aussi par leurs
+    hachures, les agents par leur style de trait."""
+    from memoire_master_rl_logistique.plots import behaviour, common
+
+    hatches = [common.SCENARIO_HATCHES[s] for s in common.MAIN_SCENARIOS]
+    assert len(set(hatches)) >= 2 and common.SCENARIO_HATCHES["high_breakdown"]
+    assert len(set(behaviour.SHOVEL_HATCHES[:3])) == 3
+    assert set(common.AGENT_LINESTYLES) == set(common.AGENT_COLORS)
+    assert len(set(common.AGENT_LINESTYLES.values())) == len(common.AGENT_LINESTYLES)

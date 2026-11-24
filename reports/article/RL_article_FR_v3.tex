@@ -494,7 +494,7 @@ Ce travail apporte deux contributions méthodologiques et trois résultats empir
 \subsection{Cadre méthodologique}
 
 \begin{revbloc}{M24}
-La \cref{fig:framework} résume les étapes de l'étude. (1) Le système de transport est modélisé et implémenté dans un simulateur stochastique aux \cref{sec:system,sec:simulator}. (2) La décision de dispatching est formulée comme un processus de décision semi-markovien doté d'une récompense multiobjectif aux \cref{sec:smdp,sec:reward}. (3) Les quatre agents d'apprentissage sont entraînés et les \rev{T31}{six} heuristiques sont implémentées aux \cref{sec:agents,sec:baselines-def}. (4) Toutes les politiques sont évaluées dans trois régimes sur 30 réplications appariées, et les agents nominaux sont en outre évalués sans réentraînement dans les régimes perturbés, selon le protocole de la \cref{sec:design}. (5) Les résultats sont analysés par des tests statistiques appariés et par une analyse du comportement des politiques à la \cref{sec:results}.
+La \cref{fig:framework} résume les étapes de l'étude. (1) Le système de transport est modélisé et implémenté dans un simulateur stochastique aux \cref{sec:system,sec:simulator}. (2) La décision de dispatching est formulée comme un \corr{SMDP} doté d'une récompense multiobjectif aux \cref{sec:smdp,sec:reward}. (3) Les quatre agents d'apprentissage sont entraînés et les \rev{T31}{six} heuristiques sont implémentées aux \cref{sec:agents,sec:baselines-def}. (4) Toutes les politiques sont évaluées dans trois régimes sur 30 réplications appariées, et les agents nominaux sont en outre évalués sans réentraînement dans les régimes perturbés, selon le protocole de la \cref{sec:design}. (5) Les résultats sont analysés par des tests statistiques appariés et par une analyse du comportement des politiques à la \cref{sec:results}.
 \end{revbloc}
 
 \begin{figure}[H]
@@ -666,13 +666,13 @@ Surconsommation sur piste $\times$2 & 1{,}00 & 0{,}62 & $-$0{,}6 [$-$0{,}8 ; $-$
 \label{sec:smdp}
 
 \begin{revbloc}{M9, M24, Dir. 30/09}
-Le problème P1 est formulé comme un processus de décision markovien \cite{Puterman1994, RichardSutton2018} défini par le n-uplet $(S, A, P, R, \gamma)$. Comme les décisions sont déclenchées par des événements (la libération d'un camion) et séparées par des durées variables, il s'agit plus précisément d'un processus de décision semi-markovien \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. La \cref{fig:mdp} illustre la boucle d'interaction ; le \cref{tab:mdp} résume les composantes.
+Le problème P1 est formulé comme un processus de décision markovien \cite{Puterman1994, RichardSutton2018} défini par le n-uplet $(S, A, P, R, \gamma)$. Comme les décisions sont déclenchées par des événements (la libération d'un camion) et séparées par des durées variables, il s'agit plus précisément d'un processus de décision semi-markovien \corr{(SMDP)} \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. La \cref{fig:mdp} illustre la boucle d'interaction ; le \cref{tab:mdp} résume les composantes.
 \end{revbloc}
 
 \subsubsection{Espace d'états}
 
 \begin{revbloc}{M1, N1, N2, N3, v3}
-\corr{\textbf{État du simulateur et observation.} L'état du simulateur contient des informations que la politique n'observe pas : l'état de panne et de réparation de chaque camion, l'état de chaque tronçon de piste, la position exacte des camions en route et les durées de service restantes. La politique observe un vecteur de 23 composantes calculé à partir de cet état. Le processus de décision est donc partiellement observable ; il est traité comme un processus de décision semi-markovien sur l'observation, une approximation courante en dispatching que l'observation est conçue pour soutenir, puisqu'elle résume les files à venir par l'attente prévue sur chaque route.}
+\corr{\textbf{État du simulateur et observation.} L'état du simulateur contient des informations que la politique n'observe pas : l'état de panne et de réparation de chaque camion, l'état de chaque tronçon de piste, la position exacte des camions en route et les durées de service restantes. La politique observe un vecteur de 23 composantes calculé à partir de cet état. Le processus de décision est donc partiellement observable ; il est traité comme un \corr{SMDP} sur l'observation, une approximation courante en dispatching que l'observation est conçue pour soutenir, puisqu'elle résume les files à venir par l'attente prévue sur chaque route.}
 
 L'état $S_t$ est un vecteur de 23 composantes, normalisées dans $[0,1]$, qui décrit le système vu par le camion qui décide (\cref{tab:state}). Sa taille vaut $3S + 2D + SD + 4$ et ne dépend pas du nombre de camions : 23 composantes avec 12 comme avec 18 camions. Un agent entraîné dans un régime peut donc être évalué dans un autre sans réentraînement, comme à la \cref{sec:protocol}.
 
@@ -743,7 +743,7 @@ où $\tau_t$ est l'heure de la décision $t$ dans le poste. Le temps qui compte 
 
 \textbf{Approximations.} Elles sont au nombre de deux. D'une part, la récompense d'un pas est comptée au début du pas, sans actualisation à l'intérieur de celui-ci, ce qui est l'usage pour un processus semi-markovien à récompense par transition. D'autre part, pour PPO, la normalisation de la récompense estime l'échelle des retours avec le $\gamma$ par décision. Elle ne sert qu'à mettre la récompense à l'échelle et n'entre pas dans la cible. Enfin, l'actualisation par minute suppose un seul environnement simulé par entraînement.
 
-\textbf{Attribution du mérite.} Un agent unique décide successivement pour tous les camions. La récompense d'un pas porte sur les cycles terminés pendant ce pas, quel que soit le camion, comme le définit la \cref{sec:reward} : l'attribution du mérite d'une décision à un camion particulier n'est donc pas explicite. \corr{Une décision est prise à l'instant $\tau_t$, lorsqu'un camion se libère à une verse, et la suivante à $\tau_{t+1}$. La récompense $R_t$ est la somme des récompenses des cycles qui se terminent dans $[\tau_t, \tau_{t+1})$, augmentée du coût d'ATTENDRE si cette action a été choisie, et elle est actualisée par $\gamma_{\min}^{\tau_{t+1}-\tau_t}$. La récompense d'un cycle est donc reçue à sa fin, avec un retard égal à sa durée.}
+\textbf{Attribution du mérite.} Un agent unique décide successivement pour tous les camions. La récompense d'un pas porte sur les cycles terminés pendant ce pas, quel que soit le camion, comme le définit la \cref{sec:reward} : l'attribution du mérite d'une décision à un camion particulier n'est donc pas explicite. \corr{Une décision est prise à l'instant $\tau_t$, lorsqu'un camion se libère à une verse, et la suivante à $\tau_{t+1}$. La récompense $R_t$ est la somme des récompenses des cycles dont le camion arrive à sa verse dans $(\tau_t, \tau_{t+1}]$, augmentée du coût d'ATTENDRE si cette action a été choisie ; elle est comptée en $\tau_t$, et ce qui suit $\tau_{t+1}$ est actualisé par $\gamma_{\min}^{\tau_{t+1}-\tau_t}$. La récompense d'un cycle est donc reçue à l'arrivée de son camion à la verse, avec un retard proche de la durée du cycle (\cref{fig:cycle}).}
 \end{revbloc}
 
 \begin{table}[H]
@@ -798,7 +798,7 @@ avec $w_1 = 1$, $w_2 = 0{,}1$, $w_3 = 0{,}05$ et $w_4 = 0{,}3$, et où :
 
 \corr{Dans $p^{\mathrm{bal}}_c$, $\omega_j$ est en minutes, si bien que la variance est en min$^2$ ; l'échelle de 100~min$^2$ ramène le terme à l'ordre de 1. Sur un poste nominal, les termes pondérés de MTWT valent 253,6 pour la production, $-2{,}1$ pour l'équilibre, $-19{,}2$ pour la distance et $-1{,}5$ pour l'attente, et ceux de PPO 252,3, $-3{,}3$, $-18{,}6$ et $-2{,}0$ : la production domine, et la distance est la principale pénalité.}
 
-\textbf{Moment du versement.} La récompense d'un cycle n'est connue qu'à sa fin, puisque les files dépendent des arrivées des autres camions. Elle est versée au pas pendant lequel le cycle se termine. La récompense $R_t$ d'un pas est donc la somme des récompenses des cycles terminés depuis la décision précédente, quel que soit le camion, augmentée du coût d'une ATTENDRE si c'est l'action choisie. À la fin du poste, les cycles en cours sont menés à terme : la somme des $R_t$ sur un poste est la somme des récompenses de tous ses cycles. \corr{Leur carburant et leurs pénalités sont comptés, mais leur terme de production est nul lorsque la verse est atteinte après 480~min, en accord avec la règle du \cref{tab:simparams} qui ne compte que le tonnage livré avant la fin du poste.} Une version où la récompense était estimée et versée au moment de la décision a été essayée puis rejetée pendant la mise au point de la \cref{sec:tuning}.
+\textbf{Moment du versement.} \corr{La récompense d'un cycle n'est connue qu'à l'arrivée de son camion à la verse : les files dépendent des arrivées des autres camions, et la file à la verse et la durée du déversement sont connues à l'arrivée. Le cycle est alors compté comme terminé, et sa récompense est versée au pas pendant lequel cette arrivée a lieu, comme le montre la \cref{fig:cycle}. La récompense $R_t$ d'un pas est donc la somme des récompenses des cycles dont le camion est arrivé à sa verse après la décision $\tau_t$,} quel que soit le camion, augmentée du coût d'une ATTENDRE si c'est l'action choisie. À la fin du poste, les cycles en cours sont menés à terme : la somme des $R_t$ sur un poste est la somme des récompenses de tous ses cycles. \corr{Leur carburant et leurs pénalités sont comptés, mais leur terme de production est nul lorsque la verse est atteinte après 480~min, en accord avec la règle du \cref{tab:simparams} qui ne compte que le tonnage livré avant la fin du poste.} Une version où la récompense était estimée et versée au moment de la décision a été essayée puis rejetée pendant la mise au point de la \cref{sec:tuning}.
 
 \textbf{Coût d'une attente volontaire.} Pour l'action ATTENDRE, de durée $\delta_t$, la récompense vaut
 \begin{equation}
@@ -811,6 +811,13 @@ Le second terme est le coût d'opportunité de l'immobilité : la production per
 
 \textbf{Récompense non modifiée.} La récompense a été fixée avant la campagne. Une variante qui étendait le coût d'opportunité à tous les cycles a été essayée pendant la mise au point de la \cref{sec:tuning}, puis abandonnée. Le défaut qu'elle visait a été corrigé par l'actualisation par minute de la \cref{sec:discount}, sans changer la récompense.
 \end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/cycle_timeline}
+\caption{\corr{Chronologie de deux camions en fin de poste, avec les décisions de l'agent. Durées illustratives ; la récompense d'un cycle entre dans le pas pendant lequel son camion arrive à la verse.}}
+\label{fig:cycle}
+\end{figure}
 
 Les poids privilégient la production tout en conservant une pénalité d'attente. La sensibilité des agents à $w_4$ est examinée dans l'étude d'ablation de la \cref{sec:ablation}.
 
@@ -1380,15 +1387,15 @@ PPO                  & 0,953 & 0,943 & +35,6 & $-$15,1 & +45,1 \\
 \toprule
 \textbf{Régime} & \textbf{Agent} & \textbf{Spécialisé} & \textbf{Transféré} & \textbf{$\Delta$ (t/h) [IC 95\,\%]} & \textbf{$\Delta$ (\%)} \\
 \midrule
-Fortes pannes & PPO        & 4\,163,9 & 4\,163,5 & $-$0,5 [$-$6,2 ; 5,0] & 0,0 \\
-              & DQN        & 1\,578,5 & 1\,226,2 & $-$352,3 [$-$368,0 ; $-$329,2] & $-$22,3 \\
-              & Q-Learning & 3\,839,8 & 3\,871,6 & +31,7 [22,9 ; 40,4] & +0,8 \\
-              & SARSA      & 3\,353,1 & 3\,419,2 & +66,0 [51,7 ; 79,5] & +2,0 \\
-\midrule
 Forte charge  & PPO        & 6\,310,0 & 6\,257,9 & $-$52,1 [$-$67,1 ; $-$37,6] & $-$0,8 \\
               & DQN        & 984,5    & 1\,802,3 & +817,7 [724,7 ; 908,4] & +83,1 \\
               & Q-Learning & 5\,787,9 & 5\,757,0 & $-$30,9 [$-$49,6 ; $-$10,8] & $-$0,5 \\
               & SARSA      & 5\,409,8 & 4\,035,7 & $-$1\,374,1 [$-$1\,393,0 ; $-$1\,355,1] & $-$25,4 \\
+\midrule
+Fortes pannes & PPO        & 4\,163,9 & 4\,163,5 & $-$0,5 [$-$6,2 ; 5,0] & 0,0 \\
+              & DQN        & 1\,578,5 & 1\,226,2 & $-$352,3 [$-$368,0 ; $-$329,2] & $-$22,3 \\
+              & Q-Learning & 3\,839,8 & 3\,871,6 & +31,7 [22,9 ; 40,4] & +0,8 \\
+              & SARSA      & 3\,353,1 & 3\,419,2 & +66,0 [51,7 ; 79,5] & +2,0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1662,7 +1669,7 @@ L'étude d'ablation porte sur le poids de la pénalité d'attente $w_4$, en cond
 
 \begin{table}[H]
 \centering
-\caption{Ablation sur le poids de la pénalité d'attente $w_4$ (régime nominal, 5 modèles par valeur). Effondrés : modèles DQN sous 1\,500~t/h.}
+\caption{Ablation sur le poids de la pénalité d'attente $w_4$ (régime nominal, 5 modèles par valeur). Effondrés : modèles DQN sous 1\,500~t/h\corr{ ; Att. : part des décisions ATTENDRE}.}
 \label{tab:ablation}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -1686,12 +1693,12 @@ PPO est insensible à $w_4$ : sa \corr{productivité moyenne varie de moins de 0
 
 \begin{table}[H]
 \centering
-\caption{Valeur d'ATTENDRE face à la meilleure affectation dans les cinq modèles DQN nominaux, sur les états de décision rencontrés par MTWT sur cinq graines de sélection. Écart : médiane de $Q(s,\mathrm{ATT}) - \max_{a \neq \mathrm{ATT}} Q(s,a)$ ; attendu : écart d'une ATTENDRE de 0,2~min si les valeurs étaient exactes.}
+\caption{Valeur d'ATTENDRE face à la meilleure affectation dans les cinq modèles DQN nominaux, sur les états de décision rencontrés par MTWT sur cinq graines de sélection. Écart : médiane de $Q(s,\mathrm{ATTENDRE}) - \max_{a \neq \mathrm{ATTENDRE}} Q(s,a)$ ; attendu : écart d'une ATTENDRE de 0,2~min si les valeurs étaient exactes.}
 \label{tab:dqndiag}
 \small
 \begin{tabular}{@{}crrrrr@{}}
 \toprule
-\textbf{Graine} & \textbf{Productivité (t/h)} & \textbf{ATT. en tête (\%)} & \textbf{Écart} & \textbf{Attendu} & \textbf{Échelle de $Q$} \\
+\textbf{Graine} & \textbf{Productivité (t/h)} & \textbf{\corr{ATTENDRE} en tête (\%)} & \textbf{Écart} & \textbf{Attendu} & \textbf{Échelle de $Q$} \\
 \midrule
 1 & 194 & 95{,}5 & 0{,}19 & $-$0{,}10 & 166 \\
 2 & 3\,932 & 0{,}0 & $-$0{,}20 & $-$0{,}09 & 155 \\
@@ -1880,7 +1887,7 @@ PPO                  & $0{,}237\pm0{,}001$ & \boldmath{$0{,}248\pm0{,}002$} & $0
 \begin{revbloc}{T31}
 \corr{Cette étude a examiné dans quelles conditions de fonctionnement l'apprentissage par renforcement profond apporte un gain mesurable par rapport à des heuristiques de dispatching solides qui tiennent compte des files dans une mine à ciel ouvert, et si ce gain se maintient lorsque le régime de fonctionnement change.} Dix politiques, six heuristiques et quatre agents d'apprentissage, ont été comparées dans un même simulateur à événements discrets et dans trois régimes, sur 30 réplications appariées, avec 5 modèles par agent, une mise au point faite sur des graines distinctes de l'évaluation selon une règle fixée à l'avance, et des comparaisons fixées avant la campagne.
 
-Trois résultats principaux se dégagent. Premièrement, aucun agent ne dépasse la meilleure heuristique : MTWT, qui affecte chaque camion à la route de plus faible attente prévue, est la plus productive dans les trois régimes. PPO la suit de près, à 0,5 à 0,9\,\% en dessous, au niveau du \corr{LP statique}, et dépasse nettement l'Affectation fixe. Deuxièmement, PPO consomme de 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT\corr{, un avantage qu'une variante de MTWT pondérant le carburant supprime dans deux régimes sur trois}, et \corr{il perd au plus 0,8\,\% de productivité} lorsqu'il est déployé sans réentraînement en forte charge, en fortes pannes et dans deux régimes intermédiaires jamais vus. Troisièmement, les autres agents échouent de façon reproductible : \corr{la configuration de DQN évaluée} s'effondre sur l'action d'attente dans la plupart de ses modèles, quelle que soit la pénalité d'attente, et les agents tabulaires se dégradent à mesure que l'exploration diminue. \corr{PPO approche donc la meilleure règle et se transfère à des perturbations modérées, mais son avantage en carburant disparaît en grande partie face à une règle qui pondère aussi le carburant.} \corr{Près de la saturation des pelles, toutefois, les règles qui répartissent la flotte dépassent MTWT et PPO déployé sans réentraînement perd de 3 à 19\,\% face à elle : sa robustesse n'est établie que pour des perturbations modérées.}
+Trois résultats principaux se dégagent. Premièrement, aucun agent ne dépasse la meilleure heuristique : MTWT, qui affecte chaque camion à la route de plus faible attente prévue, est la plus productive dans les trois régimes. PPO la suit de près, à 0,5 à 0,9\,\% en dessous, au niveau du \corr{LP statique}, et dépasse nettement l'Affectation fixe. Deuxièmement, PPO consomme de 1,4 à 2,8\,\% de carburant de moins par tonne que MTWT\corr{, un avantage qu'une variante de MTWT pondérant le carburant supprime dans deux régimes sur trois}, et \corr{il perd au plus 0,8\,\% de productivité} lorsqu'il est déployé sans réentraînement en forte charge, en fortes pannes et dans deux régimes intermédiaires jamais vus. Troisièmement, les autres agents échouent de façon reproductible : \corr{la configuration de DQN évaluée} s'effondre sur l'action \corr{ATTENDRE} dans la plupart de ses modèles, quelle que soit la pénalité d'attente, et les agents tabulaires se dégradent à mesure que l'exploration diminue. \corr{PPO approche donc la meilleure règle et se transfère à des perturbations modérées, mais son avantage en carburant disparaît en grande partie face à une règle qui pondère aussi le carburant.} \corr{Près de la saturation des pelles, toutefois, les règles qui répartissent la flotte dépassent MTWT et PPO déployé sans réentraînement perd de 3 à 19\,\% face à elle : sa robustesse n'est établie que pour des perturbations modérées.}
 
 \corr{Dans ce cadre, PPO n'est jamais plus productif que MTWT. Il constitue une alternative crédible lorsqu'une perte de productivité de 1 à 2\,\% est acceptable, que les perturbations restent modérées et que la flotte reste dans les tailles vues à l'entraînement ; il n'a alors pas besoin d'être réentraîné. Son avantage en carburant tient face à MTWT telle quelle, mais face à une variante qui pondère le carburant seulement en conditions nominales, à 0,5\,\%. Son état contient les mêmes temps d'attente prévus que MTWT, ce qui explique très probablement qu'il atteigne ce niveau ; qu'il l'atteigne sans eux n'a pas été testé. L'intérêt de l'apprentissage par renforcement pour le dispatching doit donc être mesuré face à des règles qui tiennent compte des files et, lorsque l'énergie compte, face à des règles qui pondèrent le carburant.}
 

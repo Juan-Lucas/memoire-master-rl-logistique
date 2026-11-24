@@ -91,6 +91,9 @@ SCENARIO_COLORS = {
     "high_load": "#1A237E",
     "high_breakdown": "#64B5F6",
 }
+# Hachures des régimes : en noir et blanc, le nominal et les fortes pannes ont presque le
+# même gris ; les hachures les distinguent.
+SCENARIO_HATCHES = {"nominal": "", "high_load": "", "high_breakdown": "///"}
 
 
 def order_policies(policies: Iterable[str]) -> list[str]:
@@ -151,6 +154,8 @@ AGENT_COLORS = {
     "DQN": "#2196F3",
     "PPO": "#FF5722",
 }
+# Styles de trait des agents, pour que les courbes restent distinctes en noir et blanc.
+AGENT_LINESTYLES = {"PPO": "-", "DQN": "--", "Q-Learning": "-.", "SARSA": ":"}
 
 # Suffixe des noms de fichiers de figures par régime (ex. learning_curves_highload.png).
 SCENARIO_SUFFIXES = {"nominal": "nominal", "high_load": "highload",
