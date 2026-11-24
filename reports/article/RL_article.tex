@@ -153,7 +153,6 @@ Four learning algorithms are studied. Q-Learning and State--Action--Reward--Stat
 The rest of the article is organised as follows. \Cref{sec:relwork} reviews the literature on truck dispatching along three paradigms. \Cref{sec:positioning} summarises this literature in a positioning table and derives the research gap, the problem studied, the research questions and the hypotheses. \Cref{sec:contributions} presents the contributions and the methodological framework. \Cref{sec:approach} describes the modelled system, the simulator, the formulation of the decision problem and the agents studied. \Cref{sec:design} details the experimental protocol and \cref{sec:results} the results. \Cref{sec:discussion} discusses these results and their limitations, and \cref{sec:conclusion} concludes the article.
 \end{revbloc}
 
-\adir{new structure of the article (M24).}
 
 
 \section{Related work}
@@ -457,7 +456,6 @@ The contribution of this article is evaluative rather than algorithmic: no new r
 Three scope limitations follow from this positioning and are discussed in \cref{sec:limitations}. The evaluation is carried out in simulation, so the reported magnitudes describe relative performance in the proposed simulated environment rather than predictions for a real site. The agents are single controllers that decide for all trucks, so multi-agent formulations \cite{Zhao2025} fall outside the compared space. Finally, the three regimes represent stylised disruptions, designed to be interpretable and reproducible.
 \end{revbloc}
 
-\adir{check exactly what Mining-Gym offers (disruptions, baselines) and adjust the corresponding column of \cref{tab:litterature} (M26).}
 
 
 % ============================================================================
@@ -502,7 +500,7 @@ This work makes two methodological contributions and reports three empirical fin
 \label{fig:framework}
 \end{figure}
 
-\adir{the supervisor asked for a summary figure of the steps, without logos (meetings of 16 August and 22 September).}
+\afig{in draw.io, framework: ``LP'' becomes ``Static LP''; the section numbers become \S5.1--5.4, \S5.5--5.6, \S5.7--5.8 and \S6.3, \S6.1--6.2, \S6.4--6.5 and \S7; ``bootstrap CI'' becomes ``bootstrap CI (paired and hierarchical)''. Export as PDF.}
 
 
 % ============================================================================
@@ -548,7 +546,7 @@ The simulator follows the Gymnasium interface \cite{MarkTowers2025}, which ensur
 \label{fig:simulation}
 \end{figure}
 
-\afig{in draw.io, correct the ``Simulation Engine'' module (``Time-step haulage physics'' becomes ``Discrete-event simulation; decision at the dump'') and the ``Energy Consumption'' module (``Fuel use from power demand; idling, uphill hauling, braking'' becomes ``Grade-dependent fuel curves measured on a Cat 785D; idling at 11.3 L/h''), to stay consistent with the text (M11, v3).}
+\afig{in draw.io, architecture: ``LP (linear program)'' becomes ``Static LP''. Export as PDF.}
 
 \begin{revbloc}{M11, A, v3}
 The architecture comprises the following modules:
@@ -770,7 +768,7 @@ Discounting & $\gamma_{\min}^{\Delta t_t}$ & \rev{M9, v3}{Per simulated minute; 
 \label{fig:mdp}
 \end{figure}
 
-\afig{in draw.io: the reward arrow reads ``Tonnage, balance, fuel, waiting''; replace with ``Production, balance, distance, waiting (paid at cycle end)''. The action arrow reads ``Truck -> shovel assignment''; replace with ``Shovel--dump pair or WAIT''. Add the decision duration ``$\Delta t$ (per-minute discount)'' on the state arrow (v3).}
+\afig{in draw.io, SMDP loop: ``(paid at cycle end)'' becomes ``(paid when the truck reaches the dump)'', and ``open-pit'' becomes ``open pit''. Export as PDF.}
 
 \subsection{Multi-objective reward function}
 \label{sec:reward}

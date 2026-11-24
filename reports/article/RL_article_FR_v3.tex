@@ -155,7 +155,6 @@ Quatre algorithmes d'apprentissage sont étudiés. Q-Learning et State--Action--
 Le reste de l'article est organisé comme suit. La \cref{sec:relwork} passe en revue la littérature sur le dispatching de camions selon trois paradigmes. La \cref{sec:positioning} synthétise cette littérature dans un tableau de positionnement et en déduit la lacune de recherche, le problème étudié, les questions de recherche et les hypothèses. La \cref{sec:contributions} présente les contributions et le cadre méthodologique. La \cref{sec:approach} décrit le système modélisé, le simulateur, la formulation du problème de décision et les agents étudiés. La \cref{sec:design} détaille le protocole expérimental et la \cref{sec:results} les résultats. La \cref{sec:discussion} discute ces résultats et leurs limites, et la \cref{sec:conclusion} conclut l'article.
 \end{revbloc}
 
-\adir{nouvelle structure de l'article (M24) : à faire valider avant la traduction anglaise.}
 
 
 \section{Travaux connexes}
@@ -459,7 +458,6 @@ La contribution de cet article est évaluative plutôt qu'algorithmique : aucun 
 Trois limites de portée découlent de ce positionnement et sont discutées dans la \cref{sec:limitations}. L'évaluation est menée en simulation, de sorte que les ordres de grandeur rapportés décrivent une performance relative dans l'environnement simulé proposé plutôt que des prédictions à l'échelle d'un site. Les agents sont des contrôleurs uniques qui décident pour tous les camions, de sorte que les formulations multi-agents \cite{Zhao2025} sortent de l'espace comparé. Enfin, les trois régimes représentent des perturbations stylisées, conçues pour être interprétables et reproductibles.
 \end{revbloc}
 
-\adir{vérifier ce que propose exactement Mining-Gym (perturbations, références) et ajuster la colonne correspondante du \cref{tab:litterature} (M26).}
 
 
 % ============================================================================
@@ -504,7 +502,7 @@ La \cref{fig:framework} résume les étapes de l'étude. (1) Le système de tran
 \label{fig:framework}
 \end{figure}
 
-\adir{la directrice a demandé une figure récapitulative des étapes, sans logos (réunions des 16 août et 22 septembre).}
+\afig{dans draw.io, schéma récapitulatif : « LP » devient « Static LP » ; les numéros de section deviennent \S5.1--5.4, \S5.5--5.6, \S5.7--5.8 et \S6.3, \S6.1--6.2, \S6.4--6.5 et \S7 ; « bootstrap CI » devient « bootstrap CI (paired and hierarchical) ». Exporter en PDF.}
 
 
 % ============================================================================
@@ -550,7 +548,7 @@ Le simulateur est conforme à l'interface Gymnasium \cite{MarkTowers2025}, ce qu
 \label{fig:simulation}
 \end{figure}
 
-\afig{dans draw.io, corriger le module « Simulation Engine » (« Time-step haulage physics » devient « Discrete-event simulation ; decision at the dump ») et le module « Energy Consumption » (« Fuel use from power demand ; idling, uphill hauling, braking » devient « Grade-dependent fuel curves measured on a Cat 785D ; idling at 11.3 L/h »), pour rester cohérent avec le texte (M11, v3).}
+\afig{dans draw.io, architecture : « LP (linear program) » devient « Static LP ». Exporter en PDF.}
 
 \begin{revbloc}{M11, A, v3}
 L'architecture comprend les modules suivants :
@@ -774,7 +772,7 @@ Actualisation & $\gamma_{\min}^{\Delta t_t}$ & \rev{M9, v3}{Par minute de simula
 
 \rev{m6}{\ifrevmarks\small Fichier renommé \texttt{mdp\_formulation.png} ; son contenu est déjà en anglais.\fi}
 
-\afig{dans draw.io : la flèche de récompense dit « Tonnage, balance, fuel, waiting » ; remplacer par « Production, balance, distance, waiting (paid at cycle end) ». La flèche d'action dit « Truck -> shovel assignment » ; remplacer par « Shovel--dump pair or WAIT ». Ajouter sur la flèche de l'état la durée de la décision « $\Delta t$ (per-minute discount) » (v3).}
+\afig{dans draw.io, boucle du SMDP : « (paid at cycle end) » devient « (paid when the truck reaches the dump) », et « open-pit » devient « open pit ». Exporter en PDF.}
 
 \subsection{Fonction de récompense multiobjectif}
 \label{sec:reward}
