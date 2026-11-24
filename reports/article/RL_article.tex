@@ -1163,10 +1163,17 @@ The simulation is implemented in Python 3.11.11 with Gymnasium 1.2.3 \cite{MarkT
 \label{sec:results}
 
 \begin{revbloc}{T31}
-This section presents productivity, queueing, policy behaviour, trade-offs between criteria, robustness and transfer without retraining, then statistical significance, variability, convergence and the ablation study. All values come from the single evaluation of the final campaign, on seeds 42 to 71. For an agent, each replication is first averaged over its 5 models (training seeds): the reported mean and standard deviation then refer to the 30 replications, as for a heuristic. Variability between models is reported separately, in \cref{tab:runs,sec:stability}. In the tables, N, HL and FB denote the nominal, high load and frequent breakdown regimes.
+\corr{The section has two parts. The main results, in \cref{sec:main-results}, answer the three hypotheses: productivity, queueing, trade-offs between criteria, robustness and transfer without retraining, and statistical significance. The diagnostic analyses, in \cref{sec:diagnostics}, explain these results without testing a hypothesis. The text gives the reading of each table and the quantities derived from it; the values themselves are in the tables.} All values come from the single evaluation of the final campaign, on seeds 42 to 71. For an agent, each replication is first averaged over its 5 models (training seeds): the reported mean and standard deviation then refer to the 30 replications, as for a heuristic. Variability between models is reported separately, in \cref{tab:runs,sec:stability}. In the tables, N, HL and FB denote the nominal, high load and frequent breakdown regimes.
 \end{revbloc}
 
-\subsection{Productivity}
+\subsection{\corr{Main results}}
+\label{sec:main-results}
+
+\begin{corrbloc}
+The five subsections below give the evidence for the hypotheses: productivity and statistical significance for H1, robustness and transfer without retraining for H2, queueing and trade-offs between criteria for H3.
+\end{corrbloc}
+
+\subsubsection{Productivity}
 \label{sec:productivity}
 
 \begin{revbloc}{T31}
@@ -1197,9 +1204,9 @@ PPO                  & 4,414.7 $\pm$ 51 & 6,310.0 $\pm$ 62 & 4,163.9 $\pm$ 77 & 
 \end{tabular}
 \end{table}
 
-\textbf{The same three policies lead in all three regimes.} MTWT is the most productive policy in every regime: 4,437~t/h under nominal conditions, 6,365~t/h under high load and 4,184~t/h under frequent breakdowns. PPO and \corr{Static LP} follow closely, within 1\%: PPO is 23~t/h ($-0.5\%$), 55~t/h ($-0.9\%$) and 20~t/h ($-0.5\%$) below MTWT. Next come FIFO and Fixed Assignment, almost tied, 2 to 4\% below MTWT depending on the regime. No learning agent outperforms the best heuristic, in any regime.
+\textbf{The same three policies lead in all three regimes.} \corr{MTWT is the most productive policy in every regime.} PPO and \corr{Static LP} follow closely, within 1\%: \corr{PPO is 0.5\% below MTWT under nominal conditions and frequent breakdowns, and 0.9\% under high load.} Next come FIFO and Fixed Assignment, almost tied, 2 to 4\% below MTWT depending on the regime. No learning agent outperforms the best heuristic, in any regime.
 
-\textbf{The other agents are below Fixed Assignment.} Q-Learning loses 158 to 417~t/h against Fixed Assignment depending on the regime, and SARSA 646 to 795~t/h. DQN produces 985 to 1,579~t/h on average: four of its five nominal models collapse onto the WAIT action, as shown in \cref{sec:behaviour,sec:stability}.
+\textbf{The other agents are below Fixed Assignment.} \corr{Q-Learning produces 4 to 7\% less than Fixed Assignment depending on the regime, and SARSA 13 to 16\% less. DQN reaches 15 to 38\% of the productivity of MTWT:} four of its five nominal models collapse onto the WAIT action, as shown in \cref{sec:behaviour,sec:stability}.
 
 \textbf{The distance rules hit a ceiling.} Nearest Shovel and Shortest Path send most of the fleet to the nearest shovel, as shown in \cref{sec:behaviour}. Under high load, their productivity per truck drops by 31\% and 23\%, against 2 to 6\% for the policies that spread the fleet.
 
@@ -1213,42 +1220,7 @@ PPO                  & 4,414.7 $\pm$ 51 & 6,310.0 $\pm$ 62 & 4,163.9 $\pm$ 77 & 
 \label{fig:productivity}
 \end{figure}
 
-\begin{revbloc}{T31}
-\Cref{tab:cycles_reward} reports the number of completed cycles and the cumulative reward. The ranking by reward follows the productivity ranking, except for one swap between two very close policies under nominal conditions (FIFO and Fixed Assignment) and under high load (PPO and FIFO). The reward of DQN is negative: its repeated waits accumulate the WAIT penalty and the opportunity cost.
-
-\begin{table}[H]
-\centering
-\caption{Completed cycles per shift and cumulative reward by policy and regime (means over 30 replications).}
-\label{tab:cycles_reward}
-\small
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.05}
-\begin{tabularx}{\textwidth}{@{}l*{6}{>{\centering\arraybackslash}X}@{}}
-\toprule
-\multirow{2}{*}{\textbf{Policy}}
-  & \multicolumn{3}{c}{\textbf{Completed cycles}}
-  & \multicolumn{3}{c}{\textbf{Cumulative reward}} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-7}
-  & \textbf{N} & \textbf{HL} & \textbf{FB}
-  & \textbf{N}   & \textbf{HL}   & \textbf{FB} \\
-\midrule
-FIFO                 & 242.5 & 355.7 & 228.6 & 220.6 & 322.6 & 208.0 \\
-Fixed Assignment     & 242.6 & 354.6 & 228.5 & 219.8 & 320.6 & 207.0 \\
-Nearest Shovel       & 222.5 & 229.9 & 214.5 & 192.5 & 152.0 & 186.9 \\
-Shortest Path        & 230.1 & 266.2 & 220.4 & 199.4 & 196.1 & 192.2 \\
-MTWT                 & \textbf{253.6} & \textbf{363.7} & \textbf{239.1} & \textbf{230.9} & \textbf{330.3} & \textbf{217.7} \\
-\corr{Static LP}                   & 251.7 & 362.9 & 237.1 & 227.0 & 329.7 & 213.9 \\
-\midrule
-Q-Learning           & 233.6 & 330.7 & 219.4 & 200.5 & 281.0 & 190.1 \\
-SARSA                & 204.2 & 309.1 & 191.6 & 175.9 & 265.1 & 158.7 \\
-DQN                  & 73.5 & 56.3 & 90.2 & $-$148.6 & $-$417.4 & $-$105.5 \\
-PPO                  & 252.3 & 360.6 & 237.9 & 228.3 & 320.9 & 215.5 \\
-\bottomrule
-\end{tabularx}
-\end{table}
-\end{revbloc}
-
-\subsection{Queueing and idle time}
+\subsubsection{Queueing and idle time}
 \label{sec:waiting}
 
 \begin{revbloc}{T31}
@@ -1280,60 +1252,14 @@ PPO                  & 16.7 $\pm$ 1.1 & 0.0 & 24.7 & 22.6 $\pm$ 1.2 & 5.5 & 35.9
 \end{tabular}
 \end{table}
 
-\textbf{Congestion.} Fixed Assignment has the lowest queueing time among the policies that produce normally, in all three regimes (11.3, 19.0 and 10.6~min), closely followed by MTWT and FIFO. PPO queues slightly longer than MTWT (16.7 versus 12.2~min under nominal conditions) for almost the same productivity. The two distance rules accumulate 52 to 188~min of queueing, because they concentrate the fleet in front of one shovel.
+\textbf{Congestion.} Fixed Assignment has the lowest queueing time among the policies that produce normally, in all three regimes, closely followed by MTWT and FIFO. PPO queues \corr{1 to 4.5~min per truck longer than MTWT} for almost the same productivity. The two distance rules \corr{queue about five to nine times as long as MTWT}, because they concentrate the fleet in front of one shovel.
 
-\textbf{Voluntary waiting.} The six heuristics never use WAIT. PPO hardly uses it, except under high load, where it accounts for 26\% of its decisions but only 5.5~min per truck, as these waits are short. Q-Learning waits in 33 to 46\% of its decisions (7 to 10~min per truck). The trucks of DQN spend 273 to 395~min per shift in voluntary waiting, i.e.\ 57 to 82\% of the shift: this is the collapse described in \cref{sec:tuning}. Their low queueing time is therefore not a sign of efficiency: these trucks hardly move.
+\textbf{Voluntary waiting.} The six heuristics never use WAIT. PPO hardly uses it, except under high load, where it accounts for 26\% of its decisions \corr{(\cref{tab:behaviour}) but little time per truck}, as these waits are short. \corr{Q-Learning waits often, but briefly. The trucks of DQN spend 57 to 82\% of the shift in voluntary waiting:} this is the collapse described in \cref{sec:tuning}. Their low queueing time is therefore not a sign of efficiency: these trucks hardly move.
 
 \textbf{Frequent breakdowns.} Queueing is slightly lower than under nominal conditions for most policies, since fewer trucks are available at the same time. The increase in total idle time (about 26 to 28~min per truck for the heuristics that spread the fleet) comes from repairs.
 \end{revbloc}
 
-\subsection{Allocation behaviour of the policies}
-\label{sec:behaviour}
-
-\begin{revbloc}{T31}
-\Cref{tab:behaviour} describes the allocation of cycles among the three shovels and the share of decisions devoted to the WAIT action. The allocation among shovels is not recorded by the evaluation: it is obtained by replaying the same episodes with the cycle log. Each replayed episode was checked to be identical to the evaluated one (productivity, queueing time and fuel); nothing was chosen on these episodes.
-
-\begin{table}[H]
-\centering
-\caption{Allocation of cycles among shovels S1 to S3 and share of WAIT decisions, by policy and regime (\%).}
-\label{tab:behaviour}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcc|cc|cc}
-\toprule
- & \multicolumn{2}{c|}{\textbf{Nominal}} & \multicolumn{2}{c|}{\textbf{High load}} & \multicolumn{2}{c}{\textbf{Frequent breakdowns}} \\
-\textbf{Policy} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} \\
-\midrule
-FIFO                 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 \\
-Fixed Assignment     & 36 / 33 / 31 & 0 & 36 / 33 / 31 & 0 & 36 / 34 / 31 & 0 \\
-Nearest Shovel       & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 \\
-Shortest Path        & 74 / 26 / 0 & 0 & 71 / 29 / 0 & 0 & 72 / 28 / 0 & 0 \\
-MTWT                 & 50 / 35 / 15 & 0 & 42 / 36 / 22 & 0 & 49 / 37 / 14 & 0 \\
-\corr{Static LP}                   & 60 / 40 / 0 & 0 & 42 / 42 / 17 & 0 & 64 / 36 / 0 & 0 \\
-\midrule
-Q-Learning           & 36 / 34 / 31 & 42 & 39 / 28 / 34 & 46 & 36 / 34 / 30 & 33 \\
-SARSA                & 0 / 0 / 99 & 2 & 1 / 30 / 69 & 1 & 0 / 1 / 99 & 15 \\
-DQN                  & 46 / 27 / 27 & 79 & 44 / 15 / 42 & 99 & 50 / 43 / 7 & 96 \\
-PPO                  & 59 / 36 / 4 & 0 & 46 / 36 / 18 & 26 & 56 / 37 / 7 & 0 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Three profiles emerge among the heuristics. The distance rules concentrate the fleet: Nearest Shovel sends all its cycles to shovel 1, and Shortest Path 71 to 74\%. FIFO and Fixed Assignment split the cycles almost equally, and therefore send nearly a third of them to shovel 3, the farthest. MTWT and \corr{Static LP} favour shovels 1 and 2 and use shovel 3 only when the other two are busy, mostly under high load (22 and 17\%). PPO follows the same profile as MTWT, but uses shovel 3 even less: 4\% against 15\% under nominal conditions, 7\% against 14\% under frequent breakdowns. Its cycles are therefore shorter, which explains its lower consumption per tonne in \cref{sec:sustainability}.
-
-The value-based agents show extreme behaviours. SARSA sends 99\% of its cycles to shovel 3 under nominal conditions and frequent breakdowns, as during tuning. Q-Learning spreads its cycles over the three shovels, but waits in 33 to 46\% of its decisions. DQN waits in 79 to 99\% of its decisions. Its only working nominal model (seed 2, 3,932~t/h) sends 99\% of its cycles to shovel 1: it reproduces Nearest Shovel (3,893~t/h), not a new policy.
-
-\Cref{fig:behavioral} shows the same allocation for each policy and regime; for an agent, the bars average its 5 specialised models.
-\end{revbloc}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/behaviour_30_replications}
-\caption{Allocation of cycles among shovels and share of WAIT decisions.}
-\label{fig:behavioral}
-\end{figure}
-
-\subsection{Trade-offs between productivity, queueing and fuel}
+\subsubsection{Trade-offs between productivity, queueing and fuel}
 \label{sec:pareto}
 
 \begin{revbloc}{T31}
@@ -1395,7 +1321,7 @@ Between productivity and queueing time, the trade-off is minimal: MTWT produces 
 \end{corrbloc}
 \end{revbloc}
 
-\subsection{Robustness and transfer without retraining}
+\subsubsection{Robustness and transfer without retraining}
 \label{sec:robustness}
 
 \begin{revbloc}{T31}
@@ -1434,7 +1360,7 @@ PPO                  & 0.953 & 0.943 & +35.6 & $-$15.1 & +45.1 \\
 \end{tabular}
 \end{table}
 
-Under high load, the policies that spread the fleet keep 94 to 98\% of their productivity per truck; the two distance rules keep only 69 and 77\%. Under frequent breakdowns, all policies that work lose 4 to 6\% of productivity, and their ratios are almost identical (0.938 to 0.964): truck breakdowns affect all policies in the same way. The ratios of DQN (0.510 and 1.227) and of SARSA under high load (1.009) mainly reflect nominal levels that are very low or vary strongly from one model to another, not robustness.
+\corr{Under high load, the policies that spread the fleet lose little productivity per truck, and the two distance rules much more, as seen in \cref{sec:productivity}. Under frequent breakdowns, all policies that work lose 4 to 6\% of productivity: truck breakdowns affect all policies in the same way. The ratios of DQN, and of SARSA under high load, mainly reflect} nominal levels that are very low or vary strongly from one model to another, not robustness.
 \end{revbloc}
 
 \begin{revbloc}{T31}
@@ -1461,9 +1387,9 @@ High load           & PPO        & 6,310.0 & 6,257.9 & $-$52.1 [$-$67.1; $-$37.6
 \end{tabular}
 \end{table}
 
-\textbf{\corr{PPO transfers with a bounded loss.}} Under frequent breakdowns, the nominal PPO performs exactly like the specialised PPO ($-0.5$~t/h, interval containing 0)\corr{; a test of equivalence by two one-sided tests (TOST), with a margin of 1\% of the productivity of the specialised PPO set as an operational criterion after the campaign, concludes to equivalence ($p<0.001$, 90\% interval [$-5$; 5]~t/h for a margin of 42~t/h)}. Under high load, it loses 0.8\%\corr{, but equivalence within 1\% is not established ($p = 0.08$, 90\% interval [$-65$; $-39$]~t/h for a margin of 63~t/h); it is within 2\%}; it remains ahead of Fixed Assignment (+53~t/h [28; 78]) and behind MTWT ($-108$~t/h [$-130$; $-85$]). It never uses WAIT, whereas the specialised PPO under high load uses it in 26\% of its decisions. In the two unseen intermediate regimes, the nominal PPO likewise ranks just behind MTWT: $-61$~t/h with 15 trucks, $-19$~t/h with 5\% breakdowns, and ahead of Fixed Assignment by 118 and 165~t/h.
+\textbf{\corr{PPO transfers with a bounded loss.}} Under frequent breakdowns, the nominal PPO performs like the specialised PPO \corr{(\cref{tab:transfer}); a test of equivalence by two one-sided tests (TOST), with a margin of 1\% of the productivity of the specialised PPO set as an operational criterion after the campaign, concludes to equivalence ($p<0.001$, 90\% interval [$-5$; 5]~t/h for a margin of 42~t/h)}. Under high load, it loses 0.8\%\corr{, but equivalence within 1\% is not established ($p = 0.08$, 90\% interval [$-65$; $-39$]~t/h for a margin of 63~t/h); it is within 2\%}; it remains ahead of Fixed Assignment (+53~t/h [28; 78]) and behind MTWT ($-108$~t/h [$-130$; $-85$]). It never uses WAIT, whereas the specialised PPO under high load uses it in 26\% of its decisions. In the two unseen intermediate regimes, the nominal PPO likewise ranks just behind MTWT: $-61$~t/h with 15 trucks, $-19$~t/h with 5\% breakdowns, and ahead of Fixed Assignment by 118 and 165~t/h.
 
-\textbf{The other agents.} Q-Learning transfers with a gap below 1\%. SARSA transfers well under frequent breakdowns but loses 25\% under high load. The transferred nominal DQN does better than the specialised DQN under high load (+83\%), because the specialised DQN collapses even more: this gap does not measure a transfer capability.
+\textbf{The other agents.} Q-Learning transfers with a gap below 1\%. SARSA transfers well under frequent breakdowns but loses 25\% under high load. The transferred nominal DQN does better than the specialised DQN under high load, because the specialised DQN collapses even more: this gap does not measure a transfer capability.
 
 Except for SARSA under high load, retraining an agent in the disrupted regime therefore brings almost nothing in this study: truck breakdowns and a larger fleet do not change the dispatching logic a nominal agent has learned.
 
@@ -1478,7 +1404,7 @@ Except for SARSA under high load, retraining an agent in the disrupted regime th
 \end{figure}
 
 \begin{corrbloc}
-\textbf{More severe disruptions.} \Cref{tab:disruptions} reports the additional regimes. During the outage of shovel 1, MTWT remains the most productive policy and loses 5.7\% of its production over the shift, compared with the same replications without outage; FIFO loses about as much, 5.8\%, and PPO 7.2\%, so that its gap to MTWT widens from 0.6 to 2.2\%. The \corr{Static LP} policy loses 21.7\%: its plan, computed once at the start of the shift, keeps sending trucks to the broken shovel. After the repair, the throughput of every policy is back within 5\% of its level without outage in the following 30~min. Near saturation, the ranking changes: Fixed Assignment, \corr{Static LP} and FIFO overtake MTWT by 3 to 5.5\%, because spreading the fleet evenly matters more than the smallest predicted waiting when every shovel has a queue. PPO, deployed without retraining, falls 3 to 10\% below MTWT with the models trained under high load, and 10 to 19\% with the nominal models: fleets of 29 and 34 trucks lie far outside the 12 or 18 trucks seen in training.
+\textbf{More severe disruptions.} \Cref{tab:disruptions} reports the additional regimes. During the outage of shovel 1, MTWT remains the most productive policy and the one that loses the least production; FIFO loses about as much, and PPO one and a half points more, so that its gap to MTWT widens from 0.6 to 2.2\%. The \corr{Static LP} policy loses about four times as much as MTWT: its plan, computed once at the start of the shift, keeps sending trucks to the broken shovel. After the repair, the throughput of every policy is back within 5\% of its level without outage in the following 30~min. Near saturation, the ranking changes: Fixed Assignment, \corr{Static LP} and FIFO overtake MTWT by 3 to 5.5\%, because spreading the fleet evenly matters more than the smallest predicted waiting when every shovel has a queue. PPO, deployed without retraining, falls 3 to 10\% below MTWT with the models trained under high load, and 10 to 19\% with the nominal models: fleets of 29 and 34 trucks lie far outside the 12 or 18 trucks seen in training.
 
 \begin{table}[H]
 \centering
@@ -1503,13 +1429,13 @@ PPO, high load models & 4{,}353 & 4{,}034 & 7.3 & 8{,}732 & 9{,}087 \\
 \end{table}
 \end{corrbloc}
 
-\subsection{Statistical significance}
+\subsubsection{Statistical significance}
 \label{sec:stats}
 
 \begin{revbloc}{T31}
 The Friedman test shows an effect of the policy on productivity in each of the three regimes ($\chi^2(9) = 263.4$ under nominal conditions, 263.0 under high load and 263.2 under frequent breakdowns; $p<0.001$). The linear model of productivity per truck shows a significant interaction between policy and regime ($F(18, 783) = 1{,}211.1$, $p<0.001$, $\eta^2_p = 0.97$). \corr{Restricted to the five competitive policies, the interaction remains significant but much smaller ($F(8, 348) = 30.4$, $p<0.001$, $\eta^2_p = 0.41$): most of the overall effect comes from the policies that collapse.}
 
-\Cref{tab:stats} reports the eight comparisons fixed before the campaign in \cref{sec:proto}. All are significant after Holm correction ($p<0.001$). PPO is significantly below MTWT in all three regimes, by 20 to 55~t/h \corr{when the replications are resampled}, and significantly above Fixed Assignment, by 105 to 169~t/h. The three other agents are below both references in all regimes. \corr{The paired $d_z$ is very large for DQN and the tabular agents ($|d_z| > 3$)}: it reflects differences of several hundred t/h against low variability between replications. \corr{For PPO against MTWT, the paired $d_z$ ranges from $-0.82$ to $-0.97$: the gap is consistent from one replication to the next, but small in practice, less than 1\% of productivity and 0.06 to 0.16 truck of the fleet. When the variability between training runs is included, the gap remains significant under nominal conditions and frequent breakdowns, but not under high load: the hierarchical interval, [$-136$; 1]~t/h, contains zero, because one of the five PPO models, seed 5, produces 6{,}164~t/h against 6{,}322 to 6{,}375~t/h for the others.}
+\Cref{tab:stats} reports the eight comparisons fixed before the campaign in \cref{sec:proto}. All are significant after Holm correction ($p<0.001$). PPO is significantly below MTWT in all three regimes \corr{when the replications are resampled}, and significantly above Fixed Assignment. The three other agents are below both references in all regimes. \corr{The paired $d_z$ is very large for DQN and the tabular agents ($|d_z| > 3$)}: it reflects differences of several hundred t/h against low variability between replications. \corr{For PPO against MTWT, the paired $d_z$ is close to $-1$: the gap is consistent from one replication to the next, but small in practice, less than 1\% of productivity and 0.06 to 0.16 truck of the fleet. When the variability between training runs is included, the gap remains significant under nominal conditions and frequent breakdowns, but not under high load: the hierarchical interval contains zero, because one of the five PPO models, seed 5, is clearly less productive than the others (\cref{tab:runs}).}
 
 \begin{corrbloc}
 \begin{table}[H]
@@ -1556,13 +1482,96 @@ The Friedman test shows an effect of the policy on productivity in each of the t
 These comparisons concern the expected performance of each algorithm: for each replication, an agent is represented by the mean of its 5 models. They do not say that a model drawn at random would do the same: for DQN, one model in five reproduces Nearest Shovel and the others collapse (\cref{tab:runs,tab:behaviour}).
 \end{revbloc}
 
-\subsection{Variability between replications and between models}
+\subsection{\corr{Diagnostic analyses}}
+\label{sec:diagnostics}
+
+\begin{corrbloc}
+These analyses test no hypothesis. They check that the reward agrees with productivity, describe how each policy allocates the fleet, measure how much the models of one agent differ, follow training, and explain the collapse of DQN.
+\end{corrbloc}
+
+\subsubsection{\corr{Cumulative reward}}
+\label{sec:reward-results}
+\begin{revbloc}{T31}
+\Cref{tab:cycles_reward} reports the cumulative reward. \corr{The number of completed cycles is not shown: each cycle delivers 140~t, so it equals the productivity of \cref{tab:productivity} times 8~h divided by 140~t.} The ranking by reward follows the productivity ranking, except for one swap between two very close policies under nominal conditions (FIFO and Fixed Assignment) and under high load (PPO and FIFO). The reward of DQN is negative: its repeated waits accumulate the WAIT penalty and the opportunity cost.
+
+\begin{table}[H]
+\centering
+\caption{\corr{Cumulative reward by policy and regime (means over 30 replications).}}
+\label{tab:cycles_reward}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Policy} & \textbf{N} & \textbf{HL} & \textbf{FB} \\
+\midrule
+FIFO                   & 220.6 & 322.6 & 208.0 \\
+Fixed Assignment       & 219.8 & 320.6 & 207.0 \\
+Nearest Shovel         & 192.5 & 152.0 & 186.9 \\
+Shortest Path          & 199.4 & 196.1 & 192.2 \\
+MTWT                   & \textbf{230.9} & \textbf{330.3} & \textbf{217.7} \\
+\corr{Static LP}       & 227.0 & 329.7 & 213.9 \\
+\midrule
+Q-Learning             & 200.5 & 281.0 & 190.1 \\
+SARSA                  & 175.9 & 265.1 & 158.7 \\
+DQN                    & $-$148.6 & $-$417.4 & $-$105.5 \\
+PPO                    & 228.3 & 320.9 & 215.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{revbloc}
+
+\subsubsection{Allocation behaviour of the policies}
+\label{sec:behaviour}
+
+\begin{revbloc}{T31}
+\Cref{tab:behaviour} describes the allocation of cycles among the three shovels and the share of decisions devoted to the WAIT action. The allocation among shovels is not recorded by the evaluation: it is obtained by replaying the same episodes with the cycle log. Each replayed episode was checked to be identical to the evaluated one (productivity, queueing time and fuel); nothing was chosen on these episodes.
+
+\begin{table}[H]
+\centering
+\caption{Allocation of cycles among shovels S1 to S3 and share of WAIT decisions, by policy and regime (\%).}
+\label{tab:behaviour}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc|cc|cc}
+\toprule
+ & \multicolumn{2}{c|}{\textbf{Nominal}} & \multicolumn{2}{c|}{\textbf{High load}} & \multicolumn{2}{c}{\textbf{Frequent breakdowns}} \\
+\textbf{Policy} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} \\
+\midrule
+FIFO                 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 \\
+Fixed Assignment     & 36 / 33 / 31 & 0 & 36 / 33 / 31 & 0 & 36 / 34 / 31 & 0 \\
+Nearest Shovel       & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 \\
+Shortest Path        & 74 / 26 / 0 & 0 & 71 / 29 / 0 & 0 & 72 / 28 / 0 & 0 \\
+MTWT                 & 50 / 35 / 15 & 0 & 42 / 36 / 22 & 0 & 49 / 37 / 14 & 0 \\
+\corr{Static LP}                   & 60 / 40 / 0 & 0 & 42 / 42 / 17 & 0 & 64 / 36 / 0 & 0 \\
+\midrule
+Q-Learning           & 36 / 34 / 31 & 42 & 39 / 28 / 34 & 46 & 36 / 34 / 30 & 33 \\
+SARSA                & 0 / 0 / 99 & 2 & 1 / 30 / 69 & 1 & 0 / 1 / 99 & 15 \\
+DQN                  & 46 / 27 / 27 & 79 & 44 / 15 / 42 & 99 & 50 / 43 / 7 & 96 \\
+PPO                  & 59 / 36 / 4 & 0 & 46 / 36 / 18 & 26 & 56 / 37 / 7 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three profiles emerge among the heuristics. The distance rules concentrate the fleet: Nearest Shovel sends all its cycles to shovel 1, and Shortest Path \corr{nearly three quarters}. FIFO and Fixed Assignment split the cycles almost equally, and therefore send nearly a third of them to shovel 3, the farthest. MTWT and \corr{Static LP} favour shovels 1 and 2 and use shovel 3 only when the other two are busy, mostly under high load. PPO follows the same profile as MTWT, but uses shovel 3 even less: 4\% against 15\% under nominal conditions, 7\% against 14\% under frequent breakdowns. Its cycles are therefore shorter, which explains its lower consumption per tonne in \cref{sec:sustainability}.
+
+The value-based agents show extreme behaviours. SARSA sends \corr{almost all} its cycles to shovel 3 under nominal conditions and frequent breakdowns, as during tuning. Q-Learning spreads its cycles over the three shovels, \corr{but waits in a third to nearly half of its decisions, and DQN in four fifths or more.} Its only working nominal model (seed 2, 3,932~t/h) sends 99\% of its cycles to shovel 1: it reproduces Nearest Shovel (3,893~t/h), not a new policy.
+
+\Cref{fig:behavioral} shows the same allocation for each policy and regime; for an agent, the bars average its 5 specialised models.
+\end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/behaviour_30_replications}
+\caption{Allocation of cycles among shovels and share of WAIT decisions.}
+\label{fig:behavioral}
+\end{figure}
+
+\subsubsection{Variability between replications and between models}
 \label{sec:stability}
 
 \begin{revbloc}{T31}
 \textbf{Between replications.} For a given model, the coefficient of variation of productivity over the 30 replications is low for all policies that work: 0.8 to 2.5\% depending on the policy and the regime. It exceeds 3\% only for Shortest Path under high load (3.8\%) and for DQN (3.2 to 12.5\%).
 
-\textbf{Between models.} \Cref{tab:runs} gives the productivity of each of the 5 models of each agent. PPO is highly reproducible: its 5 models are within 10~t/h of one another under nominal conditions, 21~t/h under frequent breakdowns and 211~t/h under high load. The tabular agents vary more (up to 436~t/h apart). DQN is bimodal: in each regime, one or two models produce 2,900 to 4,200~t/h and the others less than 1,200~t/h, most of them less than 400~t/h. The mean of DQN therefore describes a mixture of working and collapsed models, not a typical level. \corr{\Cref{tab:runs_wait} gives the share of WAIT of each model. Except the working nominal model, seed 2, the DQN models wait in 88 to 100\% of their decisions; under frequent breakdowns, the two models that wait least, 88 and 94\%, still produce 3{,}484 and 2{,}940~t/h, so that the share of WAIT alone does not identify a collapse. Under high load, the five PPO models differ: from 0 to 83\% of WAIT, and the model that waits most, seed 5, is also the least productive. The fuel per tonne of PPO varies little between models, from 0.236 to 0.253~L/t.}
+\textbf{Between models.} \Cref{tab:runs} gives the productivity of each of the 5 models of each agent. PPO is highly reproducible \corr{under nominal conditions and frequent breakdowns, less so under high load, where seed 5 stands apart}. The tabular agents vary more. DQN is bimodal: in each regime, \corr{one or two models work and the others collapse, most of them below a tenth of the productivity of MTWT}. The mean of DQN therefore describes a mixture of working and collapsed models, not a typical level. \corr{\Cref{tab:runs_wait} gives the share of WAIT of each model. Except the working nominal model, seed 2, the DQN models wait in most of their decisions; under frequent breakdowns, the two models that wait least, seeds 4 and 5, still work, so that the share of WAIT alone does not identify a collapse. Under high load, the five PPO models differ in their use of WAIT, and the model that waits most, seed 5, is also the least productive. The fuel per tonne of PPO varies little between models, from 0.236 to 0.253~L/t.}
 
 \begin{corrbloc}
 \begin{table}[H]
@@ -1619,7 +1628,7 @@ These comparisons concern the expected performance of each algorithm: for each r
 Aggregated as in Agarwal et al.~\cite{Agarwal2021}, normalised by Fixed Assignment and pooled over the three regimes, the IQMs of the agents are 1.037 for PPO [1.035; 1.037], 0.956 for Q-Learning [0.949; 0.961], 0.850 for SARSA [0.842; 0.857] and 0.187 for DQN [0.065; 0.438]. The probability that a PPO model does better than a DQN or Q-Learning model in the same regime is 1.
 \end{revbloc}
 
-\subsection{Convergence}
+\subsubsection{Convergence}
 \label{sec:convergence}
 
 \begin{revbloc}{T31}
@@ -1627,7 +1636,7 @@ Aggregated as in Agarwal et al.~\cite{Agarwal2021}, normalised by Fixed Assignme
 
 \begin{itemize}
   \item \textbf{PPO} improves from the start and reaches a plateau at about 10\% of the budget, then remains stable: under nominal conditions, from 4,243~t/h in the first interval to 4,409~t/h at 10\% and 4,423~t/h at the end. The same holds in the two disrupted regimes.
-  \item \textbf{DQN} starts at the level of the random policy, when exploration is total (about 4,170~t/h under nominal conditions), then declines as exploration decreases, down to about 3,460~t/h at the end. Played without exploration, the final model does much worse (1,287~t/h on average): during training, the rare random actions are enough to get trucks out of repeated waits.
+  \item \textbf{DQN} starts at the level of the random policy, when exploration is total (about 4,170~t/h under nominal conditions), then declines as exploration decreases, down to about 3,460~t/h at the end. Played without exploration, the final model does much worse \corr{(\cref{tab:productivity})}: during training, the rare random actions are enough to get trucks out of repeated waits.
   \item \textbf{Q-Learning and SARSA} also decline as exploration decreases. Q-Learning falls from 4,169 to about 4,060~t/h halfway, then recovers slightly (4,108~t/h at the end). SARSA declines until the end (3,559~t/h). Neither exceeds the level reached at the start with almost total exploration, i.e.\ that of the random policy. This convergence failure, already observed during tuning, is confirmed over the 5 models and the three regimes.
 \end{itemize}
 \end{revbloc}
@@ -1639,7 +1648,7 @@ Aggregated as in Agarwal et al.~\cite{Agarwal2021}, normalised by Fixed Assignme
 \label{fig:convergence}
 \end{figure}
 
-\subsection{Ablation study}
+\subsubsection{Ablation study}
 \label{sec:ablation}
 
 \begin{revbloc}{T31}
@@ -1664,10 +1673,10 @@ The ablation study concerns the weight of the waiting penalty $w_4$, under nomin
 \end{tabular}
 \end{table}
 
-PPO is insensitive to $w_4$: its productivity only varies from 4,411 to 4,417~t/h, and it almost never uses WAIT. DQN collapses for every value of $w_4$, including without a waiting penalty, with 2 to 4 collapsed models out of 5. With $w_4 = 0.5$, two models wait for the whole shift and haul no tonne at all; their fuel per tonne is undefined. The collapse of DQN therefore does not come from the weight of the waiting penalty, which is consistent with the explanation proposed in \cref{sec:tuning}: it stems from the very small value gap between WAIT and the best assignment.
+PPO is insensitive to $w_4$: its \corr{mean productivity varies by less than 0.2\%}, and it almost never uses WAIT. DQN collapses for every value of $w_4$, including without a waiting penalty. With $w_4 = 0.5$, two models wait for the whole shift and haul no tonne at all; their fuel per tonne is undefined. The collapse of DQN therefore does not come from the weight of the waiting penalty, which is consistent with the explanation proposed in \cref{sec:tuning}: it stems from the very small value gap between WAIT and the best assignment.
 
 \begin{corrbloc}
-\textbf{Why DQN collapses.} The value gap was measured directly on the five nominal DQN models, without retraining, on the 1{,}329 decision states met by MTWT on five selection seeds (\cref{tab:dqndiag}). The values $Q$ are of the order of 155 to 177, and a WAIT of 0.2~min should be worth about 0.1 less than the best assignment: $1-\gamma_{\min}^{0.2}$ times the value, plus the cost of the wait. This gap is about 0.06\% of the values. In the four collapsed models, WAIT is valued 0.07 to 0.19 above the best assignment and comes first in 76 to 95\% of these states, and in more than 99\% of the states that the model meets itself; in the only working model, seed 2, WAIT is valued 0.20 below and never comes first. An error of 0.04 to 0.12\% of the values is therefore enough to reverse the order of WAIT and the best assignment, which supports the explanation of \corr{\cref{app:tuning}} with a measurement.
+\textbf{Why DQN collapses.} The value gap was measured directly on the five nominal DQN models, without retraining, on the 1{,}329 decision states met by MTWT on five selection seeds (\cref{tab:dqndiag}). The values $Q$ are of the order of 155 to 177, and a WAIT of 0.2~min should be worth about 0.1 less than the best assignment: $1-\gamma_{\min}^{0.2}$ times the value, plus the cost of the wait. This gap is about 0.06\% of the values. In the four collapsed models, WAIT is valued above the best assignment and comes first in most of these states, and in more than 99\% of the states that the model meets itself; in the only working model, seed 2, WAIT is valued below and never comes first. An error of 0.04 to 0.12\% of the values is therefore enough to reverse the order of WAIT and the best assignment, which supports the explanation of \corr{\cref{app:tuning}} with a measurement.
 
 \begin{table}[H]
 \centering
