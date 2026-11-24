@@ -596,6 +596,36 @@ Aléas & \rev{v3}{un flux aléatoire indépendant par processus et un flux de pa
 
 La vérification contrôle que le code met en œuvre le modèle tel qu'il est spécifié ; la validation contrôle que le modèle produit des ordres de grandeur plausibles. Les deux sont présentées séparément.
 
+Le \cref{tab:audit} réunit les hypothèses du simulateur, leur fondement et le contrôle appliqué à chacune ; les paragraphes qui suivent détaillent ces contrôles.
+
+\begin{table}[H]
+\centering
+\caption{Hypothèses, calibration et contrôles du simulateur. Fondement : hypothèse du modèle, mesure ou valeur du constructeur ; contrôle : test automatique, validation des ordres de grandeur ou variante du \cref{tab:sensitivity}.}
+\label{tab:audit}
+\ifcorrmarks\color{corrcolor}\fi
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{3.3cm}}
+\toprule
+\textbf{Élément} & \textbf{Valeur} & \textbf{Fondement} & \textbf{Contrôle} \\
+\midrule
+Topologie et distances & 3 pelles, 2 verses, 0,8 à 3,2~km (\cref{tab:simparams}) & Mine stylisée, sans site & Retours sans pente \\
+Vitesses et temps de trajet & 26 et 32~km/h, $-3\,\%$ par point de pente ; log-normale, $\sigma = 0{,}12$ & Hypothèse & Vitesses $\times$0,9 et $\times$1,1 ; cycle retour comparé à \cite{ChungTa2013} \\
+Chargement et déversement & 2,0 et 1,0~min en moyenne, log-normales & Hypothèse & Chargement $\times$0,8 et $\times$1,2 ; déversement $\times$1,2 \\
+Usure des pistes & 5\,\% par passage, $-0{,}02$, plancher 0,6 & Hypothèse & Usure $\times$2 \\
+Pannes des camions & 2\,\% ou 10\,\% par cycle ; réparation $\mathcal{U}(10,30)$~min & Conception des régimes & Mêmes pannes pour toutes les politiques (tests) \\
+Charge utile et camion & 140~t ; Cat 785D & Constructeur \cite{Caterpillar2019,Caterpillar785D2025} & Aucun \\
+Carburant en roulage & Courbes selon la pente $\times$ 0,447 & Mesures \cite{Kubler2015} ; facteur fixé sur les graines de sélection & 95,4~L/h, sous le maximum de 135,6~L/h \cite{Caterpillar2019} \\
+Carburant au ralenti & 11,3~L/h & Mesure \cite{Kubler2015} & 8 et 15~L/h \\
+Surconsommation sur piste dégradée & $+50\,\%$ à l'état plancher & Hypothèse non calibrée, \cref{sec:limitations} & Supprimée et doublée \\
+Files & Un camion à la fois, dans l'ordre d'arrivée ; pelles et verses sans panne & Hypothèse & Invariants testés dans chaque régime \\
+Poste & 480~min ; un cycle ne livre de tonnage que s'il se termine dans le poste & Convention & Tonnage égal au journal des cycles (tests) \\
+Flux aléatoires & Un flux par processus et par camion, partagés par toutes les politiques & Conception des expériences & Flux séparés (tests) \\
+Agents et LP statique & Hyperparamètres du \cref{tab:hyper} ; paramètre $u$ du LP statique & Mis au point sur les graines de sélection 20000 à 20009 & Tous les essais rapportés, \cref{sec:tuning} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 \textbf{Vérification.} 165 tests automatiques contrôlent le simulateur. Dans chaque régime, ils vérifient les invariants suivants : chaque camion est dans un seul état à tout instant, et a un cycle en cours si et seulement s'il roule ; une pelle ou une verse sert un camion à la fois, dans l'ordre d'arrivée, et ne reste jamais inoccupée lorsqu'un camion attend ; les événements simultanés sont traités dans un ordre fixe, les arrivées avant les décisions, puis selon l'indice du camion ; le tonnage d'un épisode égale la somme de son journal des cycles ; un cycle dont le déversement se termine après le poste est simulé jusqu'au bout, avec son carburant et ses pénalités, mais ne livre aucun tonnage ; chaque camion consomme au moins le ralenti de tout son temps à l'arrêt ; et la récompense de chaque cycle est versée une seule fois. D'autres tests contrôlent les flux aléatoires séparés, les bornes des compteurs en fin de poste et l'actualisation par minute de la \cref{sec:discount}.
 
 \textbf{Validation des ordres de grandeur.} Le simulateur n'est pas calibré sur un site, mais ses ordres de grandeur peuvent être comparés à des valeurs publiées. En conditions nominales avec l'Affectation fixe, un cycle dure 22,7~min sans attente ni panne, dont 2,0~min de chargement. Les 20,7~min restantes de trajets et de déversement se situent dans la plage de 15 à 25~min rapportée pour le cycle de retour des camions d'une mine de sables bitumineux \cite{ChungTa2013}, où le chargement dure 3 à 4~min avec des camions de 240 à 400~t. Un camion transporte 354~t/h, soit environ 2,5 chargements de 140~t par heure, et consomme 95,4~L/h, dans la plage moyenne publiée par le constructeur pour le Cat 785D et sous son maximum de 135,6~L/h \cite{Caterpillar2019} ; le ralenti, à 11,3~L/h, est une valeur mesurée sur un camion en exploitation \cite{Kubler2015}. Les pelles sont occupées 35\,\% du poste, en accord avec un facteur d'appariement de 0,35.

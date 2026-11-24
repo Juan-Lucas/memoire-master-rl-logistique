@@ -594,6 +594,36 @@ Randomness & \rev{v3}{one independent random stream per process and one breakdow
 
 Verification checks that the code implements the model as specified; validation checks that the model produces magnitudes of a plausible order. Both are reported separately.
 
+\Cref{tab:audit} gathers the assumptions of the simulator, their basis and the check applied to each of them; the paragraphs below detail the checks.
+
+\begin{table}[H]
+\centering
+\caption{Assumptions, calibration and checks of the simulator. Basis: assumption of the model, measurement or manufacturer value; check: automated test, validation of magnitudes or variant of \cref{tab:sensitivity}.}
+\label{tab:audit}
+\ifcorrmarks\color{corrcolor}\fi
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{3.3cm}}
+\toprule
+\textbf{Element} & \textbf{Value} & \textbf{Basis} & \textbf{Check} \\
+\midrule
+Topology and distances & 3 shovels, 2 dumps, 0.8 to 3.2~km (\cref{tab:simparams}) & Stylised mine, no site & Returns without grade \\
+Speeds and travel times & 26 and 32~km/h, $-3\%$ per grade point; log-normal, $\sigma = 0.12$ & Assumption & Speeds $\times$0.9 and $\times$1.1; back cycle compared with \cite{ChungTa2013} \\
+Loading and dumping & 2.0 and 1.0~min on average, log-normal & Assumption & Loading $\times$0.8 and $\times$1.2; dumping $\times$1.2 \\
+Road wear & 5\% per pass, $-0.02$, floor 0.6 & Assumption & Wear $\times$2 \\
+Truck breakdowns & 2\% or 10\% per cycle; repair $\mathcal{U}(10,30)$~min & Design of the regimes & Same breakdowns for all policies (tests) \\
+Payload and truck & 140~t; Cat 785D & Manufacturer \cite{Caterpillar2019,Caterpillar785D2025} & None \\
+Fuel when travelling & Curves by grade $\times$ 0.447 & Measurements \cite{Kubler2015}; factor set on selection seeds & 95.4~L/h, below the maximum of 135.6~L/h \cite{Caterpillar2019} \\
+Fuel when idling & 11.3~L/h & Measurement \cite{Kubler2015} & 8 and 15~L/h \\
+Overconsumption on degraded roads & $+50\%$ at the floor condition & Uncalibrated assumption, \cref{sec:limitations} & Removed and doubled \\
+Queues & One truck at a time, order of arrival; shovels and dumps never fail & Assumption & Invariants tested in each regime \\
+Shift & 480~min; a cycle delivers tonnage only if it ends within the shift & Convention & Tonnage equal to the cycle log (tests) \\
+Random streams & One stream per process and per truck, shared by all policies & Design of the experiments & Separate streams (tests) \\
+Agents and Static LP & Hyperparameters of \cref{tab:hyper}; parameter $u$ of Static LP & Tuned on selection seeds 20000 to 20009 & All trials reported, \cref{sec:tuning} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 \textbf{Verification.} 165 automated tests check the simulator. In each regime, they verify the following invariants: each truck is in exactly one state at any time, and has a cycle in progress if and only if it is travelling; a shovel or a dump serves one truck at a time, in the order of arrival, and never stays idle while a truck is waiting; simultaneous events are processed in a fixed order, arrivals before decisions, then by truck index; the tonnage of an episode equals the sum over its cycle log; a cycle whose dumping ends after the shift is simulated to the end, with its fuel and its penalties, but delivers no tonnage; each truck consumes at least the idling fuel of all its stationary time; and the reward of each cycle is paid exactly once. Other tests check the separate random streams, the bounds of the counters at the end of the shift and the discounting per minute of \cref{sec:discount}.
 
 \textbf{Validation of magnitudes.} The simulator is not calibrated on a site, but its magnitudes can be compared with published values. Under nominal conditions with Fixed Assignment, a cycle lasts 22.7~min without waiting or breakdowns, including 2.0~min of loading. The remaining 20.7~min of travel and dumping lie within the range of 15 to 25~min reported for the back cycle of haul trucks in an oil sands mine \cite{ChungTa2013}, where loading takes 3 to 4~min with trucks of 240 to 400~t. A truck hauls 354~t/h, about 2.5 loads of 140~t per hour, and consumes 95.4~L/h, within the medium range published by the manufacturer for the Cat 785D and below its maximum of 135.6~L/h \cite{Caterpillar2019}; idling, at 11.3~L/h, is a value measured on an operating truck \cite{Kubler2015}. Shovels are busy 35\% of the shift, consistently with a match factor of 0.35.
