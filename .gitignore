@@ -14,6 +14,8 @@
 !/data/results_v2/campagne/*_seed[0-9]/
 /data/results_v2/campagne/*_seed[0-9]/*
 !/data/results_v2/campagne/*_seed[0-9]/metadata.json
+# Expériences ajoutées après la campagne (rapport du 17/11/2026) : CSV de résultats.
+!/data/results_v2/extensions/
 
 # Articles PDF de la bibliographie (droits d'auteur : conservés en local seulement)
 references/**/*.pdf

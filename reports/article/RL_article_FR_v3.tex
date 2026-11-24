@@ -598,6 +598,35 @@ La vérification contrôle que le code met en œuvre le modèle tel qu'il est sp
 
 \textbf{Validation des ordres de grandeur.} Le simulateur n'est pas calibré sur un site, mais ses ordres de grandeur peuvent être comparés à des valeurs publiées. En conditions nominales avec l'Affectation fixe, un cycle dure 22,7~min sans attente ni panne, dont 2,0~min de chargement. Les 20,7~min restantes de trajets et de déversement se situent dans la plage de 15 à 25~min rapportée pour le cycle de retour des camions d'une mine de sables bitumineux \cite{ChungTa2013}, où le chargement dure 3 à 4~min avec des camions de 240 à 400~t. Un camion transporte 354~t/h, soit environ 2,5 chargements de 140~t par heure, et consomme 95,4~L/h, dans la plage moyenne publiée par le constructeur pour le Cat 785D et sous son maximum de 135,6~L/h \cite{Caterpillar2019} ; le ralenti, à 11,3~L/h, est une valeur mesurée sur un camion en exploitation \cite{Kubler2015}. Les pelles sont occupées 35\,\% du poste, en accord avec un facteur d'appariement de 0,35.
 
+\textbf{Sensibilité.} Chaque paramètre physique a été modifié séparément dans le régime nominal : durée de chargement $\times$0,8 et $\times$1,2, durée de déversement $\times$1,2, vitesses $\times$0,9 et $\times$1,1, retours à vide sans pente au lieu d'une montée, usure des pistes doublée, ralenti à 8 et 15~L/h au lieu de 11,3~L/h, et surconsommation sur piste dégradée supprimée ou doublée. Les six heuristiques et les cinq modèles PPO nominaux ont été évalués sans réentraînement sur 30 nouvelles réplications, graines 72 à 101, simulateur de référence compris, pour que toutes les comparaisons restent appariées (\cref{tab:sensitivity}). MTWT reste la politique la plus productive dans les douze variantes, et le classement par productivité change peu, avec une corrélation de Kendall d'au moins 0,81 avec la référence. PPO reste de 0,5 à 0,9\,\% sous MTWT, sauf lorsque l'usure des pistes est doublée, où l'écart atteint 2,8\,\% : les modèles PPO ont été entraînés avec l'usure nominale. Sa consommation plus faible par tonne se maintient dans toutes les variantes, de 1,4 à 3,6\,\% sous MTWT. Le classement par carburant par tonne change davantage, jusqu'à une corrélation de 0,62 lorsque la surconsommation sur piste dégradée est doublée, parce que LP, Pelle la plus proche et PPO sont à moins de 1\,\% les uns des autres sur cet indicateur.
+
+\begin{table}[H]
+\centering
+\caption{Sensibilité des résultats aux paramètres du simulateur, régime nominal, graines 72 à 101. MTWT est la politique la plus productive dans chaque variante. $\tau$ : corrélation de Kendall avec le classement de la référence ; $\Delta$ = PPO $-$ MTWT en \%, avec intervalle de confiance bootstrap apparié à 95\,\%.}
+\label{tab:sensitivity}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lccrr@{}}
+\toprule
+\textbf{Variante} & \textbf{$\tau$ prod.} & \textbf{$\tau$ carb.} & \textbf{$\Delta$ productivité (\%)} & \textbf{$\Delta$ carb. par tonne (\%)} \\
+\midrule
+Référence (simulateur nominal) & 1{,}00 & 1{,}00 & $-$0{,}6 [$-$0{,}9 ; $-$0{,}4] & $-$2{,}4 [$-$2{,}7 ; $-$2{,}1] \\
+\midrule
+Chargement $\times$0,8 & 0{,}81 & 1{,}00 & $-$0{,}8 [$-$1{,}1 ; $-$0{,}5] & $-$2{,}5 [$-$2{,}9 ; $-$2{,}2] \\
+Chargement $\times$1,2 & 0{,}90 & 0{,}81 & $-$0{,}8 [$-$1{,}0 ; $-$0{,}5] & $-$2{,}7 [$-$3{,}1 ; $-$2{,}3] \\
+Déversement $\times$1,2 & 1{,}00 & 1{,}00 & $-$0{,}7 [$-$0{,}8 ; $-$0{,}5] & $-$2{,}8 [$-$3{,}2 ; $-$2{,}4] \\
+Vitesses $\times$0,9 & 1{,}00 & 1{,}00 & $-$0{,}5 [$-$0{,}8 ; $-$0{,}2] & $-$2{,}6 [$-$3{,}1 ; $-$2{,}2] \\
+Vitesses $\times$1,1 & 1{,}00 & 1{,}00 & $-$0{,}9 [$-$1{,}1 ; $-$0{,}7] & $-$3{,}2 [$-$3{,}6 ; $-$2{,}8] \\
+Retours à vide sans pente & 0{,}90 & 0{,}90 & $-$0{,}9 [$-$1{,}1 ; $-$0{,}7] & $-$2{,}4 [$-$2{,}7 ; $-$2{,}0] \\
+Usure des pistes $\times$2 & 0{,}81 & 0{,}81 & $-$2{,}8 [$-$3{,}1 ; $-$2{,}5] & $-$3{,}6 [$-$4{,}0 ; $-$3{,}1] \\
+Ralenti 8~L/h & 1{,}00 & 1{,}00 & $-$0{,}6 [$-$0{,}8 ; $-$0{,}4] & $-$2{,}4 [$-$2{,}7 ; $-$2{,}1] \\
+Ralenti 15~L/h & 1{,}00 & 0{,}90 & $-$0{,}6 [$-$0{,}8 ; $-$0{,}4] & $-$2{,}3 [$-$2{,}6 ; $-$2{,}0] \\
+Surconsommation sur piste $\times$0 & 1{,}00 & 1{,}00 & $-$0{,}6 [$-$0{,}9 ; $-$0{,}4] & $-$3{,}4 [$-$3{,}8 ; $-$3{,}0] \\
+Surconsommation sur piste $\times$2 & 1{,}00 & 0{,}62 & $-$0{,}6 [$-$0{,}8 ; $-$0{,}4] & $-$1{,}4 [$-$1{,}7 ; $-$1{,}2] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \textbf{Portée.} Ces ordres de grandeur sont plausibles, mais le simulateur n'est pas calibré sur des données d'exploitation d'un site : les valeurs rapportées décrivent la performance relative des politiques dans cet environnement et ne sont pas des prévisions pour une mine réelle.
 \end{corrbloc}
 

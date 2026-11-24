@@ -64,6 +64,7 @@ from memoire_master_rl_logistique.simulation.reward import (
     compute_reward,
     reward_terms,
 )
+from memoire_master_rl_logistique.simulation.variants import NOMINAL_VARIANT, SimulationVariant
 
 from .observation_builder import build_observation, observation_size
 
@@ -129,6 +130,7 @@ class MineEnv(gym.Env):
         log_cycles: bool = False,
         fuel: FuelParams = DEFAULT_FUEL,
         seed_step: int = 1,
+        variant: SimulationVariant = NOMINAL_VARIANT,
     ) -> None:
         super().__init__()
         if seed_step < 1:
@@ -156,6 +158,8 @@ class MineEnv(gym.Env):
         self.log_cycles = log_cycles
         # Modèle de carburant (T14) : calibré par défaut, modifiable pour une étude de sensibilité.
         self.fuel = fuel
+        # Variante physique de la mine (analyse de sensibilité, M2) ; nominale par défaut.
+        self.variant = variant
         self.cycle_log: list[CycleRecord] = []
         # Décisions de l'épisode (T19), exposées dans ``info`` : toutes, et ATTENDRE seules.
         self.decision_count: int = 0
@@ -227,14 +231,16 @@ class MineEnv(gym.Env):
         self.graph = build_mine_graph(
             shovel_count=self.shovel_count,
             dump_count=self.dump_count,
+            speed_scale=self.variant.speed_scale,
+            flat_returns=self.variant.flat_returns,
         )
 
         self.shovels = [
             Shovel(
                 shovel_id=f"S{i + 1}",
                 node_id=f"shovel_{i + 1}",
-                load_time_mean_min=LOAD_TIME_MEAN_MIN,
-                load_time_std_min=LOAD_TIME_STD_MIN,
+                load_time_mean_min=LOAD_TIME_MEAN_MIN * self.variant.load_time_scale,
+                load_time_std_min=LOAD_TIME_STD_MIN * self.variant.load_time_scale,
             )
             for i in range(self.shovel_count)
         ]
@@ -243,8 +249,8 @@ class MineEnv(gym.Env):
             DumpSite(
                 dump_id=f"D{i + 1}",
                 node_id=f"dump_{i + 1}",
-                unload_time_mean_min=UNLOAD_TIME_MEAN_MIN,
-                unload_time_std_min=UNLOAD_TIME_STD_MIN,
+                unload_time_mean_min=UNLOAD_TIME_MEAN_MIN * self.variant.unload_time_scale,
+                unload_time_std_min=UNLOAD_TIME_STD_MIN * self.variant.unload_time_scale,
             )
             for i in range(self.dump_count)
         ]
@@ -712,7 +718,7 @@ class MineEnv(gym.Env):
             loaded=loaded,
             params=self.fuel,
         )
-        if self.rng_road.random() < 0.05:
+        if self.rng_road.random() < self.variant.road_wear_probability:
             edge.road_state = max(0.6, edge.road_state - 0.02)
         return travel_min, travel_fuel_l
 

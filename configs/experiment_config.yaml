@@ -8,6 +8,7 @@ project: memoire-master-rl-logistique
 # Trois ensembles disjoints (T26, vérifié par tests/test_seeds.py).
 seeds:
   evaluation: {start: 42, count: 30}      # 42 à 71 : les 30 réplications appariées
+  evaluation_extension: {start: 72, count: 30}  # 72 à 101 : expériences ajoutées après la campagne (rapport du 17/11/2026)
   tuning: {start: 20000, count: 10}       # 20 000 à 20 009 : sélection des hyperparamètres (T25 bis)
   training: [1, 2, 3, 4, 5]               # graines d'entraînement
   training_episode_stride: 1000000        # épisodes d'entraînement : s × 1 000 000 + n° d'épisode

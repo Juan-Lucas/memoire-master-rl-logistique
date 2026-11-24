@@ -41,7 +41,7 @@ def make_env(scenario: Scenario, **kwargs: Any) -> MineEnv:
         episode_minutes=scenario.episode_minutes,
         breakdown_probability=scenario.breakdown_probability,
         reward_weights=scenario.reward_weights,
-        **kwargs,
+        **{"variant": scenario.variant, "fuel": scenario.fuel, **kwargs},
     )
 
 
@@ -86,7 +86,9 @@ def heuristic_policies(
         "ShortestPath": _baseline_fn(
             ShortestPathPolicy(env.graph, shovel_nodes, dump_nodes), needs_graph_sync=True),
         "MTWT": _baseline_fn(
-            MTWTPolicy(env.graph, shovel_nodes, dump_nodes), needs_graph_sync=True),
+            MTWTPolicy(env.graph, shovel_nodes, dump_nodes,
+                       load_time_min=env.shovels[0].load_time_mean_min),
+            needs_graph_sync=True),
         "LP": _baseline_fn(
             LPDispatchPolicy(env.graph, shovel_nodes, dump_nodes,
                              lp_plan(scenario, lp_max_utilization)),

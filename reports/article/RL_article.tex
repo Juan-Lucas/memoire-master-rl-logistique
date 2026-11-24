@@ -596,6 +596,35 @@ Verification checks that the code implements the model as specified; validation 
 
 \textbf{Validation of magnitudes.} The simulator is not calibrated on a site, but its magnitudes can be compared with published values. Under nominal conditions with Fixed Assignment, a cycle lasts 22.7~min without waiting or breakdowns, including 2.0~min of loading. The remaining 20.7~min of travel and dumping lie within the range of 15 to 25~min reported for the back cycle of haul trucks in an oil sands mine \cite{ChungTa2013}, where loading takes 3 to 4~min with trucks of 240 to 400~t. A truck hauls 354~t/h, about 2.5 loads of 140~t per hour, and consumes 95.4~L/h, within the medium range published by the manufacturer for the Cat 785D and below its maximum of 135.6~L/h \cite{Caterpillar2019}; idling, at 11.3~L/h, is a value measured on an operating truck \cite{Kubler2015}. Shovels are busy 35\% of the shift, consistently with a match factor of 0.35.
 
+\textbf{Sensitivity.} Each physical parameter was varied separately in the nominal regime: loading time $\times$0.8 and $\times$1.2, dumping time $\times$1.2, speeds $\times$0.9 and $\times$1.1, empty returns without grade instead of climbing, twice the road wear, idling at 8 and 15~L/h instead of 11.3~L/h, and overconsumption on degraded roads removed or doubled. The six heuristics and the five nominal PPO models were evaluated without retraining over 30 new replications, seeds 72 to 101, the reference simulator included, so that every comparison remains paired (\cref{tab:sensitivity}). MTWT remains the most productive policy in all twelve variants, and the productivity ranking changes little, with a Kendall correlation of at least 0.81 with the reference. PPO stays 0.5 to 0.9\% below MTWT, except when road wear is doubled, where the gap widens to 2.8\%: the PPO models were trained with the nominal wear. Its lower fuel consumption per tonne holds in every variant, 1.4 to 3.6\% below MTWT. The ranking by fuel per tonne changes more, down to a correlation of 0.62 when overconsumption on degraded roads is doubled, because LP, Nearest Shovel and PPO are within 1\% of one another on this indicator.
+
+\begin{table}[H]
+\centering
+\caption{Sensitivity of the results to the parameters of the simulator, nominal regime, seeds 72 to 101. MTWT is the most productive policy in every variant. $\tau$: Kendall correlation with the ranking of the reference; $\Delta$ = PPO $-$ MTWT in \%, with 95\% paired bootstrap confidence interval.}
+\label{tab:sensitivity}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lccrr@{}}
+\toprule
+\textbf{Variant} & \textbf{$\tau$ prod.} & \textbf{$\tau$ fuel} & \textbf{$\Delta$ productivity (\%)} & \textbf{$\Delta$ fuel per tonne (\%)} \\
+\midrule
+Reference (nominal simulator) & 1.00 & 1.00 & $-$0.6 [$-$0.9; $-$0.4] & $-$2.4 [$-$2.7; $-$2.1] \\
+\midrule
+Loading time $\times$0.8 & 0.81 & 1.00 & $-$0.8 [$-$1.1; $-$0.5] & $-$2.5 [$-$2.9; $-$2.2] \\
+Loading time $\times$1.2 & 0.90 & 0.81 & $-$0.8 [$-$1.0; $-$0.5] & $-$2.7 [$-$3.1; $-$2.3] \\
+Dumping time $\times$1.2 & 1.00 & 1.00 & $-$0.7 [$-$0.8; $-$0.5] & $-$2.8 [$-$3.2; $-$2.4] \\
+Speeds $\times$0.9 & 1.00 & 1.00 & $-$0.5 [$-$0.8; $-$0.2] & $-$2.6 [$-$3.1; $-$2.2] \\
+Speeds $\times$1.1 & 1.00 & 1.00 & $-$0.9 [$-$1.1; $-$0.7] & $-$3.2 [$-$3.6; $-$2.8] \\
+Empty returns without grade & 0.90 & 0.90 & $-$0.9 [$-$1.1; $-$0.7] & $-$2.4 [$-$2.7; $-$2.0] \\
+Road wear $\times$2 & 0.81 & 0.81 & $-$2.8 [$-$3.1; $-$2.5] & $-$3.6 [$-$4.0; $-$3.1] \\
+Idling 8~L/h & 1.00 & 1.00 & $-$0.6 [$-$0.8; $-$0.4] & $-$2.4 [$-$2.7; $-$2.1] \\
+Idling 15~L/h & 1.00 & 0.90 & $-$0.6 [$-$0.8; $-$0.4] & $-$2.3 [$-$2.6; $-$2.0] \\
+Road overconsumption $\times$0 & 1.00 & 1.00 & $-$0.6 [$-$0.9; $-$0.4] & $-$3.4 [$-$3.8; $-$3.0] \\
+Road overconsumption $\times$2 & 1.00 & 0.62 & $-$0.6 [$-$0.8; $-$0.4] & $-$1.4 [$-$1.7; $-$1.2] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \textbf{Scope.} These magnitudes are of a plausible order, but the simulator is not calibrated on operational data from a site: the reported values describe the relative performance of the policies in this environment and are not predictions for a real mine.
 \end{corrbloc}
 
