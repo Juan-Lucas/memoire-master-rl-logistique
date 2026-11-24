@@ -159,10 +159,12 @@ def test_libelles_des_figures_en_anglais(tmp_path):
     try:
         common.set_language("en")
         assert common.policy_label("Fixed") == "Fixed Assignment"
+        assert common.policy_label("LP") == "Static LP"
         assert common.SCENARIO_LABELS["high_breakdown"] == "Frequent breakdowns"
         assert common.tr("Politique", "Policy") == "Policy"
         common.set_language("fr")
         assert common.policy_label("Fixed") == "Affectation fixe"
+        assert common.policy_label("LP") == "LP statique"
         assert common.tr("Politique", "Policy") == "Politique"
         with pytest.raises(ValueError):
             common.set_language("de")

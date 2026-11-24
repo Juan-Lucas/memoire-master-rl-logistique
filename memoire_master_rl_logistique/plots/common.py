@@ -31,7 +31,7 @@ POLICY_LABELS = {
     "ShortestPath": "Plus court chemin",
     # Sigles des tableaux de l'article v3 (définis dans la section 5.7).
     "MTWT": "MTWT",
-    "LP": "LP",
+    "LP": "LP statique",
     "Q-Learning": "Q-Learning",
     "SARSA": "SARSA",
     "DQN": "DQN",
@@ -56,7 +56,7 @@ _LABELS = {
            "wait": dict(WAIT_LABELS)},
     "en": {
         "policy": {**POLICY_LABELS, "Fixed": "Fixed Assignment", "Nearest": "Nearest Shovel",
-                   "ShortestPath": "Shortest Path"},
+                   "ShortestPath": "Shortest Path", "LP": "Static LP"},
         "scenario": {"nominal": "Nominal", "high_load": "High load",
                      "high_breakdown": "Frequent breakdowns"},
         "wait": {"queue_wait_min_per_truck": "Queueing time per truck (min per shift)",
