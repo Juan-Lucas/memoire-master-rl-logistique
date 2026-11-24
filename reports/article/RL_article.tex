@@ -68,6 +68,14 @@
 \newcommand{\revtag}[1]{\ifrevmarks\textsuperscript{\textcolor{red!70!black}{\scriptsize[#1]}}\fi}
 \newcommand{\rev}[2]{\ifrevmarks{\color{revcolor}#2}\revtag{#1}\else#2\fi}
 \newenvironment{revbloc}[1]{\par\ifrevmarks\color{revcolor}\noindent\revtag{#1}\ \fi}{\par}
+
+% Corrections du rapport de la directrice du 17/11/2026 : en bleu tant que \corrmarkstrue.
+% \corrmarksfalse avant la soumission : tout repasse en noir.
+\newif\ifcorrmarks
+\corrmarkstrue
+\definecolor{corrcolor}{RGB}{0,90,200}
+\newcommand{\corr}[1]{\ifcorrmarks{\color{corrcolor}#1}\else#1\fi}
+\newenvironment{corrbloc}{\par\ifcorrmarks\color{corrcolor}\fi}{\par}
 \newcommand{\aexp}[1]{\ifrevmarks\textcolor{orange!85!black}{\textbf{[EXPERIMENT TO RUN: #1]}}\fi}
 \newcommand{\adir}[1]{\ifrevmarks\textcolor{violet}{\textbf{[TO VALIDATE WITH THE SUPERVISOR: #1]}}\fi}
 \newcommand{\afig}[1]{\ifrevmarks\textcolor{green!45!black}{\textbf{[FIGURE TO REGENERATE: #1]}}\fi}
@@ -100,7 +108,7 @@ Jean-Luc Mupasa Kalunga$^{1,*}$ \qquad Olfa Ferchichi$^{2}$\\[0.5em]
 
 \begin{abstract}
 \begin{revbloc}{m1, m2, M1, M3, v3, T31}
-Truck--shovel haulage can account for up to 60\% of the operating costs of an open-pit mine and is highly sensitive to disruptions. Reinforcement learning studies of truck dispatching usually evaluate a single training run, in a single operating regime, against static heuristics, so the actual value of learning remains unclear. We compare ten dispatching policies in a stochastic discrete-event simulator: six heuristics, including a rule that minimises predicted waiting time and a linear programming policy, two tabular agents, Q-Learning and State--Action--Reward--State--Action, and two deep agents, Deep Q-Network and Proximal Policy Optimization. The problem is formulated as a semi-Markov decision process with discounting per minute. The agents are tuned under a rule fixed in advance, on seeds distinct from the evaluation seeds, and trained with five seeds each. All policies are evaluated over 30 paired replications in three regimes (nominal conditions, a 50\% larger fleet and frequent breakdowns), and agents trained under nominal conditions are also tested without retraining in disrupted and unseen regimes. This rule is the most productive in every regime. Proximal Policy Optimization comes within 0.5--0.9\% of it, on par with the linear programming policy, uses 1.4--2.8\% less fuel per tonne and transfers to new regimes almost without loss. Deep Q-Network collapses onto the waiting action in four of its five models, and the tabular agents degrade as exploration decreases. No agent outperforms the best heuristic: here, the value of learning lies in fuel efficiency and robustness, and learned dispatchers should be benchmarked against rules that account for queues rather than static ones.
+Truck--shovel haulage can \corr{account for up to 60\% of operating costs in an open-pit mine} and is highly sensitive to disruptions. Reinforcement learning studies of truck dispatching usually evaluate a single training run, in a single operating regime, against static heuristics, so the actual value of learning remains unclear. We compare ten dispatching policies in a stochastic discrete-event simulator: six heuristics, including a rule that minimises predicted waiting time and a linear programming policy, two tabular agents, Q-Learning and State--Action--Reward--State--Action, and two deep agents, Deep Q-Network and Proximal Policy Optimization. The problem is formulated as a semi-Markov decision process with discounting per minute. \corr{Each agent is tuned on separate seeds and trained with five seeds.} All policies are evaluated over 30 paired replications in three regimes (nominal conditions, a 50\% larger fleet and frequent breakdowns), \corr{and nominal agents are tested without retraining} in disrupted and unseen regimes. \corr{The waiting time rule is the most productive in every regime.} Proximal Policy Optimization comes within 0.5--0.9\% of it, on par with the linear programming policy, uses 1.4--2.8\% less fuel per tonne and transfers to new regimes almost without loss. Deep Q-Network collapses onto the waiting action in four of its five models, and the tabular agents degrade as exploration decreases. \corr{No agent outperforms the best heuristic. In this synthetic mine, Proximal Policy Optimization is useful when fuel matters or when fleet size and breakdown rate vary, not for productivity alone, and learned dispatchers should be measured against rules that account for queues.}
 \end{revbloc}
 \end{abstract}
 
@@ -138,7 +146,7 @@ Four learning algorithms are studied. Q-Learning and State--Action--Reward--Stat
 % ---------------------------------------------------------
 
 \begin{revbloc}{M23, M24}
-The objective of this work is to determine in which operating regimes a learned dispatching policy is preferable to an industrial rule, and to explain the observed differences from the behaviour of the policies. The contribution is evaluative: no new algorithm is proposed, and the contribution lies in a controlled comparison protocol applied to \rev{T31}{ten policies} and three regimes.
+\corr{The central question of this work is the following: under which operating conditions does deep reinforcement learning provide measurable benefits over strong dispatching heuristics that account for queues, and how reliably do these benefits persist under disruptions? The observed differences are explained from the behaviour of the policies.} The contribution is evaluative: no new algorithm is proposed, and the contribution lies in a controlled comparison protocol applied to \rev{T31}{ten policies} and three regimes.
 
 The rest of the article is organised as follows. \Cref{sec:relwork} (\nameref{sec:relwork}) reviews the literature on truck dispatching along three paradigms. \Cref{sec:positioning} (\nameref{sec:positioning}) summarises this literature in a positioning table and derives the research gap, the problem studied, the research questions and the hypotheses. \Cref{sec:contributions} (\nameref{sec:contributions}) presents the contributions and the methodological framework. \Cref{sec:approach} (\nameref{sec:approach}) describes the modelled system, the simulator, the formulation of the decision problem and the agents studied. \Cref{sec:design} (\nameref{sec:design}) details the experimental protocol and \cref{sec:results} (\nameref{sec:results}) the results. \Cref{sec:discussion} (\nameref{sec:discussion}) discusses these results and their limitations, and \cref{sec:conclusion} (\nameref{sec:conclusion}) concludes the article.
 \end{revbloc}
@@ -373,15 +381,19 @@ Proof-of-concept dispatching
 % ---------------------------------------------------------
 
 \begin{revbloc}{M24 (merger of §1.3, §2.4, §3)}
-The literature reviewed and \cref{tab:litterature} reveal four complementary gaps.
+\corr{Existing studies provide limited evidence on whether deep reinforcement learning remains competitive with dispatching baselines that account for queues across operating regimes, particularly when the variability due to training and the stochasticity of the environment are evaluated separately. The literature reviewed and \cref{tab:litterature} break this gap down into four unresolved evaluative questions.}
 
-First, the three paradigms reviewed are rarely compared with one another. Studies of dispatching rules compare them with each other \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, mathematical programming compares an optimiser with a rule or with a mixed-integer formulation \cite{Soumis1989, AmandaSmith2020}, and learning studies compare an agent with a small number of baseline rules \cite{deCarvalho2023, Zhao2025}. When comparisons across families exist, the algorithms are evaluated on different environments, rewards or fleet configurations, which prevents attributing an observed difference to the dispatching logic itself.
+\corr{First, does the ranking of dispatching policies hold when policies from different families are compared in the same environment?} The three paradigms reviewed are rarely compared with one another. Studies of dispatching rules compare them with each other \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, mathematical programming compares an optimiser with a rule or with a mixed-integer formulation \cite{Soumis1989, AmandaSmith2020}, and learning studies compare an agent with a small number of baseline rules \cite{deCarvalho2023, Zhao2025}. When comparisons across families exist, the algorithms are evaluated on different environments, rewards or fleet configurations, which prevents attributing an observed difference to the dispatching logic itself.
 
-Second, the operating regime is usually treated as a fixed context rather than as an experimental factor. Reviews of fleet management with reinforcement learning observe that most contributions remain at the proof-of-concept stage and are evaluated in stable environments \cite{Hazrathosseini2024}, and studies that do consider disruptions usually consider only one type, most often congestion \cite{Zeng2022}. A reported ranking is therefore conditional on a single operating point.
+\corr{Second, does this ranking hold when the operating regime changes? The regime} is usually treated as a fixed context rather than as an experimental factor. Reviews of fleet management with reinforcement learning observe that most contributions remain at the proof-of-concept stage and are evaluated in stable environments \cite{Hazrathosseini2024}, and studies that do consider disruptions usually consider only one type, most often congestion \cite{Zeng2022}. A reported ranking is therefore conditional on a single operating point.
 
-Third, the strength of the baselines is often insufficient. Learning studies report improvements over two or three baseline rules \cite{Zhao2025}, and sometimes over none \cite{deCarvalho2023}. When the comparison rule is weak, an improvement establishes little about the practical value of the learned policy.
+\corr{Third, does a learned policy outperform a rule that already accounts for queues? The baselines are often too weak to answer this question.} Learning studies report improvements over two or three baseline rules \cite{Zhao2025}, and sometimes over none \cite{deCarvalho2023}. When the comparison rule is weak, an improvement establishes little about the practical value of the learned policy.
 
-Fourth, the inferential protocol is rarely documented. The number of replications, the control of random seeds and corrections for multiple comparisons are rarely reported in the literature on mine dispatching \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, whereas the literature on the evaluation of reinforcement learning agents has shown that these choices change the conclusions \cite{Henderson2018, Agarwal2021}.
+\corr{Fourth, are the observed differences larger than the variability between training runs and between replications?} The inferential protocol is rarely documented. The number of replications, the control of random seeds and corrections for multiple comparisons are rarely reported in the literature on mine dispatching \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, whereas the literature on the evaluation of reinforcement learning agents has shown that these choices change the conclusions \cite{Henderson2018, Agarwal2021}.
+
+\begin{corrbloc}
+\textbf{Closest studies.} Banerjee et al.~\cite{Banerjee2025} compare PPO with random and fixed assignment in six scenarios, from normal operation to severe equipment failures; their results are averaged over ten runs, and confidence intervals are left to future work. Rosales and Diaz~\cite{FranciscoRosales2025} compare a deep Q-learning agent with random and greedy policies and with heuristics based on distance or waiting time. De Carvalho and Dimitrakopoulos~\cite{deCarvalho2023} compare an actor--critic agent with a conventional planning approach in two steps, and Zhao et al.~\cite{Zhao2025} compare their agents with two or three baseline rules. Pei et al.~\cite{Pei2025} evaluate learned dispatching without retraining for autonomous haulage. None of these studies combines a baseline that accounts for queues, several operating regimes and a separate report of the variability due to training, which is the combination evaluated here.
+\end{corrbloc}
 \end{revbloc}
 
 % ---------------------------------------------------------
@@ -457,14 +469,22 @@ This section states the contributions of the study, then presents the methodolog
 \subsection{Contributions}
 
 \begin{revbloc}{M23, M24, M26, M16}
-This work makes four contributions.
+\begin{corrbloc}
+This work makes two methodological contributions and reports three empirical findings.
 
+\noindent\textbf{Methodological contributions.}
 \begin{itemize}
-  \item \textbf{C1. An evaluation protocol across several regimes.} A stochastic simulator compatible with the Gymnasium interface is combined with a measurement protocol that treats the operating regime as an experimental factor, evaluates each policy over 30 paired replications and applies paired tests corrected for multiple comparisons.
-  \item \textbf{C2. A comparison of \rev{T31}{ten} policies from different families.} \rev{T31}{Six heuristics, including a rule based on predicted waiting time (MTWT) and a policy based on a linear program (LP),} two tabular learning agents and two deep learning agents are evaluated in the same environment, with the same actions, the same seeds and the same indicators.
-  \item \textbf{C3. An analysis of policy behaviour.} The allocation of cycles among shovels and the use of the waiting action, measured over all replications, explain the differences in productivity and queueing between policies.
-  \item \textbf{C4. Evidence on regime dependence.} The ranking of policies is compared across regimes, the interaction between policy and regime is tested, and an evaluation without retraining shows to what extent a policy learned under nominal conditions keeps its performance under disruption.
+  \item \textbf{C1. A controlled evaluation protocol across operating regimes.} Ten policies from different families, six heuristics including a rule based on predicted waiting time (MTWT) and a policy based on a linear program (LP), two tabular agents and two deep agents, are evaluated in the same stochastic simulator compatible with the Gymnasium interface, with the same actions, seeds and indicators. The operating regime is treated as an experimental factor; each policy is evaluated over 30 paired replications per regime, each agent is trained with five seeds, and paired tests are corrected for multiple comparisons.
+  \item \textbf{C2. A semi-Markov formulation of truck dispatching with discounting per minute.} Decisions of variable duration are discounted by the simulated time that separates them, which removes a bias of discounting per decision observed during agent tuning.
 \end{itemize}
+
+\noindent\textbf{Empirical findings.}
+\begin{itemize}
+  \item \textbf{F1. Ranking and regime dependence.} MTWT is the most productive policy in all three regimes; PPO and LP follow within 1\%. The interaction between policy and regime is tested.
+  \item \textbf{F2. Transfer without retraining.} PPO trained under nominal conditions loses 0.8\% of productivity or less when it is deployed without retraining in the two disrupted regimes.
+  \item \textbf{F3. A fuel trade-off explained by behaviour.} PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT because it sends fewer cycles to the farthest shovel, as the allocation of cycles among shovels shows.
+\end{itemize}
+\end{corrbloc}
 \end{revbloc}
 
 \subsection{Methodological framework}
@@ -486,7 +506,7 @@ This work makes four contributions.
 % ============================================================================
 % Section 5: Proposed approach
 % ============================================================================
-\section{Proposed approach: model, simulator and agents}
+\section{\texorpdfstring{\corr{Simulation model, decision problem and agents}}{Simulation model, decision problem and agents}}
 \label{sec:approach}
 
 \rev{M23}{This section describes the modelled system, the simulator, the formulation of the decision problem, the reward function, the learning agents and the reference heuristics. All values given are those of the evaluated implementation.}
@@ -1646,9 +1666,9 @@ PPO                  & $0.237\pm0.001$ & \boldmath{$0.248\pm0.002$} & $0.242\pm0
 \label{sec:conclusion}
 
 \begin{revbloc}{T31}
-This study examined whether dispatching policies learned by reinforcement do better than reference rules in an open-pit mine, and whether their advantage holds when the operating regime changes. Ten policies, six heuristics and four learning agents, were compared in the same discrete-event simulator and in three regimes, over 30 paired replications, with 5 models per agent, tuning carried out on seeds distinct from the evaluation under a rule fixed in advance, and comparisons fixed before the campaign.
+\corr{This study examined under which operating conditions deep reinforcement learning provides measurable benefits over strong dispatching heuristics that account for queues in an open-pit mine, and whether these benefits persist when the operating regime changes.} Ten policies, six heuristics and four learning agents, were compared in the same discrete-event simulator and in three regimes, over 30 paired replications, with 5 models per agent, tuning carried out on seeds distinct from the evaluation under a rule fixed in advance, and comparisons fixed before the campaign.
 
-Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with a policy based on a linear program, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, and its performance holds almost without loss when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: DQN collapses onto the waiting action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes.
+Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with a policy based on a linear program, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, and its performance holds almost without loss when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: DQN collapses onto the waiting action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes. \corr{PPO is therefore useful when fuel consumption matters and when fleet size or breakdown rate vary, not when productivity alone is the objective.}
 
 These results suggest that the value of reinforcement learning for dispatching should be measured against rules that account for queues rather than static ones, and that it lies here less in productivity than in the trade-off with fuel and in stability outside the training regime. They remain conditional on the simulator used, which has not been calibrated on site data.
 
