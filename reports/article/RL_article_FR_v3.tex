@@ -76,7 +76,7 @@
 \newif\ifcorrmarks
 \corrmarkstrue
 \definecolor{corrcolor}{RGB}{0,90,200}
-\newcommand{\corr}[1]{\ifcorrmarks{\color{corrcolor}#1}\else#1\fi}
+\newcommand{\corr}[1]{\ifcorrmarks\textcolor{corrcolor}{#1}\else#1\fi}
 \newenvironment{corrbloc}{\par\ifcorrmarks\color{corrcolor}\fi}{\par}
 \newcommand{\aexp}[1]{\ifrevmarks\textcolor{orange!85!black}{\textbf{[EXPÉRIENCE À FAIRE : #1]}}\fi}
 \newcommand{\adir}[1]{\ifrevmarks\textcolor{violet}{\textbf{[À VALIDER AVEC LA DIRECTRICE : #1]}}\fi}
@@ -442,7 +442,7 @@ Trois hypothèses réfutables, formulées avant l'analyse des résultats, guiden
 
 \begin{itemize}
   \item \textbf{H1 :} en conditions nominales, les politiques d'apprentissage par renforcement profond obtiennent une productivité supérieure à celle de la meilleure heuristique.
-  \item \textbf{H2 :} aucune politique ne domine dans les trois régimes : le classement dépend du régime, ce qui se traduit par une interaction significative entre politique et régime.
+  \item \textbf{H2 :} aucune politique ne domine dans les trois régimes : le classement dépend du régime, ce qui se traduit par une interaction significative entre politique et régime. \corr{Elle est scindée en H2a, aucune politique ne domine dans les trois régimes, et H2b, l'interaction entre politique et régime est significative : une interaction portée par le bas du classement n'établit pas H2a.}
   \item \textbf{H3 :} une productivité élevée ne s'accompagne pas nécessairement d'une faible attente en file, de sorte que plusieurs politiques forment un compromis entre ces deux critères.
 \end{itemize}
 \end{revbloc}
@@ -695,7 +695,7 @@ G_t = \sum_{l \geq 0} \Big( \prod_{m=0}^{l-1} \gamma_{\min}^{\Delta t_{t+m}} \Bi
 \end{equation}
 où $\tau_t$ est l'heure de la décision $t$ dans le poste. Le temps qui compte devient celui de la mine, et non le nombre de décisions.
 
-\textbf{Aucun paramètre nouveau.} Le facteur par minute est déduit du $\gamma$ de chaque algorithme par $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, où $\bar{\Delta} = 1{,}89$~min est l'intervalle moyen entre deux décisions de l'Affectation fixe en conditions nominales. Une décision de durée moyenne est donc actualisée exactement comme avec un facteur par décision. Avec $\gamma = 0{,}995$, l'horizon effectif reste en moyenne d'environ 200 décisions, soit environ 377~minutes en conditions nominales. Il ne dépend pas de la taille de la flotte, alors qu'avec une actualisation par décision il raccourcirait en minutes quand les décisions deviennent plus fréquentes, par exemple en forte charge.
+\textbf{Aucun paramètre nouveau.} Le facteur par minute est déduit du $\gamma$ de chaque algorithme par $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, où $\bar{\Delta} = 1{,}89$~min est l'intervalle moyen entre deux décisions de l'Affectation fixe en conditions nominales. Une décision de durée moyenne est donc actualisée exactement comme avec un facteur par décision. Avec $\gamma = 0{,}995$, l'horizon effectif reste en moyenne d'environ 200 décisions, soit environ 377~minutes en conditions nominales. Il ne dépend pas de la taille de la flotte, alors qu'avec une actualisation par décision il raccourcirait en minutes quand les décisions deviennent plus fréquentes, par exemple en forte charge. \corr{Comme $\gamma_{\min} = \gamma^{1/\bar\Delta}$, le choix de l'intervalle de référence ne fait que changer l'échelle de l'horizon en minutes, $\bar\Delta/(1-\gamma)$ : 300, 378 et 500~min pour $\bar\Delta = 1{,}5$, 1,89 et 2,5~min, toutes de l'ordre du poste. L'Affectation fixe sert de référence parce qu'elle n'attend jamais et que ses cycles sont stables ; l'intervalle de MTWT, 1,81~min, donnerait 362~min.}
 
 \textbf{Pourquoi.} Avec une actualisation par décision, une décision qui dure 0,2~min et un cycle vers la pelle la plus éloignée retardent autant la suite, alors que l'un dure cent fois plus que l'autre. La mise au point des agents, rapportée à la \cref{sec:tuning}, a montré deux conséquences mesurées de ce défaut. Les agents à valeurs dérivaient vers la pelle la plus éloignée, puisqu'un long trajet ne retarde pas la production suivante en nombre de décisions. Quand un cycle rapportait en moyenne une valeur négative, enchaîner des attentes de 0,2~min repoussait ce coût de nombreuses décisions pour quelques minutes seulement. L'actualisation par minute corrige la cause commune de ces deux défauts sans modifier la récompense.
 
@@ -761,6 +761,8 @@ avec $w_1 = 1$, $w_2 = 0{,}1$, $w_3 = 0{,}05$ et $w_4 = 0{,}3$, et où :
   \item $p^{\mathrm{att}}_c = \min\big((W^{\mathrm{pelle}}_c + W^{\mathrm{verse}}_c)/30\,;\,1\big)$ pénalise l'attente en file réellement subie pendant le cycle, en minutes, divisée par 30 et plafonnée à 1.
 \end{itemize}
 
+\corr{Dans $p^{\mathrm{bal}}_c$, $\omega_j$ est en minutes, si bien que la variance est en min$^2$ ; l'échelle de 100~min$^2$ ramène le terme à l'ordre de 1. Sur un poste nominal, les termes pondérés de MTWT valent 253,6 pour la production, $-2{,}1$ pour l'équilibre, $-19{,}2$ pour la distance et $-1{,}5$ pour l'attente, et ceux de PPO 252,3, $-3{,}3$, $-18{,}6$ et $-2{,}0$ : la production domine, et la distance est la principale pénalité.}
+
 \textbf{Moment du versement.} La récompense d'un cycle n'est connue qu'à sa fin, puisque les files dépendent des arrivées des autres camions. Elle est versée au pas pendant lequel le cycle se termine. La récompense $R_t$ d'un pas est donc la somme des récompenses des cycles terminés depuis la décision précédente, quel que soit le camion, augmentée du coût d'une ATTENDRE si c'est l'action choisie. À la fin du poste, les cycles en cours sont menés à terme : la somme des $R_t$ sur un poste est la somme des récompenses de tous ses cycles. \corr{Leur carburant et leurs pénalités sont comptés, mais leur terme de production est nul lorsque la verse est atteinte après 480~min, en accord avec la règle du \cref{tab:simparams} qui ne compte que le tonnage livré avant la fin du poste.} Une version où la récompense était estimée et versée au moment de la décision a été essayée puis rejetée pendant la mise au point de la \cref{sec:tuning}.
 
 \textbf{Coût d'une attente volontaire.} Pour l'action ATTENDRE, de durée $\delta_t$, la récompense vaut
@@ -823,12 +825,14 @@ Coefficient d'entropie         & \textbf{0}     & s.o. & s.o. & s.o. \\
 Tampon de rejeu / échauffement & s.o. & 200\,000 / 1\,000 & s.o. & s.o. \\
 Mise à jour du réseau cible    & s.o. & tous les 1\,000 pas & s.o. & s.o. \\
 Exploration $\varepsilon$      & s.o. & $1\to0{,}02$, \textbf{10\,\%} des pas & \multicolumn{2}{c}{$1\to0{,}01$, sur les épisodes} \\
-Budget d'entraînement          & 2\,000\,000 pas & 2\,000\,000 pas & 30\,000 épisodes & 30\,000 épisodes \\
+\corr{Postes simulés par entraînement} & \corr{environ 7\,500} & \corr{2\,800 à 3\,300} & \corr{30\,000} & \corr{30\,000} \\
+\corr{Temps de calcul par entraînement (min)} & \corr{341 à 346} & \corr{225 à 351} & \corr{230 à 275} & \corr{279 à 361} \\
 \bottomrule
 \end{tabular}
 \\[4pt]
 \raggedright
 \footnotesize $^{a}$\,Valeur par défaut de la bibliothèque SB3 : Tanh pour les algorithmes on-policy (PPO) ; ReLU pour les algorithmes off-policy (DQN).\\
+\corr{Temps mesurés pendant la campagne, quatre entraînements en parallèle sur 8 cœurs. Les budgets ne sont pas égaux d'une méthode à l'autre : la comparaison entre agents tabulaires et profonds ne se fait pas à budget égal.}\\
 \end{table}
 
 \subsubsection{Deep Q-Network}
@@ -843,7 +847,7 @@ y = r + \gamma_{\min}^{\Delta t} \max_{a'} Q_{\theta^-}(s', a') ,
 \label{sec:tabular}
 
 \begin{revbloc}{M8, v3}
-Q-Learning \cite{WatkinsDayan1992} et SARSA \cite{RummeryNiranjan1994} stockent une valeur pour chaque couple état--action dans une table. L'état de 23 composantes étant trop grand pour une table, il est réduit à six variables. Les cinq premières sont les temps d'attente aux 3 pelles et aux 2 verses, découpés en 6 intervalles égaux entre 0 et 9,6~min (au-delà, la valeur sature). La sixième est l'indice de la pelle la plus proche du camion qui décide (0 à 2). Une variante qui la remplaçait par la route de plus petite attente prévue (0 à 5), c'est-à-dire l'information qu'utilise MTWT, a été essayée pendant la mise au point de la \cref{sec:tuning} et n'a pas été retenue. L'espace discrétisé compte donc $6^5 \times 3 = 23\,328$ états. Lorsqu'un état est absent de la table, l'action 0 est jouée par défaut ; la part des décisions concernées est mesurée pendant l'évaluation. Cette représentation ne dépend pas du nombre de camions.
+Q-Learning \cite{WatkinsDayan1992} et SARSA \cite{RummeryNiranjan1994} stockent une valeur pour chaque couple état--action dans une table. L'état de 23 composantes étant trop grand pour une table, il est réduit à six variables. Les cinq premières sont les temps d'attente aux 3 pelles et aux 2 verses, découpés en 6 intervalles égaux entre 0 et 9,6~min (au-delà, la valeur sature). La sixième est l'indice de la pelle la plus proche du camion qui décide (0 à 2). Une variante qui la remplaçait par la route de plus petite attente prévue (0 à 5), c'est-à-dire l'information qu'utilise MTWT, a été essayée pendant la mise au point de la \cref{sec:tuning} et n'a pas été retenue. L'espace discrétisé compte donc $6^5 \times 3 = 23\,328$ états. Lorsqu'un état est absent de la table, l'action 0 est jouée par défaut ; la part des décisions concernées est mesurée pendant l'évaluation \corr{: 0,1 à 0,5\,\% des décisions de Q-Learning en moyenne, au plus 3,8\,\% sur une réplication, et aucune pour SARSA, si bien qu'un repli autre que l'action 0 n'est pas nécessaire}. Cette représentation ne dépend pas du nombre de camions.
 
 Q-Learning met à jour la valeur de l'action à partir de la meilleure action suivante (méthode hors politique), tandis que SARSA utilise l'action effectivement choisie ensuite (méthode sur politique). Avec l'actualisation par minute, la mise à jour s'écrit
 \begin{equation}
@@ -926,7 +930,18 @@ Les Algorithmes~\ref{alg:ppo}, \ref{alg:dqn} et \ref{alg:qlearning} formalisent 
 \begin{revbloc}{M25, M16, Dir. corr. 1, A, v3}
 Les six règles de référence sont définies dans le \cref{tab:baselines} telles qu'elles sont implémentées. Aucune n'utilise l'action ATTENDRE. Elles se répartissent en trois groupes.
 
-\textbf{Règles tenant compte des files et des trajets.} La règle du temps d'attente minimal des camions (MTWT) envoie le camion à la pelle où il attendra le moins à son arrivée, en combinant le temps de trajet moyen et la libération prévue de chaque pelle, camions déjà en route compris ; elle choisit la verse de la même façon. Elle représente les règles des systèmes commerciaux de gestion de flotte \cite{Zeng2022}. La politique fondée sur un programme linéaire (LP) suit le principe de DISPATCH \cite{Soumis1989} : un programme linéaire fixe, en début de poste, des taux de flux cibles sur chaque route pelle--verse ; à chaque décision, le camion est envoyé sur la route la plus en retard sur son plan. Le programme maximise la production sous des contraintes de capacité des pelles et des verses, de conservation des camions et d'heures-camions disponibles, en limitant l'utilisation planifiée de chaque ressource à une valeur $u \leq 1$. Avec $u = 1$, le plan sature la pelle la plus proche, ce qui est optimal sans aléa mais crée une file sans limite avec des durées aléatoires. La valeur $u = 0{,}7$ a été choisie parmi sept candidats sur les graines de sélection, jamais sur celles de l'évaluation, et sert pour les trois régimes. Ces deux règles n'utilisent que des grandeurs moyennes (temps de trajet, durées de service, probabilité de panne), jamais les aléas de l'épisode.
+\textbf{Règles tenant compte des files et des trajets.} La règle du temps d'attente minimal des camions (MTWT) envoie le camion à la pelle où il attendra le moins à son arrivée, en combinant le temps de trajet moyen et la libération prévue de chaque pelle, camions déjà en route compris ; elle choisit la verse de la même façon. Elle représente les règles des systèmes commerciaux de gestion de flotte \cite{Zeng2022}. La politique fondée sur un programme linéaire (LP) suit le principe de DISPATCH \cite{Soumis1989} : un programme linéaire fixe, en début de poste, des taux de flux cibles sur chaque route pelle--verse ; à chaque décision, le camion est envoyé sur la route la plus en retard sur son plan. Le programme maximise la production sous des contraintes de capacité des pelles et des verses, de conservation des camions et d'heures-camions disponibles, en limitant l'utilisation planifiée de chaque ressource à une valeur $u \leq 1$.
+\begin{corrbloc}
+Avec $x_{jk}$ le flux chargé planifié de la pelle $j$ vers la verse $k$ et $y_{kj}$ le flux à vide de la verse $k$ vers la pelle $j$, en cycles par heure, le programme s'écrit
+\begin{align}
+\max_{x,\,y \ge 0}\ & \textstyle\sum_{j,k} x_{jk} \label{eq:lp}\\
+\text{s.t.}\ & \textstyle\sum_k x_{jk} \le u\,60/\bar t_{\mathrm{load}} \ \ \forall j, \qquad \sum_j x_{jk} \le u\,60/\bar t_{\mathrm{dump}} \ \ \forall k, \nonumber\\
+& \textstyle\sum_j x_{jk} = \sum_j y_{kj} \ \ \forall k, \qquad \sum_k y_{kj} = \sum_k x_{jk} \ \ \forall j, \nonumber\\
+& \textstyle\sum_{j,k} x_{jk}\,\big(\bar t_{\mathrm{load}} + \bar\tau_{jk} + \bar t_{\mathrm{dump}} + p_b\,\bar r\big) + \sum_{k,j} y_{kj}\,\bar\tau_{kj} \le 60\,N, \nonumber
+\end{align}
+où $\bar t_{\mathrm{load}}$ et $\bar t_{\mathrm{dump}}$ sont les durées moyennes de service, $\bar\tau$ les temps de trajet moyens, $p_b$ la probabilité de panne par cycle, $\bar r$ la durée moyenne de réparation et $N$ le nombre de camions. Un second programme garde la production à 0,1\,\% de ce maximum et minimise le temps de trajet total. Le plan est calculé une fois, en début de poste, et jamais réoptimisé : LP est un plan statique avec une règle d'affectation dynamique.
+\end{corrbloc}
+ Avec $u = 1$, le plan sature la pelle la plus proche, ce qui est optimal sans aléa mais crée une file sans limite avec des durées aléatoires. La valeur $u = 0{,}7$ a été choisie parmi sept candidats sur les graines de sélection, jamais sur celles de l'évaluation, et sert pour les trois régimes. Ces deux règles n'utilisent que des grandeurs moyennes (temps de trajet, durées de service, probabilité de panne), jamais les aléas de l'épisode.
 
 \textbf{Règles tenant compte des files seulement, ou d'aucune information.} La règle FIFO sert d'abord la pelle qui attend un camion depuis le plus longtemps, comme dans les travaux passés en revue à la \cref{sec:relwork} ; si toutes les pelles sont occupées, elle choisit celle qui se libérera le plus tôt, camions en route compris. Elle ne tient pas compte des trajets : une pelle libre dans une minute mais lointaine passe avant une pelle proche libre dans deux minutes. L'Affectation fixe attache chaque camion à une pelle et à une verse pendant tout le poste, sans réaffectation.
 
@@ -1054,48 +1069,14 @@ Avec une première procédure de réglage (une grille de quatre configurations �
 \end{itemize}
 Chaque essai est enregistré avec sa configuration et le commit du code utilisé, et peut être refait par une seule commande.
 
-\textbf{Essais.} Le \cref{tab:tuning} les rapporte dans l'ordre. Les repères sur les mêmes graines sont : MTWT 4\,443~t/h, LP 4\,412, FIFO 4\,246, Affectation fixe 4\,226, politique au hasard 4\,167, Pelle la plus proche 3\,915.
+\textbf{Essais.} Le \cref{tab:tuning}\corr{, en \cref{app:tuning},} les rapporte dans l'ordre. Les repères sur les mêmes graines sont : MTWT 4\,443~t/h, LP 4\,412, FIFO 4\,246, Affectation fixe 4\,226, politique au hasard 4\,167, Pelle la plus proche 3\,915.
 \end{revbloc}
 
-\begin{table}[H]
-\centering
-\caption{Essais de la mise au point des agents sur les graines de sélection (t/h). Entre parenthèses : part des décisions ATTENDRE ou des cycles envoyés à une seule pelle.}
-\label{tab:tuning}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.6cm}}
-\toprule
-\textbf{N\textsuperscript{o}} & \textbf{Essai} & \textbf{Résultat} & \textbf{Décision} \\
-\midrule
-\multicolumn{4}{l}{\emph{Actualisation par décision}} \\
-0 & Réglage de PPO et DQN, 200\,000 pas & PPO 3\,953 (99\,\% pelle 1) ; DQN 3\,992 & point de départ \\
-1, 2, 4 & Récompense estimée et versée à la décision, avec ou sans coût des minutes en file & PPO 3\,915 à 3\,981 ; DQN 4\,106 à 4\,191 (ATTENDRE 52 à 65\,\%) & rejetée \\
-3 & PPO, budget complet, récompense versée à la fin du cycle & PPO 4\,260 & gardée \\
-5 & Attente prévue par route dans l'état (23 composantes) & PPO 4\,345 & retenue \\
-6 & Récompense normalisée et $\gamma = 0{,}995$ & PPO 4\,405 (ATTENDRE 36\,\%) & retenue \\
-7 & Contrôle de DQN, budget complet, $\gamma = 0{,}995$ & DQN 3\,593 (99\,\% pelle 3) & gardé, sans variante \\
-8, 9 & Q-Learning et SARSA, configuration initiale & Q-Learning 3\,955 (62\,\% pelle 3) ; SARSA 3\,535 (98\,\% pelle 3) & point de départ \\
-\midrule
-\multicolumn{4}{l}{\emph{Coût d'opportunité étendu à tous les cycles (abandonné)}} \\
-10--13 & Même configuration, récompense modifiée & PPO 210 (ATTENDRE 99,8\,\%) ; DQN 3\,532 (ATTENDRE 94,8\,\%) ; Q-Learning 4\,099 ; SARSA 4\,134 & abandonné \\
-\midrule
-\multicolumn{4}{l}{\emph{Actualisation par minute}} \\
-14--17 & Même configuration que les essais 6 à 9 & PPO 4\,414 (ATTENDRE 0\,\%) ; DQN 121 (ATTENDRE 99,8\,\%) ; Q-Learning 3\,974 ; SARSA 3\,602 (100\,\% pelle 3) & PPO et DQN figés \\
-16--23 & Réglage tabulaire : $\alpha \in \{0{,}1 ; 0{,}2\}$ × \{6 ; 8\} intervalles & Q-Learning 3\,369 à \textbf{4\,181} ($\alpha = 0{,}2$, 6 int.) ; SARSA 3\,481 à \textbf{3\,626} ($\alpha = 0{,}1$, 6 int.), 98 à 100\,\% pelle 3 & meilleures configurations \\
-24, 25 & Sixième variable de l'état : route de plus petite attente prévue & Q-Learning 4\,062 ; SARSA 3\,505 (95\,\% pelle 3) & rejetée \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\begin{corrbloc}
+\textbf{Trois enseignements.} Les essais, leurs résultats et les raisons de chaque décision sont rapportés en \cref{app:tuning}. Trois enseignements s'en dégagent. Premièrement, donner à l'agent l'attente prévue par route est le changement qui a rapproché PPO de MTWT, de 3\,953 à 4\,345~t/h. Deuxièmement, l'actualisation par décision était la cause commune de deux défauts, une dérive des agents à valeurs vers la pelle la plus éloignée et des attentes insérées pour repousser une récompense négative ; l'actualisation par minute corrige la formulation sans changer la récompense. Troisièmement, avec l'actualisation par minute, DQN s'effondre sur ATTENDRE alors que PPO ne s'effondre pas, et les agents tabulaires ne font pas mieux qu'une politique au hasard.
+\end{corrbloc}
 
-\begin{revbloc}{v3}
-\textbf{Ce qui a été retenu, et pourquoi.} Chaque changement retenu se justifie indépendamment de son score. Le bloc des attentes prévues par route donne à l'agent la même information que MTWT. La normalisation de la récompense et un horizon plus long sont des pratiques usuelles pour PPO. L'actualisation par minute corrige la formulation du problème, comme l'explique la \cref{sec:discount}. Pendant la même période, les heuristiques de référence ont été renforcées : prévision des camions en route pour MTWT et FIFO, et ajout de la politique LP. La comparaison est donc devenue plus difficile pour l'apprentissage par renforcement.
 
-\textbf{Le défaut trouvé, et la variante abandonnée.} Avec l'actualisation par décision, les trois agents à valeurs (DQN, Q-Learning, SARSA) dérivaient vers la pelle la plus éloignée, et leur productivité baissait à mesure que l'exploration diminuait. Une mesure sans réentraînement en a montré la cause. Aller toujours à la pelle 3 plutôt qu'à la pelle 1 fait perdre 9\,\% de productivité, mais ne change presque pas la récompense par décision (0,813 contre 0,820), car un cycle rapporte 1 quelle que soit sa durée. Une première correction, décidée avec la directrice de recherche, étendait le coût d'opportunité à tous les cycles (durée du cycle divisée par 23,2~min). La récompense d'un poste n'en changeait que d'une constante, et la dérive a disparu (essais 10 à 13). Mais un cycle rapportait alors en moyenne une valeur négative. Avec une actualisation par décision, repousser une récompense négative la rend moins coûteuse, et intercaler des attentes de 0,2~min devenait le moyen de la repousser. PPO a ainsi appris à attendre dans 99,8\,\% de ses décisions. Les deux défauts ont donc la même cause : une actualisation par décision alors que les décisions n'ont pas la même durée. Cette variante a été abandonnée, la récompense est revenue à sa définition précédente, et l'actualisation par minute a été introduite pour les quatre algorithmes, sans autre changement. Ces deux décisions ont été prises après avoir vu des résultats sur les graines de sélection : elles sont déclarées comme telles.
-
-\textbf{L'effondrement de DQN.} Avec l'actualisation par minute, DQN choisit ATTENDRE dans 99,8\,\% de ses décisions (essai 15). Rejoué de façon gloutonne, le modèle final produit 840~t par poste, alors que les derniers postes d'entraînement, joués avec mises à jour et exploration, produisaient de 25\,620 à 30\,660~t. \corr{Avec l'actualisation par minute, la cible d'ATTENDRE est $r_{\mathrm{ATT}} + \gamma_{\min}^{\Delta t}\max_{a'} Q(s',a')$, où $\Delta t$ est une fraction de minute après une attente courte et $r_{\mathrm{ATT}}$ est proche de zéro. Quand $\Delta t$ est petit, $\gamma_{\min}^{\Delta t}$ est proche de 1 et $s'$ diffère peu de $s$, si bien que $Q(s,\mathrm{ATT}) \approx \max_{a'} Q(s,a')$ : l'écart entre ATTENDRE et la meilleure affectation disparaît presque, ce qui est juste. Le biais de maximisation de DQN, qui surestime la plus grande de plusieurs estimations bruitées, peut alors placer ATTENDRE en tête ; une fois ATTENDRE choisie, l'état suivant est presque le même, et l'erreur se répète. La \cref{sec:ablation} mesure cet écart sur les modèles entraînés.} PPO, qui apprend une politique et non des valeurs à comparer, n'est pas touché. Le test d'équivalence de la \cref{sec:discount} exclut une erreur d'implémentation. Conformément à la règle, DQN part en campagne dans cette version.
-
-\textbf{Les agents tabulaires.} Le réglage a retenu $\alpha = 0{,}2$ pour Q-Learning et $\alpha = 0{,}1$ pour SARSA, avec 6 intervalles dans les deux cas. Donner à l'état discret la route que choisirait MTWT, au lieu de la pelle la plus proche, a fait perdre environ 120~t/h aux deux algorithmes (essais 24 et 25), et n'a pas corrigé la concentration de SARSA sur la pelle 3. Dans les dix essais tabulaires avec l'actualisation par minute (16 à 25), la productivité mesurée pendant l'entraînement part d'environ 4\,160~t/h, quand l'exploration est presque aléatoire, puis baisse à mesure que l'exploration diminue. Le meilleur agent tabulaire (4\,181~t/h) égale à peine la politique aléatoire (4\,167~t/h). Nous le présentons comme un défaut de convergence de l'approche tabulaire sur ce problème, avec l'état réduit et le budget retenus, et non comme une limite de ces algorithmes en général.
-\end{revbloc}
 
 \subsection{Indicateurs}
 \label{sec:metrics}
@@ -1657,7 +1638,7 @@ L'étude d'ablation porte sur le poids de la pénalité d'attente $w_4$, en cond
 PPO est insensible à $w_4$ : sa productivité ne varie que de 4\,411 à 4\,417~t/h, et il n'utilise presque jamais ATTENDRE. DQN s'effondre pour toutes les valeurs de $w_4$, y compris sans pénalité d'attente, avec 2 à 4 modèles effondrés sur 5. Avec $w_4 = 0{,}5$, deux modèles attendent pendant tout le poste et ne transportent aucune tonne ; leur carburant par tonne n'est pas défini. L'effondrement de DQN ne vient donc pas du poids de la pénalité d'attente, ce qui est cohérent avec l'explication proposée dans la \cref{sec:tuning} : il tient à l'écart de valeur, très faible, entre ATTENDRE et la meilleure affectation.
 
 \begin{corrbloc}
-\textbf{Pourquoi DQN s'effondre.} L'écart de valeur a été mesuré directement sur les cinq modèles DQN nominaux, sans réentraînement, sur les 1\,329 états de décision rencontrés par MTWT sur cinq graines de sélection (\cref{tab:dqndiag}). Les valeurs $Q$ sont de l'ordre de 155 à 177, et une ATTENDRE de 0,2~min devrait valoir environ 0,1 de moins que la meilleure affectation : $1-\gamma_{\min}^{0,2}$ fois la valeur, plus le coût de l'attente. Cet écart représente environ 0,06\,\% des valeurs. Dans les quatre modèles effondrés, ATTENDRE vaut de 0,07 à 0,19 de plus que la meilleure affectation et passe en tête dans 76 à 95\,\% de ces états, et dans plus de 99\,\% des états que le modèle rencontre lui-même ; dans le seul modèle qui fonctionne, graine 2, ATTENDRE vaut 0,20 de moins et n'est jamais en tête. Une erreur de 0,04 à 0,12\,\% des valeurs suffit donc à inverser l'ordre d'ATTENDRE et de la meilleure affectation, ce qui appuie l'explication de la \cref{sec:tuning} par une mesure.
+\textbf{Pourquoi DQN s'effondre.} L'écart de valeur a été mesuré directement sur les cinq modèles DQN nominaux, sans réentraînement, sur les 1\,329 états de décision rencontrés par MTWT sur cinq graines de sélection (\cref{tab:dqndiag}). Les valeurs $Q$ sont de l'ordre de 155 à 177, et une ATTENDRE de 0,2~min devrait valoir environ 0,1 de moins que la meilleure affectation : $1-\gamma_{\min}^{0,2}$ fois la valeur, plus le coût de l'attente. Cet écart représente environ 0,06\,\% des valeurs. Dans les quatre modèles effondrés, ATTENDRE vaut de 0,07 à 0,19 de plus que la meilleure affectation et passe en tête dans 76 à 95\,\% de ces états, et dans plus de 99\,\% des états que le modèle rencontre lui-même ; dans le seul modèle qui fonctionne, graine 2, ATTENDRE vaut 0,20 de moins et n'est jamais en tête. Une erreur de 0,04 à 0,12\,\% des valeurs suffit donc à inverser l'ordre d'ATTENDRE et de la meilleure affectation, ce qui appuie l'explication de l'\corr{\cref{app:tuning}} par une mesure.
 
 \begin{table}[H]
 \centering
@@ -1715,7 +1696,8 @@ Le \cref{tab:hypotheses} résume le statut des trois hypothèses.
 \textbf{Hyp.} & \textbf{Énoncé} & \textbf{Éléments clés} & \textbf{Verdict} \\
 \midrule
 H1 & En conditions nominales, les agents profonds dépassent la meilleure heuristique en productivité. & \rev{T31}{PPO est à $-22{,}8$~t/h ($-0{,}5\,\%$) de MTWT, DQN à $-3\,150$~t/h ; $p<0{,}001$ après correction (\cref{tab:stats}). Moyenne sur 5 modèles par agent.} & \rev{T31}{\textbf{Réfutée}} \\[4pt]
-H2 & Aucune politique ne domine dans les trois régimes. & \rev{T31}{MTWT est la plus productive dans les trois régimes. L'interaction entre politique et régime est significative ($F(18,783)=1\,211$, $p<0{,}001$), mais elle vient du bas du classement.} & \rev{T31}{\textbf{Réfutée}} \\[4pt]
+\corr{H2a} & \corr{Aucune politique ne domine dans les trois régimes.} & \corr{MTWT est la plus productive dans les trois régimes (\cref{tab:productivity}) ; près de la saturation des pelles, toutefois, l'Affectation fixe la dépasse (\cref{tab:disruptions}).} & \corr{\textbf{Réfutée} dans les trois régimes} \\[4pt]
+\corr{H2b} & \corr{L'interaction entre politique et régime est significative.} & \corr{$F(18,783)=1\,211$, $p<0{,}001$, portée par le bas du classement ; restreinte aux cinq politiques compétitives, $F(8,348)=30{,}4$, $p<0{,}001$, $\eta^2_p=0{,}41$.} & \corr{\textbf{Confirmée}} \\[4pt]
 H3 & Une productivité élevée ne s'accompagne pas nécessairement d'une faible attente en file. & \rev{T31}{Front réduit à l'Affectation fixe et MTWT (et LP en forte charge), avec moins d'une minute d'écart de file. En revanche, un compromis net existe entre productivité et carburant par tonne (analyse ajoutée, non prévue par l'hypothèse).} & \rev{T31}{\textbf{Non validée}} \\
 \bottomrule
 \end{tabularx}
@@ -1871,6 +1853,52 @@ Les auteurs déclarent n'avoir aucun intérêt financier concurrent connu ni auc
 \bibliography{RL_references}
 
 \adir{style bibliographique : utiliser le modèle de la revue cible (sn-jnl pour Springer) ; corriger les entrées de \texttt{RL\_references.bib} signalées dans le rapport de relecture (section 5.4).}
+
+\appendix
+\section{Essais de la mise au point des agents}
+\label{app:tuning}
+
+\corr{Cette annexe rapporte les essais de la mise au point des agents résumés à la \cref{sec:tuning}, dans l'ordre où ils ont été menés.}
+
+\begin{table}[H]
+\centering
+\caption{Essais de la mise au point des agents sur les graines de sélection (t/h). Entre parenthèses : part des décisions ATTENDRE ou des cycles envoyés à une seule pelle.}
+\label{tab:tuning}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.6cm}}
+\toprule
+\textbf{N\textsuperscript{o}} & \textbf{Essai} & \textbf{Résultat} & \textbf{Décision} \\
+\midrule
+\multicolumn{4}{l}{\emph{Actualisation par décision}} \\
+0 & Réglage de PPO et DQN, 200\,000 pas & PPO 3\,953 (99\,\% pelle 1) ; DQN 3\,992 & point de départ \\
+1, 2, 4 & Récompense estimée et versée à la décision, avec ou sans coût des minutes en file & PPO 3\,915 à 3\,981 ; DQN 4\,106 à 4\,191 (ATTENDRE 52 à 65\,\%) & rejetée \\
+3 & PPO, budget complet, récompense versée à la fin du cycle & PPO 4\,260 & gardée \\
+5 & Attente prévue par route dans l'état (23 composantes) & PPO 4\,345 & retenue \\
+6 & Récompense normalisée et $\gamma = 0{,}995$ & PPO 4\,405 (ATTENDRE 36\,\%) & retenue \\
+7 & Contrôle de DQN, budget complet, $\gamma = 0{,}995$ & DQN 3\,593 (99\,\% pelle 3) & gardé, sans variante \\
+8, 9 & Q-Learning et SARSA, configuration initiale & Q-Learning 3\,955 (62\,\% pelle 3) ; SARSA 3\,535 (98\,\% pelle 3) & point de départ \\
+\midrule
+\multicolumn{4}{l}{\emph{Coût d'opportunité étendu à tous les cycles (abandonné)}} \\
+10--13 & Même configuration, récompense modifiée & PPO 210 (ATTENDRE 99,8\,\%) ; DQN 3\,532 (ATTENDRE 94,8\,\%) ; Q-Learning 4\,099 ; SARSA 4\,134 & abandonné \\
+\midrule
+\multicolumn{4}{l}{\emph{Actualisation par minute}} \\
+14--17 & Même configuration que les essais 6 à 9 & PPO 4\,414 (ATTENDRE 0\,\%) ; DQN 121 (ATTENDRE 99,8\,\%) ; Q-Learning 3\,974 ; SARSA 3\,602 (100\,\% pelle 3) & PPO et DQN figés \\
+16--23 & Réglage tabulaire : $\alpha \in \{0{,}1 ; 0{,}2\}$ × \{6 ; 8\} intervalles & Q-Learning 3\,369 à \textbf{4\,181} ($\alpha = 0{,}2$, 6 int.) ; SARSA 3\,481 à \textbf{3\,626} ($\alpha = 0{,}1$, 6 int.), 98 à 100\,\% pelle 3 & meilleures configurations \\
+24, 25 & Sixième variable de l'état : route de plus petite attente prévue & Q-Learning 4\,062 ; SARSA 3\,505 (95\,\% pelle 3) & rejetée \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{revbloc}{v3}
+\textbf{Ce qui a été retenu, et pourquoi.} Chaque changement retenu se justifie indépendamment de son score. Le bloc des attentes prévues par route donne à l'agent la même information que MTWT. La normalisation de la récompense et un horizon plus long sont des pratiques usuelles pour PPO. L'actualisation par minute corrige la formulation du problème, comme l'explique la \cref{sec:discount}. Pendant la même période, les heuristiques de référence ont été renforcées : prévision des camions en route pour MTWT et FIFO, et ajout de la politique LP. La comparaison est donc devenue plus difficile pour l'apprentissage par renforcement.
+
+\textbf{Le défaut trouvé, et la variante abandonnée.} Avec l'actualisation par décision, les trois agents à valeurs (DQN, Q-Learning, SARSA) dérivaient vers la pelle la plus éloignée, et leur productivité baissait à mesure que l'exploration diminuait. Une mesure sans réentraînement en a montré la cause. Aller toujours à la pelle 3 plutôt qu'à la pelle 1 fait perdre 9\,\% de productivité, mais ne change presque pas la récompense par décision (0,813 contre 0,820), car un cycle rapporte 1 quelle que soit sa durée. Une première correction, décidée avec la directrice de recherche, étendait le coût d'opportunité à tous les cycles (durée du cycle divisée par 23,2~min). La récompense d'un poste n'en changeait que d'une constante, et la dérive a disparu (essais 10 à 13). Mais un cycle rapportait alors en moyenne une valeur négative. Avec une actualisation par décision, repousser une récompense négative la rend moins coûteuse, et intercaler des attentes de 0,2~min devenait le moyen de la repousser. PPO a ainsi appris à attendre dans 99,8\,\% de ses décisions. Les deux défauts ont donc la même cause : une actualisation par décision alors que les décisions n'ont pas la même durée. Cette variante a été abandonnée, la récompense est revenue à sa définition précédente, et l'actualisation par minute a été introduite pour les quatre algorithmes, sans autre changement. Ces deux décisions ont été prises après avoir vu des résultats sur les graines de sélection : elles sont déclarées comme telles.
+
+\textbf{L'effondrement de DQN.} Avec l'actualisation par minute, DQN choisit ATTENDRE dans 99,8\,\% de ses décisions (essai 15). Rejoué de façon gloutonne, le modèle final produit 840~t par poste, alors que les derniers postes d'entraînement, joués avec mises à jour et exploration, produisaient de 25\,620 à 30\,660~t. \corr{Avec l'actualisation par minute, la cible d'ATTENDRE est $r_{\mathrm{ATT}} + \gamma_{\min}^{\Delta t}\max_{a'} Q(s',a')$, où $\Delta t$ est une fraction de minute après une attente courte et $r_{\mathrm{ATT}}$ est proche de zéro. Quand $\Delta t$ est petit, $\gamma_{\min}^{\Delta t}$ est proche de 1 et $s'$ diffère peu de $s$, si bien que $Q(s,\mathrm{ATT}) \approx \max_{a'} Q(s,a')$ : l'écart entre ATTENDRE et la meilleure affectation disparaît presque, ce qui est juste. Le biais de maximisation de DQN, qui surestime la plus grande de plusieurs estimations bruitées, peut alors placer ATTENDRE en tête ; une fois ATTENDRE choisie, l'état suivant est presque le même, et l'erreur se répète. La \cref{sec:ablation} mesure cet écart sur les modèles entraînés.} PPO, qui apprend une politique et non des valeurs à comparer, n'est pas touché. Le test d'équivalence de la \cref{sec:discount} exclut une erreur d'implémentation. Conformément à la règle, DQN part en campagne dans cette version.
+
+\textbf{Les agents tabulaires.} Le réglage a retenu $\alpha = 0{,}2$ pour Q-Learning et $\alpha = 0{,}1$ pour SARSA, avec 6 intervalles dans les deux cas. Donner à l'état discret la route que choisirait MTWT, au lieu de la pelle la plus proche, a fait perdre environ 120~t/h aux deux algorithmes (essais 24 et 25), et n'a pas corrigé la concentration de SARSA sur la pelle 3. Dans les dix essais tabulaires avec l'actualisation par minute (16 à 25), la productivité mesurée pendant l'entraînement part d'environ 4\,160~t/h, quand l'exploration est presque aléatoire, puis baisse à mesure que l'exploration diminue. Le meilleur agent tabulaire (4\,181~t/h) égale à peine la politique aléatoire (4\,167~t/h). Nous le présentons comme un défaut de convergence de l'approche tabulaire sur ce problème, avec l'état réduit et le budget retenus, et non comme une limite de ces algorithmes en général.
+\end{revbloc}
 
 % ============================================================================
 % Annexe de travail : journal des modifications (affichée seulement avec \revmarkstrue)

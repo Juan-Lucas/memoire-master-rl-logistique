@@ -74,7 +74,7 @@
 \newif\ifcorrmarks
 \corrmarkstrue
 \definecolor{corrcolor}{RGB}{0,90,200}
-\newcommand{\corr}[1]{\ifcorrmarks{\color{corrcolor}#1}\else#1\fi}
+\newcommand{\corr}[1]{\ifcorrmarks\textcolor{corrcolor}{#1}\else#1\fi}
 \newenvironment{corrbloc}{\par\ifcorrmarks\color{corrcolor}\fi}{\par}
 \newcommand{\aexp}[1]{\ifrevmarks\textcolor{orange!85!black}{\textbf{[EXPERIMENT TO RUN: #1]}}\fi}
 \newcommand{\adir}[1]{\ifrevmarks\textcolor{violet}{\textbf{[TO VALIDATE WITH THE SUPERVISOR: #1]}}\fi}
@@ -440,7 +440,7 @@ Three falsifiable hypotheses, formulated before the analysis of the results, gui
 
 \begin{itemize}
   \item \textbf{H1:} under nominal conditions, deep reinforcement learning policies achieve higher productivity than the best heuristic.
-  \item \textbf{H2:} no policy dominates in all three regimes: the ranking depends on the regime, which translates into a significant interaction between policy and regime.
+  \item \textbf{H2:} no policy dominates in all three regimes: the ranking depends on the regime, which translates into a significant interaction between policy and regime. \corr{It is split into H2a, no policy dominates in all three regimes, and H2b, the interaction between policy and regime is significant: an interaction carried by the bottom of the ranking does not establish H2a.}
   \item \textbf{H3:} high productivity does not necessarily come with low queueing time, so that several policies form a trade-off between these two criteria.
 \end{itemize}
 \end{revbloc}
@@ -693,7 +693,7 @@ G_t = \sum_{l \geq 0} \Big( \prod_{m=0}^{l-1} \gamma_{\min}^{\Delta t_{t+m}} \Bi
 \end{equation}
 where $\tau_t$ is the time of decision $t$ in the shift. The time that counts becomes mine time, not the number of decisions.
 
-\textbf{No new parameter.} The factor per minute is derived from the $\gamma$ of each algorithm through $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, where $\bar{\Delta} = 1.89$~min is the mean interval between two decisions of Fixed Assignment under nominal conditions. A decision of average duration is therefore discounted exactly as with a factor per decision. With $\gamma = 0.995$, the effective horizon remains on average about 200 decisions, i.e.\ about 377~minutes under nominal conditions. It does not depend on fleet size, whereas with discounting per decision it would shrink in minutes when decisions become more frequent, for instance under high load.
+\textbf{No new parameter.} The factor per minute is derived from the $\gamma$ of each algorithm through $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, where $\bar{\Delta} = 1.89$~min is the mean interval between two decisions of Fixed Assignment under nominal conditions. A decision of average duration is therefore discounted exactly as with a factor per decision. With $\gamma = 0.995$, the effective horizon remains on average about 200 decisions, i.e.\ about 377~minutes under nominal conditions. It does not depend on fleet size, whereas with discounting per decision it would shrink in minutes when decisions become more frequent, for instance under high load. \corr{Since $\gamma_{\min} = \gamma^{1/\bar\Delta}$, the choice of the reference interval only rescales the horizon in minutes, $\bar\Delta/(1-\gamma)$: 300, 378 and 500~min for $\bar\Delta = 1.5$, 1.89 and 2.5~min, all of the order of the shift. Fixed Assignment is taken as reference because it never waits and its cycles are stable; the interval of MTWT, 1.81~min, would give 362~min.}
 
 \textbf{Why.} With discounting per decision, a decision lasting 0.2~min and a cycle to the farthest shovel delay what follows equally, although one lasts a hundred times longer than the other. Agent tuning, reported in \cref{sec:tuning}, revealed two measured consequences of this flaw. Value-based agents drifted towards the farthest shovel, since a long trip does not delay the next production in number of decisions. When a cycle yielded a negative value on average, chaining waits of 0.2~min pushed this cost back by many decisions for only a few minutes. Discounting per minute fixes the common cause of both flaws without changing the reward.
 
@@ -757,6 +757,8 @@ with $w_1 = 1$, $w_2 = 0.1$, $w_3 = 0.05$ and $w_4 = 0.3$, and where:
   \item $p^{\mathrm{wait}}_c = \min\big((W^{\mathrm{shovel}}_c + W^{\mathrm{dump}}_c)/30\,;\,1\big)$ penalises the queueing time actually incurred during the cycle, in minutes, divided by 30 and capped at 1.
 \end{itemize}
 
+\corr{In $p^{\mathrm{bal}}_c$, $\omega_j$ is in minutes, so that the variance is in min$^2$; the scale of 100~min$^2$ brings the term to the order of 1. Over a nominal shift, the weighted terms of MTWT amount to 253.6 for production, $-2.1$ for balance, $-19.2$ for distance and $-1.5$ for waiting, and those of PPO to 252.3, $-3.3$, $-18.6$ and $-2.0$: production dominates, and distance is the main penalty.}
+
 \textbf{Timing of payment.} The reward of a cycle is known only at its end, since queues depend on the arrivals of the other trucks. It is paid at the step during which the cycle ends. The reward $R_t$ of a step is therefore the sum of the rewards of the cycles completed since the previous decision, whatever the truck, plus the cost of a WAIT if that is the chosen action. At the end of the shift, cycles in progress are completed: the sum of the $R_t$ over a shift is the sum of the rewards of all its cycles. \corr{Their fuel and penalties are counted, but their production term is zero when the dump is reached after 480~min, consistently with the rule of \cref{tab:simparams} that counts only the tonnage delivered before the end of the shift.} A version in which the reward was estimated and paid at the time of the decision was tried and rejected during the tuning of \cref{sec:tuning}.
 
 \textbf{Cost of voluntary waiting.} For the WAIT action, of duration $\delta_t$, the reward is
@@ -819,12 +821,14 @@ Entropy coefficient            & \textbf{0}     & n/a & n/a & n/a \\
 Replay buffer / warm-up        & n/a & 200{,}000 / 1{,}000 & n/a & n/a \\
 Target network update          & n/a & every 1{,}000 steps & n/a & n/a \\
 Exploration $\varepsilon$      & n/a & $1\to0.02$, \textbf{10\%} of steps & \multicolumn{2}{c}{$1\to0.01$, over episodes} \\
-Training budget                & 2{,}000{,}000 steps & 2{,}000{,}000 steps & 30{,}000 episodes & 30{,}000 episodes \\
+\corr{Simulated shifts per run} & \corr{about 7{,}500} & \corr{2{,}800 to 3{,}300} & \corr{30{,}000} & \corr{30{,}000} \\
+\corr{CPU time per run (min)} & \corr{341 to 346} & \corr{225 to 351} & \corr{230 to 275} & \corr{279 to 361} \\
 \bottomrule
 \end{tabular}
 \\[4pt]
 \raggedright
 \footnotesize $^{a}$\,Default of the SB3 library: Tanh for on-policy algorithms (PPO); ReLU for off-policy algorithms (DQN).\\
+\corr{Times measured during the campaign, four runs in parallel on 8 cores. Budgets are not equal across methods: the comparison between tabular and deep agents is not made at equal budget.}\\
 \end{table}
 
 \subsubsection{Deep Q-Network}
@@ -839,7 +843,7 @@ y = r + \gamma_{\min}^{\Delta t} \max_{a'} Q_{\theta^-}(s', a') ,
 \label{sec:tabular}
 
 \begin{revbloc}{M8, v3}
-Q-Learning \cite{WatkinsDayan1992} and SARSA \cite{RummeryNiranjan1994} store one value for each state--action pair in a table. The state of 23 components being too large for a table, it is reduced to six variables. The first five are the waiting times at the 3 shovels and the 2 dumps, split into 6 equal intervals between 0 and 9.6~min (beyond which the value saturates). The sixth is the index of the shovel nearest to the deciding truck (0 to 2). A variant that replaced it with the route of smallest predicted waiting time (0 to 5), i.e.\ the information used by MTWT, was tried during the tuning of \cref{sec:tuning} and not retained. The discretised space therefore contains $6^5 \times 3 = 23{,}328$ states. When a state is absent from the table, action 0 is played by default; the share of decisions concerned is measured during evaluation. This representation does not depend on the number of trucks.
+Q-Learning \cite{WatkinsDayan1992} and SARSA \cite{RummeryNiranjan1994} store one value for each state--action pair in a table. The state of 23 components being too large for a table, it is reduced to six variables. The first five are the waiting times at the 3 shovels and the 2 dumps, split into 6 equal intervals between 0 and 9.6~min (beyond which the value saturates). The sixth is the index of the shovel nearest to the deciding truck (0 to 2). A variant that replaced it with the route of smallest predicted waiting time (0 to 5), i.e.\ the information used by MTWT, was tried during the tuning of \cref{sec:tuning} and not retained. The discretised space therefore contains $6^5 \times 3 = 23{,}328$ states. When a state is absent from the table, action 0 is played by default; the share of decisions concerned is measured during evaluation\corr{: 0.1 to 0.5\% of the decisions of Q-Learning on average, at most 3.8\% in one replication, and none for SARSA, so that a fallback other than action 0 is not needed}. This representation does not depend on the number of trucks.
 
 Q-Learning updates the value of the action from the best next action (off-policy method), whereas SARSA uses the action actually chosen next (on-policy method). With discounting per minute, the update reads
 \begin{equation}
@@ -922,7 +926,18 @@ Algorithms~\ref{alg:ppo}, \ref{alg:dqn} and \ref{alg:qlearning} formalise the le
 \begin{revbloc}{M25, M16, Dir. corr. 1, A, v3}
 The six reference rules are defined in \cref{tab:baselines} as implemented. None uses the WAIT action. They fall into three groups.
 
-\textbf{Rules accounting for queues and travel.} The Minimum Truck Waiting Time rule (MTWT) sends the truck to the shovel where it will wait the least on arrival, combining the mean travel time and the predicted release of each shovel, trucks already en route included; it chooses the dump in the same way. It represents the rules of commercial fleet management systems \cite{Zeng2022}. The policy based on a linear program (LP) follows the DISPATCH principle \cite{Soumis1989}: a linear program sets, at the start of the shift, target flow rates on each shovel--dump route; at each decision, the truck is sent to the route that is furthest behind its plan. The program maximises production under capacity constraints on shovels and dumps, truck conservation and available truck-hours, limiting the planned utilisation of each resource to a value $u \leq 1$. With $u = 1$, the plan saturates the nearest shovel, which is optimal without randomness but creates an unbounded queue with random durations. The value $u = 0.7$ was chosen among seven candidates on the selection seeds, never on the evaluation seeds, and is used for all three regimes. These two rules use only mean quantities (travel times, service durations, breakdown probability), never the random events of the episode.
+\textbf{Rules accounting for queues and travel.} The Minimum Truck Waiting Time rule (MTWT) sends the truck to the shovel where it will wait the least on arrival, combining the mean travel time and the predicted release of each shovel, trucks already en route included; it chooses the dump in the same way. It represents the rules of commercial fleet management systems \cite{Zeng2022}. The policy based on a linear program (LP) follows the DISPATCH principle \cite{Soumis1989}: a linear program sets, at the start of the shift, target flow rates on each shovel--dump route; at each decision, the truck is sent to the route that is furthest behind its plan. The program maximises production under capacity constraints on shovels and dumps, truck conservation and available truck-hours, limiting the planned utilisation of each resource to a value $u \leq 1$.
+\begin{corrbloc}
+With $x_{jk}$ the planned loaded flow from shovel $j$ to dump $k$ and $y_{kj}$ the empty flow from dump $k$ to shovel $j$, in cycles per hour, the program is
+\begin{align}
+\max_{x,\,y \ge 0}\ & \textstyle\sum_{j,k} x_{jk} \label{eq:lp}\\
+\text{s.t.}\ & \textstyle\sum_k x_{jk} \le u\,60/\bar t_{\mathrm{load}} \ \ \forall j, \qquad \sum_j x_{jk} \le u\,60/\bar t_{\mathrm{dump}} \ \ \forall k, \nonumber\\
+& \textstyle\sum_j x_{jk} = \sum_j y_{kj} \ \ \forall k, \qquad \sum_k y_{kj} = \sum_k x_{jk} \ \ \forall j, \nonumber\\
+& \textstyle\sum_{j,k} x_{jk}\,\big(\bar t_{\mathrm{load}} + \bar\tau_{jk} + \bar t_{\mathrm{dump}} + p_b\,\bar r\big) + \sum_{k,j} y_{kj}\,\bar\tau_{kj} \le 60\,N, \nonumber
+\end{align}
+where $\bar t_{\mathrm{load}}$ and $\bar t_{\mathrm{dump}}$ are the mean service times, $\bar\tau$ the mean travel times, $p_b$ the breakdown probability per cycle, $\bar r$ the mean repair time and $N$ the number of trucks. A second program keeps the production within 0.1\% of this maximum and minimises the total travel time. The plan is computed once, at the start of the shift, and never re-optimised: LP is a static plan with a dynamic assignment rule.
+\end{corrbloc}
+ With $u = 1$, the plan saturates the nearest shovel, which is optimal without randomness but creates an unbounded queue with random durations. The value $u = 0.7$ was chosen among seven candidates on the selection seeds, never on the evaluation seeds, and is used for all three regimes. These two rules use only mean quantities (travel times, service durations, breakdown probability), never the random events of the episode.
 
 \textbf{Rules accounting for queues only, or for no information.} The FIFO rule first serves the shovel that has been waiting for a truck the longest, as in the studies reviewed in \cref{sec:relwork}; if all shovels are busy, it chooses the one that will be free soonest, trucks en route included. It ignores travel: a shovel free in one minute but far away comes before a nearby shovel free in two minutes. Fixed Assignment ties each truck to one shovel and one dump for the whole shift, without reassignment.
 
@@ -1050,48 +1065,14 @@ With a first tuning procedure (a grid of four configurations at 200{,}000 steps)
 \end{itemize}
 Each trial is recorded with its configuration and the commit of the code used, and can be rerun with a single command.
 
-\textbf{Trials.} \Cref{tab:tuning} reports them in order. The reference points on the same seeds are: MTWT 4{,}443~t/h, LP 4{,}412, FIFO 4{,}246, Fixed Assignment 4{,}226, random policy 4{,}167, Nearest Shovel 3{,}915.
+\textbf{Trials.} \Cref{tab:tuning}\corr{, in \cref{app:tuning},} reports them in order. The reference points on the same seeds are: MTWT 4{,}443~t/h, LP 4{,}412, FIFO 4{,}246, Fixed Assignment 4{,}226, random policy 4{,}167, Nearest Shovel 3{,}915.
 \end{revbloc}
 
-\begin{table}[H]
-\centering
-\caption{Trials of agent tuning on the selection seeds (t/h). In brackets: share of WAIT decisions or of cycles sent to a single shovel.}
-\label{tab:tuning}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.6cm}}
-\toprule
-\textbf{No.} & \textbf{Trial} & \textbf{Result} & \textbf{Decision} \\
-\midrule
-\multicolumn{4}{l}{\emph{Discounting per decision}} \\
-0 & Tuning of PPO and DQN, 200{,}000 steps & PPO 3{,}953 (99\% shovel 1); DQN 3{,}992 & starting point \\
-1, 2, 4 & Reward estimated and paid at the decision, with or without a cost of queue minutes & PPO 3{,}915 to 3{,}981; DQN 4{,}106 to 4{,}191 (WAIT 52 to 65\%) & rejected \\
-3 & PPO, full budget, reward paid at the end of the cycle & PPO 4{,}260 & kept \\
-5 & Predicted waiting per route in the state (23 components) & PPO 4{,}345 & retained \\
-6 & Normalised reward and $\gamma = 0.995$ & PPO 4{,}405 (WAIT 36\%) & retained \\
-7 & DQN check, full budget, $\gamma = 0.995$ & DQN 3{,}593 (99\% shovel 3) & kept, no variant \\
-8, 9 & Q-Learning and SARSA, initial configuration & Q-Learning 3{,}955 (62\% shovel 3); SARSA 3{,}535 (98\% shovel 3) & starting point \\
-\midrule
-\multicolumn{4}{l}{\emph{Opportunity cost extended to all cycles (abandoned)}} \\
-10--13 & Same configuration, modified reward & PPO 210 (WAIT 99.8\%); DQN 3{,}532 (WAIT 94.8\%); Q-Learning 4{,}099; SARSA 4{,}134 & abandoned \\
-\midrule
-\multicolumn{4}{l}{\emph{Discounting per minute}} \\
-14--17 & Same configuration as trials 6 to 9 & PPO 4{,}414 (WAIT 0\%); DQN 121 (WAIT 99.8\%); Q-Learning 3{,}974; SARSA 3{,}602 (100\% shovel 3) & PPO and DQN frozen \\
-16--23 & Tabular tuning: $\alpha \in \{0.1; 0.2\}$ × \{6; 8\} intervals & Q-Learning 3{,}369 to \textbf{4{,}181} ($\alpha = 0.2$, 6 int.); SARSA 3{,}481 to \textbf{3{,}626} ($\alpha = 0.1$, 6 int.), 98 to 100\% shovel 3 & best configurations \\
-24, 25 & Sixth state variable: route of smallest predicted waiting & Q-Learning 4{,}062; SARSA 3{,}505 (95\% shovel 3) & rejected \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\begin{corrbloc}
+\textbf{Three lessons.} The trials, their results and the reasons for each decision are reported in \cref{app:tuning}. Three lessons emerge. First, giving the agent the predicted waiting per route was the change that brought PPO close to MTWT, from 3{,}953 to 4{,}345~t/h. Second, discounting per decision was the common cause of two flaws, a drift of the value-based agents towards the farthest shovel and waits inserted to postpone a negative reward; discounting per minute corrects the formulation without changing the reward. Third, under discounting per minute, DQN collapses onto WAIT while PPO does not, and the tabular agents do not do better than a random policy.
+\end{corrbloc}
 
-\begin{revbloc}{v3}
-\textbf{What was retained, and why.} Each retained change is justified independently of its score. The block of predicted waiting per route gives the agent the same information as MTWT. Reward normalisation and a longer horizon are common practice for PPO. Discounting per minute corrects the formulation of the problem, as explained in \cref{sec:discount}. Over the same period, the reference heuristics were strengthened: prediction of trucks en route for MTWT and FIFO, and addition of the LP policy. The comparison has therefore become harder for reinforcement learning.
 
-\textbf{The flaw found, and the abandoned variant.} With discounting per decision, the three value-based agents (DQN, Q-Learning, SARSA) drifted towards the farthest shovel, and their productivity decreased as exploration diminished. A measurement without retraining revealed the cause. Always going to shovel 3 rather than shovel 1 loses 9\% of productivity, but hardly changes the reward per decision (0.813 versus 0.820), because a cycle yields 1 whatever its duration. A first correction, decided with the research supervisor, extended the opportunity cost to all cycles (cycle duration divided by 23.2~min). The reward of a shift changed only by a constant, and the drift disappeared (trials 10 to 13). But a cycle then yielded a negative value on average. With discounting per decision, postponing a negative reward makes it less costly, and inserting waits of 0.2~min became the way to postpone it. PPO thus learned to wait in 99.8\% of its decisions. Both flaws therefore have the same cause: discounting per decision while decisions do not last the same time. This variant was abandoned, the reward returned to its previous definition, and discounting per minute was introduced for the four algorithms, with no other change. These two decisions were taken after seeing results on the selection seeds: they are declared as such.
-
-\textbf{The collapse of DQN.} With discounting per minute, DQN chooses WAIT in 99.8\% of its decisions (trial 15). Replayed greedily, the final model produces 840~t per shift, whereas the last training shifts, played with updates and exploration, produced 25{,}620 to 30{,}660~t. \corr{With discounting per minute, the target of WAIT is $r_{\mathrm{WAIT}} + \gamma_{\min}^{\Delta t}\max_{a'} Q(s',a')$, where $\Delta t$ is a fraction of a minute after a short wait and $r_{\mathrm{WAIT}}$ is close to zero. When $\Delta t$ is small, $\gamma_{\min}^{\Delta t}$ is close to 1 and $s'$ differs little from $s$, so that $Q(s,\mathrm{WAIT}) \approx \max_{a'} Q(s,a')$: the gap between WAIT and the best assignment almost vanishes, which is correct. The maximisation bias of DQN, which overestimates the largest of several noisy estimates, can then place WAIT first; once WAIT is chosen, the next state is almost the same, and the error repeats. \Cref{sec:ablation} measures this gap on the trained models.} PPO, which learns a policy rather than values to compare, is not affected. The equivalence test of \cref{sec:discount} rules out an implementation error. In accordance with the rule, DQN goes into the campaign in this version.
-
-\textbf{The tabular agents.} Tuning retained $\alpha = 0.2$ for Q-Learning and $\alpha = 0.1$ for SARSA, with 6 intervals in both cases. Giving the discrete state the route MTWT would choose, instead of the nearest shovel, cost both algorithms about 120~t/h (trials 24 and 25), and did not correct the concentration of SARSA on shovel 3. In the ten tabular trials with discounting per minute (16 to 25), the productivity measured during training starts at about 4{,}160~t/h, when exploration is almost random, then decreases as exploration diminishes. The best tabular agent (4{,}181~t/h) barely matches the random policy (4{,}167~t/h). We present this as a convergence failure of the tabular approach on this problem, with the reduced state and budget retained, not as a limitation of these algorithms in general.
-\end{revbloc}
 
 \subsection{Indicators}
 \label{sec:metrics}
@@ -1651,7 +1632,7 @@ The ablation study concerns the weight of the waiting penalty $w_4$, under nomin
 PPO is insensitive to $w_4$: its productivity only varies from 4,411 to 4,417~t/h, and it almost never uses WAIT. DQN collapses for every value of $w_4$, including without a waiting penalty, with 2 to 4 collapsed models out of 5. With $w_4 = 0.5$, two models wait for the whole shift and haul no tonne at all; their fuel per tonne is undefined. The collapse of DQN therefore does not come from the weight of the waiting penalty, which is consistent with the explanation proposed in \cref{sec:tuning}: it stems from the very small value gap between WAIT and the best assignment.
 
 \begin{corrbloc}
-\textbf{Why DQN collapses.} The value gap was measured directly on the five nominal DQN models, without retraining, on the 1{,}329 decision states met by MTWT on five selection seeds (\cref{tab:dqndiag}). The values $Q$ are of the order of 155 to 177, and a WAIT of 0.2~min should be worth about 0.1 less than the best assignment: $1-\gamma_{\min}^{0.2}$ times the value, plus the cost of the wait. This gap is about 0.06\% of the values. In the four collapsed models, WAIT is valued 0.07 to 0.19 above the best assignment and comes first in 76 to 95\% of these states, and in more than 99\% of the states that the model meets itself; in the only working model, seed 2, WAIT is valued 0.20 below and never comes first. An error of 0.04 to 0.12\% of the values is therefore enough to reverse the order of WAIT and the best assignment, which supports the explanation of \cref{sec:tuning} with a measurement.
+\textbf{Why DQN collapses.} The value gap was measured directly on the five nominal DQN models, without retraining, on the 1{,}329 decision states met by MTWT on five selection seeds (\cref{tab:dqndiag}). The values $Q$ are of the order of 155 to 177, and a WAIT of 0.2~min should be worth about 0.1 less than the best assignment: $1-\gamma_{\min}^{0.2}$ times the value, plus the cost of the wait. This gap is about 0.06\% of the values. In the four collapsed models, WAIT is valued 0.07 to 0.19 above the best assignment and comes first in 76 to 95\% of these states, and in more than 99\% of the states that the model meets itself; in the only working model, seed 2, WAIT is valued 0.20 below and never comes first. An error of 0.04 to 0.12\% of the values is therefore enough to reverse the order of WAIT and the best assignment, which supports the explanation of \corr{\cref{app:tuning}} with a measurement.
 
 \begin{table}[H]
 \centering
@@ -1710,7 +1691,8 @@ This section interprets the results in light of the research questions, discusse
 \textbf{Hyp.} & \textbf{Statement} & \textbf{Key evidence} & \textbf{Verdict} \\
 \midrule
 H1 & Under nominal conditions, the deep agents outperform the best heuristic in productivity. & \rev{T31}{PPO is $-22.8$~t/h ($-0.5\%$) below MTWT, DQN $-3{,}150$~t/h; $p<0.001$ after correction (\cref{tab:stats}). Mean over 5 models per agent.} & \rev{T31}{\textbf{Refuted}} \\[4pt]
-H2 & No policy dominates in all three regimes. & \rev{T31}{MTWT is the most productive in all three regimes. The interaction between policy and regime is significant ($F(18,783)=1{,}211$, $p<0.001$), but it comes from the bottom of the ranking.} & \rev{T31}{\textbf{Refuted}} \\[4pt]
+\corr{H2a} & \corr{No policy dominates in all three regimes.} & \corr{MTWT is the most productive in all three regimes (\cref{tab:productivity}); near the saturation of the shovels, however, Fixed Assignment overtakes it (\cref{tab:disruptions}).} & \corr{\textbf{Refuted} in the three regimes} \\[4pt]
+\corr{H2b} & \corr{The interaction between policy and regime is significant.} & \corr{$F(18,783)=1{,}211$, $p<0.001$, carried by the bottom of the ranking; restricted to the five competitive policies, $F(8,348)=30.4$, $p<0.001$, $\eta^2_p=0.41$.} & \corr{\textbf{Supported}} \\[4pt]
 H3 & High productivity does not necessarily come with low queueing time. & \rev{T31}{Front reduced to Fixed Assignment and MTWT (and LP under high load), with less than one minute of queueing difference. A clear trade-off does exist, however, between productivity and fuel per tonne (additional analysis, not covered by the hypothesis).} & \rev{T31}{\textbf{Not supported}} \\
 \bottomrule
 \end{tabularx}
@@ -1866,6 +1848,52 @@ The authors declare that they have no known competing financial interests or per
 \bibliography{RL_references}
 
 \adir{bibliography style: use the template of the target journal.}
+
+\appendix
+\section{Agent tuning trials}
+\label{app:tuning}
+
+\corr{This appendix reports the agent tuning trials summarised in \cref{sec:tuning}, in the order in which they were run.}
+
+\begin{table}[H]
+\centering
+\caption{Trials of agent tuning on the selection seeds (t/h). In brackets: share of WAIT decisions or of cycles sent to a single shovel.}
+\label{tab:tuning}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.6cm}}
+\toprule
+\textbf{No.} & \textbf{Trial} & \textbf{Result} & \textbf{Decision} \\
+\midrule
+\multicolumn{4}{l}{\emph{Discounting per decision}} \\
+0 & Tuning of PPO and DQN, 200{,}000 steps & PPO 3{,}953 (99\% shovel 1); DQN 3{,}992 & starting point \\
+1, 2, 4 & Reward estimated and paid at the decision, with or without a cost of queue minutes & PPO 3{,}915 to 3{,}981; DQN 4{,}106 to 4{,}191 (WAIT 52 to 65\%) & rejected \\
+3 & PPO, full budget, reward paid at the end of the cycle & PPO 4{,}260 & kept \\
+5 & Predicted waiting per route in the state (23 components) & PPO 4{,}345 & retained \\
+6 & Normalised reward and $\gamma = 0.995$ & PPO 4{,}405 (WAIT 36\%) & retained \\
+7 & DQN check, full budget, $\gamma = 0.995$ & DQN 3{,}593 (99\% shovel 3) & kept, no variant \\
+8, 9 & Q-Learning and SARSA, initial configuration & Q-Learning 3{,}955 (62\% shovel 3); SARSA 3{,}535 (98\% shovel 3) & starting point \\
+\midrule
+\multicolumn{4}{l}{\emph{Opportunity cost extended to all cycles (abandoned)}} \\
+10--13 & Same configuration, modified reward & PPO 210 (WAIT 99.8\%); DQN 3{,}532 (WAIT 94.8\%); Q-Learning 4{,}099; SARSA 4{,}134 & abandoned \\
+\midrule
+\multicolumn{4}{l}{\emph{Discounting per minute}} \\
+14--17 & Same configuration as trials 6 to 9 & PPO 4{,}414 (WAIT 0\%); DQN 121 (WAIT 99.8\%); Q-Learning 3{,}974; SARSA 3{,}602 (100\% shovel 3) & PPO and DQN frozen \\
+16--23 & Tabular tuning: $\alpha \in \{0.1; 0.2\}$ × \{6; 8\} intervals & Q-Learning 3{,}369 to \textbf{4{,}181} ($\alpha = 0.2$, 6 int.); SARSA 3{,}481 to \textbf{3{,}626} ($\alpha = 0.1$, 6 int.), 98 to 100\% shovel 3 & best configurations \\
+24, 25 & Sixth state variable: route of smallest predicted waiting & Q-Learning 4{,}062; SARSA 3{,}505 (95\% shovel 3) & rejected \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{revbloc}{v3}
+\textbf{What was retained, and why.} Each retained change is justified independently of its score. The block of predicted waiting per route gives the agent the same information as MTWT. Reward normalisation and a longer horizon are common practice for PPO. Discounting per minute corrects the formulation of the problem, as explained in \cref{sec:discount}. Over the same period, the reference heuristics were strengthened: prediction of trucks en route for MTWT and FIFO, and addition of the LP policy. The comparison has therefore become harder for reinforcement learning.
+
+\textbf{The flaw found, and the abandoned variant.} With discounting per decision, the three value-based agents (DQN, Q-Learning, SARSA) drifted towards the farthest shovel, and their productivity decreased as exploration diminished. A measurement without retraining revealed the cause. Always going to shovel 3 rather than shovel 1 loses 9\% of productivity, but hardly changes the reward per decision (0.813 versus 0.820), because a cycle yields 1 whatever its duration. A first correction, decided with the research supervisor, extended the opportunity cost to all cycles (cycle duration divided by 23.2~min). The reward of a shift changed only by a constant, and the drift disappeared (trials 10 to 13). But a cycle then yielded a negative value on average. With discounting per decision, postponing a negative reward makes it less costly, and inserting waits of 0.2~min became the way to postpone it. PPO thus learned to wait in 99.8\% of its decisions. Both flaws therefore have the same cause: discounting per decision while decisions do not last the same time. This variant was abandoned, the reward returned to its previous definition, and discounting per minute was introduced for the four algorithms, with no other change. These two decisions were taken after seeing results on the selection seeds: they are declared as such.
+
+\textbf{The collapse of DQN.} With discounting per minute, DQN chooses WAIT in 99.8\% of its decisions (trial 15). Replayed greedily, the final model produces 840~t per shift, whereas the last training shifts, played with updates and exploration, produced 25{,}620 to 30{,}660~t. \corr{With discounting per minute, the target of WAIT is $r_{\mathrm{WAIT}} + \gamma_{\min}^{\Delta t}\max_{a'} Q(s',a')$, where $\Delta t$ is a fraction of a minute after a short wait and $r_{\mathrm{WAIT}}$ is close to zero. When $\Delta t$ is small, $\gamma_{\min}^{\Delta t}$ is close to 1 and $s'$ differs little from $s$, so that $Q(s,\mathrm{WAIT}) \approx \max_{a'} Q(s,a')$: the gap between WAIT and the best assignment almost vanishes, which is correct. The maximisation bias of DQN, which overestimates the largest of several noisy estimates, can then place WAIT first; once WAIT is chosen, the next state is almost the same, and the error repeats. \Cref{sec:ablation} measures this gap on the trained models.} PPO, which learns a policy rather than values to compare, is not affected. The equivalence test of \cref{sec:discount} rules out an implementation error. In accordance with the rule, DQN goes into the campaign in this version.
+
+\textbf{The tabular agents.} Tuning retained $\alpha = 0.2$ for Q-Learning and $\alpha = 0.1$ for SARSA, with 6 intervals in both cases. Giving the discrete state the route MTWT would choose, instead of the nearest shovel, cost both algorithms about 120~t/h (trials 24 and 25), and did not correct the concentration of SARSA on shovel 3. In the ten tabular trials with discounting per minute (16 to 25), the productivity measured during training starts at about 4{,}160~t/h, when exploration is almost random, then decreases as exploration diminishes. The best tabular agent (4{,}181~t/h) barely matches the random policy (4{,}167~t/h). We present this as a convergence failure of the tabular approach on this problem, with the reduced state and budget retained, not as a limitation of these algorithms in general.
+\end{revbloc}
 
 % ============================================================================
 % Working appendix: change log (shown only with \revmarkstrue)
