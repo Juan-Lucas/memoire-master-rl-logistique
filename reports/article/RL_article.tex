@@ -586,6 +586,19 @@ Randomness & \rev{v3}{one independent random stream per process and one breakdow
 \end{tabularx}
 \end{table}
 
+\begin{corrbloc}
+\subsection{Simulation verification and validation}
+\label{sec:vv}
+
+Verification checks that the code implements the model as specified; validation checks that the model produces magnitudes of a plausible order. Both are reported separately.
+
+\textbf{Verification.} 149 automated tests check the simulator. In each regime, they verify the following invariants: each truck is in exactly one state at any time, and has a cycle in progress if and only if it is travelling; a shovel or a dump serves one truck at a time, in the order of arrival, and never stays idle while a truck is waiting; simultaneous events are processed in a fixed order, arrivals before decisions, then by truck index; the tonnage of an episode equals the sum over its cycle log; a cycle whose dumping ends after the shift is simulated to the end, with its fuel and its penalties, but delivers no tonnage; each truck consumes at least the idling fuel of all its stationary time; and the reward of each cycle is paid exactly once. Other tests check the separate random streams, the bounds of the counters at the end of the shift and the discounting per minute of \cref{sec:discount}.
+
+\textbf{Validation of magnitudes.} The simulator is not calibrated on a site, but its magnitudes can be compared with published values. Under nominal conditions with Fixed Assignment, a cycle lasts 22.7~min without waiting or breakdowns, including 2.0~min of loading. The remaining 20.7~min of travel and dumping lie within the range of 15 to 25~min reported for the back cycle of haul trucks in an oil sands mine \cite{ChungTa2013}, where loading takes 3 to 4~min with trucks of 240 to 400~t. A truck hauls 354~t/h, about 2.5 loads of 140~t per hour, and consumes 95.4~L/h, within the medium range published by the manufacturer for the Cat 785D and below its maximum of 135.6~L/h \cite{Caterpillar2019}; idling, at 11.3~L/h, is a value measured on an operating truck \cite{Kubler2015}. Shovels are busy 35\% of the shift, consistently with a match factor of 0.35.
+
+\textbf{Scope.} These magnitudes are of a plausible order, but the simulator is not calibrated on operational data from a site: the reported values describe the relative performance of the policies in this environment and are not predictions for a real mine.
+\end{corrbloc}
+
 \subsection{Formulation as a semi-Markov decision process}
 \label{sec:smdp}
 
@@ -1644,7 +1657,7 @@ PPO                  & $0.237\pm0.001$ & \boldmath{$0.248\pm0.002$} & $0.242\pm0
 
 \begin{revbloc}{M7, M8, M9, M11, M12, M25, N1--N5, v3, T31}
 \begin{itemize}
-  \item \textbf{Simulation and lack of site validation:} the study relies entirely on a simulator whose structure is not calibrated on real data. A graph of seven nodes, three shovels and two dumps represent the mine. Weather conditions, operator behaviour, road incidents and maintenance decisions are not represented. The fuel model relies on measurements made on a single truck \cite{Kubler2015}, scaled to a published average by a factor that compensates for the absence of descents in the simulator; overconsumption on degraded roads is an assumption.
+  \item \textbf{Simulation and lack of site validation:} the study relies entirely on a simulator whose structure is not calibrated on real data. A graph of seven nodes, three shovels and two dumps represent the mine. Weather conditions, operator behaviour, road incidents and maintenance decisions are not represented. The fuel model relies on measurements made on a single truck \cite{Kubler2015}, scaled to a published average by a factor that compensates for the absence of descents in the simulator; overconsumption on degraded roads is an assumption. \corr{The reported performance differences are therefore conditional on a stochastic simulator that has not been calibrated on operational data from a site; they should not be interpreted as direct predictions for an operating mine.}
   \item \textbf{Breakdowns:} only trucks break down, at most once per cycle, following a stationary process. Shovel breakdowns are not represented. With a match factor of 0.35, losing a shovel would remove a third of the loading capacity at once: it would test the reallocation ability of the policies far more than a truck breakdown. This is a natural extension of this work.
   \item \textbf{Partial common random numbers:} breakdowns are drawn from a stream specific to each truck and are identical across policies; travel and service times are drawn from streams shared by all trucks, in the order of events, which depends on the decisions. The pairing between policies is therefore strong, but not perfect.
   \item \textbf{Formulation and discounting:} a single agent decides successively for all trucks, and the reward of a step covers the cycles completed during that step, whatever the truck: credit assignment to a decision is not explicit. Discounting per minute relies on two approximations (reward counted at the start of the step; scale of PPO's normalisation estimated with the $\gamma$ per decision) and requires a single simulated environment per training run. The factor per minute is referred to the mean interval of Fixed Assignment under nominal conditions (1.89~min); another reference would give another horizon in minutes.
