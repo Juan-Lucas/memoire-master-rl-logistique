@@ -125,9 +125,19 @@ def prepare_outputs(out_dir: str | Path, filenames: Iterable[str], overwrite: bo
     return paths
 
 
+def save_raster_and_vector(fig: plt.Figure, out_path: Path, dpi: int = 150, **kwargs) -> Path:
+    """Écrit la figure en PNG (``out_path``) et en PDF vectoriel à côté (même nom, suffixe
+    ``.pdf``) ; l'article inclut la figure sans extension et pdfLaTeX prend le PDF."""
+    out_path = Path(out_path)
+    fig.savefig(out_path, dpi=dpi, **kwargs)
+    pdf_path = out_path.with_suffix(".pdf")
+    fig.savefig(pdf_path, **kwargs)
+    return pdf_path
+
+
 def save_figure(fig: plt.Figure, out_path: Path, dpi: int = 150) -> None:
-    """Sauvegarde une figure, la ferme et affiche le chemin de sortie."""
-    fig.savefig(out_path, dpi=dpi)
+    """Sauvegarde une figure (PNG et PDF), la ferme et affiche le chemin de sortie."""
+    save_raster_and_vector(fig, out_path, dpi=dpi)
     plt.close(fig)
     print(f"Figure sauvegardée : {out_path}")
 

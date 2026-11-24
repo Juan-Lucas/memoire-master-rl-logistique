@@ -978,7 +978,7 @@ L'architecture découple la logique d'apprentissage de la simulation, ce qui per
 \begin{revbloc}{M28, m20, m24, v3}
 Toutes les mesures sont faites sur le \corr{processeur Intel à 4 cœurs et 8 fils, avec 16~Go de mémoire}, sans carte graphique.
 \begin{itemize}
-  \item \textbf{Entraînement :} un entraînement complet en conditions nominales, avec quatre entraînements en même temps sur la machine, a duré 223~min pour PPO, 168~min pour DQN, 253~min pour Q-Learning et 241~min pour SARSA. Chaque entraînement utilise un seul environnement simulé, exigence de l'actualisation par minute de la \cref{sec:discount}. Collecter avec quatre environnements en parallèle n'accélérerait PPO que d'un facteur 1,47 et changerait le modèle obtenu (4\,096 pas par mise à jour au lieu de 1\,024) : ce choix n'a pas été retenu. L'entraînement est déterministe pour une graine donnée. \rev{T31}{La campagne complète compte 90 entraînements : 60 pour les résultats principaux (4 algorithmes, 3 régimes, 5 graines) et 30 pour l'étude d'ablation. Elle a duré 5 jours et 9 heures, du 22 au 27 octobre 2026, quatre entraînements à la fois, soit 515 heures d'entraînement cumulées. Pendant la campagne, la machine servant aussi à d'autres calculs, la durée d'un entraînement a varié de 142 à 1\,322~min selon l'agent et le moment ; les durées ci-dessus, mesurées pendant la mise au point, sont plus représentatives. L'évaluation unique (6\,540 épisodes) a duré 4~h~18 sur 4 processus.}
+  \item \textbf{Entraînement :} un entraînement complet en conditions nominales, avec quatre entraînements en même temps sur la machine, a duré 223~min pour PPO, 168~min pour DQN, 253~min pour Q-Learning et 241~min pour SARSA. Chaque entraînement utilise un seul environnement simulé, exigence de l'actualisation par minute de la \cref{sec:discount}. Collecter avec quatre environnements en parallèle n'accélérerait PPO que d'un facteur 1,47 et changerait le modèle obtenu (4\,096 pas par mise à jour au lieu de 1\,024) : ce choix n'a pas été retenu. L'entraînement est déterministe pour une graine donnée. \rev{T31}{La campagne complète compte 90 entraînements : 60 pour les résultats principaux (4 algorithmes, 3 régimes, 5 graines) et 30 pour l'étude d'ablation. Elle a duré \corr{5 jours et 9 heures de temps écoulé}, quatre entraînements à la fois, soit 515 heures d'entraînement cumulées. Pendant la campagne, la machine servant aussi à d'autres calculs, la durée d'un entraînement a varié de 142 à 1\,322~min selon l'agent et le moment ; les durées ci-dessus, mesurées pendant la mise au point, sont plus représentatives. L'évaluation unique (6\,540 épisodes) a duré 4~h~18 sur 4 processus.}
   \item \textbf{Évaluation :} chaque épisode d'évaluation ne dépend que de la politique et de sa graine, grâce aux flux aléatoires séparés décrits à la \cref{sec:simulator}. Les épisodes sont donc répartis entre plusieurs processus, avec exactement les mêmes résultats qu'en séquentiel, graine par graine. Sur 150 épisodes, 4 processus divisent la durée par 2 ; 8 processus font moins bien que 4, car chacun doit d'abord charger PyTorch.
   \item \textbf{Inférence :} \corr{la latence d'une décision, construction de l'état comprise, mesurée décision par décision sur trois graines de sélection en conditions nominales, a une médiane de 0,63~ms pour MTWT, 0,38~ms pour \corr{LP statique}, 0,80~ms pour DQN et 1,22~ms pour PPO, et un 99\textsuperscript{e} centile de 0,75, 0,49, 1,59 et 1,53~ms ; des mesures antérieures donnaient de 0,48 à 0,71~ms pour PPO de 12 à 24 camions.} Comme l'état a une taille fixe, elle dépend peu de la taille de la flotte. Elle est négligeable devant la durée d'un cycle de transport, mais son adéquation aux contraintes d'un système de gestion de flotte commercial n'a pas été évaluée.
   \item \textbf{Mémoire :} \rev{T31}{un modèle PPO occupe 501~Ko (plus 2~Ko pour les statistiques de normalisation de la récompense), un modèle DQN 344~Ko, et une table de Q-Learning ou de SARSA de 0,6 à 1,3~Mo selon le nombre d'états visités pendant l'entraînement.}
@@ -1029,7 +1029,7 @@ Fortes pannes  & 12 & 3 & 2 & 10\,\% & \rev{M15}{0,35} & Pannes de camions fréq
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/fig3_scenarios.png}
+\includegraphics[width=0.95\textwidth]{figures/fig3_scenarios}
 \caption{Configuration des trois régimes de fonctionnement.}
 \label{fig:scenarios}
 \end{figure}
@@ -1180,7 +1180,7 @@ La \cref{fig:productivity} représente ces productivités avec leurs intervalles
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{figures/barplot_productivite_scenarios.png}
+\includegraphics[width=0.92\textwidth]{figures/barplot_productivite_scenarios}
 \caption{Productivité moyenne par politique et par régime. Les barres d'erreur indiquent les intervalles de confiance bootstrap à 95\,\%.}
 \label{fig:productivity}
 \end{figure}
@@ -1301,7 +1301,7 @@ La \cref{fig:behavioral} montre la même répartition pour chaque politique et c
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/behaviour_30_replications.png}
+\includegraphics[width=\textwidth]{figures/behaviour_30_replications}
 \caption{Répartition des cycles entre les pelles et part des décisions ATTENDRE.}
 \label{fig:behavioral}
 \end{figure}
@@ -1446,7 +1446,7 @@ La \cref{fig:heatmap} montre ces variations, en \%, pour toutes les politiques :
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{figures/robustness_heatmap.png}
+\includegraphics[width=0.9\textwidth]{figures/robustness_heatmap}
 \caption{Variation par rapport aux conditions nominales (\%).}
 \label{fig:heatmap}
 \end{figure}
@@ -1608,7 +1608,7 @@ La \cref{fig:convergence} montre la productivité des épisodes d'entraînement,
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/learning_curves_campagne.png}
+\includegraphics[width=\textwidth]{figures/learning_curves_campagne}
 \caption{Productivité des épisodes d'entraînement, moyenne sur les 5 modèles.}
 \label{fig:convergence}
 \end{figure}

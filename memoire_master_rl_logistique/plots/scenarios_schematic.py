@@ -22,7 +22,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
-from memoire_master_rl_logistique.plots.common import prepare_outputs
+from memoire_master_rl_logistique.plots.common import prepare_outputs, save_raster_and_vector
 
 TRUCK_COLOR   = "#546E7A"
 SHOVEL_COLOR  = "#1565C0"
@@ -129,7 +129,7 @@ def main(out_dir: str | Path, overwrite: bool = False) -> Path:
     fig.legend(handles=legend_handles, loc="lower center", ncol=3,
                fontsize=8.5, frameon=True, framealpha=0.8, bbox_to_anchor=(0.5, 0.0))
     fig.tight_layout(rect=[0, 0.08, 1, 1])
-    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    save_raster_and_vector(fig, out_path, bbox_inches="tight")
     plt.close(fig)
     print(f"Écrit : {out_path}")
     return out_path

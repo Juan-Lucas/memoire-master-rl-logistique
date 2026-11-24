@@ -974,7 +974,7 @@ The architecture decouples the learning logic from the simulation, which makes i
 \begin{revbloc}{M28, m20, m24, v3}
 All measurements are made \corr{on an Intel processor with 4 cores and 8 threads and 16~GB of memory}, without a graphics card.
 \begin{itemize}
-  \item \textbf{Training:} a full training run under nominal conditions, with four training runs at the same time on the machine, took 223~min for PPO, 168~min for DQN, 253~min for Q-Learning and 241~min for SARSA. Each run uses a single simulated environment, as required by the discounting per minute of \cref{sec:discount}. Collecting with four environments in parallel would speed PPO up by a factor of only 1.47 and would change the resulting model (4{,}096 steps per update instead of 1{,}024): this option was not retained. Training is deterministic for a given seed. \rev{T31}{The full campaign comprises 90 training runs: 60 for the main results (4 algorithms, 3 regimes, 5 seeds) and 30 for the ablation study. It took 5 days and 9 hours, from 22 to 27 October 2026, four runs at a time, i.e.\ 515 cumulative training hours. During the campaign, as the machine was also used for other computations, the duration of a run varied from 142 to 1{,}322~min depending on the agent and the time; the durations above, measured during tuning, are more representative. The single evaluation (6{,}540 episodes) took 4~h~18 on 4 processes.}
+  \item \textbf{Training:} a full training run under nominal conditions, with four training runs at the same time on the machine, took 223~min for PPO, 168~min for DQN, 253~min for Q-Learning and 241~min for SARSA. Each run uses a single simulated environment, as required by the discounting per minute of \cref{sec:discount}. Collecting with four environments in parallel would speed PPO up by a factor of only 1.47 and would change the resulting model (4{,}096 steps per update instead of 1{,}024): this option was not retained. Training is deterministic for a given seed. \rev{T31}{The full campaign comprises 90 training runs: 60 for the main results (4 algorithms, 3 regimes, 5 seeds) and 30 for the ablation study. It took \corr{5 days and 9 hours of elapsed time}, four runs at a time, i.e.\ 515 cumulative training hours. During the campaign, as the machine was also used for other computations, the duration of a run varied from 142 to 1{,}322~min depending on the agent and the time; the durations above, measured during tuning, are more representative. The single evaluation (6{,}540 episodes) took 4~h~18 on 4 processes.}
   \item \textbf{Evaluation:} each evaluation episode depends only on the policy and its seed, thanks to the separate random streams described in \cref{sec:simulator}. Episodes are therefore distributed over several processes, with exactly the same results as sequentially, seed by seed. On 150 episodes, 4 processes halve the duration; 8 processes do worse than 4, because each must first load PyTorch.
   \item \textbf{Inference:} \corr{the latency of a decision, state construction included, measured decision by decision on three selection seeds under nominal conditions, has a median of 0.63~ms for MTWT, 0.38~ms for \corr{Static LP}, 0.80~ms for DQN and 1.22~ms for PPO, and a 99th percentile of 0.75, 0.49, 1.59 and 1.53~ms; earlier measurements gave 0.48 to 0.71~ms for PPO from 12 to 24 trucks.} Since the state has a fixed size, it depends little on fleet size. It is negligible compared with the duration of a haulage cycle, but its suitability for the constraints of a commercial fleet management system has not been assessed.
   \item \textbf{Memory:} \rev{T31}{a PPO model takes 501~KB (plus 2~KB for the statistics of reward normalisation), a DQN model 344~KB, and a Q-Learning or SARSA table 0.6 to 1.3~MB depending on the number of states visited during training.}
@@ -1025,7 +1025,7 @@ Frequent breakdowns  & 12 & 3 & 2 & 10\% & \rev{M15}{0.35} & Frequent truck brea
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/fig3_scenarios.png}
+\includegraphics[width=0.95\textwidth]{figures/fig3_scenarios}
 \caption{Configuration of the three operating regimes.}
 \label{fig:scenarios}
 \end{figure}
@@ -1176,7 +1176,7 @@ PPO                  & 4,414.7 $\pm$ 51 & 6,310.0 $\pm$ 62 & 4,163.9 $\pm$ 77 & 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{figures/barplot_productivite_scenarios.png}
+\includegraphics[width=0.92\textwidth]{figures/barplot_productivite_scenarios}
 \caption{Mean productivity by policy and regime. Error bars indicate 95\% bootstrap confidence intervals.}
 \label{fig:productivity}
 \end{figure}
@@ -1296,7 +1296,7 @@ The value-based agents show extreme behaviours. SARSA sends 99\% of its cycles t
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/behaviour_30_replications.png}
+\includegraphics[width=\textwidth]{figures/behaviour_30_replications}
 \caption{Allocation of cycles among shovels and share of WAIT decisions.}
 \label{fig:behavioral}
 \end{figure}
@@ -1440,7 +1440,7 @@ Except for SARSA under high load, retraining an agent in the disrupted regime th
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{figures/robustness_heatmap.png}
+\includegraphics[width=0.9\textwidth]{figures/robustness_heatmap}
 \caption{Change with respect to nominal conditions (\%).}
 \label{fig:heatmap}
 \end{figure}
@@ -1602,7 +1602,7 @@ Aggregated as in Agarwal et al.~\cite{Agarwal2021}, normalised by Fixed Assignme
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/learning_curves_campagne.png}
+\includegraphics[width=\textwidth]{figures/learning_curves_campagne}
 \caption{Productivity of the training episodes, mean over the 5 models.}
 \label{fig:convergence}
 \end{figure}

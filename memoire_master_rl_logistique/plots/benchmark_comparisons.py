@@ -42,6 +42,7 @@ from memoire_master_rl_logistique.plots.common import (
     order_policies,
     policy_label,
     prepare_outputs,
+    save_raster_and_vector,
 )
 
 PRODUCTIVITY = "productivity_tph"
@@ -111,7 +112,7 @@ def plot_grouped_bars(summary: pd.DataFrame, ylabel: str, out_path: Path) -> Non
               frameon=False, fontsize=11)
     ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    save_raster_and_vector(fig, out_path)
     plt.close(fig)
 
 
@@ -142,7 +143,7 @@ def plot_pareto(
     axes[0][0].set_ylabel(tr("Productivité (t/h)", "Productivity (t/h)"))
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    save_raster_and_vector(fig, out_path)
     plt.close(fig)
 
 

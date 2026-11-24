@@ -55,6 +55,8 @@ def test_main_ecrit_les_trois_figures(tmp_path):
         "pareto_productivity_waiting.png",
     ]
     assert all(p.exists() for p in outputs)
+    # version vectorielle à côté de chaque PNG (figures de l'article en PDF)
+    assert all(p.with_suffix(".pdf").read_bytes().startswith(b"%PDF") for p in outputs)
     with pytest.raises(FileExistsError):
         main(REFERENCES_CSV, tmp_path)
 
@@ -72,6 +74,7 @@ def test_courbes_de_la_campagne(tmp_path):
     pd.DataFrame(rows).to_csv(csv, index=False)
     out = curves_main(csv, tmp_path / "fig")
     assert out.exists() and out.stat().st_size > 0
+    assert out.with_suffix(".pdf").read_bytes().startswith(b"%PDF")
     with pytest.raises(FileExistsError):
         curves_main(csv, tmp_path / "fig")
 
@@ -111,6 +114,7 @@ def test_schema_des_regimes(tmp_path):
     assert all("broken_trucks" not in s for s in sc.SCENARIOS)
     out = sc.main(tmp_path)
     assert out.exists() and out.stat().st_size > 0
+    assert out.with_suffix(".pdf").read_bytes().startswith(b"%PDF")
     with pytest.raises(FileExistsError):
         sc.main(tmp_path)
 

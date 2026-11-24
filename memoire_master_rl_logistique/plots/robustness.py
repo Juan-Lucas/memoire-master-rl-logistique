@@ -30,6 +30,7 @@ from memoire_master_rl_logistique.plots.common import (
     order_policies,
     policy_label,
     prepare_outputs,
+    save_raster_and_vector,
 )
 
 OUTPUT_FILES = ("robustness_ratios.csv", "robustness_heatmap.png")
@@ -69,7 +70,7 @@ def plot_robustness_heatmap(
 
     # Sans titre général : la légende de l'article le donne ; chaque panneau garde le sien.
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    save_raster_and_vector(fig, out_path, bbox_inches="tight")
     plt.close(fig)
 
 
