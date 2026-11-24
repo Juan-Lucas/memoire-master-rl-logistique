@@ -1,0 +1,2 @@
+processor,physical_cores,logical_cores,ram_gb,os,python,torch_threads
+"Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",4,8,16,Windows-10-10.0.26300-SP0,3.11.17,default
