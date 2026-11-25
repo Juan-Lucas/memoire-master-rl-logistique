@@ -59,6 +59,7 @@ from memoire_master_rl_logistique.simulation.graph_model import (
     build_mine_graph,
 )
 from memoire_master_rl_logistique.simulation.reward import (
+    DISTANCE_SCALE_KM,
     RewardTerms,
     RewardWeights,
     compute_reward,
@@ -91,6 +92,7 @@ class _CycleInProgress:
     route_km: float
     shovel_waits_at_decision: list[float]
     travel_to_shovel_min: float
+    fuel_start_l: float = 0.0  # carburant cumulé du camion au moment de la décision
     shovel_wait_min: float = 0.0
     load_min: float = 0.0
     travel_to_dump_min: float = 0.0
@@ -131,6 +133,7 @@ class MineEnv(gym.Env):
         fuel: FuelParams = DEFAULT_FUEL,
         seed_step: int = 1,
         variant: SimulationVariant = NOMINAL_VARIANT,
+        fuel_cost_scale_l: float | None = None,
     ) -> None:
         super().__init__()
         if seed_step < 1:
@@ -160,6 +163,12 @@ class MineEnv(gym.Env):
         self.fuel = fuel
         # Variante physique de la mine (analyse de sensibilité, M2) ; nominale par défaut.
         self.variant = variant
+        # Carburant dans la récompense (M5, réentraînement après la campagne) : si donné, le
+        # terme pondéré par w3 devient - carburant du cycle (L) / fuel_cost_scale_l au lieu
+        # de - distance (km) / 5. None (défaut) : récompense de la campagne, inchangée.
+        if fuel_cost_scale_l is not None and fuel_cost_scale_l <= 0:
+            raise ValueError(f"fuel_cost_scale_l doit être > 0 : {fuel_cost_scale_l}")
+        self.fuel_cost_scale_l = fuel_cost_scale_l
         self.cycle_log: list[CycleRecord] = []
         # Décisions de l'épisode (T19), exposées dans ``info`` : toutes, et ATTENDRE seules.
         self.decision_count: int = 0
@@ -168,6 +177,11 @@ class MineEnv(gym.Env):
         # Contributions pondérées des termes de la récompense (T25), remises à zéro au reset.
         self.last_reward_terms: dict[str, float] = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
         self.episode_reward_terms: dict[str, float] = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
+        # Cumuls des cycles terminés sur l'épisode : carburant (décision → fin du
+        # déversement, sans réparation) et distance ; servent à étalonner fuel_cost_scale_l.
+        self.episode_cycle_fuel_l: float = 0.0
+        self.episode_cycle_km: float = 0.0
+        self.episode_cycle_count: int = 0
 
         self.num_actions = self.shovel_count * self.dump_count + 1
         self.action_space = spaces.Discrete(self.num_actions)
@@ -276,6 +290,7 @@ class MineEnv(gym.Env):
         self.last_elapsed_min = 0.0
         self.last_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
         self.episode_reward_terms = dict.fromkeys(REWARD_TERM_NAMES, 0.0)
+        self.episode_cycle_fuel_l, self.episode_cycle_km, self.episode_cycle_count = 0.0, 0.0, 0
 
         return self._observe()
 
@@ -345,6 +360,7 @@ class MineEnv(gym.Env):
         location = self.truck_locations[idx]
 
         travel_min = 0.0
+        fuel_start_l = truck.total_fuel_l
         if location != shovel.node_id:
             travel_min, fuel_l = self._travel_route(location, shovel.node_id, False)
             truck.total_active_min += self._in_shift(time_min, travel_min)
@@ -360,6 +376,7 @@ class MineEnv(gym.Env):
                       + self._route_distance(shovel.node_id, dump.node_id)),
             shovel_waits_at_decision=self._shovel_waits(time_min),
             travel_to_shovel_min=travel_min,
+            fuel_start_l=fuel_start_l,
         )
         self.truck_shovels[idx] = self._cycles[idx].shovel_idx
         self.truck_load_end_min[idx] = float("inf")  # en route : pas encore chargé
@@ -463,6 +480,11 @@ class MineEnv(gym.Env):
         truck.total_fuel_l += estimate_idle_fuel_l(unload_min, self.fuel)
         time_min += unload_min
         dump.available_at_min = time_min
+        # Carburant du cycle, de la décision à la fin du déversement (réparation exclue).
+        cycle_fuel_l = truck.total_fuel_l - cycle.fuel_start_l
+        self.episode_cycle_fuel_l += cycle_fuel_l
+        self.episode_cycle_km += cycle.route_km
+        self.episode_cycle_count += 1
 
         # Tonnage livré au déversement : compté s'il se termine avant la fin du poste.
         delivered_tonnage = 0.0
@@ -497,9 +519,13 @@ class MineEnv(gym.Env):
                 unload_min=unload_min, repair_min=repair_min, delivered_t=delivered_tonnage,
             ))
 
+        # Variante carburant (M5) : le terme de distance porte le carburant du cycle, exprimé
+        # en km équivalents pour garder - km / DISTANCE_SCALE_KM dans simulation.reward.
+        cost_km = (cycle.route_km if self.fuel_cost_scale_l is None
+                   else cycle_fuel_l / self.fuel_cost_scale_l * DISTANCE_SCALE_KM)
         return self._compute_reward(
             delivered_tonnage_t=delivered_tonnage,
-            route_distance_km=cycle.route_km,
+            route_distance_km=cost_km,
             resource_waits_min=cycle.shovel_waits_at_decision,
             operational_wait_min=cycle.shovel_wait_min + dump_wait_min,
         )

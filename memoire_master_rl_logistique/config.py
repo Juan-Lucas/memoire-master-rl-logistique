@@ -43,6 +43,8 @@ EXPERIMENT_KEYS = {"project", "seeds", "scenario_defaults", "scenarios", "main_s
 SEED_KEYS = {"evaluation", "tuning", "training", "training_episode_stride"}
 # Facultative : absente des configurations archivées avec la campagne finale.
 OPTIONAL_SEED_KEYS = {"evaluation_extension"}
+# Facultative aussi : réentraînements ajoutés après la campagne (experiments/retraining.py).
+OPTIONAL_EXPERIMENT_KEYS = {"retraining"}
 HEURISTIC_KEYS = {"lp_max_utilization", "lp_utilization_candidates"}
 HYPERPARAMETER_KEYS = {
     "PPO": {"learning_rate", "gamma", "batch_size", "gae_lambda", "clip_range", "n_steps",
@@ -80,7 +82,7 @@ def experiment_config(directory: str | Path | None = None) -> dict[str, Any]:
     """Contenu validé de ``experiment_config.yaml`` (copie : le modifier est sans effet)."""
     path = Path(directory or config_dir()) / EXPERIMENT_FILE
     config = copy.deepcopy(_read_yaml(str(path)))
-    _check_keys(set(config), EXPERIMENT_KEYS, str(path))
+    _check_keys(set(config), EXPERIMENT_KEYS, str(path), frozenset(OPTIONAL_EXPERIMENT_KEYS))
     _check_keys(set(config["seeds"]), SEED_KEYS, f"{path} (seeds)",
                 frozenset(OPTIONAL_SEED_KEYS))
     _check_keys(set(config["heuristics"]), HEURISTIC_KEYS, f"{path} (heuristics)")

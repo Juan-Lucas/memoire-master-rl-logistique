@@ -11,6 +11,7 @@ from stable_baselines3.common.logger import configure
 from stable_baselines3.common.vec_env import VecNormalize
 
 from memoire_master_rl_logistique.config import hyperparameters
+from memoire_master_rl_logistique.rl.agent_variants import AgentVariant
 from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
 from memoire_master_rl_logistique.rl.checkpoints import (
     DEFAULT_CHECKPOINT_FREQ,
@@ -64,6 +65,8 @@ def train_ppo(
     progress_bar: bool = True,
     checkpoint_freq: int | None = DEFAULT_CHECKPOINT_FREQ,
     resume: bool = False,
+    agent_variant: AgentVariant | None = None,
+    fuel_cost_scale_l: float | None = None,
 ) -> PPO:
     """Entraîne un agent PPO et l'enregistre dans ``output_dir``.
 
@@ -87,7 +90,12 @@ def train_ppo(
     (``None`` : aucune) ; ``resume`` reprend un entraînement interrompu à sa dernière
     sauvegarde, avec exactement la même configuration (voir ``rl/checkpoints.py`` : la
     reprise n'est pas identique au bit près, et elle est écrite dans ``metadata.json``).
+
+    ``agent_variant`` et ``fuel_cost_scale_l`` : variante réentraînée après la campagne
+    (``rl/agent_variants.py``), écrite dans ``metadata.json`` ; ``None`` pour la campagne.
     """
+    if agent_variant is not None and agent_variant.fuel_in_reward and fuel_cost_scale_l is None:
+        raise ValueError("Variante carburant : fuel_cost_scale_l manquant.")
     params = hyperparameters("PPO", learning_rate=learning_rate, ent_coef=ent_coef, n_envs=n_envs,
                              gamma=gamma, normalize_reward=normalize_reward,
                              time_discount=time_discount)
@@ -111,12 +119,13 @@ def train_ppo(
     signature = training_signature(
         algorithm="PPO", seed=seed, total_timesteps=total_timesteps, n_envs=n_envs,
         normalize_reward=normalize, time_discount=per_minute, params=params,
-        env=asdict(env_config))
+        env=asdict(env_config), **_variant_fields(agent_variant, fuel_cost_scale_l))
     env = make_training_vec_env(
         seed, n_envs,
         truck_count=truck_count, shovel_count=shovel_count, dump_count=dump_count,
         episode_minutes=episode_minutes, breakdown_probability=breakdown_probability,
-        reward_weights=reward_weights,
+        reward_weights=reward_weights, agent_variant=agent_variant,
+        fuel_cost_scale_l=fuel_cost_scale_l,
     )
 
     kpi_callback = KPILoggerCallback(
@@ -185,13 +194,23 @@ def train_ppo(
                   "normalize_reward": normalize, "time_discount": per_minute,
                   **({"gamma_per_minute": gamma_min} if per_minute else {}),
                   **({"reward_clip": REWARD_CLIP} if normalize else {}), **params,
-                  **({"resumed_from_timesteps": resumed_from} if resumed_from else {})},
+                  **({"resumed_from_timesteps": resumed_from} if resumed_from else {}),
+                  **_variant_fields(agent_variant, fuel_cost_scale_l)},
     ))
     clear_checkpoint(out_path)
     print(f"Modèle sauvegardé : {model_path}")
 
     env.close()
     return model
+
+
+def _variant_fields(agent_variant: AgentVariant | None,
+                    fuel_cost_scale_l: float | None) -> dict:
+    """Champs de la variante pour la signature et les métadonnées (rien pour la campagne)."""
+    if agent_variant is None:
+        return {}
+    return {"agent_variant": agent_variant.as_dict(),
+            **({"fuel_cost_scale_l": fuel_cost_scale_l} if agent_variant.fuel_in_reward else {})}
 
 
 def main() -> None:
