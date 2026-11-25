@@ -210,3 +210,77 @@ def test_metadonnees_et_gamma_du_modele(tmp_path):
     with pytest.raises(ValueError, match="n_envs"):
         train_ppo(output_dir=str(tmp_path / "x"), total_timesteps=1_024, progress_bar=False,
                   time_discount=True, n_envs=2, **RUN)
+
+
+# --- Cas jouets du rapport du 17/11/2026 (M4) ---------------------------------------------
+
+def test_retour_actualise_avec_des_durees_variables():
+    """Trois décisions de 0,2, 5 et 22 min, valeurs nulles et λ = 1 : le retour du premier
+    pas vaut r0 + γ_min^0,2 · r1 + γ_min^(0,2 + 5) · r2, calculé à la main."""
+    obs_space, act_space = gym.spaces.Box(0, 1, (3,)), gym.spaces.Discrete(2)
+    g = per_minute_gamma(0.995)
+    buffer = TimeDiscountRolloutBuffer(3, obs_space, act_space, gamma=0.995, gae_lambda=1.0,
+                                       gamma_per_minute=g)
+    buffer.reset()
+    rewards, elapsed = [1.0, 2.0, 3.0], [0.2, 5.0, 22.0]
+    for step in range(3):
+        buffer.set_step_discounts([{"elapsed_min": elapsed[step]}])
+        buffer.add(np.zeros((1, 3)), np.array([[0]]), np.array([rewards[step]]),
+                   np.array([step == 0], dtype=float), th.tensor([0.0]), th.tensor([0.0]))
+    buffer.compute_returns_and_advantage(th.tensor([0.0]), np.array([False]))
+    expected = rewards[0] + g ** 0.2 * rewards[1] + g ** 5.2 * rewards[2]
+    assert buffer.returns[0, 0] == pytest.approx(expected, rel=1e-6)
+
+
+def test_fin_du_poste_est_une_coupure():
+    """Le poste se termine par une coupure (truncated), jamais par un état terminal : les
+    quatre algorithmes prolongent la valeur de la dernière observation. La durée de la
+    dernière décision s'arrête à 480 min ; le facteur de prolongement de PPO est γ_min^Δt."""
+    env = make_env(SCENARIOS["nominal"])
+    obs, info = env.reset(seed=20_000)
+    policy = heuristic_policies(SCENARIOS["nominal"])["Fixed"]
+    while True:
+        before = env.current_time_min
+        obs, _, terminated, truncated, info = env.step(policy(obs, info, env))
+        assert not terminated
+        if truncated:
+            break
+    assert info["elapsed_min"] == pytest.approx(env.episode_minutes - before)
+    assert info["elapsed_min"] >= 0
+
+    from memoire_master_rl_logistique.rl.time_discount import TimeDiscountCallback
+
+    class FakeModel:
+        gamma = 0.995
+        rollout_buffer = TimeDiscountRolloutBuffer(
+            4, gym.spaces.Box(0, 1, (3,)), gym.spaces.Discrete(2), gamma=0.995,
+            gamma_per_minute=per_minute_gamma(0.995))
+
+    callback = TimeDiscountCallback(0.995)
+    callback.model = FakeModel()
+    callback.model.rollout_buffer.reset()
+    callback.locals = {"infos": [{"elapsed_min": 3.7}]}
+    callback._on_step()
+    assert callback.model.gamma == pytest.approx(per_minute_gamma(0.995) ** 3.7, rel=1e-6)
+
+
+def test_attentes_repetees():
+    """Dix ATTENDRE successives : le produit des facteurs égale le facteur de la durée
+    totale écoulée ; le camion qui attend reste immobile au moins 0,2 min. L'intervalle
+    entre deux décisions peut être nul : quand une attente se termine à l'arrivée d'un
+    autre camion, celui-ci décide au même instant (facteur 1, aucune actualisation)."""
+    env = MineEnv(breakdown_probability=0.0)
+    env.reset(seed=20_000)
+    for _ in range(env.truck_count):   # tous les camions partent : des événements à venir
+        env.step(0)
+    g = per_minute_gamma(0.995)
+    start, product, simultaneous = env.current_time_min, 1.0, 0
+    for _ in range(10):
+        idx, now = env.current_truck_idx, env.current_time_min
+        _, _, _, _, info = env.step(env.action_space.n - 1)
+        assert env.trucks[idx].available_at_min >= now + 0.2 - 1e-9
+        assert info["elapsed_min"] >= 0
+        simultaneous += info["elapsed_min"] == 0
+        product *= step_discount(g, info["elapsed_min"])
+    assert product == pytest.approx(step_discount(g, env.current_time_min - start), rel=1e-9)
+    assert simultaneous > 0  # le cas des décisions simultanées est bien rencontré

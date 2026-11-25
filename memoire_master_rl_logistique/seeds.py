@@ -31,6 +31,9 @@ def _seed_range(block: dict) -> tuple[int, ...]:
 
 
 EVAL_SEEDS = _seed_range(_SEEDS["evaluation"])
+# Expériences ajoutées après la campagne finale (rapport du 17/11/2026) : les graines 42 à 71
+# ont déjà servi ; toute nouvelle évaluation, références comprises, se fait sur 72 à 101.
+EXTENSION_EVAL_SEEDS = _seed_range(_SEEDS.get("evaluation_extension", {"start": 72, "count": 30}))
 TUNING_SEEDS = _seed_range(_SEEDS["tuning"])
 TRAIN_SEEDS = tuple(_SEEDS["training"])
 

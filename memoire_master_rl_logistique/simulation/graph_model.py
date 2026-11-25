@@ -35,9 +35,11 @@ class RoadGraph:
     piste se dégrade.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, speed_scale: float = 1.0) -> None:
         self._g: nx.DiGraph = nx.DiGraph()
         self._edge_cache: dict[tuple[str, str], RoadEdge] = {}
+        # Facteur des vitesses de base (analyse de sensibilité) ; 1 dans toute la campagne.
+        self.speed_scale = speed_scale
 
     @property
     def nodes(self) -> nx.classes.reportviews.NodeView:
@@ -140,7 +142,7 @@ class RoadGraph:
         tirage aléatoire et d'estimation de coût pour ShortestPathPolicy.
         """
         edge = self.get_edge(src, dst)
-        base_speed_kmh = 26.0 if loaded else 32.0
+        base_speed_kmh = (26.0 if loaded else 32.0) * self.speed_scale
 
         slope_factor = max(0.55, 1.0 - max(0.0, edge.slope_pct) * SLOPE_PENALTY_PER_PCT)
         state_factor = max(0.55, min(1.2, edge.road_state))
@@ -172,14 +174,20 @@ class RoadGraph:
 def build_mine_graph(
     shovel_count: int = 3,
     dump_count: int = 2,
+    speed_scale: float = 1.0,
+    flat_returns: bool = False,
 ) -> RoadGraph:
     """Construit le graphe de la mine.
 
     Topologie en étoile : parc ↔ intersection ↔ pelles et verses, plus des
     arêtes directes pelle → verse (chargé) et verse → pelle (à vide).
     Distances et pentes inspirées d'Afrapoli (2019) et Mohtasham (2023).
+
+    ``speed_scale`` et ``flat_returns`` servent seulement à l'analyse de sensibilité
+    (``simulation.variants``) : avec ``flat_returns``, les retours à vide verse → pelle
+    n'ont plus de pente.
     """
-    graph = RoadGraph()
+    graph = RoadGraph(speed_scale=speed_scale)
 
     graph.add_node("yard", "yard")
     graph.add_node("junction_1", "junction")
@@ -241,6 +249,8 @@ def build_mine_graph(
             s_idx = (si - 1) % len(shovel_params)
             dist = (dump_params[d_idx][0] + shovel_params[s_idx][0]) * 0.8
             slope = max(1.0, (dump_params[d_idx][1] + shovel_params[s_idx][1]) / 2.0 - 2.0)
+            if flat_returns:
+                slope = 0.0
             graph.add_edge(d_node, s_node, distance_km=dist, slope_pct=slope)
 
     return graph

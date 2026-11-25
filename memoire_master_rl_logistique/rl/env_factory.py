@@ -9,6 +9,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv
 
 from memoire_master_rl_logistique.env.mine_env import MineEnv
+from memoire_master_rl_logistique.rl.agent_variants import AgentVariant, wrap_env
 from memoire_master_rl_logistique.seeds import training_episode_seed
 
 
@@ -21,8 +22,10 @@ def create_env(
     breakdown_probability: float = 0.02,
     reward_weights: tuple[float, ...] = (1.0, 0.1, 0.05, 0.3),
     seed_step: int = 1,
+    fuel_cost_scale_l: float | None = None,
 ) -> MineEnv:
-    """Crée une instance de l'environnement minier."""
+    """Crée une instance de l'environnement minier (``fuel_cost_scale_l`` : variante
+    carburant de la récompense, ``MineEnv``)."""
     return MineEnv(
         truck_count=truck_count,
         shovel_count=shovel_count,
@@ -32,12 +35,14 @@ def create_env(
         breakdown_probability=breakdown_probability,
         reward_weights=reward_weights,
         seed_step=seed_step,
+        fuel_cost_scale_l=fuel_cost_scale_l,
     )
 
 
-def _monitored_env(**kwargs: Any) -> Monitor:
+def _monitored_env(agent_variant: AgentVariant | None = None, **kwargs: Any) -> Monitor:
     # Monitor : récompense et longueur d'épisode dans les journaux SB3 (rollout/ep_rew_mean).
-    return Monitor(create_env(**kwargs))
+    # Variante d'agent (réentraînement après la campagne) : wrappers sous le Monitor.
+    return Monitor(wrap_env(create_env(**kwargs), agent_variant))
 
 
 def make_training_vec_env(train_seed: int, n_envs: int = 1, **env_kwargs: Any) -> VecEnv:

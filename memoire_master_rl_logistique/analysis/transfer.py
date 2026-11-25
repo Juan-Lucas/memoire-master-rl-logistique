@@ -21,7 +21,9 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
+import numpy as np
 import pandas as pd
+from scipy import stats
 
 from memoire_master_rl_logistique.analysis.statistical_tests import (
     load_results,
@@ -65,6 +67,45 @@ def transfer_table(data: pd.DataFrame, metric: str = "productivity_tph") -> pd.D
             "ci_high": high,
             "diff_pct": 100 * diff.mean() / specialised,
         })
+    return pd.DataFrame(rows)
+
+
+def tost(diff, margin: float, alpha: float = 0.05) -> dict[str, float | bool]:
+    """Test d'équivalence par deux tests t unilatéraux (TOST) sur des différences appariées.
+
+    H0 : |moyenne| ≥ ``margin``. L'équivalence est conclue si les deux tests unilatéraux
+    rejettent au seuil ``alpha`` (p = max des deux), ce qui revient à un IC à
+    100 (1 − 2 α) % de la moyenne entièrement compris dans [−margin, margin].
+    Un IC à 95 % qui contient zéro ne suffit pas (rapport du 17/11/2026, M7).
+    """
+    diff = np.asarray(diff, dtype=float)
+    if margin <= 0:
+        raise ValueError(f"La marge doit être > 0 : {margin}")
+    p_lower = stats.ttest_1samp(diff, -margin, alternative="greater").pvalue
+    p_upper = stats.ttest_1samp(diff, margin, alternative="less").pvalue
+    p = float(max(p_lower, p_upper))
+    sem = diff.std(ddof=1) / np.sqrt(len(diff))
+    half = stats.t.ppf(1 - alpha, len(diff) - 1) * sem
+    return {"margin": margin, "tost_p": p, "equivalent": p < alpha,
+            "ci90_low": float(diff.mean() - half), "ci90_high": float(diff.mean() + half)}
+
+
+def equivalence_table(data: pd.DataFrame, metric: str = "productivity_tph",
+                      margin_pct: float = 1.0) -> pd.DataFrame:
+    """TOST du transfert pour chaque (régime, agent) : marge = ``margin_pct`` % de la
+    moyenne du modèle spécialisé. Différences appariées par graine d'évaluation, moyennées
+    sur les graines d'entraînement (comme ``transfer_table``)."""
+    agents = data[data["mode"].isin([SPECIALISED, TRANSFERRED])]
+    keys = ["scenario", "policy", "seed"] + (["train_seed"] if "train_seed" in data else [])
+    wide = agents.pivot_table(index=keys, columns="mode", values=metric, aggfunc="first").dropna()
+    per_seed = wide.groupby(level=["scenario", "policy", "seed"]).mean()
+    rows = []
+    for (scenario, policy), group in per_seed.groupby(level=["scenario", "policy"]):
+        diff = (group[TRANSFERRED] - group[SPECIALISED]).to_numpy()
+        specialised = group[SPECIALISED].mean()
+        rows.append({"scenario": scenario, "policy": policy, "diff": diff.mean(),
+                     "diff_pct": 100 * diff.mean() / specialised,
+                     **tost(diff, margin_pct / 100 * specialised)})
     return pd.DataFrame(rows)
 
 

@@ -31,7 +31,7 @@ POLICY_LABELS = {
     "ShortestPath": "Plus court chemin",
     # Sigles des tableaux de l'article v3 (définis dans la section 5.7).
     "MTWT": "MTWT",
-    "LP": "LP",
+    "LP": "LP statique",
     "Q-Learning": "Q-Learning",
     "SARSA": "SARSA",
     "DQN": "DQN",
@@ -56,7 +56,7 @@ _LABELS = {
            "wait": dict(WAIT_LABELS)},
     "en": {
         "policy": {**POLICY_LABELS, "Fixed": "Fixed Assignment", "Nearest": "Nearest Shovel",
-                   "ShortestPath": "Shortest Path"},
+                   "ShortestPath": "Shortest Path", "LP": "Static LP"},
         "scenario": {"nominal": "Nominal", "high_load": "High load",
                      "high_breakdown": "Frequent breakdowns"},
         "wait": {"queue_wait_min_per_truck": "Queueing time per truck (min per shift)",
@@ -91,6 +91,9 @@ SCENARIO_COLORS = {
     "high_load": "#1A237E",
     "high_breakdown": "#64B5F6",
 }
+# Hachures des régimes : en noir et blanc, le nominal et les fortes pannes ont presque le
+# même gris ; les hachures les distinguent.
+SCENARIO_HATCHES = {"nominal": "", "high_load": "", "high_breakdown": "///"}
 
 
 def order_policies(policies: Iterable[str]) -> list[str]:
@@ -125,9 +128,19 @@ def prepare_outputs(out_dir: str | Path, filenames: Iterable[str], overwrite: bo
     return paths
 
 
+def save_raster_and_vector(fig: plt.Figure, out_path: Path, dpi: int = 150, **kwargs) -> Path:
+    """Écrit la figure en PNG (``out_path``) et en PDF vectoriel à côté (même nom, suffixe
+    ``.pdf``) ; l'article inclut la figure sans extension et pdfLaTeX prend le PDF."""
+    out_path = Path(out_path)
+    fig.savefig(out_path, dpi=dpi, **kwargs)
+    pdf_path = out_path.with_suffix(".pdf")
+    fig.savefig(pdf_path, **kwargs)
+    return pdf_path
+
+
 def save_figure(fig: plt.Figure, out_path: Path, dpi: int = 150) -> None:
-    """Sauvegarde une figure, la ferme et affiche le chemin de sortie."""
-    fig.savefig(out_path, dpi=dpi)
+    """Sauvegarde une figure (PNG et PDF), la ferme et affiche le chemin de sortie."""
+    save_raster_and_vector(fig, out_path, dpi=dpi)
     plt.close(fig)
     print(f"Figure sauvegardée : {out_path}")
 
@@ -141,6 +154,8 @@ AGENT_COLORS = {
     "DQN": "#2196F3",
     "PPO": "#FF5722",
 }
+# Styles de trait des agents, pour que les courbes restent distinctes en noir et blanc.
+AGENT_LINESTYLES = {"PPO": "-", "DQN": "--", "Q-Learning": "-.", "SARSA": ":"}
 
 # Suffixe des noms de fichiers de figures par régime (ex. learning_curves_highload.png).
 SCENARIO_SUFFIXES = {"nominal": "nominal", "high_load": "highload",

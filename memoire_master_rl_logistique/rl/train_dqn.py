@@ -14,6 +14,7 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.logger import configure
 
 from memoire_master_rl_logistique.config import hyperparameters
+from memoire_master_rl_logistique.rl.agent_variants import AgentVariant, DoubleDQN
 from memoire_master_rl_logistique.rl.callbacks import KPILoggerCallback
 from memoire_master_rl_logistique.rl.checkpoints import (
     DEFAULT_CHECKPOINT_FREQ,
@@ -33,6 +34,7 @@ from memoire_master_rl_logistique.rl.model_metadata import (
     write_metadata,
 )
 from memoire_master_rl_logistique.rl.model_paths import RESULTS_DIR, ensure_new_model, model_dir
+from memoire_master_rl_logistique.rl.train_ppo import _variant_fields
 from memoire_master_rl_logistique.rl.time_discount import (
     TimeDiscountReplayBuffer,
     per_minute_gamma,
@@ -58,6 +60,8 @@ def train_dqn(
     progress_bar: bool = True,
     checkpoint_freq: int | None = DEFAULT_CHECKPOINT_FREQ,
     resume: bool = False,
+    agent_variant: AgentVariant | None = None,
+    fuel_cost_scale_l: float | None = None,
 ) -> DQN:
     """Entraîne un agent DQN et l'enregistre dans ``output_dir``.
 
@@ -71,7 +75,13 @@ def train_dqn(
 
     ``time_discount`` : actualisation par minute (``rl/time_discount.py``) : la mémoire de
     rejeu garde γ_min^Δt de chaque transition, utilisé dans la cible à la place de γ.
+
+    ``agent_variant`` et ``fuel_cost_scale_l`` : variante réentraînée après la campagne
+    (``rl/agent_variants.py``) ; ``double_q`` entraîne un ``DoubleDQN``.
     """
+    if agent_variant is not None and agent_variant.fuel_in_reward and fuel_cost_scale_l is None:
+        raise ValueError("Variante carburant : fuel_cost_scale_l manquant.")
+    model_class = DoubleDQN if agent_variant is not None and agent_variant.double_q else DQN
     params = hyperparameters("DQN", learning_rate=learning_rate,
                              exploration_fraction=exploration_fraction,
                              time_discount=time_discount)
@@ -86,12 +96,14 @@ def train_dqn(
                            breakdown_probability, reward_weights)
     signature = training_signature(algorithm="DQN", seed=seed, total_timesteps=total_timesteps,
                                    time_discount=per_minute, params=params,
-                                   env=asdict(env_config))
+                                   env=asdict(env_config),
+                                   **_variant_fields(agent_variant, fuel_cost_scale_l))
     env = make_training_vec_env(
         seed,
         truck_count=truck_count, shovel_count=shovel_count, dump_count=dump_count,
         episode_minutes=episode_minutes, breakdown_probability=breakdown_probability,
-        reward_weights=reward_weights,
+        reward_weights=reward_weights, agent_variant=agent_variant,
+        fuel_cost_scale_l=fuel_cost_scale_l,
     )
 
     kpi_callback = KPILoggerCallback(
@@ -101,12 +113,12 @@ def train_dqn(
     )
 
     if resume:
-        model, env, state = resume_sb3(DQN, out_path, env, signature, seed, kpi_callback)
+        model, env, state = resume_sb3(model_class, out_path, env, signature, seed, kpi_callback)
         resumed_from, elapsed_before = state["resumed_from_timesteps"], state["elapsed_s"]
         log_dir = out_path / "sb3_logs" / f"reprise_{model.num_timesteps}"
         print(f"Reprise de l'entraînement DQN à {model.num_timesteps} pas...")
     else:
-        model = DQN(
+        model = model_class(
             policy="MlpPolicy",
             env=env,
             policy_kwargs={"net_arch": params["net_arch"]},
@@ -150,7 +162,8 @@ def train_dqn(
         seed=seed,
         training={"total_timesteps": total_timesteps, **params, "time_discount": per_minute,
                   **({"gamma_per_minute": gamma_min} if per_minute else {}),
-                  **({"resumed_from_timesteps": resumed_from} if resumed_from else {})},
+                  **({"resumed_from_timesteps": resumed_from} if resumed_from else {}),
+                  **_variant_fields(agent_variant, fuel_cost_scale_l)},
     ))
     clear_checkpoint(out_path)
     print(f"Modèle DQN sauvegardé : {model_path}")

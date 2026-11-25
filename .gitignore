@@ -14,6 +14,11 @@
 !/data/results_v2/campagne/*_seed[0-9]/
 /data/results_v2/campagne/*_seed[0-9]/*
 !/data/results_v2/campagne/*_seed[0-9]/metadata.json
+# Expériences ajoutées après la campagne (rapport du 17/11/2026) : CSV de résultats.
+!/data/results_v2/extensions/
+# Valeurs Q de chaque état du diagnostic de DQN (≈ 47 Mo) : régénérées par la commande ;
+# le résumé, lui, est versionné.
+/data/results_v2/extensions/dqn_diagnostic/dqn_q_values.csv
 
 # Articles PDF de la bibliographie (droits d'auteur : conservés en local seulement)
 references/**/*.pdf

@@ -1,0 +1,5 @@
+regime,sat_shovel_wait,sat_dump_wait,sat_shovel_trucks,sat_route_wait,sat_tonnage,sat_fuel
+high_breakdown,0.0,0.0,0.0,0.0,0.0,0.0
+high_load,0.0,0.0,0.0,0.0,0.0,0.0
+nominal,0.0,0.0,0.0,0.0,0.0,0.0
+saturation_34,0.0,0.0,0.0,0.0022259321090706734,0.0,0.0

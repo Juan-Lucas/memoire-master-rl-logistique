@@ -8,6 +8,7 @@ project: memoire-master-rl-logistique
 # Trois ensembles disjoints (T26, vérifié par tests/test_seeds.py).
 seeds:
   evaluation: {start: 42, count: 30}      # 42 à 71 : les 30 réplications appariées
+  evaluation_extension: {start: 72, count: 30}  # 72 à 101 : expériences ajoutées après la campagne (rapport du 17/11/2026)
   tuning: {start: 20000, count: 10}       # 20 000 à 20 009 : sélection des hyperparamètres (T25 bis)
   training: [1, 2, 3, 4, 5]               # graines d'entraînement
   training_episode_stride: 1000000        # épisodes d'entraînement : s × 1 000 000 + n° d'épisode
@@ -88,3 +89,22 @@ reproducibility:
   python_version: "3.11.11"
   gymnasium_version: "1.2.3"
   stable_baselines3_version: "2.8.0"
+
+# Réentraînements après la campagne (rapport du 17/11/2026 : M5, M6, T17). Régime nominal,
+# graines d'entraînement de la campagne, mêmes hyperparamètres et même budget ; évaluation sur
+# les graines 72 à 101 (seeds.evaluation_extension), avec les modèles nominaux de la campagne
+# comme référence. Analyse de diagnostic, séparée de la campagne (experiments/retraining.py).
+retraining:
+  regime: nominal
+  # Échelle du carburant dans la récompense (variante PPO-fuel) : un cycle de l'Affectation
+  # fixe en nominal consomme en moyenne 35,92 L pour 7,632 km sur les graines de sélection
+  # (seeds.tuning) ; 35,92 / (7,632 / 5) = 23,53 L donne au terme carburant la même valeur
+  # moyenne que le terme de distance (- km / 5). Aucun essai d'entraînement pour la choisir.
+  fuel_cost_scale_l: 23.53
+  variants:
+    PPO-no-route-wait: {algorithm: PPO, drop_route_wait: true}   # T17 : sans les 6 attentes prévues
+    PPO-fuel: {algorithm: PPO, fuel_in_reward: true}             # M5 : carburant au lieu de la distance
+    PPO-w3-0: {algorithm: PPO, reward_weights: [1.0, 0.1, 0.0, 0.3]}   # M5 : sans pénalité de distance
+    PPO-w3-0.1: {algorithm: PPO, reward_weights: [1.0, 0.1, 0.1, 0.3]} # M5 : pénalité de distance doublée
+    DQN-no-wait: {algorithm: DQN, no_wait_action: true}          # M6 : sans l'action ATTENDRE
+    Double-DQN: {algorithm: DQN, double_q: true}                 # M6 : Double DQN

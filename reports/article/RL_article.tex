@@ -39,7 +39,7 @@
   linkcolor=blue!55!black,
   citecolor=blue!55!black,
   urlcolor=blue!65!black,
-  pdftitle={Beyond Static Dispatching Heuristics},
+  pdftitle={Deep Reinforcement Learning for Open Pit Mine Truck Dispatching},
   pdfauthor={Jean-Luc MUPASA KALUNGA}
 }
 
@@ -68,6 +68,14 @@
 \newcommand{\revtag}[1]{\ifrevmarks\textsuperscript{\textcolor{red!70!black}{\scriptsize[#1]}}\fi}
 \newcommand{\rev}[2]{\ifrevmarks{\color{revcolor}#2}\revtag{#1}\else#2\fi}
 \newenvironment{revbloc}[1]{\par\ifrevmarks\color{revcolor}\noindent\revtag{#1}\ \fi}{\par}
+
+% Corrections du rapport de la directrice du 17/11/2026 : en bleu tant que \corrmarkstrue.
+% \corrmarksfalse avant la soumission : tout repasse en noir.
+\newif\ifcorrmarks
+\corrmarkstrue
+\definecolor{corrcolor}{RGB}{0,90,200}
+\newcommand{\corr}[1]{\ifcorrmarks\textcolor{corrcolor}{#1}\else#1\fi}
+\newenvironment{corrbloc}{\par\ifcorrmarks\color{corrcolor}\fi}{\par}
 \newcommand{\aexp}[1]{\ifrevmarks\textcolor{orange!85!black}{\textbf{[EXPERIMENT TO RUN: #1]}}\fi}
 \newcommand{\adir}[1]{\ifrevmarks\textcolor{violet}{\textbf{[TO VALIDATE WITH THE SUPERVISOR: #1]}}\fi}
 \newcommand{\afig}[1]{\ifrevmarks\textcolor{green!45!black}{\textbf{[FIGURE TO REGENERATE: #1]}}\fi}
@@ -80,7 +88,7 @@
 
 
 % Title and authors
-\title{\textbf{Beyond Static Dispatching Heuristics: A Comparative Evaluation of Deep Reinforcement Learning under Disruptions in Open-Pit Mining}}
+\title{\textbf{\corr{Deep Reinforcement Learning for Open Pit Mine Truck Dispatching: Productivity, Fuel Efficiency and Robustness across Operating Regimes}}}
 
 \author{%
 \begin{tabular}{c}
@@ -100,12 +108,12 @@ Jean-Luc Mupasa Kalunga$^{1,*}$ \qquad Olfa Ferchichi$^{2}$\\[0.5em]
 
 \begin{abstract}
 \begin{revbloc}{m1, m2, M1, M3, v3, T31}
-Truck--shovel haulage can account for up to 60\% of the operating costs of an open-pit mine and is highly sensitive to disruptions. Reinforcement learning studies of truck dispatching usually evaluate a single training run, in a single operating regime, against static heuristics, so the actual value of learning remains unclear. We compare ten dispatching policies in a stochastic discrete-event simulator: six heuristics, including a rule that minimises predicted waiting time and a linear programming policy, two tabular agents, Q-Learning and State--Action--Reward--State--Action, and two deep agents, Deep Q-Network and Proximal Policy Optimization. The problem is formulated as a semi-Markov decision process with discounting per minute. The agents are tuned under a rule fixed in advance, on seeds distinct from the evaluation seeds, and trained with five seeds each. All policies are evaluated over 30 paired replications in three regimes (nominal conditions, a 50\% larger fleet and frequent breakdowns), and agents trained under nominal conditions are also tested without retraining in disrupted and unseen regimes. This rule is the most productive in every regime. Proximal Policy Optimization comes within 0.5--0.9\% of it, on par with the linear programming policy, uses 1.4--2.8\% less fuel per tonne and transfers to new regimes almost without loss. Deep Q-Network collapses onto the waiting action in four of its five models, and the tabular agents degrade as exploration decreases. No agent outperforms the best heuristic: here, the value of learning lies in fuel efficiency and robustness, and learned dispatchers should be benchmarked against rules that account for queues rather than static ones.
+Truck--shovel haulage can \corr{account for up to 60\% of operating costs in an \corr{open pit} mine} and is \corr{sensitive} to disruptions. Reinforcement learning studies of truck dispatching usually evaluate a single training run, in a single \corr{regime}, against static heuristics, so the \corr{value of learning remains unclear}. \corr{This evaluation study compares} ten dispatching policies in a stochastic discrete-event simulator: six heuristics, including a \corr{rule minimising} predicted waiting time and a \corr{static} linear programming policy, two tabular agents, Q-Learning and State--Action--Reward--State--Action, and two deep agents, Deep Q-Network and Proximal Policy Optimization. \corr{The problem is a semi-Markov decision process with discounting per minute.} \corr{Agents are tuned on separate seeds and trained with five seeds.} All policies are evaluated over 30 paired replications in three regimes (nominal conditions, a 50\% larger fleet and frequent breakdowns), \corr{and nominal agents are tested without retraining} in \corr{other regimes}. \corr{The waiting time rule is the most productive in every regime.} Proximal Policy Optimization comes within 0.5--0.9\% of it, \corr{like static linear programming}, uses 1.4--2.8\% less fuel per tonne and \corr{loses at most 0.8\% when transferred to moderate disruptions, but not near shovel saturation}. Deep Q-Network\corr{, in the configuration evaluated,} collapses onto the waiting action in four of \corr{five} models, and the tabular agents degrade as exploration decreases. \corr{No agent outperforms the best heuristic, and its variant that also weighs fuel matches the fuel efficiency of Proximal Policy Optimization in two of three regimes. Learned dispatchers should be measured against rules that account for queues and fuel.}
 \end{revbloc}
 \end{abstract}
 
 
-\noindent\textbf{Keywords:} \rev{m1}{Deep reinforcement learning; Open-pit mining; Truck dispatching; Fleet management; Operational resilience; Stochastic simulation; Proximal policy optimization; Deep Q-network.}
+\noindent\textbf{Keywords:} \rev{m1}{Deep reinforcement learning; \corr{Open pit} mining; Truck dispatching; Fleet management; \corr{Robustness to disruptions}; Stochastic simulation; Proximal policy optimization; Deep Q-network.}
 
 % ============================================================================
 % Section 1: Introduction
@@ -113,24 +121,24 @@ Truck--shovel haulage can account for up to 60\% of the operating costs of an op
 \section{Introduction}
 \label{sec:intro}
 
-Open-pit mining is a cornerstone of the global supply chain of raw materials, where the economic viability of operations is inseparable from the efficiency of large logistics systems. It is therefore essential to explore recent technological advances to improve the performance and resilience of these logistics systems.
+\corr{In an \corr{open pit} mine, trucks carry ore and waste from the shovels to the dumps, and the way these trucks are dispatched decides how much material is moved during a shift. This article asks whether reinforcement learning dispatches trucks better than the rules already used for this task.}
 
 % ---------------------------------------------------------
 \subsection{Industrial context}
 % ---------------------------------------------------------
 
-Open-pit mines are very large industrial systems in which the truck--shovel cycle forms the main logistics backbone. This process, which covers excavation, haulage and dumping of material, is not merely an operational task but a decisive financial factor, accounting for up to 60\% of the total operating costs of a mine site \cite{Afrapoli2017}. In modern mining, the pressure to optimise these flows is twofold: maximising throughput to meet global demand for raw materials, while minimising the energy consumption and greenhouse gas emissions of diesel haulage fleets.
+\corr{Open pit} mines are very large industrial systems in which the truck--shovel cycle forms the main logistics backbone. \corr{This process, which covers excavation, haulage and dumping of material, can account for up to 60\% of the total operating costs of a mine site} \cite{Afrapoli2017}. In modern mining, the pressure to optimise these flows is twofold: maximising throughput to meet global demand for raw materials, while minimising the energy consumption and greenhouse gas emissions of diesel haulage fleets.
 
-The efficiency of these systems is, however, constantly challenged by high operational variability. In real mining environments, conditions are far from deterministic. Equipment breakdowns, payload fluctuations, random travel times caused by road degradation and sudden traffic congestion together create a highly unstable environment. Managing this complexity requires real-time decision making that balances immediate productivity and fleet resilience.
+The efficiency of these systems is, however, constantly challenged by high operational variability. In real mining environments, conditions are far from deterministic. Equipment breakdowns, payload fluctuations, random travel times caused by road degradation and sudden traffic congestion together create a highly unstable environment. Managing this complexity requires real-time decision making that balances immediate productivity and \corr{the ability of the fleet to absorb disruptions}.
 
 % ---------------------------------------------------------
 \subsection{Key concepts}
 % ---------------------------------------------------------
 
 \begin{revbloc}{m3, m4}
-This study relies on a few concepts used throughout the article. Reinforcement learning (RL) is a branch of artificial intelligence in which an autonomous agent learns a behaviour by trial and error, through its interactions with a dynamic environment, so as to maximise a cumulative reward signal. Deep reinforcement learning (DRL) extends RL by using neural networks to approximate value functions or policies, which makes it possible to handle high-dimensional state spaces. Truck dispatching is the real-time operational process of assigning trucks to loading and dumping points in order to keep the fleet synchronised and productive; in mines, it is implemented by fleet management systems (FMS).
+\corr{Reinforcement learning (RL) trains an agent, through interaction with an environment, to choose the actions that maximise a cumulative reward; deep reinforcement learning (DRL) approximates its value functions or policies with neural networks. Truck dispatching assigns trucks in real time to loading and dumping points; in mines, it is carried out by fleet management systems (FMS).}
 
-Four learning algorithms are studied. Q-Learning and State--Action--Reward--State--Action (SARSA) are tabular methods that store one value for each state--action pair. Deep Q-Network (DQN) replaces this table with a neural network. Proximal Policy Optimization (PPO) learns a policy directly with an actor--critic method. \rev{T31}{The six reference heuristics are referred to below as First-In-First-Out (FIFO), Fixed Assignment, Nearest Shovel, Shortest Path, Minimum Truck Waiting Time (MTWT) and LP, a policy based on a linear program;} their exact definitions are given in \cref{sec:baselines-def}. Finally, the decision problem is formulated as a Markov decision process (MDP), more precisely as a semi-Markov decision process (SMDP), since decisions are separated by variable durations, as detailed in \cref{sec:smdp}.
+Four learning algorithms are studied. Q-Learning and State--Action--Reward--State--Action (SARSA) are tabular methods that store one value for each state--action pair. Deep Q-Network (DQN) replaces this table with a neural network. Proximal Policy Optimization (PPO) learns a policy directly with an actor--critic method. \rev{T31}{The six reference heuristics are referred to below as First-In-First-Out (FIFO), Fixed Assignment, Nearest Shovel, Shortest Path, Minimum Truck Waiting Time (MTWT) and \corr{Static LP}, a policy based on a linear program;} their exact definitions are given in \cref{sec:baselines-def}. \corr{The decision problem is formulated as a semi-Markov decision process (SMDP), that is, a Markov decision process (MDP) whose decisions are separated by variable durations}, as detailed in \cref{sec:smdp}.
 \end{revbloc}
 
 % ---------------------------------------------------------
@@ -138,12 +146,13 @@ Four learning algorithms are studied. Q-Learning and State--Action--Reward--Stat
 % ---------------------------------------------------------
 
 \begin{revbloc}{M23, M24}
-The objective of this work is to determine in which operating regimes a learned dispatching policy is preferable to an industrial rule, and to explain the observed differences from the behaviour of the policies. The contribution is evaluative: no new algorithm is proposed, and the contribution lies in a controlled comparison protocol applied to \rev{T31}{ten policies} and three regimes.
+\corr{The central question of this work is the following: under which operating conditions does deep reinforcement learning provide measurable benefits over strong dispatching heuristics that account for queues, and how reliably do these benefits persist under disruptions? The observed differences are explained from the behaviour of the policies.} The contribution is evaluative: no new algorithm is proposed, and the contribution lies in a controlled comparison protocol applied to \rev{T31}{ten policies} and three regimes.
 
-The rest of the article is organised as follows. \Cref{sec:relwork} (\nameref{sec:relwork}) reviews the literature on truck dispatching along three paradigms. \Cref{sec:positioning} (\nameref{sec:positioning}) summarises this literature in a positioning table and derives the research gap, the problem studied, the research questions and the hypotheses. \Cref{sec:contributions} (\nameref{sec:contributions}) presents the contributions and the methodological framework. \Cref{sec:approach} (\nameref{sec:approach}) describes the modelled system, the simulator, the formulation of the decision problem and the agents studied. \Cref{sec:design} (\nameref{sec:design}) details the experimental protocol and \cref{sec:results} (\nameref{sec:results}) the results. \Cref{sec:discussion} (\nameref{sec:discussion}) discusses these results and their limitations, and \cref{sec:conclusion} (\nameref{sec:conclusion}) concludes the article.
+\corr{Studies of reinforcement learning for truck dispatching usually evaluate one training run, in one regime, against rules that ignore queues; \cref{sec:gap} details this gap. Three hypotheses are tested, stated in \cref{sec:rq}: deep agents outperform the best heuristic under nominal conditions (H1), the ranking of policies depends on the regime (H2), and productivity and queueing time form a trade-off (H3). The results refute H1: the rule minimising predicted waiting time, MTWT, is the most productive policy in the three regimes, PPO comes within 0.5 to 0.9\% of it, and no agent outperforms it. The interaction between policy and regime is significant, but it does not change the leading policy, and the expected trade-off between productivity and queueing time is not observed.}
+
+The rest of the article is organised as follows. \Cref{sec:relwork} reviews the literature on truck dispatching along three paradigms. \Cref{sec:positioning} summarises this literature in a positioning table and derives the research gap, the problem studied, the research questions and the hypotheses. \Cref{sec:contributions} presents the contributions and the methodological framework. \Cref{sec:approach} describes the modelled system, the simulator, the formulation of the decision problem and the agents studied. \Cref{sec:design} details the experimental protocol and \cref{sec:results} the results. \Cref{sec:discussion} discusses these results and their limitations, and \cref{sec:conclusion} concludes the article.
 \end{revbloc}
 
-\adir{new structure of the article (M24).}
 
 
 \section{Related work}
@@ -159,7 +168,7 @@ Dispatching by rules remains the dominant paradigm in operating mines, because i
 Four rules are particularly relevant to this study. The First-In-First-Out (FIFO) rule gives priority to the loading unit that has been waiting for a truck the longest; it balances shovel workload but ignores the spatial layout of the pit. Fixed Assignment allocates each truck to a predetermined shovel for the whole shift; it stabilises the match factor and remains a widespread industrial reference, but cannot reallocate capacity in response to queue imbalances. Nearest Shovel sends the truck to the closest loading unit, which minimises empty travel distance at the price of a purely local optimisation. Shortest Path generalises this idea by choosing the destination that minimises an estimated cycle cost on the graph of haul roads. The exact definitions used in this study are given in \cref{tab:baselines}.
 \end{revbloc}
 
-The practical performance of these rules has been assessed both in the field and in simulation. Subtil et al. \cite{Subtil2011} report a practical implementation of dispatching in an operating open-pit mine, while Mohtasham and Mirzaei-Nasirabad \cite{MehrnazMohtasham2023} evaluate a commercial dispatching package at the Sungun copper mine and stress the sensitivity of dispatching rules to operating conditions. Discrete-event simulation has been the standard instrument for this kind of evaluation \cite{NecmettinCetin2004, MarceloFioroni2008, Zeng2022, MiladAbolghasemian2020}. It consistently shows that greedy rules degrade sharply once the fleet size exceeds the loading capacity of the pit, because queues concentrate on a subset of shovels. \rev{M25, m5, T31}{The heuristics retained here represent different logics: FIFO takes the state of the queues into account, Fixed Assignment imposes a static and balanced allocation, while Nearest Shovel and Shortest Path rely on spatial proximity without considering queues. Two stronger references, of the kind used by commercial systems, complete the set: a rule combining queues and travel times, Minimum Truck Waiting Time \cite{Zeng2022}, and a policy guided by an upstream linear optimisation layer \cite{Soumis1989, AmandaSmith2020}.}
+The practical performance of these rules has been assessed both in the field and in simulation. Subtil et al. \cite{Subtil2011} report a practical implementation of dispatching in an operating \corr{open pit} mine, while Mohtasham and Mirzaei-Nasirabad \cite{MehrnazMohtasham2023} evaluate a commercial dispatching package at the Sungun copper mine and stress the sensitivity of dispatching rules to operating conditions. Discrete-event simulation has been the standard instrument for this kind of evaluation \cite{NecmettinCetin2004, MarceloFioroni2008, Zeng2022, MiladAbolghasemian2020}. It consistently shows that greedy rules degrade sharply once the fleet size exceeds the loading capacity of the pit, because queues concentrate on a subset of shovels. \rev{M25, m5, T31}{The heuristics retained here represent different logics: FIFO takes the state of the queues into account, Fixed Assignment imposes a static and balanced allocation, while Nearest Shovel and Shortest Path rely on spatial proximity without considering queues. Two stronger references, of the kind used by commercial systems, complete the set: a rule combining queues and travel times, Minimum Truck Waiting Time \cite{Zeng2022}, and a policy guided by an upstream linear optimisation layer \cite{Soumis1989, AmandaSmith2020}.}
 
 \subsection{Mathematical optimisation and metaheuristics}
 
@@ -167,7 +176,7 @@ To overcome the limits of simple rules, researchers turned to mathematical progr
 
 However, the deterministic nature of mixed-integer linear programming (MILP) often conflicts with the stochastic reality of mining. Ta et al. \cite{ChungTa2013} attempted to bridge this gap by incorporating shovel idle probabilities into linear models, using queueing theory to obtain better production estimates. Despite these advances, MILP models frequently suffer from the curse of dimensionality when applied to large mines operating dozens of trucks \cite{AmandaSmith2020, ZhongxinWang2022}.
 
-To handle this complexity, metaheuristics have been widely applied to truck dispatching and routing. Souza et al. \cite{Souza2010} showed that a hybrid heuristic combining GRASP and VNS could obtain near-optimal solutions in short computing times. Liu and Chai \cite{GuangweiLiu2019} used a genetic algorithm to minimise haulage energy consumption while accounting for road resistance that varies over time. Ant colony optimisation algorithms, which model the probabilistic route selection of social insects through pheromone update mechanisms, have been applied to assignment problems with several vehicles in surface mining, as their stochastic selection naturally adapts to competing demands on shared road segments \cite{ShivPrakashUpadhyay2017}. Simulated annealing, which accepts suboptimal moves with a probability controlled by a temperature in order to escape local optima, has likewise been used for scheduling in open-pit environments \cite{BurakOzdemir2019}. Although powerful, metaheuristics are often formulated to optimise a given system state or planning horizon. When major disruptions change the underlying operating conditions, the optimisation must be repeated or rerun, which may limit responsiveness when decisions must be updated on short time scales in dynamic mining environments.
+To handle this complexity, metaheuristics have been widely applied to truck dispatching and routing. Souza et al. \cite{Souza2010} showed that a hybrid heuristic combining GRASP and VNS could obtain near-optimal solutions in short computing times. Liu and Chai \cite{GuangweiLiu2019} used a genetic algorithm to minimise haulage energy consumption while accounting for road resistance that varies over time. Ant colony optimisation algorithms, which model the probabilistic route selection of social insects through pheromone update mechanisms, have been applied to assignment problems with several vehicles in surface mining, as their stochastic selection naturally adapts to competing demands on shared road segments \cite{ShivPrakashUpadhyay2017}. Simulated annealing, which accepts suboptimal moves with a probability controlled by a temperature in order to escape local optima, has likewise been used for scheduling in \corr{open pit} environments \cite{BurakOzdemir2019}. Although powerful, metaheuristics are often formulated to optimise a given system state or planning horizon. When major disruptions change the underlying operating conditions, the optimisation must be repeated or rerun, which may limit responsiveness when decisions must be updated on short time scales in dynamic mining environments.
 
 \subsection{Reinforcement learning approaches}
 
@@ -175,9 +184,9 @@ The shift to reinforcement learning represents a change of paradigm: instead of 
 
 Within the reinforcement learning family, methods differ substantially in representational power and learning paradigm. \rev{m5}{Tabular methods, such as Q-Learning and SARSA \cite{RichardSutton2018},} build value functions over tables of discrete state--action pairs, which makes them transparent and computationally light, but their expressiveness degrades sharply as the observation space grows with fleet size. DQN agents address this problem by approximating the Q-function with a neural network and stabilising training through experience replay and a frozen target network, which allows them to generalise to high-dimensional continuous inputs. PPO \cite{JohnSchulman2017} belongs to the actor--critic family: it optimises the policy directly through a surrogate objective whose clipping constraint prevents catastrophic parameter updates. These four algorithms, from tabular to deep and from value-based to policy-gradient, form a natural comparative spectrum and constitute the RL component of the testbed designed in this study.
 
-In mining, this transition is more recent. Hazrathosseini and Afrapoli \cite{Hazrathosseini2024} provide a critical review, stressing that, although RL holds considerable potential for intelligent FMS, most studies remain at the proof-of-concept stage. De Carvalho and Dimitrakopoulos \cite{deCarvalho2023} applied an actor--critic framework to production scheduling, showing that RL can handle fleet dynamics while updating production targets.
+In mining, this transition is more recent. Hazrathosseini and Afrapoli \cite{Hazrathosseini2024} provide a critical review, stressing that, although RL holds considerable potential for intelligent FMS, most studies remain at the proof-of-concept stage. De Carvalho and Dimitrakopoulos \cite{deCarvalho2023} applied an actor--critic framework to production scheduling, showing that RL can handle fleet dynamics while updating production targets. \corr{Deep RL has since been applied to real-time truck dispatching: Noriega et al. \cite{Noriega2025} train a double DQN dispatcher in a discrete-event simulation of an iron ore mine to meet production and grade targets, and Huo et al. \cite{Huo2024} train a double DQN for each truck and report 10 to 30\% less greenhouse gas per unit of production than fixed schedules. Deep RL has also been applied to the management of unmanned fleets, where a DQN agent fed with travel times estimated from connected sensors reduced truck idle time by 19.2\% on a case from the Sarcheshmeh copper mine \cite{Badakhshan2025}.}
 
-Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide standardised environments for testing these algorithms. Zhao et al. \cite{Zhao2025} proposed a hierarchical multi-agent reinforcement learning (MARL) approach to sustainable dispatching with an emphasis on energy efficiency, while Pei et al. \cite{Pei2025} and Rosales and Diaz \cite{FranciscoRosales2025} explored learned dispatching and interpretable dispatching for autonomous mine haulage. The use of reinforcement learning for decision support for hierarchical industrial scheduling extends beyond mining: \rev{v3}{Szatmári et al.~\cite{KingaSzatmari2025} review} similar hierarchical architectures in chemical process control, which suggests that the design patterns emerging in research on mine dispatching are relevant across domains. A common limitation of these studies, however, is their focus on nominal conditions. Most RL agents are trained and tested in stable environments; few studies explicitly evaluate how a DQN or PPO agent behaves under frequent equipment breakdowns or unexpected congestion peaks.
+Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide standardised environments for testing these algorithms. Zhao et al. \cite{Zhao2025} proposed a hierarchical multi-agent reinforcement learning (MARL) approach to sustainable dispatching with an emphasis on energy efficiency, while Pei et al. \cite{Pei2025} and Rosales and Diaz \cite{FranciscoRosales2025} explored learned dispatching and interpretable dispatching for autonomous mine haulage. The use of reinforcement learning for decision support for hierarchical industrial scheduling extends beyond mining: \rev{v3}{Szatmári et al.~\cite{KingaSzatmari2025} review} similar hierarchical architectures in chemical process control, which suggests that the design patterns emerging in research on mine dispatching are relevant across domains. \corr{Uncertainty has also been addressed: Deuitch and Sari \cite{Deuitch2026} tune six DQN variants in a simulator with random breakdowns, repair effectiveness, loading times and grades, and compare them with three heuristics, and Shi et al. \cite{Shi2026} reassign trucks after equipment failures with a multi-objective particle swarm and a genetic algorithm, which reduces truck waiting time by 30.4\% compared with traditional methods in a coal mine. The present study compares tabular, value-based and policy-gradient agents with strong heuristics such as MTWT in three regimes, and tests the policies outside the regime they were trained in.}
 
 % ============================================================================
 % Section 3: Positioning and problem statement
@@ -192,7 +201,7 @@ Recent testbeds, such as Mining-Gym \cite{Banerjee2025}, have begun to provide s
 \begin{table}[H]
 \centering
 
-\caption{Positioning of the proposed study with respect to representative approaches to truck dispatching.}
+\caption{Positioning of the proposed study with respect to representative approaches to truck dispatching. \corr{Operational variations: uncertain operating parameters without a disrupted regime; Limited: replications or seeds reported without confidence intervals or tests.}}
 \label{tab:litterature}
 
 \renewcommand{\arraystretch}{1.35}
@@ -294,13 +303,13 @@ Optimality under stable conditions
 \addlinespace
 
 Metaheuristics and optimisation by simulation
-\cite{Souza2010,GuangweiLiu2019,ShivPrakashUpadhyay2017,BurakOzdemir2019}
+\cite{Souza2010,GuangweiLiu2019,ShivPrakashUpadhyay2017,BurakOzdemir2019,Shi2026}
 &
 Yes (heuristic search)
 &
 No
 &
-Scenarios
+\corr{Operational variations}
 &
 MILP or 1 to 2 rules
 &
@@ -330,17 +339,17 @@ Routing and scheduling performance
 \addlinespace
 
 Reinforcement learning in mining
-\cite{deCarvalho2023,Banerjee2025,Zhao2025,Pei2025,FranciscoRosales2025}
+\cite{deCarvalho2023,Banerjee2025,Zhao2025,Pei2025,FranciscoRosales2025,Badakhshan2025,Deuitch2026,Noriega2025,Huo2024}
 &
 No
 &
-Actor--critic, MARL, interpretable RL
+Actor--critic, MARL, \corr{DQN,} interpretable RL
 &
-No
+\corr{Equipment failures in three studies \cite{Banerjee2025,Deuitch2026,Huo2024}}
 &
 0 to 3
 &
-Limited
+\corr{Limited; seeds and confidence intervals in \cite{Noriega2025}}
 &
 Proof-of-concept dispatching
 \\
@@ -355,11 +364,11 @@ Proof-of-concept dispatching
 &
 \textbf{Congestion and breakdowns}
 &
-\rev{T31}{\textbf{6 heuristics, incl. MTWT and LP}}
+\rev{T31}{\textbf{6 heuristics, incl. MTWT and \corr{Static LP}}}
 &
 \rev{M3, T31}{\textbf{30 paired replications, 5 training seeds}}
 &
-\textbf{Operational resilience across three regimes}
+\textbf{\corr{Robustness across several regimes}}
 \\
 
 \bottomrule
@@ -373,15 +382,19 @@ Proof-of-concept dispatching
 % ---------------------------------------------------------
 
 \begin{revbloc}{M24 (merger of §1.3, §2.4, §3)}
-The literature reviewed and \cref{tab:litterature} reveal four complementary gaps.
+\corr{Existing studies provide limited evidence on whether deep reinforcement learning remains competitive with dispatching baselines that account for queues across operating regimes, particularly when the variability due to training and the stochasticity of the environment are evaluated separately. The literature reviewed and \cref{tab:litterature} break this gap down into four unresolved evaluative questions.}
 
-First, the three paradigms reviewed are rarely compared with one another. Studies of dispatching rules compare them with each other \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, mathematical programming compares an optimiser with a rule or with a mixed-integer formulation \cite{Soumis1989, AmandaSmith2020}, and learning studies compare an agent with a small number of baseline rules \cite{deCarvalho2023, Zhao2025}. When comparisons across families exist, the algorithms are evaluated on different environments, rewards or fleet configurations, which prevents attributing an observed difference to the dispatching logic itself.
+\corr{First, does the ranking of dispatching policies hold when policies from different families are compared in the same environment?} \corr{In the studies of \cref{tab:litterature}, each paradigm is compared mostly with itself.} Studies of dispatching rules compare them with each other \cite{Alarie2002, MehrnazMohtasham2023, Zeng2022}, mathematical programming compares an optimiser with a rule or with a mixed-integer formulation \cite{Soumis1989, AmandaSmith2020}, and learning studies compare an agent with a small number of baseline rules \cite{deCarvalho2023, Zhao2025}. When comparisons across families exist, the algorithms are evaluated on different environments, rewards or fleet configurations, which prevents attributing an observed difference to the dispatching logic itself.
 
-Second, the operating regime is usually treated as a fixed context rather than as an experimental factor. Reviews of fleet management with reinforcement learning observe that most contributions remain at the proof-of-concept stage and are evaluated in stable environments \cite{Hazrathosseini2024}, and studies that do consider disruptions usually consider only one type, most often congestion \cite{Zeng2022}. A reported ranking is therefore conditional on a single operating point.
+\corr{Second, does this ranking hold when the operating regime changes? The regime} \corr{is a fixed context in most studies of \cref{tab:litterature}, rather than an experimental factor. Hazrathosseini and Afrapoli \cite{Hazrathosseini2024} observe that reinforcement learning contributions to fleet management mostly remain at the proof-of-concept stage and are evaluated in stable environments. Among the studies that vary the conditions, Zeng et al. \cite{Zeng2022} vary the fleet size, which creates congestion, Banerjee et al. \cite{Banerjee2025} add equipment failures of increasing severity, Huo et al. \cite{Huo2024} disable a truck during the shift, and Deuitch and Sari \cite{Deuitch2026} add random breakdowns. Elsewhere, a reported ranking is conditional on a single operating point.}
 
-Third, the strength of the baselines is often insufficient. Learning studies report improvements over two or three baseline rules \cite{Zhao2025}, and sometimes over none \cite{deCarvalho2023}. When the comparison rule is weak, an improvement establishes little about the practical value of the learned policy.
+\corr{Third, does a learned policy outperform a rule that already accounts for queues? In the learning studies, the baselines seldom account for queues.} \corr{Zhao et al. \cite{Zhao2025} compare their agents with two or three rules, de Carvalho and Dimitrakopoulos \cite{deCarvalho2023} with a conventional planning approach, Banerjee et al. \cite{Banerjee2025} with random and fixed assignment, and Huo et al. \cite{Huo2024} with fixed schedules. Two studies include a rule that accounts for queues: Noriega et al. \cite{Noriega2025} a shortest queue rule, and Rosales and Diaz \cite{FranciscoRosales2025} a heuristic based on waiting time, as the present study does with MTWT.} When the comparison rule is weak, an improvement establishes little about the practical value of the learned policy.
 
-Fourth, the inferential protocol is rarely documented. The number of replications, the control of random seeds and corrections for multiple comparisons are rarely reported in the literature on mine dispatching \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, whereas the literature on the evaluation of reinforcement learning agents has shown that these choices change the conclusions \cite{Henderson2018, Agarwal2021}.
+\corr{Fourth, are the observed differences larger than the variability between training runs and between replications?} \corr{In the dispatching studies cited here \cite{MehrnazMohtasham2023, MiladAbolghasemian2020, BurakOzdemir2019}, the number of replications, the control of random seeds and corrections for multiple comparisons are not reported together, and Banerjee et al. \cite{Banerjee2025} average ten runs and leave confidence intervals to future work,} whereas the literature on the evaluation of reinforcement learning agents has shown that these choices change the conclusions \cite{Henderson2018, Agarwal2021}.
+
+\begin{corrbloc}
+\textbf{Closest studies.} Banerjee et al.~\cite{Banerjee2025} compare PPO with random and fixed assignment in six scenarios, from normal operation to severe equipment failures; their results are averaged over ten runs, and confidence intervals are left to future work. Rosales and Diaz~\cite{FranciscoRosales2025} compare a deep Q-learning agent with random and greedy policies and with heuristics based on distance or waiting time. De Carvalho and Dimitrakopoulos~\cite{deCarvalho2023} compare an actor--critic agent with a conventional planning approach in two steps, and Zhao et al.~\cite{Zhao2025} compare their agents with two or three baseline rules. Pei et al.~\cite{Pei2025} evaluate learned dispatching without retraining for autonomous haulage. \corr{Noriega et al.~\cite{Noriega2025} train a double DQN dispatcher with five seeds and compare it with a shortest queue rule and a target tracking rule over 20 simulations with confidence intervals, in a single operating regime. Huo et al.~\cite{Huo2024} test a truck failure, a change in shovel grade and pretrained networks, against fixed schedules.} None of these studies combines a baseline that accounts for queues, several operating regimes and a separate report of the variability due to training, which is the combination evaluated here.
+\end{corrbloc}
 \end{revbloc}
 
 % ---------------------------------------------------------
@@ -428,7 +441,7 @@ Three falsifiable hypotheses, formulated before the analysis of the results, gui
 
 \begin{itemize}
   \item \textbf{H1:} under nominal conditions, deep reinforcement learning policies achieve higher productivity than the best heuristic.
-  \item \textbf{H2:} no policy dominates in all three regimes: the ranking depends on the regime, which translates into a significant interaction between policy and regime.
+  \item \textbf{H2:} no policy dominates in all three regimes: the ranking depends on the regime, which translates into a significant interaction between policy and regime. \corr{It is split into H2a, no policy dominates in all three regimes, and H2b, the interaction between policy and regime is significant: an interaction carried by the bottom of the ranking does not establish H2a.}
   \item \textbf{H3:} high productivity does not necessarily come with low queueing time, so that several policies form a trade-off between these two criteria.
 \end{itemize}
 \end{revbloc}
@@ -443,7 +456,6 @@ The contribution of this article is evaluative rather than algorithmic: no new r
 Three scope limitations follow from this positioning and are discussed in \cref{sec:limitations}. The evaluation is carried out in simulation, so the reported magnitudes describe relative performance in the proposed simulated environment rather than predictions for a real site. The agents are single controllers that decide for all trucks, so multi-agent formulations \cite{Zhao2025} fall outside the compared space. Finally, the three regimes represent stylised disruptions, designed to be interpretable and reproducible.
 \end{revbloc}
 
-\adir{check exactly what Mining-Gym offers (disruptions, baselines) and adjust the corresponding column of \cref{tab:litterature} (M26).}
 
 
 % ============================================================================
@@ -452,23 +464,33 @@ Three scope limitations follow from this positioning and are discussed in \cref{
 \section{Contributions and methodological framework}
 \label{sec:contributions}
 
+This section states the contributions of the study, then presents the methodological framework that links them, from the modelling of the haulage system to the analysis of the results.
+
 \subsection{Contributions}
 
 \begin{revbloc}{M23, M24, M26, M16}
-This work makes four contributions.
+\begin{corrbloc}
+This work makes two methodological contributions and reports three empirical findings.
 
+\noindent\textbf{Methodological contributions.}
 \begin{itemize}
-  \item \textbf{C1. An evaluation protocol across several regimes.} A stochastic simulator compatible with the Gymnasium interface is combined with a measurement protocol that treats the operating regime as an experimental factor, evaluates each policy over 30 paired replications and applies paired tests corrected for multiple comparisons.
-  \item \textbf{C2. A comparison of \rev{T31}{ten} policies from different families.} \rev{T31}{Six heuristics, including a rule based on predicted waiting time (MTWT) and a policy based on a linear program (LP),} two tabular learning agents and two deep learning agents are evaluated in the same environment, with the same actions, the same seeds and the same indicators.
-  \item \textbf{C3. An analysis of policy behaviour.} The allocation of cycles among shovels and the use of the waiting action, measured over all replications, explain the differences in productivity and queueing between policies.
-  \item \textbf{C4. Evidence on regime dependence.} The ranking of policies is compared across regimes, the interaction between policy and regime is tested, and an evaluation without retraining shows to what extent a policy learned under nominal conditions keeps its performance under disruption.
+  \item \textbf{C1. A controlled evaluation protocol across operating regimes.} Ten policies from different families, six heuristics including a rule based on predicted waiting time (MTWT) and a policy based on a linear program (\corr{Static LP}), two tabular agents and two deep agents, are evaluated in the same stochastic simulator compatible with the Gymnasium interface, with the same actions, seeds and indicators. The operating regime is treated as an experimental factor; each policy is evaluated over 30 paired replications per regime, each agent is trained with five seeds, and paired tests are corrected for multiple comparisons.
+  \item \textbf{C2. A semi-Markov formulation of truck dispatching with discounting per minute.} Decisions of variable duration are discounted by the simulated time that separates them, which removes a bias of discounting per decision observed during agent tuning.
 \end{itemize}
+
+\noindent\textbf{Empirical findings.}
+\begin{itemize}
+  \item \textbf{F1. Ranking and regime dependence.} MTWT is the most productive policy in all three regimes; PPO and \corr{Static LP} follow within 1\%. The interaction between policy and regime is tested.
+  \item \textbf{F2. Transfer without retraining.} PPO trained under nominal conditions loses 0.8\% of productivity or less when it is deployed without retraining in the two disrupted regimes. \corr{Near the saturation of the shovels, it falls 3 to 19\% below MTWT.}
+  \item \textbf{F3. A fuel trade-off explained by behaviour.} PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT because it sends fewer cycles to the farthest shovel, as the allocation of cycles among shovels shows. \corr{A variant of MTWT that weighs fuel removes most of this advantage.}
+\end{itemize}
+\end{corrbloc}
 \end{revbloc}
 
 \subsection{Methodological framework}
 
 \begin{revbloc}{M24}
-\Cref{fig:framework} summarises the steps of the study. (1) The haulage system is modelled and implemented in a stochastic simulator in \cref{sec:system,sec:simulator}. (2) The dispatching decision is formulated as a semi-Markov decision process with a multi-objective reward in \cref{sec:smdp,sec:reward}. (3) The four learning agents are trained and the \rev{T31}{six} heuristics are implemented in \cref{sec:agents,sec:baselines-def}. (4) All policies are evaluated in three regimes over 30 paired replications, and the nominal agents are also evaluated without retraining in the disrupted regimes, following the protocol of \cref{sec:design}. (5) The results are analysed with paired statistical tests and an analysis of policy behaviour in \cref{sec:results}.
+\Cref{fig:framework} summarises the steps of the study. (1) The haulage system is modelled and implemented in a stochastic simulator in \cref{sec:system,sec:simulator}. (2) The dispatching decision is formulated as an \corr{SMDP} with a multi-objective reward in \cref{sec:smdp,sec:reward}. (3) The four learning agents are trained and the \rev{T31}{six} heuristics are implemented in \cref{sec:agents,sec:baselines-def}. (4) All policies are evaluated in three regimes over 30 paired replications, and the nominal agents are also evaluated without retraining in the disrupted regimes, following the protocol of \cref{sec:design}. (5) The results are analysed with paired statistical tests and an analysis of policy behaviour in \cref{sec:results}.
 \end{revbloc}
 
 \begin{figure}[H]
@@ -478,13 +500,13 @@ This work makes four contributions.
 \label{fig:framework}
 \end{figure}
 
-\adir{the supervisor asked for a summary figure of the steps, without logos (meetings of 16 August and 22 September).}
+\afig{in draw.io, framework: ``LP'' becomes ``Static LP''; the section numbers become \S5.1--5.4, \S5.5--5.6, \S5.7--5.8 and \S6.3, \S6.1--6.2, \S6.4--6.5 and \S7; ``bootstrap CI'' becomes ``bootstrap CI (paired and hierarchical)''. Export as PDF.}
 
 
 % ============================================================================
 % Section 5: Proposed approach
 % ============================================================================
-\section{Proposed approach: model, simulator and agents}
+\section{\texorpdfstring{\corr{Simulation model, decision problem and agents}}{Simulation model, decision problem and agents}}
 \label{sec:approach}
 
 \rev{M23}{This section describes the modelled system, the simulator, the formulation of the decision problem, the reward function, the learning agents and the reference heuristics. All values given are those of the evaluated implementation.}
@@ -524,7 +546,7 @@ The simulator follows the Gymnasium interface \cite{MarkTowers2025}, which ensur
 \label{fig:simulation}
 \end{figure}
 
-\afig{in draw.io, correct the ``Simulation Engine'' module (``Time-step haulage physics'' becomes ``Discrete-event simulation; decision at the dump'') and the ``Energy Consumption'' module (``Fuel use from power demand; idling, uphill hauling, braking'' becomes ``Grade-dependent fuel curves measured on a Cat 785D; idling at 11.3 L/h''), to stay consistent with the text (M11, v3).}
+\afig{in draw.io, architecture: ``LP (linear program)'' becomes ``Static LP''. Export as PDF.}
 
 \begin{revbloc}{M11, A, v3}
 The architecture comprises the following modules:
@@ -564,19 +586,93 @@ Randomness & \rev{v3}{one independent random stream per process and one breakdow
 \end{tabularx}
 \end{table}
 
+\begin{corrbloc}
+\subsection{Simulation verification and validation}
+\label{sec:vv}
+
+Verification checks that the code implements the model as specified; validation checks that the model produces magnitudes of a plausible order. Both are reported separately.
+
+\Cref{tab:audit} gathers the assumptions of the simulator, their basis and the check applied to each of them; the paragraphs below detail the checks.
+
+\begin{table}[H]
+\centering
+\caption{Assumptions, calibration and checks of the simulator. Basis: assumption of the model, measurement or manufacturer value; check: automated test, validation of magnitudes or variant of \cref{tab:sensitivity}.}
+\label{tab:audit}
+\ifcorrmarks\color{corrcolor}\fi
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{3.3cm}}
+\toprule
+\textbf{Element} & \textbf{Value} & \textbf{Basis} & \textbf{Check} \\
+\midrule
+Topology and distances & 3 shovels, 2 dumps, 0.8 to 3.2~km (\cref{tab:simparams}) & Stylised mine, no site & Returns without grade \\
+Speeds and travel times & 26 and 32~km/h, $-3\%$ per grade point; log-normal, $\sigma = 0.12$ & Assumption & Speeds $\times$0.9 and $\times$1.1; back cycle compared with \cite{ChungTa2013} \\
+Loading and dumping & 2.0 and 1.0~min on average, log-normal & Assumption & Loading $\times$0.8 and $\times$1.2; dumping $\times$1.2 \\
+Road wear & 5\% per pass, $-0.02$, floor 0.6 & Assumption & Wear $\times$2 \\
+Truck breakdowns & 2\% or 10\% per cycle; repair $\mathcal{U}(10,30)$~min & Design of the regimes & Same breakdowns for all policies (tests) \\
+Payload and truck & 140~t; Cat 785D & Manufacturer \cite{Caterpillar2019,Caterpillar785D2025} & None \\
+Fuel when travelling & Curves by grade $\times$ 0.447 & Measurements \cite{Kubler2015}; factor set on selection seeds & 95.4~L/h, below the maximum of 135.6~L/h \cite{Caterpillar2019} \\
+Fuel when idling & 11.3~L/h & Measurement \cite{Kubler2015} & 8 and 15~L/h \\
+Overconsumption on degraded roads & $+50\%$ at the floor condition & Uncalibrated assumption, \cref{sec:limitations} & Removed and doubled \\
+Queues & One truck at a time, order of arrival; shovels and dumps never fail & Assumption & Invariants tested in each regime \\
+Shift & 480~min; a cycle delivers tonnage only if it ends within the shift & Convention & Tonnage equal to the cycle log (tests) \\
+Random streams & One stream per process and per truck, shared by all policies & Design of the experiments & Separate streams (tests) \\
+Agents and Static LP & Hyperparameters of \cref{tab:hyper}; parameter $u$ of Static LP & Tuned on selection seeds 20000 to 20009 & All trials reported, \cref{sec:tuning} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Verification.} 165 automated tests check the simulator. In each regime, they verify the following invariants: each truck is in exactly one state at any time, and has a cycle in progress if and only if it is travelling; a shovel or a dump serves one truck at a time, in the order of arrival, and never stays idle while a truck is waiting; simultaneous events are processed in a fixed order, arrivals before decisions, then by truck index; the tonnage of an episode equals the sum over its cycle log; a cycle whose dumping ends after the shift is simulated to the end, with its fuel and its penalties, but delivers no tonnage; each truck consumes at least the idling fuel of all its stationary time; and the reward of each cycle is paid exactly once. Other tests check the separate random streams, the bounds of the counters at the end of the shift and the discounting per minute of \cref{sec:discount}.
+
+\textbf{Validation of magnitudes.} The simulator is not calibrated on a site, but its magnitudes can be compared with published values. Under nominal conditions with Fixed Assignment, a cycle lasts 22.7~min without waiting or breakdowns, including 2.0~min of loading. The remaining 20.7~min of travel and dumping lie within the range of 15 to 25~min reported for the back cycle of haul trucks in an oil sands mine \cite{ChungTa2013}, where loading takes 3 to 4~min with trucks of 240 to 400~t. A truck hauls 354~t/h, about 2.5 loads of 140~t per hour, and consumes 95.4~L/h, within the medium range published by the manufacturer for the Cat 785D and below its maximum of 135.6~L/h \cite{Caterpillar2019}; idling, at 11.3~L/h, is a value measured on an operating truck \cite{Kubler2015}. Shovels are busy 35\% of the shift, consistently with a match factor of 0.35.
+
+\textbf{Sensitivity.} Each physical parameter was varied separately in the nominal regime: loading time $\times$0.8 and $\times$1.2, dumping time $\times$1.2, speeds $\times$0.9 and $\times$1.1, empty returns without grade instead of climbing, twice the road wear, idling at 8 and 15~L/h instead of 11.3~L/h, and overconsumption on degraded roads removed or doubled. The six heuristics and the five nominal PPO models were evaluated without retraining over 30 new replications, seeds 72 to 101, the reference simulator included, so that every comparison remains paired (\cref{tab:sensitivity}). MTWT remains the most productive policy in all twelve variants, and the productivity ranking changes little, with a Kendall correlation of at least 0.81 with the reference. PPO stays 0.5 to 0.9\% below MTWT, except when road wear is doubled, where the gap widens to 2.8\%: the PPO models were trained with the nominal wear. Its lower fuel consumption per tonne holds in every variant, 1.4 to 3.6\% below MTWT. The ranking by fuel per tonne changes more, down to a correlation of 0.62 when overconsumption on degraded roads is doubled, because \corr{Static LP}, Nearest Shovel and PPO are within 1\% of one another on this indicator.
+
+\begin{table}[H]
+\centering
+\caption{Sensitivity of the results to the parameters of the simulator, nominal regime, seeds 72 to 101. MTWT is the most productive policy in every variant. $\tau$: Kendall correlation with the ranking of the reference; $\Delta$ = PPO $-$ MTWT in \%, with 95\% paired bootstrap confidence interval.}
+\label{tab:sensitivity}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lccrr@{}}
+\toprule
+\textbf{Variant} & \textbf{$\tau$ prod.} & \textbf{$\tau$ fuel} & \textbf{$\Delta$ productivity (\%)} & \textbf{$\Delta$ fuel per tonne (\%)} \\
+\midrule
+Reference (nominal simulator) & 1.00 & 1.00 & $-$0.6 [$-$0.9; $-$0.4] & $-$2.4 [$-$2.7; $-$2.1] \\
+\midrule
+Loading time $\times$0.8 & 0.81 & 1.00 & $-$0.8 [$-$1.1; $-$0.5] & $-$2.5 [$-$2.9; $-$2.2] \\
+Loading time $\times$1.2 & 0.90 & 0.81 & $-$0.8 [$-$1.0; $-$0.5] & $-$2.7 [$-$3.1; $-$2.3] \\
+Dumping time $\times$1.2 & 1.00 & 1.00 & $-$0.7 [$-$0.8; $-$0.5] & $-$2.8 [$-$3.2; $-$2.4] \\
+Speeds $\times$0.9 & 1.00 & 1.00 & $-$0.5 [$-$0.8; $-$0.2] & $-$2.6 [$-$3.1; $-$2.2] \\
+Speeds $\times$1.1 & 1.00 & 1.00 & $-$0.9 [$-$1.1; $-$0.7] & $-$3.2 [$-$3.6; $-$2.8] \\
+Empty returns without grade & 0.90 & 0.90 & $-$0.9 [$-$1.1; $-$0.7] & $-$2.4 [$-$2.7; $-$2.0] \\
+Road wear $\times$2 & 0.81 & 0.81 & $-$2.8 [$-$3.1; $-$2.5] & $-$3.6 [$-$4.0; $-$3.1] \\
+Idling 8~L/h & 1.00 & 1.00 & $-$0.6 [$-$0.8; $-$0.4] & $-$2.4 [$-$2.7; $-$2.1] \\
+Idling 15~L/h & 1.00 & 0.90 & $-$0.6 [$-$0.8; $-$0.4] & $-$2.3 [$-$2.6; $-$2.0] \\
+Road overconsumption $\times$0 & 1.00 & 1.00 & $-$0.6 [$-$0.9; $-$0.4] & $-$3.4 [$-$3.8; $-$3.0] \\
+Road overconsumption $\times$2 & 1.00 & 0.62 & $-$0.6 [$-$0.8; $-$0.4] & $-$1.4 [$-$1.7; $-$1.2] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Scope.} These magnitudes are of a plausible order, but the simulator is not calibrated on operational data from a site: the reported values describe the relative performance of the policies in this environment and are not predictions for a real mine.
+\end{corrbloc}
+
 \subsection{Formulation as a semi-Markov decision process}
 \label{sec:smdp}
 
 \begin{revbloc}{M9, M24, Dir. 30/09}
-Problem P1 is formulated as a Markov decision process \cite{Puterman1994, RichardSutton2018} defined by the tuple $(S, A, P, R, \gamma)$. Since decisions are triggered by events (a truck becoming available) and separated by variable durations, it is more precisely a semi-Markov decision process \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. \Cref{fig:mdp} illustrates the interaction loop; \cref{tab:mdp} summarises the components.
+Problem P1 is formulated as a Markov decision process \cite{Puterman1994, RichardSutton2018} defined by the tuple $(S, A, P, R, \gamma)$. Since decisions are triggered by events (a truck becoming available) and separated by variable durations, it is more precisely a semi-Markov decision process \corr{(SMDP)} \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. \Cref{fig:mdp} illustrates the interaction loop; \cref{tab:mdp} summarises the components.
 \end{revbloc}
 
 \subsubsection{State space}
 
 \begin{revbloc}{M1, N1, N2, N3, v3}
+\corr{\textbf{Simulator state and observation.} The simulator state contains information that the policy does not observe: the breakdown and repair state of each truck, the condition of each road segment, the exact position of the trucks in transit and the remaining service times. The policy observes a vector of 23 components computed from this state. The decision process is therefore partially observable; it is treated as an \corr{SMDP} on the observation, an approximation that is common in dispatching and that the observation is designed to support, since it summarises the future queues through the predicted waiting per route.}
+
 The state $S_t$ is a vector of 23 components, normalised to $[0,1]$, which describes the system as seen by the deciding truck (\cref{tab:state}). Its size is $3S + 2D + SD + 4$ and does not depend on the number of trucks: 23 components with 12 as with 18 trucks. An agent trained in one regime can therefore be evaluated in another without retraining, as done in \cref{sec:protocol}.
 
-The block of predicted waiting times per route gives, for each of the six shovel--dump pairs, the waiting time the deciding truck would face if it took that route: the predicted queue on its arrival at the shovel, then the predicted queue on its arrival at the dump after an average loading. The predictions account for trucks already en route. This is exactly the information used by the Minimum Truck Waiting Time rule, MTWT, defined in \cref{sec:baselines-def}. This block was added during the agent tuning of \cref{sec:tuning}: without it, the agent had to learn on its own the non-linear combination $\max(0, \text{release} - \text{arrival})$ that MTWT computes.
+The block of predicted waiting times per route gives, for each of the six shovel--dump pairs, the waiting time the deciding truck would face if it took that route: the predicted queue on its arrival at the shovel, then the predicted queue on its arrival at the dump after an average loading. The predictions account for trucks already en route. This is exactly the information used by the Minimum Truck Waiting Time rule, MTWT, defined in \cref{sec:baselines-def}. \corr{It is given to the agent because any dispatching system that tracks truck positions can compute it; the question is whether learning adds anything to it.} This block was added during the agent tuning of \cref{sec:tuning}: without it, the agent had to learn on its own the non-linear combination $\max(0, \text{release} - \text{arrival})$ that MTWT computes.
 \end{revbloc}
 
 \begin{table}[H]
@@ -602,6 +698,9 @@ Total & 23 & independent of the number of trucks \\
 \end{tabularx}
 \end{table}
 
+\corr{The scales are fixed bounds: 480~min is the shift length; 24 exceeds the largest fleet of training, 18 trucks; 30~min caps the predicted waiting; 3{,}500~t is 25 cycles of 140~t; 1{,}085~L is 8~h at the maximum consumption of the Cat 785D, 135.6~L/h. Replayed on five selection seeds, no component reaches its bound in the three regimes; with 34 trucks, only the predicted waiting does, in 0.2\% of the decisions. The transfer results are therefore not driven by saturated inputs.}
+
+
 \subsubsection{Action space}
 
 The action $A_t$ is requested whenever a truck becomes available. Each action encodes a complete cycle assignment: a shovel--dump pair $(\text{Shovel}_j, \text{Dump}_k)$, or a waiting action (WAIT). With $S=3$ shovels and $D=2$ dumps:
@@ -609,7 +708,7 @@ The action $A_t$ is requested whenever a truck becomes available. Each action en
   |A| = S \times D + 1 = 7,
   \quad A_t \in \{0, 1, \dots, 6\},
 \end{equation}
-where action $a \in \{0,\dots,5\}$ corresponds to $\text{Shovel}_{\lfloor a/D \rfloor}$ and $\text{Dump}_{a \bmod D}$. \rev{M11}{Action 6 holds the truck until the next system event (release of a truck, a shovel or a dump), for at most 5~minutes and at least 0.2~minute.} \rev{M16, v3}{No action mask is used: the seven actions are always allowed, for all agents.}
+where action $a \in \{0,\dots,5\}$ corresponds to $\text{Shovel}_{\lfloor a/D \rfloor}$ and $\text{Dump}_{a \bmod D}$. \rev{M11}{Action 6 holds the truck until the next system event (release of a truck, a shovel or a dump), for at most 5~minutes and at least 0.2~minute.} \corr{The next system event is the arrival of a truck at a shovel or a dump, or the end of a repair. Repeated short waits do occur: replayed on five selection seeds under high load, three of the five PPO models wait in 15, 22 and 84\% of their decisions, with up to 218 consecutive WAIT actions of one truck, 85\% of them shorter than 0.5~min. Under nominal conditions and frequent breakdowns, PPO waits in less than 0.3\% of its decisions and never more than three times in a row.} \rev{M16, v3}{No action mask is used: the seven actions are always allowed, for all agents.}
 
 \subsubsection{Transition function and discounting}
 \label{sec:discount}
@@ -617,7 +716,7 @@ where action $a \in \{0,\dots,5\}$ corresponds to $\text{Shovel}_{\lfloor a/D \r
 The transition function $P(S_{t+1} \mid S_t, A_t)$ is defined implicitly by the simulator: travel times, loading and dumping durations, road degradation and breakdowns. The same action taken in the same state can therefore lead to different successor states.
 
 \begin{revbloc}{M9, v3}
-\textbf{Duration of decisions.} Two successive decisions are separated by a variable duration $\Delta t_t$: from 0.2~min after a short WAIT to several minutes, depending on when the next truck becomes available. Over a shift, the durations of the decisions cover exactly the 480~minutes.
+\textbf{Duration of decisions.} Two successive decisions are separated by a variable duration $\Delta t_t$: \corr{from zero, when two trucks decide at the same instant, for instance when a WAIT ends with the arrival of another truck, to several minutes,} depending on when the next truck becomes available. \corr{A truck that chooses WAIT stays idle for at least 0.2~min.} Over a shift, the durations of the decisions cover exactly the 480~minutes.
 
 \textbf{Discounting per minute.} A reward obtained after a decision that lasted $\Delta t_t$ minutes is discounted by $\gamma_{\min}^{\Delta t_t}$, rather than by a fixed factor $\gamma$ at each decision \cite{BradtkeDuff1995, SuttonPrecupSingh1999}. The discounted return from decision $t$ is therefore
 \begin{equation}
@@ -627,7 +726,7 @@ G_t = \sum_{l \geq 0} \Big( \prod_{m=0}^{l-1} \gamma_{\min}^{\Delta t_{t+m}} \Bi
 \end{equation}
 where $\tau_t$ is the time of decision $t$ in the shift. The time that counts becomes mine time, not the number of decisions.
 
-\textbf{No new parameter.} The factor per minute is derived from the $\gamma$ of each algorithm through $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, where $\bar{\Delta} = 1.89$~min is the mean interval between two decisions of Fixed Assignment under nominal conditions. A decision of average duration is therefore discounted exactly as with a factor per decision. With $\gamma = 0.995$, the effective horizon remains on average about 200 decisions, i.e.\ about 377~minutes under nominal conditions. It does not depend on fleet size, whereas with discounting per decision it would shrink in minutes when decisions become more frequent, for instance under high load.
+\textbf{No new parameter.} The factor per minute is derived from the $\gamma$ of each algorithm through $\gamma_{\min} = \gamma^{1/\bar{\Delta}}$, where $\bar{\Delta} = 1.89$~min is the mean interval between two decisions of Fixed Assignment under nominal conditions. A decision of average duration is therefore discounted exactly as with a factor per decision. With $\gamma = 0.995$, the effective horizon remains on average about 200 decisions, i.e.\ about 377~minutes under nominal conditions. It does not depend on fleet size, whereas with discounting per decision it would shrink in minutes when decisions become more frequent, for instance under high load. \corr{Since $\gamma_{\min} = \gamma^{1/\bar\Delta}$, the choice of the reference interval only rescales the horizon in minutes, $\bar\Delta/(1-\gamma)$: 300, 378 and 500~min for $\bar\Delta = 1.5$, 1.89 and 2.5~min, all of the order of the shift. Fixed Assignment is taken as reference because it never waits and its cycles are stable; the interval of MTWT, 1.81~min, would give 362~min.}
 
 \textbf{Why.} With discounting per decision, a decision lasting 0.2~min and a cycle to the farthest shovel delay what follows equally, although one lasts a hundred times longer than the other. Agent tuning, reported in \cref{sec:tuning}, revealed two measured consequences of this flaw. Value-based agents drifted towards the farthest shovel, since a long trip does not delay the next production in number of decisions. When a cycle yielded a negative value on average, chaining waits of 0.2~min pushed this cost back by many decisions for only a few minutes. Discounting per minute fixes the common cause of both flaws without changing the reward.
 
@@ -636,11 +735,11 @@ where $\tau_t$ is the time of decision $t$ in the shift. The time that counts be
 \delta_t = R_t + \gamma_{\min}^{\Delta t_t} V(S_{t+1}) - V(S_t), \qquad
 \hat{A}_t = \delta_t + \gamma_{\min}^{\Delta t_t}\, \lambda\, \hat{A}_{t+1} .
 \end{equation}
-Bootstrapping the value at the end of the shift uses the same factor. A test checks that, if all decisions lasted exactly 1.89~min, the four algorithms would learn exactly what they learn with discounting per decision: same network weights for PPO and DQN, same tables for Q-Learning and SARSA.
+\corr{The shift ends by truncation at 480~min, never by a terminal state: the environment returns \texttt{truncated}, and the four algorithms bootstrap the value of the last observation with the factor $\gamma_{\min}^{\Delta t}$ of the last decision, whose duration stops at 480~min.} \corr{Unit tests check the discounted return for variable durations, the factor used at the truncation of the shift and repeated WAIT actions, whose factors multiply to the factor of the total elapsed time.} A test checks that, if all decisions lasted exactly 1.89~min, the four algorithms would learn exactly what they learn with discounting per decision: same network weights for PPO and DQN, same tables for Q-Learning and SARSA.
 
 \textbf{Approximations.} There are two. First, the reward of a step is counted at the start of the step, without discounting within it, which is customary for a semi-Markov process with rewards per transition. Second, for PPO, reward normalisation estimates the scale of returns with the $\gamma$ per decision. It only rescales the reward and does not enter the target. Finally, discounting per minute assumes a single simulated environment per training run.
 
-\textbf{Credit assignment.} A single agent decides successively for all trucks. The reward of a step covers the cycles completed during that step, whatever the truck, as defined in \cref{sec:reward}: the credit of a decision to a particular truck is therefore not explicit.
+\textbf{Credit assignment.} A single agent decides successively for all trucks. The reward of a step covers the cycles completed during that step, whatever the truck, as defined in \cref{sec:reward}: the credit of a decision to a particular truck is therefore not explicit. \corr{A decision is taken at time $\tau_t$, when a truck becomes available at a dump, and the next one at $\tau_{t+1}$. The reward $R_t$ is the sum of the rewards of the cycles whose truck reaches its dump in $(\tau_t, \tau_{t+1}]$, plus the cost of WAIT if this action was chosen; it is counted at $\tau_t$, and what follows $\tau_{t+1}$ is discounted by $\gamma_{\min}^{\tau_{t+1}-\tau_t}$. The reward of a cycle is thus received when its truck reaches the dump, after a delay close to the duration of the cycle (\cref{fig:cycle}).}
 \end{revbloc}
 
 \begin{table}[H]
@@ -669,7 +768,7 @@ Discounting & $\gamma_{\min}^{\Delta t_t}$ & \rev{M9, v3}{Per simulated minute; 
 \label{fig:mdp}
 \end{figure}
 
-\afig{in draw.io: the reward arrow reads ``Tonnage, balance, fuel, waiting''; replace with ``Production, balance, distance, waiting (paid at cycle end)''. The action arrow reads ``Truck -> shovel assignment''; replace with ``Shovel--dump pair or WAIT''. Add the decision duration ``$\Delta t$ (per-minute discount)'' on the state arrow (v3).}
+\afig{in draw.io, SMDP loop: ``(paid at cycle end)'' becomes ``(paid when the truck reaches the dump)'', and ``open-pit'' becomes ``open pit''. Export as PDF.}
 
 \subsection{Multi-objective reward function}
 \label{sec:reward}
@@ -691,7 +790,9 @@ with $w_1 = 1$, $w_2 = 0.1$, $w_3 = 0.05$ and $w_4 = 0.3$, and where:
   \item $p^{\mathrm{wait}}_c = \min\big((W^{\mathrm{shovel}}_c + W^{\mathrm{dump}}_c)/30\,;\,1\big)$ penalises the queueing time actually incurred during the cycle, in minutes, divided by 30 and capped at 1.
 \end{itemize}
 
-\textbf{Timing of payment.} The reward of a cycle is known only at its end, since queues depend on the arrivals of the other trucks. It is paid at the step during which the cycle ends. The reward $R_t$ of a step is therefore the sum of the rewards of the cycles completed since the previous decision, whatever the truck, plus the cost of a WAIT if that is the chosen action. At the end of the shift, cycles in progress are completed: the sum of the $R_t$ over a shift is the sum of the rewards of all its cycles. A version in which the reward was estimated and paid at the time of the decision was tried and rejected during the tuning of \cref{sec:tuning}.
+\corr{In $p^{\mathrm{bal}}_c$, $\omega_j$ is in minutes, so that the variance is in min$^2$; the scale of 100~min$^2$ brings the term to the order of 1. Over a nominal shift, the weighted terms of MTWT amount to 253.6 for production, $-2.1$ for balance, $-19.2$ for distance and $-1.5$ for waiting, and those of PPO to 252.3, $-3.3$, $-18.6$ and $-2.0$: production dominates, and distance is the main penalty.}
+
+\textbf{Timing of payment.} \corr{The reward of a cycle is known only when its truck reaches the dump: queues depend on the arrivals of the other trucks, and the queue at the dump and the dumping time are known on arrival. The cycle is then counted as completed, and its reward is paid at the step during which this arrival occurs, as shown in \cref{fig:cycle}. The reward $R_t$ of a step is therefore the sum of the rewards of the cycles whose truck reached its dump after the decision $\tau_t$,} whatever the truck, plus the cost of a WAIT if that is the chosen action. At the end of the shift, cycles in progress are completed: the sum of the $R_t$ over a shift is the sum of the rewards of all its cycles. \corr{Their fuel and penalties are counted, but their production term is zero when the dump is reached after 480~min, consistently with the rule of \cref{tab:simparams} that counts only the tonnage delivered before the end of the shift.} A version in which the reward was estimated and paid at the time of the decision was tried and rejected during the tuning of \cref{sec:tuning}.
 
 \textbf{Cost of voluntary waiting.} For the WAIT action, of duration $\delta_t$, the reward is
 \begin{equation}
@@ -705,10 +806,19 @@ The second term is the opportunity cost of idleness: the production lost by a st
 \textbf{Unchanged reward.} The reward was fixed before the campaign. A variant that extended the opportunity cost to all cycles was tried during the tuning of \cref{sec:tuning} and then abandoned. The flaw it targeted was fixed by the discounting per minute of \cref{sec:discount}, without changing the reward.
 \end{revbloc}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/cycle_timeline}
+\caption{\corr{Chronology of two trucks at the end of a shift, with the decisions of the agent. Illustrative durations; the reward of a cycle enters the step during which its truck reaches the dump.}}
+\label{fig:cycle}
+\end{figure}
+
 The weights favour production while keeping a waiting penalty. The sensitivity of the agents to $w_4$ is examined in the ablation study of \cref{sec:ablation}.
 
 \subsection{Learning agents studied}
 \label{sec:agents}
+
+Four learning agents are compared, from tabular methods to deep networks, and from methods that learn the value of actions to a method that learns the policy directly. PPO and DQN observe the full state of 23 components, whereas Q-Learning and SARSA use a reduced and discretised state. The hyperparameters of the four agents are given in \cref{tab:hyper}.
 
 \subsubsection{Proximal Policy Optimization}
 
@@ -751,12 +861,14 @@ Entropy coefficient            & \textbf{0}     & n/a & n/a & n/a \\
 Replay buffer / warm-up        & n/a & 200{,}000 / 1{,}000 & n/a & n/a \\
 Target network update          & n/a & every 1{,}000 steps & n/a & n/a \\
 Exploration $\varepsilon$      & n/a & $1\to0.02$, \textbf{10\%} of steps & \multicolumn{2}{c}{$1\to0.01$, over episodes} \\
-Training budget                & 2{,}000{,}000 steps & 2{,}000{,}000 steps & 30{,}000 episodes & 30{,}000 episodes \\
+\corr{Simulated shifts per run} & \corr{about 7{,}500} & \corr{2{,}800 to 3{,}300} & \corr{30{,}000} & \corr{30{,}000} \\
+\corr{CPU time per run (min)} & \corr{341 to 346} & \corr{225 to 351} & \corr{230 to 275} & \corr{279 to 361} \\
 \bottomrule
 \end{tabular}
 \\[4pt]
 \raggedright
 \footnotesize $^{a}$\,Default of the SB3 library: Tanh for on-policy algorithms (PPO); ReLU for off-policy algorithms (DQN).\\
+\corr{Times measured during the campaign, four runs in parallel on 4 cores and 8 threads. Budgets are not equal across methods: the comparison between tabular and deep agents is not made at equal budget.}\\
 \end{table}
 
 \subsubsection{Deep Q-Network}
@@ -771,7 +883,7 @@ y = r + \gamma_{\min}^{\Delta t} \max_{a'} Q_{\theta^-}(s', a') ,
 \label{sec:tabular}
 
 \begin{revbloc}{M8, v3}
-Q-Learning \cite{WatkinsDayan1992} and SARSA \cite{RummeryNiranjan1994} store one value for each state--action pair in a table. The state of 23 components being too large for a table, it is reduced to six variables. The first five are the waiting times at the 3 shovels and the 2 dumps, split into 6 equal intervals between 0 and 9.6~min (beyond which the value saturates). The sixth is the index of the shovel nearest to the deciding truck (0 to 2). A variant that replaced it with the route of smallest predicted waiting time (0 to 5), i.e.\ the information used by MTWT, was tried during the tuning of \cref{sec:tuning} and not retained. The discretised space therefore contains $6^5 \times 3 = 23{,}328$ states. When a state is absent from the table, action 0 is played by default; the share of decisions concerned is measured during evaluation. This representation does not depend on the number of trucks.
+Q-Learning \cite{WatkinsDayan1992} and SARSA \cite{RummeryNiranjan1994} store one value for each state--action pair in a table. The state of 23 components being too large for a table, it is reduced to six variables. The first five are the waiting times at the 3 shovels and the 2 dumps, split into 6 equal intervals between 0 and 9.6~min (beyond which the value saturates). The sixth is the index of the shovel nearest to the deciding truck (0 to 2). A variant that replaced it with the route of smallest predicted waiting time (0 to 5), i.e.\ the information used by MTWT, was tried during the tuning of \cref{sec:tuning} and not retained. The discretised space therefore contains $6^5 \times 3 = 23{,}328$ states. When a state is absent from the table, action 0 is played by default; the share of decisions concerned is measured during evaluation\corr{: 0.1 to 0.5\% of the decisions of Q-Learning on average, at most 3.8\% in one replication, and none for SARSA, so that a fallback other than action 0 is not needed}. This representation does not depend on the number of trucks.
 
 Q-Learning updates the value of the action from the best next action (off-policy method), whereas SARSA uses the action actually chosen next (on-policy method). With discounting per minute, the update reads
 \begin{equation}
@@ -854,7 +966,18 @@ Algorithms~\ref{alg:ppo}, \ref{alg:dqn} and \ref{alg:qlearning} formalise the le
 \begin{revbloc}{M25, M16, Dir. corr. 1, A, v3}
 The six reference rules are defined in \cref{tab:baselines} as implemented. None uses the WAIT action. They fall into three groups.
 
-\textbf{Rules accounting for queues and travel.} The Minimum Truck Waiting Time rule (MTWT) sends the truck to the shovel where it will wait the least on arrival, combining the mean travel time and the predicted release of each shovel, trucks already en route included; it chooses the dump in the same way. It represents the rules of commercial fleet management systems \cite{Zeng2022}. The policy based on a linear program (LP) follows the DISPATCH principle \cite{Soumis1989}: a linear program sets, at the start of the shift, target flow rates on each shovel--dump route; at each decision, the truck is sent to the route that is furthest behind its plan. The program maximises production under capacity constraints on shovels and dumps, truck conservation and available truck-hours, limiting the planned utilisation of each resource to a value $u \leq 1$. With $u = 1$, the plan saturates the nearest shovel, which is optimal without randomness but creates an unbounded queue with random durations. The value $u = 0.7$ was chosen among seven candidates on the selection seeds, never on the evaluation seeds, and is used for all three regimes. These two rules use only mean quantities (travel times, service durations, breakdown probability), never the random events of the episode.
+\textbf{Rules accounting for queues and travel.} The Minimum Truck Waiting Time rule (MTWT) sends the truck to the shovel where it will wait the least on arrival, combining the mean travel time and the predicted release of each shovel, trucks already en route included; it chooses the dump in the same way. It represents the rules of commercial fleet management systems \cite{Zeng2022}. The policy based on a linear program (\corr{Static LP}) follows the DISPATCH principle \cite{Soumis1989}: a linear program sets, at the start of the shift, target flow rates on each shovel--dump route; at each decision, the truck is sent to the route that is furthest behind its plan. The program maximises production under capacity constraints on shovels and dumps, truck conservation and available truck-hours, limiting the planned utilisation of each resource to a value $u \leq 1$.
+\begin{corrbloc}
+With $x_{jk}$ the planned loaded flow from shovel $j$ to dump $k$ and $y_{kj}$ the empty flow from dump $k$ to shovel $j$, in cycles per hour, the program is
+\begin{align}
+\max_{x,\,y \ge 0}\ & \textstyle\sum_{j,k} x_{jk} \label{eq:lp}\\
+\text{s.t.}\ & \textstyle\sum_k x_{jk} \le u\,60/\bar t_{\mathrm{load}} \ \ \forall j, \qquad \sum_j x_{jk} \le u\,60/\bar t_{\mathrm{dump}} \ \ \forall k, \nonumber\\
+& \textstyle\sum_j x_{jk} = \sum_j y_{kj} \ \ \forall k, \qquad \sum_k y_{kj} = \sum_k x_{jk} \ \ \forall j, \nonumber\\
+& \textstyle\sum_{j,k} x_{jk}\,\big(\bar t_{\mathrm{load}} + \bar\tau_{jk} + \bar t_{\mathrm{dump}} + p_b\,\bar r\big) + \sum_{k,j} y_{kj}\,\bar\tau_{kj} \le 60\,N, \nonumber
+\end{align}
+where $\bar t_{\mathrm{load}}$ and $\bar t_{\mathrm{dump}}$ are the mean service times, $\bar\tau$ the mean travel times, $p_b$ the breakdown probability per cycle, $\bar r$ the mean repair time and $N$ the number of trucks. A second program keeps the production within 0.1\% of this maximum and minimises the total travel time. The plan is computed once, at the start of the shift, and never re-optimised, hence the name \corr{Static LP}: the plan is static and only the assignment rule is dynamic.
+\end{corrbloc}
+ With $u = 1$, the plan saturates the nearest shovel, which is optimal without randomness but creates an unbounded queue with random durations. The value $u = 0.7$ was chosen among seven candidates on the selection seeds, never on the evaluation seeds, and is used for all three regimes. These two rules use only mean quantities (travel times, service durations, breakdown probability), never the random events of the episode.
 
 \textbf{Rules accounting for queues only, or for no information.} The FIFO rule first serves the shovel that has been waiting for a truck the longest, as in the studies reviewed in \cref{sec:relwork}; if all shovels are busy, it chooses the one that will be free soonest, trucks en route included. It ignores travel: a shovel free in one minute but far away comes before a nearby shovel free in two minutes. Fixed Assignment ties each truck to one shovel and one dump for the whole shift, without reassignment.
 
@@ -871,7 +994,7 @@ The six reference rules are defined in \cref{tab:baselines} as implemented. None
 \textbf{Policy} & \textbf{Rule applied when truck $i$ becomes available} \\
 \midrule
 MTWT & For each shovel $j$: predicted arrival $a_j = t + $ mean empty travel time; predicted wait $\max(0,\ \text{predicted release of } j - a_j)$. Choose the shovel with the smallest wait (ties: the earliest reached), then the dump in the same way, from the predicted end of loading. \\
-LP (linear program) & At the start of the shift, target flow rates $x_{jk}$ (cycles/h) maximising production, planned utilisation $\leq u = 0.7$. At each decision: the route whose number of dispatched cycles is furthest behind $x_{jk}$, at the predicted arrival time at the shovel; ties: the nearest shovel. \\
+\corr{Static LP} (linear program) & At the start of the shift, target flow rates $x_{jk}$ (cycles/h) maximising production, planned utilisation $\leq u = 0.7$. At each decision: the route whose number of dispatched cycles is furthest behind $x_{jk}$, at the predicted arrival time at the shovel; ties: the nearest shovel. \\
 FIFO & Assign the truck to the shovel that has been waiting for a truck the longest (if all are busy, the one that will be free soonest), and likewise for the dump, regardless of distances. \\
 Fixed Assignment & Assign truck $i$ to shovel $i \bmod 3$ and dump $i \bmod 2$ for the whole shift, without reassignment. \\
 Nearest Shovel & Assign the truck to the shovel closest to its position on the graph, then to the dump closest to that shovel, regardless of queues. \\
@@ -886,11 +1009,11 @@ Shortest Path & Assign the truck to the shovel--dump pair that minimises the cos
 The architecture decouples the learning logic from the simulation, which makes it possible to test different agents interchangeably (\cref{fig:simulation,fig:mdp}). The agent selects an action $a_t$ from the state $s_t$; the environment applies the assignment and returns the next state and the reward; the evaluation module computes the indicators for \rev{v3}{the ten policies (six heuristics and four agents)} in the three regimes.
 
 \begin{revbloc}{M28, m20, m24, v3}
-All measurements are made on the CPU of an 8-core laptop, without a graphics card.
+All measurements are made \corr{on an Intel processor with 4 cores and 8 threads and 16~GB of memory}, without a graphics card.
 \begin{itemize}
-  \item \textbf{Training:} a full training run under nominal conditions, with four training runs at the same time on the machine, took 223~min for PPO, 168~min for DQN, 253~min for Q-Learning and 241~min for SARSA. Each run uses a single simulated environment, as required by the discounting per minute of \cref{sec:discount}. Collecting with four environments in parallel would speed PPO up by a factor of only 1.47 and would change the resulting model (4{,}096 steps per update instead of 1{,}024): this option was not retained. Training is deterministic for a given seed. \rev{T31}{The full campaign comprises 90 training runs: 60 for the main results (4 algorithms, 3 regimes, 5 seeds) and 30 for the ablation study. It took 5 days and 9 hours, from 22 to 27 October 2026, four runs at a time, i.e.\ 515 cumulative training hours. During the campaign, as the machine was also used for other computations, the duration of a run varied from 142 to 1{,}322~min depending on the agent and the time; the durations above, measured during tuning, are more representative. The single evaluation (6{,}540 episodes) took 4~h~18 on 4 processes.}
+  \item \textbf{Training:} a full training run under nominal conditions, with four training runs at the same time on the machine, took 223~min for PPO, 168~min for DQN, 253~min for Q-Learning and 241~min for SARSA. Each run uses a single simulated environment, as required by the discounting per minute of \cref{sec:discount}. Collecting with four environments in parallel would speed PPO up by a factor of only 1.47 and would change the resulting model (4{,}096 steps per update instead of 1{,}024): this option was not retained. Training is deterministic for a given seed. \rev{T31}{The full campaign comprises 90 training runs: 60 for the main results (4 algorithms, 3 regimes, 5 seeds) and 30 for the ablation study. It took \corr{5 days and 9 hours of elapsed time}, four runs at a time, i.e.\ 515 cumulative training hours. During the campaign, as the machine was also used for other computations, the duration of a run varied from 142 to 1{,}322~min depending on the agent and the time; the durations above, measured during tuning, are more representative. The single evaluation (6{,}540 episodes) took 4~h~18 on 4 processes.}
   \item \textbf{Evaluation:} each evaluation episode depends only on the policy and its seed, thanks to the separate random streams described in \cref{sec:simulator}. Episodes are therefore distributed over several processes, with exactly the same results as sequentially, seed by seed. On 150 episodes, 4 processes halve the duration; 8 processes do worse than 4, because each must first load PyTorch.
-  \item \textbf{Inference:} the latency of a decision, state construction included, is below 1~millisecond for all policies: from 0.48 to 0.71~ms for PPO and from 0.36 to 0.49~ms for DQN, from 12 to 24 trucks. Since the state has a fixed size, it depends little on fleet size. It is negligible compared with the duration of a haulage cycle, but its suitability for the constraints of a commercial fleet management system has not been assessed.
+  \item \textbf{Inference:} \corr{the latency of a decision, state construction included, measured decision by decision on three selection seeds under nominal conditions, has a median of 0.63~ms for MTWT, 0.38~ms for \corr{Static LP}, 0.80~ms for DQN and 1.22~ms for PPO, and a 99th percentile of 0.75, 0.49, 1.59 and 1.53~ms; earlier measurements gave 0.48 to 0.71~ms for PPO from 12 to 24 trucks.} Since the state has a fixed size, it depends little on fleet size. It is negligible compared with the duration of a haulage cycle, but its suitability for the constraints of a commercial fleet management system has not been assessed.
   \item \textbf{Memory:} \rev{T31}{a PPO model takes 501~KB (plus 2~KB for the statistics of reward normalisation), a DQN model 344~KB, and a Q-Learning or SARSA table 0.6 to 1.3~MB depending on the number of states visited during training.}
 \end{itemize}
 \end{revbloc}
@@ -939,20 +1062,26 @@ Frequent breakdowns  & 12 & 3 & 2 & 10\% & \rev{M15}{0.35} & Frequent truck brea
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/fig3_scenarios.png}
+\includegraphics[width=0.95\textwidth]{figures/fig3_scenarios}
 \caption{Configuration of the three operating regimes.}
 \label{fig:scenarios}
 \end{figure}
+
+\begin{corrbloc}
+\textbf{Severity of the main regimes.} The two disrupted regimes are moderate: under high load, the match factor rises from 0.35 to 0.52 and the shovels remain below saturation; under frequent breakdowns, a truck breaks down in 10\% of its cycles instead of 2\%, for 10 to 30~min. They test the robustness of the policies to a change of fleet size and of truck availability, not to a structural change of the mine.
+
+\textbf{More severe disruptions.} Three further regimes, evaluated without retraining over 30 new replications, seeds 72 to 101, together with the nominal regime on the same seeds, test more severe conditions: an outage of shovel 1, the nearest and most used, from 120 to 240~min of the shift, announced to all policies when it starts; and fleets of 29 and 34 trucks, which raise the match factor to 0.85 and 1.0, close to the saturation of the shovels. The PPO models trained under nominal conditions and those trained under high load are both evaluated.
+\end{corrbloc}
 
 \subsection{Training and evaluation protocol}
 \label{sec:protocol}
 
 \begin{revbloc}{M1, M7, m19, A, v3}
-\textbf{Three disjoint sets of seeds.} The evaluation seeds (42 to 71) provide the 30 replications of each result. The selection seeds (20{,}000 to 20{,}009) were used for every choice made before the campaign: hyperparameter tuning, choice of $u$ for the LP policy and the agent tuning of \cref{sec:tuning}. The training seeds (1 to 5) initialise the agents; the agent with seed $s$ plays its training episodes on seeds $s \times 10^6, s \times 10^6 + 1, \ldots$, which never intersect the other two sets. A test checks, for the four algorithms, that all seeds used during training are training seeds. No choice was made on the evaluation seeds, and no agent was evaluated on them before the final campaign; nothing was changed after seeing its results.
+\textbf{Three disjoint sets of seeds.} The evaluation seeds (42 to 71) provide the 30 replications of each result. The selection seeds (20{,}000 to 20{,}009) were used for every choice made before the campaign: hyperparameter tuning, choice of $u$ for the \corr{Static LP} policy and the agent tuning of \cref{sec:tuning}. The training seeds (1 to 5) initialise the agents; the agent with seed $s$ plays its training episodes on seeds $s \times 10^6, s \times 10^6 + 1, \ldots$, which never intersect the other two sets. A test checks, for the four algorithms, that all seeds used during training are training seeds. No choice was made on the evaluation seeds, and no agent was evaluated on them before the final campaign; nothing was changed after seeing its results.
 
 \textbf{Specialised agents.} Each learning agent is trained in each of the three regimes with 5 training seeds: 2~million steps for PPO and DQN, 30{,}000 episodes for Q-Learning and SARSA, i.e.\ 60 training runs. The main results compare, in each regime, the agents trained in that regime with the six heuristics.
 
-\textbf{Evaluation without retraining.} To measure the ability of a learned policy to withstand a change of regime, the agents trained under nominal conditions are also evaluated, without any retraining, under high load and frequent breakdowns, on the same seeds as the specialised agents. This is possible for the four agents, since the state has the same size whatever the number of trucks, as shown in \cref{sec:smdp}. The nominal agents are also evaluated in two unseen intermediate regimes: 15 trucks with 2\% breakdowns, and 12 trucks with 5\% breakdowns.
+\textbf{Evaluation without retraining.} To measure the ability of a learned policy to withstand a change of regime, the agents trained under nominal conditions are also evaluated, without any retraining, under high load and frequent breakdowns, on the same seeds as the specialised agents. This is possible for the four agents, since the state has the same size whatever the number of trucks, as shown in \cref{sec:smdp}. The nominal agents are also evaluated in two unseen intermediate regimes: 15 trucks with 2\% breakdowns, and 12 trucks with 5\% breakdowns. \corr{These evaluations vary two parameters of the same mine, fleet size and breakdown rate, with the same topology, service times and roads. The unseen regimes interpolate between values seen in training; the disrupted regimes change the regime along the same two axes. They test transfer across parameter values, not across a change of distribution or of topology; the outage of a shovel during the shift and the fleets close to saturation of \cref{sec:scenarios} go further.}
 
 \textbf{Ablation study.} Sensitivity to the weight of the waiting penalty is measured under nominal conditions for $w_4 \in \{0; 0.1; 0.5\}$, the retained value $w_4 = 0.3$ being that of the nominal agents. It covers PPO and DQN, with the same 5 training seeds, i.e.\ 30 additional training runs. PPO is the main agent of the study, and DQN the one whose behaviour depends most on the WAIT action, as shown in \cref{sec:tuning}. Q-Learning and SARSA, whose convergence is insufficient, are excluded. This choice was fixed before the campaign.
 
@@ -976,54 +1105,20 @@ With a first tuning procedure (a grid of four configurations at 200{,}000 steps)
 \end{itemize}
 Each trial is recorded with its configuration and the commit of the code used, and can be rerun with a single command.
 
-\textbf{Trials.} \Cref{tab:tuning} reports them in order. The reference points on the same seeds are: MTWT 4{,}443~t/h, LP 4{,}412, FIFO 4{,}246, Fixed Assignment 4{,}226, random policy 4{,}167, Nearest Shovel 3{,}915.
+\textbf{Trials.} \Cref{tab:tuning}\corr{, in \cref{app:tuning},} reports them in order. The reference points on the same seeds are: MTWT 4{,}443~t/h, \corr{Static LP} 4{,}412, FIFO 4{,}246, Fixed Assignment 4{,}226, random policy 4{,}167, Nearest Shovel 3{,}915.
 \end{revbloc}
 
-\begin{table}[H]
-\centering
-\caption{Trials of agent tuning on the selection seeds (t/h). In brackets: share of WAIT decisions or of cycles sent to a single shovel.}
-\label{tab:tuning}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.6cm}}
-\toprule
-\textbf{No.} & \textbf{Trial} & \textbf{Result} & \textbf{Decision} \\
-\midrule
-\multicolumn{4}{l}{\emph{Discounting per decision}} \\
-0 & Tuning of PPO and DQN, 200{,}000 steps & PPO 3{,}953 (99\% shovel 1); DQN 3{,}992 & starting point \\
-1, 2, 4 & Reward estimated and paid at the decision, with or without a cost of queue minutes & PPO 3{,}915 to 3{,}981; DQN 4{,}106 to 4{,}191 (WAIT 52 to 65\%) & rejected \\
-3 & PPO, full budget, reward paid at the end of the cycle & PPO 4{,}260 & kept \\
-5 & Predicted waiting per route in the state (23 components) & PPO 4{,}345 & retained \\
-6 & Normalised reward and $\gamma = 0.995$ & PPO 4{,}405 (WAIT 36\%) & retained \\
-7 & DQN check, full budget, $\gamma = 0.995$ & DQN 3{,}593 (99\% shovel 3) & kept, no variant \\
-8, 9 & Q-Learning and SARSA, initial configuration & Q-Learning 3{,}955 (62\% shovel 3); SARSA 3{,}535 (98\% shovel 3) & starting point \\
-\midrule
-\multicolumn{4}{l}{\emph{Opportunity cost extended to all cycles (abandoned)}} \\
-10--13 & Same configuration, modified reward & PPO 210 (WAIT 99.8\%); DQN 3{,}532 (WAIT 94.8\%); Q-Learning 4{,}099; SARSA 4{,}134 & abandoned \\
-\midrule
-\multicolumn{4}{l}{\emph{Discounting per minute}} \\
-14--17 & Same configuration as trials 6 to 9 & PPO 4{,}414 (WAIT 0\%); DQN 121 (WAIT 99.8\%); Q-Learning 3{,}974; SARSA 3{,}602 (100\% shovel 3) & PPO and DQN frozen \\
-16--23 & Tabular tuning: $\alpha \in \{0.1; 0.2\}$ × \{6; 8\} intervals & Q-Learning 3{,}369 to \textbf{4{,}181} ($\alpha = 0.2$, 6 int.); SARSA 3{,}481 to \textbf{3{,}626} ($\alpha = 0.1$, 6 int.), 98 to 100\% shovel 3 & best configurations \\
-24, 25 & Sixth state variable: route of smallest predicted waiting & Q-Learning 4{,}062; SARSA 3{,}505 (95\% shovel 3) & rejected \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\begin{corrbloc}
+\textbf{Three lessons.} The trials, their results and the reasons for each decision are reported in \cref{app:tuning}. Three lessons emerge. First, giving the agent the predicted waiting per route was the change that brought PPO close to MTWT, from 3{,}953 to 4{,}345~t/h. Second, discounting per decision was the common cause of two flaws, a drift of the value-based agents towards the farthest shovel and waits inserted to postpone a negative reward; discounting per minute corrects the formulation without changing the reward. Third, under discounting per minute, DQN collapses onto WAIT while PPO does not, and the tabular agents do not do better than a random policy.
+\end{corrbloc}
 
-\begin{revbloc}{v3}
-\textbf{What was retained, and why.} Each retained change is justified independently of its score. The block of predicted waiting per route gives the agent the same information as MTWT. Reward normalisation and a longer horizon are common practice for PPO. Discounting per minute corrects the formulation of the problem, as explained in \cref{sec:discount}. Over the same period, the reference heuristics were strengthened: prediction of trucks en route for MTWT and FIFO, and addition of the LP policy. The comparison has therefore become harder for reinforcement learning.
 
-\textbf{The flaw found, and the abandoned variant.} With discounting per decision, the three value-based agents (DQN, Q-Learning, SARSA) drifted towards the farthest shovel, and their productivity decreased as exploration diminished. A measurement without retraining revealed the cause. Always going to shovel 3 rather than shovel 1 loses 9\% of productivity, but hardly changes the reward per decision (0.813 versus 0.820), because a cycle yields 1 whatever its duration. A first correction, decided with the research supervisor, extended the opportunity cost to all cycles (cycle duration divided by 23.2~min). The reward of a shift changed only by a constant, and the drift disappeared (trials 10 to 13). But a cycle then yielded a negative value on average. With discounting per decision, postponing a negative reward makes it less costly, and inserting waits of 0.2~min became the way to postpone it. PPO thus learned to wait in 99.8\% of its decisions. Both flaws therefore have the same cause: discounting per decision while decisions do not last the same time. This variant was abandoned, the reward returned to its previous definition, and discounting per minute was introduced for the four algorithms, with no other change. These two decisions were taken after seeing results on the selection seeds: they are declared as such.
-
-\textbf{The collapse of DQN.} With discounting per minute, DQN chooses WAIT in 99.8\% of its decisions (trial 15). Replayed greedily, the final model produces 840~t per shift, whereas the last training shifts, played with updates and exploration, produced 25{,}620 to 30{,}660~t. Our interpretation, consistent with this measurement but not demonstrated, is the following. A wait of 0.2~min delays the next production by only 0.2~min: its value is therefore almost equal to that of the best action, which is correct. The gap then becomes smaller than the approximation error of the network. As soon as this error puts waiting first, the model waits, and one wait leads to others. PPO, which learns a policy rather than values to compare, is not affected. The equivalence test of \cref{sec:discount} rules out an implementation error. In accordance with the rule, DQN goes into the campaign in this version.
-
-\textbf{The tabular agents.} Tuning retained $\alpha = 0.2$ for Q-Learning and $\alpha = 0.1$ for SARSA, with 6 intervals in both cases. Giving the discrete state the route MTWT would choose, instead of the nearest shovel, cost both algorithms about 120~t/h (trials 24 and 25), and did not correct the concentration of SARSA on shovel 3. In the ten tabular trials with discounting per minute (16 to 25), the productivity measured during training starts at about 4{,}160~t/h, when exploration is almost random, then decreases as exploration diminishes. The best tabular agent (4{,}181~t/h) barely matches the random policy (4{,}167~t/h). We present this as a convergence failure of the tabular approach on this problem, with the reduced state and budget retained, not as a limitation of these algorithms in general.
-\end{revbloc}
 
 \subsection{Indicators}
 \label{sec:metrics}
 
 \begin{revbloc}{M2, M21, M15, m18}
-In this study, operational resilience refers to the ability of a policy to maintain its throughput and contain queueing when the system moves from nominal to disrupted conditions. It is measured by the following indicators, computed for each replication.
+\corr{In this study, robustness refers to} the ability of a policy to maintain its throughput and contain queueing when the system moves from nominal to disrupted conditions. It is measured by the following indicators, computed for each replication.
 
 \begin{enumerate}
   \item \textbf{Productivity:} tonnage delivered per hour (t/h), and productivity per truck (t/h/truck), which makes it possible to compare regimes whose fleets differ in size.
@@ -1052,7 +1147,7 @@ In this study, operational resilience refers to the ability of a policy to maint
 
 \textbf{Tests.} In each regime, the Friedman test \cite{Friedman1937} checks for an effect of the policy. Pairwise comparisons use the two-sided Wilcoxon signed-rank test \cite{Wilcoxon1945}, with a Holm correction \cite{Holm1979} over the family of comparisons reported in each regime \cite{Demsar2006}. \rev{v3}{These comparisons were fixed before the campaign: each of the four agents is compared with MTWT, the best heuristic on the selection seeds, and with Fixed Assignment, a widespread industrial reference according to \cref{sec:relwork}, i.e.\ eight comparisons per regime and per indicator. Regime dependence is tested on the three main regimes only.} The dependence of the ranking on the regime (H2) is tested with a linear model of productivity per truck including the policy, the blocks (regime, seed) and the interaction between policy and regime.
 
-\textbf{Effect sizes and intervals.} Differences are reported in physical units, with a 95\% paired bootstrap confidence interval (10{,}000 resamples of the differences per seed) \cite{EfronTibshirani1993}. Cohen's $d$ is reported for descriptive purposes; in a simulator, variability between replications is low, so a large $d$ does not mean a large practical effect. $p$-values below 0.001 are reported as $p<0.001$.
+\textbf{Effect sizes and intervals.} Differences are reported in physical units, with a 95\% paired bootstrap confidence interval (10{,}000 resamples of the differences per seed) \cite{EfronTibshirani1993}. \corr{Cohen's $d$ is computed for paired differences, $d_z = \bar{\Delta}/s_{\Delta}$, over the 30 paired replications, which are the unit of every test;} it is reported for descriptive purposes; in a simulator, variability between replications is low, so a large $d$ does not mean a large practical effect. $p$-values below 0.001 are reported as $p<0.001$. \corr{To account for both sources of variability, the gap between an agent and a reference is also given a confidence interval by a hierarchical bootstrap, which resamples the training seeds, then the replications, paired with the reference. The interaction between policy and regime is tested on all policies and on the five competitive ones, MTWT, \corr{Static LP}, PPO, FIFO and Fixed Assignment, so that collapsed policies do not dominate the effect.}
 
 \textbf{Training variability.} For each agent and each regime, the score of a model is its mean over the 30 evaluation seeds. The 5 models are summarised by their interquartile mean (IQM), with a 95\% confidence interval from a bootstrap stratified by regime, and by the worst and best model \cite{Agarwal2021}. The probability of improvement $P(X > Y)$ between two agents is also reported. For the aggregate over the three regimes, scores are divided by the mean of Fixed Assignment in the same regime. Learning curves are the mean of the 5 evaluated models, with a pointwise bootstrap interval; they are read from the training logs of these models, not from separate training runs.
 \end{revbloc}
@@ -1073,10 +1168,17 @@ The simulation is implemented in Python 3.11.11 with Gymnasium 1.2.3 \cite{MarkT
 \label{sec:results}
 
 \begin{revbloc}{T31}
-This section presents productivity, queueing, policy behaviour, trade-offs between criteria, robustness and transfer without retraining, then statistical significance, variability, convergence and the ablation study. All values come from the single evaluation of the final campaign, on seeds 42 to 71. For an agent, each replication is first averaged over its 5 models (training seeds): the reported mean and standard deviation then refer to the 30 replications, as for a heuristic. Variability between models is reported separately, in \cref{tab:runs,sec:stability}. In the tables, N, HL and FB denote the nominal, high load and frequent breakdown regimes.
+\corr{The section has two parts. The main results, in \cref{sec:main-results}, answer the three hypotheses: productivity, queueing, trade-offs between criteria, robustness and transfer without retraining, and statistical significance. The diagnostic analyses, in \cref{sec:diagnostics}, explain these results without testing a hypothesis. The text gives the reading of each table and the quantities derived from it; the values themselves are in the tables.} All values come from the single evaluation of the final campaign, on seeds 42 to 71. For an agent, each replication is first averaged over its 5 models (training seeds): the reported mean and standard deviation then refer to the 30 replications, as for a heuristic. Variability between models is reported separately, in \cref{tab:runs,sec:stability}. In the tables, N, HL and FB denote the nominal, high load and frequent breakdown regimes.
 \end{revbloc}
 
-\subsection{Productivity}
+\subsection{\corr{Main results}}
+\label{sec:main-results}
+
+\begin{corrbloc}
+The five subsections below give the evidence for the hypotheses: productivity and statistical significance for H1, robustness and transfer without retraining for H2, queueing and trade-offs between criteria for H3.
+\end{corrbloc}
+
+\subsubsection{Productivity}
 \label{sec:productivity}
 
 \begin{revbloc}{T31}
@@ -1097,7 +1199,7 @@ Fixed Assignment     & 4,246.1 $\pm$ 45 & 6,204.9 $\pm$ 49 & 3,999.3 $\pm$ 69 & 
 Nearest Shovel       & 3,893.2 $\pm$ 50 & 4,023.2 $\pm$ 39 & 3,754.3 $\pm$ 69 & 324.4 & 223.5 & 312.9 \\
 Shortest Path        & 4,026.2 $\pm$ 47 & 4,657.9 $\pm$ 177 & 3,857.6 $\pm$ 57 & 335.5 & 258.8 & 321.5 \\
 MTWT                 & \textbf{4,437.4 $\pm$ 55} & \textbf{6,365.3 $\pm$ 64} & \textbf{4,183.7 $\pm$ 79} & \textbf{369.8} & \textbf{353.6} & \textbf{348.6} \\
-LP                   & 4,404.2 $\pm$ 70 & 6,351.3 $\pm$ 66 & 4,149.8 $\pm$ 88 & 367.0 & 352.9 & 345.8 \\
+\corr{Static LP}                   & 4,404.2 $\pm$ 70 & 6,351.3 $\pm$ 66 & 4,149.8 $\pm$ 88 & 367.0 & 352.9 & 345.8 \\
 \midrule
 Q-Learning           & 4,088.2 $\pm$ 47 & 5,787.9 $\pm$ 55 & 3,839.8 $\pm$ 73 & 340.7 & 321.6 & 320.0 \\
 SARSA                & 3,573.3 $\pm$ 55 & 5,409.8 $\pm$ 47 & 3,353.1 $\pm$ 65 & 297.8 & 300.5 & 279.4 \\
@@ -1107,9 +1209,9 @@ PPO                  & 4,414.7 $\pm$ 51 & 6,310.0 $\pm$ 62 & 4,163.9 $\pm$ 77 & 
 \end{tabular}
 \end{table}
 
-\textbf{The same three policies lead in all three regimes.} MTWT is the most productive policy in every regime: 4,437~t/h under nominal conditions, 6,365~t/h under high load and 4,184~t/h under frequent breakdowns. PPO and LP follow closely, within 1\%: PPO is 23~t/h ($-0.5\%$), 55~t/h ($-0.9\%$) and 20~t/h ($-0.5\%$) below MTWT. Next come FIFO and Fixed Assignment, almost tied, 2 to 4\% below MTWT depending on the regime. No learning agent outperforms the best heuristic, in any regime.
+\textbf{The same three policies lead in all three regimes.} \corr{MTWT is the most productive policy in every regime.} PPO and \corr{Static LP} follow closely, within 1\%: \corr{PPO is 0.5\% below MTWT under nominal conditions and frequent breakdowns, and 0.9\% under high load.} Next come FIFO and Fixed Assignment, almost tied, 2 to 4\% below MTWT depending on the regime. No learning agent outperforms the best heuristic, in any regime.
 
-\textbf{The other agents are below Fixed Assignment.} Q-Learning loses 158 to 417~t/h against Fixed Assignment depending on the regime, and SARSA 646 to 795~t/h. DQN produces 985 to 1,579~t/h on average: four of its five nominal models collapse onto the WAIT action, as shown in \cref{sec:behaviour,sec:stability}.
+\textbf{The other agents are below Fixed Assignment.} \corr{Q-Learning produces 4 to 7\% less than Fixed Assignment depending on the regime, and SARSA 13 to 16\% less. DQN reaches 15 to 38\% of the productivity of MTWT:} four of its five nominal models collapse onto the WAIT action, as shown in \cref{sec:behaviour,sec:stability}.
 
 \textbf{The distance rules hit a ceiling.} Nearest Shovel and Shortest Path send most of the fleet to the nearest shovel, as shown in \cref{sec:behaviour}. Under high load, their productivity per truck drops by 31\% and 23\%, against 2 to 6\% for the policies that spread the fleet.
 
@@ -1118,47 +1220,12 @@ PPO                  & 4,414.7 $\pm$ 51 & 6,310.0 $\pm$ 62 & 4,163.9 $\pm$ 77 & 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{figures/barplot_productivite_scenarios.png}
+\includegraphics[width=0.92\textwidth]{figures/barplot_productivite_scenarios}
 \caption{Mean productivity by policy and regime. Error bars indicate 95\% bootstrap confidence intervals.}
 \label{fig:productivity}
 \end{figure}
 
-\begin{revbloc}{T31}
-\Cref{tab:cycles_reward} reports the number of completed cycles and the cumulative reward. The ranking by reward follows the productivity ranking, except for one swap between two very close policies under nominal conditions (FIFO and Fixed Assignment) and under high load (PPO and FIFO). The reward of DQN is negative: its repeated waits accumulate the WAIT penalty and the opportunity cost.
-
-\begin{table}[H]
-\centering
-\caption{Completed cycles per shift and cumulative reward by policy and regime (means over 30 replications).}
-\label{tab:cycles_reward}
-\small
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.05}
-\begin{tabularx}{\textwidth}{@{}l*{6}{>{\centering\arraybackslash}X}@{}}
-\toprule
-\multirow{2}{*}{\textbf{Policy}}
-  & \multicolumn{3}{c}{\textbf{Completed cycles}}
-  & \multicolumn{3}{c}{\textbf{Cumulative reward}} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-7}
-  & \textbf{N} & \textbf{HL} & \textbf{FB}
-  & \textbf{N}   & \textbf{HL}   & \textbf{FB} \\
-\midrule
-FIFO                 & 242.5 & 355.7 & 228.6 & 220.6 & 322.6 & 208.0 \\
-Fixed Assignment     & 242.6 & 354.6 & 228.5 & 219.8 & 320.6 & 207.0 \\
-Nearest Shovel       & 222.5 & 229.9 & 214.5 & 192.5 & 152.0 & 186.9 \\
-Shortest Path        & 230.1 & 266.2 & 220.4 & 199.4 & 196.1 & 192.2 \\
-MTWT                 & \textbf{253.6} & \textbf{363.7} & \textbf{239.1} & \textbf{230.9} & \textbf{330.3} & \textbf{217.7} \\
-LP                   & 251.7 & 362.9 & 237.1 & 227.0 & 329.7 & 213.9 \\
-\midrule
-Q-Learning           & 233.6 & 330.7 & 219.4 & 200.5 & 281.0 & 190.1 \\
-SARSA                & 204.2 & 309.1 & 191.6 & 175.9 & 265.1 & 158.7 \\
-DQN                  & 73.5 & 56.3 & 90.2 & $-$148.6 & $-$417.4 & $-$105.5 \\
-PPO                  & 252.3 & 360.6 & 237.9 & 228.3 & 320.9 & 215.5 \\
-\bottomrule
-\end{tabularx}
-\end{table}
-\end{revbloc}
-
-\subsection{Queueing and idle time}
+\subsubsection{Queueing and idle time}
 \label{sec:waiting}
 
 \begin{revbloc}{T31}
@@ -1180,7 +1247,7 @@ Fixed Assignment     & 11.3 $\pm$ 1.4 & 0.0 & 18.9 & 19.0 $\pm$ 2.1 & 0.0 & 26.7
 Nearest Shovel       & 62.1 $\pm$ 5.5 & 0.0 & 69.3 & 188.3 $\pm$ 8.0 & 0.0 & 193.9 & 52.8 $\pm$ 5.2 & 0.0 & 86.3 \\
 Shortest Path        & 61.4 $\pm$ 5.4 & 0.0 & 68.7 & 152.9 $\pm$ 14.8 & 0.0 & 159.0 & 52.1 $\pm$ 5.1 & 0.0 & 86.4 \\
 MTWT                 & 12.2 $\pm$ 1.3 & 0.0 & 20.2 & 21.4 $\pm$ 2.4 & 0.0 & 29.2 & 10.8 $\pm$ 1.3 & 0.0 & 47.5 \\
-LP                   & 18.9 $\pm$ 1.9 & 0.0 & 27.0 & 21.1 $\pm$ 1.4 & 0.0 & 28.9 & 18.3 $\pm$ 1.6 & 0.0 & 54.9 \\
+\corr{Static LP}                   & 18.9 $\pm$ 1.9 & 0.0 & 27.0 & 21.1 $\pm$ 1.4 & 0.0 & 28.9 & 18.3 $\pm$ 1.6 & 0.0 & 54.9 \\
 \midrule
 Q-Learning           & 18.8 $\pm$ 1.1 & 9.6 & 35.8 & 37.6 $\pm$ 2.0 & 8.0 & 52.8 & 20.4 $\pm$ 1.5 & 7.1 & 61.6 \\
 SARSA                & 36.8 $\pm$ 1.9 & 0.2 & 43.8 & 45.6 $\pm$ 2.1 & 0.1 & 52.5 & 36.6 $\pm$ 2.2 & 5.6 & 72.1 \\
@@ -1190,60 +1257,14 @@ PPO                  & 16.7 $\pm$ 1.1 & 0.0 & 24.7 & 22.6 $\pm$ 1.2 & 5.5 & 35.9
 \end{tabular}
 \end{table}
 
-\textbf{Congestion.} Fixed Assignment has the lowest queueing time among the policies that produce normally, in all three regimes (11.3, 19.0 and 10.6~min), closely followed by MTWT and FIFO. PPO queues slightly longer than MTWT (16.7 versus 12.2~min under nominal conditions) for almost the same productivity. The two distance rules accumulate 52 to 188~min of queueing, because they concentrate the fleet in front of one shovel.
+\textbf{Congestion.} Fixed Assignment has the lowest queueing time among the policies that produce normally, in all three regimes, closely followed by MTWT and FIFO. PPO queues \corr{1 to 4.5~min per truck longer than MTWT} for almost the same productivity. The two distance rules \corr{queue about five to nine times as long as MTWT}, because they concentrate the fleet in front of one shovel.
 
-\textbf{Voluntary waiting.} The six heuristics never use WAIT. PPO hardly uses it, except under high load, where it accounts for 26\% of its decisions but only 5.5~min per truck, as these waits are short. Q-Learning waits in 33 to 46\% of its decisions (7 to 10~min per truck). The trucks of DQN spend 273 to 395~min per shift in voluntary waiting, i.e.\ 57 to 82\% of the shift: this is the collapse described in \cref{sec:tuning}. Their low queueing time is therefore not a sign of efficiency: these trucks hardly move.
+\textbf{Voluntary waiting.} The six heuristics never use WAIT. PPO hardly uses it, except under high load, where it accounts for 26\% of its decisions \corr{(\cref{tab:behaviour}) but little time per truck}, as these waits are short. \corr{Q-Learning waits often, but briefly. The trucks of DQN spend 57 to 82\% of the shift in voluntary waiting:} this is the collapse described in \cref{sec:tuning}. Their low queueing time is therefore not a sign of efficiency: these trucks hardly move.
 
 \textbf{Frequent breakdowns.} Queueing is slightly lower than under nominal conditions for most policies, since fewer trucks are available at the same time. The increase in total idle time (about 26 to 28~min per truck for the heuristics that spread the fleet) comes from repairs.
 \end{revbloc}
 
-\subsection{Allocation behaviour of the policies}
-\label{sec:behaviour}
-
-\begin{revbloc}{T31}
-\Cref{tab:behaviour} describes the allocation of cycles among the three shovels and the share of decisions devoted to the WAIT action. The allocation among shovels is not recorded by the evaluation: it is obtained by replaying the same episodes with the cycle log. Each replayed episode was checked to be identical to the evaluated one (productivity, queueing time and fuel); nothing was chosen on these episodes.
-
-\begin{table}[H]
-\centering
-\caption{Allocation of cycles among shovels S1 to S3 and share of WAIT decisions, by policy and regime (\%).}
-\label{tab:behaviour}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcc|cc|cc}
-\toprule
- & \multicolumn{2}{c|}{\textbf{Nominal}} & \multicolumn{2}{c|}{\textbf{High load}} & \multicolumn{2}{c}{\textbf{Frequent breakdowns}} \\
-\textbf{Policy} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} \\
-\midrule
-FIFO                 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 \\
-Fixed Assignment     & 36 / 33 / 31 & 0 & 36 / 33 / 31 & 0 & 36 / 34 / 31 & 0 \\
-Nearest Shovel       & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 \\
-Shortest Path        & 74 / 26 / 0 & 0 & 71 / 29 / 0 & 0 & 72 / 28 / 0 & 0 \\
-MTWT                 & 50 / 35 / 15 & 0 & 42 / 36 / 22 & 0 & 49 / 37 / 14 & 0 \\
-LP                   & 60 / 40 / 0 & 0 & 42 / 42 / 17 & 0 & 64 / 36 / 0 & 0 \\
-\midrule
-Q-Learning           & 36 / 34 / 31 & 42 & 39 / 28 / 34 & 46 & 36 / 34 / 30 & 33 \\
-SARSA                & 0 / 0 / 99 & 2 & 1 / 30 / 69 & 1 & 0 / 1 / 99 & 15 \\
-DQN                  & 46 / 27 / 27 & 79 & 44 / 15 / 42 & 99 & 50 / 43 / 7 & 96 \\
-PPO                  & 59 / 36 / 4 & 0 & 46 / 36 / 18 & 26 & 56 / 37 / 7 & 0 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Three profiles emerge among the heuristics. The distance rules concentrate the fleet: Nearest Shovel sends all its cycles to shovel 1, and Shortest Path 71 to 74\%. FIFO and Fixed Assignment split the cycles almost equally, and therefore send nearly a third of them to shovel 3, the farthest. MTWT and LP favour shovels 1 and 2 and use shovel 3 only when the other two are busy, mostly under high load (22 and 17\%). PPO follows the same profile as MTWT, but uses shovel 3 even less: 4\% against 15\% under nominal conditions, 7\% against 14\% under frequent breakdowns. Its cycles are therefore shorter, which explains its lower consumption per tonne in \cref{sec:sustainability}.
-
-The value-based agents show extreme behaviours. SARSA sends 99\% of its cycles to shovel 3 under nominal conditions and frequent breakdowns, as during tuning. Q-Learning spreads its cycles over the three shovels, but waits in 33 to 46\% of its decisions. DQN waits in 79 to 99\% of its decisions. Its only working nominal model (seed 2, 3,932~t/h) sends 99\% of its cycles to shovel 1: it reproduces Nearest Shovel (3,893~t/h), not a new policy.
-
-\Cref{fig:behavioral} shows the same allocation for each policy and regime; for an agent, the bars average its 5 specialised models.
-\end{revbloc}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/behaviour_30_replications.png}
-\caption{Allocation of cycles among shovels and share of WAIT decisions.}
-\label{fig:behavioral}
-\end{figure}
-
-\subsection{Trade-offs between productivity, queueing and fuel}
+\subsubsection{Trade-offs between productivity, queueing and fuel}
 \label{sec:pareto}
 
 \begin{revbloc}{T31}
@@ -1258,17 +1279,54 @@ The value-based agents show extreme behaviours. SARSA sends 99\% of its cycles t
 \toprule
 \textbf{Regime} & \textbf{Productivity and queueing time} & \textbf{Productivity and fuel per tonne} \\
 \midrule
-Nominal & Fixed Assignment (4,246~t/h; 11.3~min), MTWT (4,437; 12.2) & Nearest Shovel (3,893~t/h; 0.235~L/t), LP (4,404; 0.235), PPO (4,415; 0.237), MTWT (4,437; 0.244) \\
-High load & Fixed Assignment (6,205; 19.0), LP (6,351; 21.1), MTWT (6,365; 21.4), (DQN: 985; 15.2) & PPO (6,310; 0.248), MTWT (6,365; 0.253) \\
-Frequent breakdowns & Fixed Assignment (3,999; 10.6), MTWT (4,184; 10.8) & Nearest Shovel (3,754; 0.235), LP (4,150; 0.236), PPO (4,164; 0.242), MTWT (4,184; 0.245) \\
+Nominal & Fixed Assignment (4,246~t/h; 11.3~min), MTWT (4,437; 12.2) & Nearest Shovel (3,893~t/h; 0.235~L/t), \corr{Static LP} (4,404; 0.235), PPO (4,415; 0.237), MTWT (4,437; 0.244) \\
+High load & Fixed Assignment (6,205; 19.0), \corr{Static LP} (6,351; 21.1), MTWT (6,365; 21.4), (DQN: 985; 15.2) & PPO (6,310; 0.248), MTWT (6,365; 0.253) \\
+Frequent breakdowns & Fixed Assignment (3,999; 10.6), MTWT (4,184; 10.8) & Nearest Shovel (3,754; 0.235), \corr{Static LP} (4,150; 0.236), PPO (4,164; 0.242), MTWT (4,184; 0.245) \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Between productivity and queueing time, the trade-off is minimal: MTWT produces 4.5\% more than Fixed Assignment for less than one extra minute of queueing per truck; together with Fixed Assignment, and LP under high load, it dominates all other policies. Between productivity and fuel, by contrast, several policies form the front: PPO and LP use less fuel per tonne than MTWT, for slightly lower productivity. Under high load, PPO is the policy that uses the least fuel per tonne. These fronts are defined within each regime.
+Between productivity and queueing time, the trade-off is minimal: MTWT produces 4.5\% more than Fixed Assignment for less than one extra minute of queueing per truck; together with Fixed Assignment, and \corr{Static LP} under high load, it dominates all other policies. Between productivity and fuel, by contrast, several policies form the front: PPO and \corr{Static LP} use less fuel per tonne than MTWT, for slightly lower productivity. Under high load, PPO is the policy that uses the least fuel per tonne. These fronts are defined within each regime.
+
+\begin{corrbloc}
+\textbf{Against a reference that weighs fuel.} Fuel does not enter the reward of PPO: its lower consumption is a side effect of the distance penalty $w_3$, and MTWT, which only looks at waiting, makes no such trade-off. To compare PPO with a reference that does, MTWT was extended to add, for each shovel, $\lambda$ times the predicted fuel of the cycle to the predicted waiting, with $\lambda$ from 0.25 to 4~min per litre; $\lambda = 0$ gives MTWT. These rules, \corr{Static LP} and the specialised PPO models were evaluated over 30 new replications, seeds 72 to 101 (\cref{tab:energy}). With $\lambda = 0.25$, MTWT weighing fuel is more productive than PPO in the three regimes; under high load it uses as much fuel per tonne, and under frequent breakdowns 0.7\% less [0.1; 1.3]. PPO is then on the Pareto front in only 46\% and 1\% of the bootstrap resamples. Under nominal conditions, PPO keeps a small advantage: at equal productivity, with $\lambda = 0.5$ (difference 0.1\% [$-$0.2; 0.4]), it uses 0.5\% less fuel per tonne [0.1; 1.0], and it is on the front in every resample. Larger values of $\lambda$ cost 2 to 22\% of productivity compared with MTWT, without saving noticeably more fuel. The fuel advantage of PPO over MTWT therefore comes mostly from MTWT ignoring fuel: a rule that weighs fuel with a single parameter reaches a similar trade-off.
+
+\begin{table}[H]
+\centering
+\caption{PPO against MTWT weighing fuel, seeds 72 to 101. $\lambda$: weight of the predicted fuel of the cycle, in minutes of waiting per litre. Share on the front: share of 1,000 bootstrap resamples in which the policy is Pareto non-dominated for productivity and fuel per tonne, among the nine policies evaluated ($\lambda = 2$ and 4 and Nearest Shovel not shown).}
+\label{tab:energy}
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+\textbf{Regime} & \textbf{Policy} & \textbf{Productivity (t/h)} & \textbf{Fuel (L/t)} & \textbf{Share on the front} \\
+\midrule
+\multirow{6}{*}{Nominal} & MTWT ($\lambda = 0$) & 4{,}443 & 0.2427 & 0.99 \\
+ & MTWT, $\lambda = 0.25$ & 4{,}430 & 0.2404 & 0.99 \\
+ & MTWT, $\lambda = 0.5$ & 4{,}412 & 0.2382 & 0.26 \\
+ & MTWT, $\lambda = 1$ & 4{,}338 & 0.2383 & 0.00 \\
+ & \corr{Static LP} & 4{,}395 & 0.2357 & 1.00 \\
+ & PPO & 4{,}416 & 0.2369 & 1.00 \\
+\midrule
+\multirow{6}{*}{High load} & MTWT ($\lambda = 0$) & 6{,}365 & 0.2525 & 1.00 \\
+ & MTWT, $\lambda = 0.25$ & 6{,}339 & 0.2483 & 1.00 \\
+ & MTWT, $\lambda = 0.5$ & 6{,}261 & 0.2468 & 0.97 \\
+ & MTWT, $\lambda = 1$ & 6{,}071 & 0.2469 & 0.45 \\
+ & \corr{Static LP} & 6{,}335 & 0.2532 & 0.01 \\
+ & PPO & 6{,}298 & 0.2483 & 0.46 \\
+\midrule
+\multirow{6}{*}{Frequent breakdowns} & MTWT ($\lambda = 0$) & 4{,}187 & 0.2446 & 0.85 \\
+ & MTWT, $\lambda = 0.25$ & 4{,}181 & 0.2404 & 1.00 \\
+ & MTWT, $\lambda = 0.5$ & 4{,}163 & 0.2402 & 0.54 \\
+ & MTWT, $\lambda = 1$ & 4{,}093 & 0.2397 & 0.00 \\
+ & \corr{Static LP} & 4{,}138 & 0.2366 & 1.00 \\
+ & PPO & 4{,}171 & 0.2419 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{corrbloc}
 \end{revbloc}
 
-\subsection{Robustness and transfer without retraining}
+\subsubsection{Robustness and transfer without retraining}
 \label{sec:robustness}
 
 \begin{revbloc}{T31}
@@ -1297,7 +1355,7 @@ Fixed Assignment     & 0.974 & 0.942 & +68.8 & $-$6.2 & +40.8 \\
 Nearest Shovel       & 0.689 & 0.964 & +203.4 & $-$14.9 & +179.9 \\
 Shortest Path        & 0.771 & 0.958 & +148.8 & $-$15.1 & +131.5 \\
 MTWT                 & 0.956 & 0.943 & +75.5 & $-$11.4 & +44.0 \\
-LP                   & 0.961 & 0.942 & +12.0 & $-$2.9 & +7.0 \\
+\corr{Static LP}                   & 0.961 & 0.942 & +12.0 & $-$2.9 & +7.0 \\
 \midrule
 Q-Learning           & 0.944 & 0.939 & +100.3 & +8.8 & +47.3 \\
 SARSA                & 1.009 & 0.938 & +23.8 & $-$0.5 & +19.9 \\
@@ -1307,7 +1365,7 @@ PPO                  & 0.953 & 0.943 & +35.6 & $-$15.1 & +45.1 \\
 \end{tabular}
 \end{table}
 
-Under high load, the policies that spread the fleet keep 94 to 98\% of their productivity per truck; the two distance rules keep only 69 and 77\%. Under frequent breakdowns, all policies that work lose 4 to 6\% of productivity, and their ratios are almost identical (0.938 to 0.964): truck breakdowns affect all policies in the same way. The ratios of DQN (0.510 and 1.227) and of SARSA under high load (1.009) mainly reflect nominal levels that are very low or vary strongly from one model to another, not robustness.
+\corr{Under high load, the policies that spread the fleet lose little productivity per truck, and the two distance rules much more, as seen in \cref{sec:productivity}. Under frequent breakdowns, all policies that work lose 4 to 6\% of productivity: truck breakdowns affect all policies in the same way. The ratios of DQN, and of SARSA under high load, mainly reflect} nominal levels that are very low or vary strongly from one model to another, not robustness.
 \end{revbloc}
 
 \begin{revbloc}{T31}
@@ -1321,22 +1379,22 @@ Under high load, the policies that spread the fleet keep 94 to 98\% of their pro
 \toprule
 \textbf{Regime} & \textbf{Agent} & \textbf{Specialised} & \textbf{Transferred} & \textbf{$\Delta$ (t/h) [95\% CI]} & \textbf{$\Delta$ (\%)} \\
 \midrule
-Frequent breakdowns & PPO        & 4,163.9 & 4,163.5 & $-$0.5 [$-$6.2; 5.0] & 0.0 \\
-                    & DQN        & 1,578.5 & 1,226.2 & $-$352.3 [$-$368.0; $-$329.2] & $-$22.3 \\
-                    & Q-Learning & 3,839.8 & 3,871.6 & +31.7 [22.9; 40.4] & +0.8 \\
-                    & SARSA      & 3,353.1 & 3,419.2 & +66.0 [51.7; 79.5] & +2.0 \\
-\midrule
 High load           & PPO        & 6,310.0 & 6,257.9 & $-$52.1 [$-$67.1; $-$37.6] & $-$0.8 \\
                     & DQN        & 984.5   & 1,802.3 & +817.7 [724.7; 908.4] & +83.1 \\
                     & Q-Learning & 5,787.9 & 5,757.0 & $-$30.9 [$-$49.6; $-$10.8] & $-$0.5 \\
                     & SARSA      & 5,409.8 & 4,035.7 & $-$1,374.1 [$-$1,393.0; $-$1,355.1] & $-$25.4 \\
+\midrule
+Frequent breakdowns & PPO        & 4,163.9 & 4,163.5 & $-$0.5 [$-$6.2; 5.0] & 0.0 \\
+                    & DQN        & 1,578.5 & 1,226.2 & $-$352.3 [$-$368.0; $-$329.2] & $-$22.3 \\
+                    & Q-Learning & 3,839.8 & 3,871.6 & +31.7 [22.9; 40.4] & +0.8 \\
+                    & SARSA      & 3,353.1 & 3,419.2 & +66.0 [51.7; 79.5] & +2.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{PPO transfers almost without loss.} Under frequent breakdowns, the nominal PPO performs exactly like the specialised PPO ($-0.5$~t/h, interval containing 0). Under high load, it loses 0.8\%; it remains ahead of Fixed Assignment (+53~t/h [28; 78]) and behind MTWT ($-108$~t/h [$-130$; $-85$]). It never uses WAIT, whereas the specialised PPO under high load uses it in 26\% of its decisions. In the two unseen intermediate regimes, the nominal PPO likewise ranks just behind MTWT: $-61$~t/h with 15 trucks, $-19$~t/h with 5\% breakdowns, and ahead of Fixed Assignment by 118 and 165~t/h.
+\textbf{\corr{PPO transfers with a bounded loss.}} Under frequent breakdowns, the nominal PPO performs like the specialised PPO \corr{(\cref{tab:transfer}); a test of equivalence by two one-sided tests (TOST), with a margin of 1\% of the productivity of the specialised PPO set as an operational criterion after the campaign, concludes to equivalence ($p<0.001$, 90\% interval [$-5$; 5]~t/h for a margin of 42~t/h)}. Under high load, it loses 0.8\%\corr{, but equivalence within 1\% is not established ($p = 0.08$, 90\% interval [$-65$; $-39$]~t/h for a margin of 63~t/h); it is within 2\%}; it remains ahead of Fixed Assignment (+53~t/h [28; 78]) and behind MTWT ($-108$~t/h [$-130$; $-85$]). It never uses WAIT, whereas the specialised PPO under high load uses it in 26\% of its decisions. In the two unseen intermediate regimes, the nominal PPO likewise ranks just behind MTWT: $-61$~t/h with 15 trucks, $-19$~t/h with 5\% breakdowns, and ahead of Fixed Assignment by 118 and 165~t/h.
 
-\textbf{The other agents.} Q-Learning transfers with a gap below 1\%. SARSA transfers well under frequent breakdowns but loses 25\% under high load. The transferred nominal DQN does better than the specialised DQN under high load (+83\%), because the specialised DQN collapses even more: this gap does not measure a transfer capability.
+\textbf{The other agents.} Q-Learning transfers with a gap below 1\%. SARSA transfers well under frequent breakdowns but loses 25\% under high load. The transferred nominal DQN does better than the specialised DQN under high load, because the specialised DQN collapses even more: this gap does not measure a transfer capability.
 
 Except for SARSA under high load, retraining an agent in the disrupted regime therefore brings almost nothing in this study: truck breakdowns and a larger fleet do not change the dispatching logic a nominal agent has learned.
 
@@ -1345,69 +1403,204 @@ Except for SARSA under high load, retraining an agent in the disrupted regime th
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{figures/robustness_heatmap.png}
+\includegraphics[width=0.9\textwidth]{figures/robustness_heatmap}
 \caption{Change with respect to nominal conditions (\%).}
 \label{fig:heatmap}
 \end{figure}
 
-\subsection{Statistical significance}
-\label{sec:stats}
-
-\begin{revbloc}{T31}
-The Friedman test shows an effect of the policy on productivity in each of the three regimes ($\chi^2(9) = 263.4$ under nominal conditions, 263.0 under high load and 263.2 under frequent breakdowns; $p<0.001$). The linear model of productivity per truck shows a significant interaction between policy and regime ($F(18, 783) = 1{,}211.1$, $p<0.001$, $\eta^2_p = 0.97$).
-
-\Cref{tab:stats} reports the eight comparisons fixed before the campaign in \cref{sec:proto}. All are significant after Holm correction ($p<0.001$). PPO is significantly below MTWT in all three regimes, by 20 to 55~t/h, and significantly above Fixed Assignment, by 105 to 169~t/h. The three other agents are below both references in all regimes. Cohen's $d$ is very large for DQN and the tabular agents ($|d| > 2$): it reflects differences of several hundred t/h against low variability between replications. For PPO against MTWT, $d$ ranges from $-0.25$ to $-0.88$: the gap is real, but small in practice (less than 1\% of productivity).
+\begin{corrbloc}
+\textbf{More severe disruptions.} \Cref{tab:disruptions} reports the additional regimes. During the outage of shovel 1, MTWT remains the most productive policy and the one that loses the least production; FIFO loses about as much, and PPO one and a half points more, so that its gap to MTWT widens from 0.6 to 2.2\%. The \corr{Static LP} policy loses about four times as much as MTWT: its plan, computed once at the start of the shift, keeps sending trucks to the broken shovel. After the repair, the throughput of every policy is back within 5\% of its level without outage in the following 30~min. Near saturation, the ranking changes: Fixed Assignment, \corr{Static LP} and FIFO overtake MTWT by 3 to 5.5\%, because spreading the fleet evenly matters more than the smallest predicted waiting when every shovel has a queue. PPO, deployed without retraining, falls 3 to 10\% below MTWT with the models trained under high load, and 10 to 19\% with the nominal models: fleets of 29 and 34 trucks lie far outside the 12 or 18 trucks seen in training.
 
 \begin{table}[H]
 \centering
-\caption{Pairwise comparisons of productivity: mean paired difference, 95\% bootstrap confidence interval and Cohen's $d$.}
-\label{tab:stats}
+\caption{Productivity under more severe disruptions, without retraining, seeds 72 to 101 (t/h). Loss: production lost over the shift with the outage of shovel 1, compared with the same replications without outage. In bold: the best in each column.}
+\label{tab:disruptions}
 \small
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}llrrr@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-\textbf{Regime} & \textbf{Comparison} & \textbf{Difference (t/h)} & \textbf{95\% CI} & \textbf{$d$} \\
+\textbf{Policy} & \textbf{Reference} & \textbf{Shovel outage} & \textbf{Loss (\%)} & \textbf{MF 0.85} & \textbf{MF 1.0} \\
 \midrule
-\multirow{8}{*}{Nominal} & PPO $-$ MTWT & $-$22.8 & [$-$31.2; $-$14.2] & $-$0.43 \\
- & DQN $-$ MTWT & $-$3,150.5 & [$-$3,177.0; $-$3,113.3] & $-$46.0 \\
- & Q-Learning $-$ MTWT & $-$349.2 & [$-$366.3; $-$332.0] & $-$6.79 \\
- & SARSA $-$ MTWT & $-$864.2 & [$-$879.6; $-$848.4] & $-$15.7 \\
- & PPO $-$ Fixed & +168.6 & [158.1; 179.0] & 3.52 \\
- & DQN $-$ Fixed & $-$2,959.1 & [$-$2,984.3; $-$2,922.2] & $-$45.9 \\
- & Q-Learning $-$ Fixed & $-$157.9 & [$-$172.7; $-$144.0] & $-$3.43 \\
- & SARSA $-$ Fixed & $-$672.8 & [$-$688.7; $-$657.1] & $-$13.4 \\
+FIFO & 4{,}252 & 4{,}007 & 5.8 & 9{,}344 & 10{,}443 \\
+Fixed Assignment & 4{,}254 & 3{,}884 & 8.7 & \textbf{9{,}458} & \textbf{10{,}672} \\
+Nearest Shovel & 3{,}904 & 2{,}946 & 24.5 & 4{,}027 & 4{,}042 \\
+Shortest Path & 4{,}045 & 3{,}032 & 25.1 & 5{,}231 & 5{,}490 \\
+MTWT & \textbf{4{,}443} & \textbf{4{,}190} & \textbf{5.7} & 9{,}016 & 10{,}118 \\
+\corr{Static LP} & 4{,}395 & 3{,}442 & 21.7 & 9{,}415 & 10{,}634 \\
 \midrule
-\multirow{8}{*}{High load} & PPO $-$ MTWT & $-$55.3 & [$-$75.4; $-$35.5] & $-$0.88 \\
- & DQN $-$ MTWT & $-$5,380.8 & [$-$5,403.5; $-$5,357.9] & $-$117.4 \\
- & Q-Learning $-$ MTWT & $-$577.4 & [$-$596.9; $-$557.0] & $-$9.70 \\
- & SARSA $-$ MTWT & $-$955.5 & [$-$971.4; $-$938.0] & $-$17.0 \\
- & PPO $-$ Fixed & +105.1 & [86.9; 122.9] & 1.89 \\
- & DQN $-$ Fixed & $-$5,220.4 & [$-$5,238.3; $-$5,201.6] & $-$147.5 \\
- & Q-Learning $-$ Fixed & $-$417.0 & [$-$438.8; $-$394.0] & $-$8.03 \\
- & SARSA $-$ Fixed & $-$795.1 & [$-$810.3; $-$780.4] & $-$16.5 \\
-\midrule
-\multirow{8}{*}{Frequent breakdowns} & PPO $-$ MTWT & $-$19.7 & [$-$28.0; $-$11.2] & $-$0.25 \\
- & DQN $-$ MTWT & $-$2,605.2 & [$-$2,629.0; $-$2,582.0] & $-$36.1 \\
- & Q-Learning $-$ MTWT & $-$343.8 & [$-$357.0; $-$331.1] & $-$4.51 \\
- & SARSA $-$ MTWT & $-$830.6 & [$-$848.2; $-$811.4] & $-$11.4 \\
- & PPO $-$ Fixed & +164.6 & [152.4; 177.2] & 2.24 \\
- & DQN $-$ Fixed & $-$2,420.8 & [$-$2,445.3; $-$2,398.7] & $-$36.3 \\
- & Q-Learning $-$ Fixed & $-$159.5 & [$-$170.0; $-$149.3] & $-$2.24 \\
- & SARSA $-$ Fixed & $-$646.2 & [$-$664.4; $-$628.4] & $-$9.61 \\
+PPO, nominal models & 4{,}416 & 4{,}096 & 7.2 & 8{,}118 & 8{,}200 \\
+PPO, high load models & 4{,}353 & 4{,}034 & 7.3 & 8{,}732 & 9{,}087 \\
 \bottomrule
 \end{tabular}
 \end{table}
+\end{corrbloc}
+
+\subsubsection{Statistical significance}
+\label{sec:stats}
+
+\begin{revbloc}{T31}
+The Friedman test shows an effect of the policy on productivity in each of the three regimes ($\chi^2(9) = 263.4$ under nominal conditions, 263.0 under high load and 263.2 under frequent breakdowns; $p<0.001$). The linear model of productivity per truck shows a significant interaction between policy and regime ($F(18, 783) = 1{,}211.1$, $p<0.001$, $\eta^2_p = 0.97$). \corr{Restricted to the five competitive policies, the interaction remains significant but much smaller ($F(8, 348) = 30.4$, $p<0.001$, $\eta^2_p = 0.41$): most of the overall effect comes from the policies that collapse.}
+
+\Cref{tab:stats} reports the eight comparisons fixed before the campaign in \cref{sec:proto}. All are significant after Holm correction ($p<0.001$). PPO is significantly below MTWT in all three regimes \corr{when the replications are resampled}, and significantly above Fixed Assignment. The three other agents are below both references in all regimes. \corr{The paired $d_z$ is very large for DQN and the tabular agents ($|d_z| > 3$)}: it reflects differences of several hundred t/h against low variability between replications. \corr{For PPO against MTWT, the paired $d_z$ is close to $-1$: the gap is consistent from one replication to the next, but small in practice, less than 1\% of productivity and 0.06 to 0.16 truck of the fleet. When the variability between training runs is included, the gap remains significant under nominal conditions and frequent breakdowns, but not under high load: the hierarchical interval contains zero, because one of the five PPO models, seed 5, is clearly less productive than the others (\cref{tab:runs}).}
+
+\begin{corrbloc}
+\begin{table}[H]
+\centering
+\caption{Pairwise comparisons of productivity: mean paired difference, 95\% bootstrap confidence intervals over the replications and hierarchical, over training seeds and replications, and paired Cohen's $d_z$.}
+\label{tab:stats}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+\textbf{Regime} & \textbf{Comparison} & \textbf{Difference (t/h)} & \textbf{95\% CI} & \textbf{Hierarchical CI} & \textbf{$d_z$} \\
+\midrule
+\multirow{8}{*}{Nominal} & PPO $-$ MTWT & $-$22.8 & [$-$31.1; $-$14.2] & [$-$32.2; $-$13.2] & $-$0.95 \\
+ & DQN $-$ MTWT & $-$3{,}150.5 & [$-$3{,}176.9; $-$3{,}113.2] & [$-$4{,}086.0; $-$1{,}806.5] & $-$33.77 \\
+ & Q-Learning $-$ MTWT & $-$349.2 & [$-$366.3; $-$332.0] & [$-$405.8; $-$295.0] & $-$7.13 \\
+ & SARSA $-$ MTWT & $-$864.1 & [$-$879.5; $-$848.4] & [$-$908.7; $-$830.4] & $-$19.42 \\
+ & PPO $-$ Fixed & 168.6 & [158.1; 179.0] & [157.2; 179.7] & 5.71 \\
+ & DQN $-$ Fixed & $-$2{,}959.1 & [$-$2{,}984.3; $-$2{,}922.2] & [$-$3{,}895.9; $-$1{,}615.3] & $-$32.46 \\
+ & Q-Learning $-$ Fixed & $-$157.8 & [$-$172.7; $-$144.0] & [$-$213.8; $-$104.8] & $-$3.79 \\
+ & SARSA $-$ Fixed & $-$672.8 & [$-$688.7; $-$657.1] & [$-$717.6; $-$639.1] & $-$14.83 \\
+\midrule
+\multirow{8}{*}{High load} & PPO $-$ MTWT & $-$55.3 & [$-$75.4; $-$35.5] & [$-$135.9; 1.4] & $-$0.97 \\
+ & DQN $-$ MTWT & $-$5{,}380.8 & [$-$5{,}403.5; $-$5{,}357.9] & [$-$6{,}258.0; $-$3{,}781.5] & $-$81.15 \\
+ & Q-Learning $-$ MTWT & $-$577.4 & [$-$596.9; $-$557.0] & [$-$721.1; $-$463.3] & $-$10.04 \\
+ & SARSA $-$ MTWT & $-$955.5 & [$-$971.4; $-$938.0] & [$-$1{,}080.5; $-$823.7] & $-$20.18 \\
+ & PPO $-$ Fixed & 105.1 & [86.9; 122.8] & [25.9; 161.3] & 2.06 \\
+ & DQN $-$ Fixed & $-$5{,}220.4 & [$-$5{,}238.3; $-$5{,}201.6] & [$-$6{,}095.8; $-$3{,}623.2] & $-$101.69 \\
+ & Q-Learning $-$ Fixed & $-$417.0 & [$-$438.8; $-$394.0] & [$-$561.5; $-$302.5] & $-$6.49 \\
+ & SARSA $-$ Fixed & $-$795.1 & [$-$810.2; $-$780.4] & [$-$920.0; $-$663.9] & $-$18.56 \\
+\midrule
+\multirow{8}{*}{Frequent breakdowns} & PPO $-$ MTWT & $-$19.7 & [$-$28.0; $-$11.2] & [$-$31.1; $-$8.4] & $-$0.82 \\
+ & DQN $-$ MTWT & $-$2{,}605.2 & [$-$2{,}629.0; $-$2{,}581.9] & [$-$3{,}803.0; $-$1{,}401.5] & $-$38.46 \\
+ & Q-Learning $-$ MTWT & $-$343.8 & [$-$357.0; $-$331.1] & [$-$369.5; $-$318.4] & $-$9.32 \\
+ & SARSA $-$ MTWT & $-$830.5 & [$-$848.2; $-$811.4] & [$-$938.5; $-$754.6] & $-$16.17 \\
+ & PPO $-$ Fixed & 164.6 & [152.4; 177.2] & [150.0; 179.4] & 4.61 \\
+ & DQN $-$ Fixed & $-$2{,}420.8 & [$-$2{,}445.3; $-$2{,}398.7] & [$-$3{,}616.6; $-$1{,}218.5] & $-$35.97 \\
+ & Q-Learning $-$ Fixed & $-$159.5 & [$-$170.0; $-$149.3] & [$-$183.8; $-$135.1] & $-$5.41 \\
+ & SARSA $-$ Fixed & $-$646.2 & [$-$664.4; $-$628.4] & [$-$753.6; $-$570.1] & $-$12.52 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{corrbloc}
 
 These comparisons concern the expected performance of each algorithm: for each replication, an agent is represented by the mean of its 5 models. They do not say that a model drawn at random would do the same: for DQN, one model in five reproduces Nearest Shovel and the others collapse (\cref{tab:runs,tab:behaviour}).
 \end{revbloc}
 
-\subsection{Variability between replications and between models}
+\subsection{\corr{Diagnostic analyses}}
+\label{sec:diagnostics}
+
+\begin{corrbloc}
+These analyses test no hypothesis. They check that the reward agrees with productivity, describe how each policy allocates the fleet, measure how much the models of one agent differ, follow training, and explain the collapse of DQN.
+\end{corrbloc}
+
+\subsubsection{\corr{Cumulative reward}}
+\label{sec:reward-results}
+\begin{revbloc}{T31}
+\Cref{tab:cycles_reward} reports the cumulative reward. \corr{The number of completed cycles is not shown: each cycle delivers 140~t, so it equals the productivity of \cref{tab:productivity} times 8~h divided by 140~t.} The ranking by reward follows the productivity ranking, except for one swap between two very close policies under nominal conditions (FIFO and Fixed Assignment) and under high load (PPO and FIFO). The reward of DQN is negative: its repeated waits accumulate the WAIT penalty and the opportunity cost.
+
+\begin{table}[H]
+\centering
+\caption{\corr{Cumulative reward by policy and regime (means over 30 replications).}}
+\label{tab:cycles_reward}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Policy} & \textbf{N} & \textbf{HL} & \textbf{FB} \\
+\midrule
+FIFO                   & 220.6 & 322.6 & 208.0 \\
+Fixed Assignment       & 219.8 & 320.6 & 207.0 \\
+Nearest Shovel         & 192.5 & 152.0 & 186.9 \\
+Shortest Path          & 199.4 & 196.1 & 192.2 \\
+MTWT                   & \textbf{230.9} & \textbf{330.3} & \textbf{217.7} \\
+\corr{Static LP}       & 227.0 & 329.7 & 213.9 \\
+\midrule
+Q-Learning             & 200.5 & 281.0 & 190.1 \\
+SARSA                  & 175.9 & 265.1 & 158.7 \\
+DQN                    & $-$148.6 & $-$417.4 & $-$105.5 \\
+PPO                    & 228.3 & 320.9 & 215.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{revbloc}
+
+\subsubsection{Allocation behaviour of the policies}
+\label{sec:behaviour}
+
+\begin{revbloc}{T31}
+\Cref{tab:behaviour} describes the allocation of cycles among the three shovels and the share of decisions devoted to the WAIT action. The allocation among shovels is not recorded by the evaluation: it is obtained by replaying the same episodes with the cycle log. Each replayed episode was checked to be identical to the evaluated one (productivity, queueing time and fuel); nothing was chosen on these episodes.
+
+\begin{table}[H]
+\centering
+\caption{Allocation of cycles among shovels S1 to S3 and share of WAIT decisions, by policy and regime (\%).}
+\label{tab:behaviour}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc|cc|cc}
+\toprule
+ & \multicolumn{2}{c|}{\textbf{Nominal}} & \multicolumn{2}{c|}{\textbf{High load}} & \multicolumn{2}{c}{\textbf{Frequent breakdowns}} \\
+\textbf{Policy} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} & \textbf{S1 / S2 / S3} & \textbf{WAIT} \\
+\midrule
+FIFO                 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 & 38 / 33 / 29 & 0 \\
+Fixed Assignment     & 36 / 33 / 31 & 0 & 36 / 33 / 31 & 0 & 36 / 34 / 31 & 0 \\
+Nearest Shovel       & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 & 100 / 0 / 0 & 0 \\
+Shortest Path        & 74 / 26 / 0 & 0 & 71 / 29 / 0 & 0 & 72 / 28 / 0 & 0 \\
+MTWT                 & 50 / 35 / 15 & 0 & 42 / 36 / 22 & 0 & 49 / 37 / 14 & 0 \\
+\corr{Static LP}                   & 60 / 40 / 0 & 0 & 42 / 42 / 17 & 0 & 64 / 36 / 0 & 0 \\
+\midrule
+Q-Learning           & 36 / 34 / 31 & 42 & 39 / 28 / 34 & 46 & 36 / 34 / 30 & 33 \\
+SARSA                & 0 / 0 / 99 & 2 & 1 / 30 / 69 & 1 & 0 / 1 / 99 & 15 \\
+DQN                  & 46 / 27 / 27 & 79 & 44 / 15 / 42 & 99 & 50 / 43 / 7 & 96 \\
+PPO                  & 59 / 36 / 4 & 0 & 46 / 36 / 18 & 26 & 56 / 37 / 7 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three profiles emerge among the heuristics. The distance rules concentrate the fleet: Nearest Shovel sends all its cycles to shovel 1, and Shortest Path \corr{nearly three quarters}. FIFO and Fixed Assignment split the cycles almost equally, and therefore send nearly a third of them to shovel 3, the farthest. MTWT and \corr{Static LP} favour shovels 1 and 2 and use shovel 3 only when the other two are busy, mostly under high load. PPO follows the same profile as MTWT, but uses shovel 3 even less: 4\% against 15\% under nominal conditions, 7\% against 14\% under frequent breakdowns. Its cycles are therefore shorter, which explains its lower consumption per tonne in \cref{sec:sustainability}.
+
+The value-based agents show extreme behaviours. SARSA sends \corr{almost all} its cycles to shovel 3 under nominal conditions and frequent breakdowns, as during tuning. Q-Learning spreads its cycles over the three shovels, \corr{but waits in a third to nearly half of its decisions, and DQN in four fifths or more.} Its only working nominal model (seed 2, 3,932~t/h) sends 99\% of its cycles to shovel 1: it reproduces Nearest Shovel (3,893~t/h), not a new policy.
+
+\Cref{fig:behavioral} shows the same allocation for each policy and regime; for an agent, the bars average its 5 specialised models.
+\end{revbloc}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/behaviour_30_replications}
+\caption{Allocation of cycles among shovels and share of WAIT decisions.}
+\label{fig:behavioral}
+\end{figure}
+
+\subsubsection{Variability between replications and between models}
 \label{sec:stability}
 
 \begin{revbloc}{T31}
 \textbf{Between replications.} For a given model, the coefficient of variation of productivity over the 30 replications is low for all policies that work: 0.8 to 2.5\% depending on the policy and the regime. It exceeds 3\% only for Shortest Path under high load (3.8\%) and for DQN (3.2 to 12.5\%).
 
-\textbf{Between models.} \Cref{tab:runs} gives the productivity of each of the 5 models of each agent. PPO is highly reproducible: its 5 models are within 10~t/h of one another under nominal conditions, 21~t/h under frequent breakdowns and 211~t/h under high load. The tabular agents vary more (up to 436~t/h apart). DQN is bimodal: in each regime, one or two models produce 2,900 to 4,200~t/h and the others less than 1,200~t/h, most of them less than 400~t/h. The mean of DQN therefore describes a mixture of working and collapsed models, not a typical level.
+\textbf{Between models.} \Cref{tab:runs} gives the productivity of each of the 5 models of each agent. PPO is highly reproducible \corr{under nominal conditions and frequent breakdowns, less so under high load, where seed 5 stands apart}. The tabular agents vary more. DQN is bimodal: in each regime, \corr{one or two models work and the others collapse, most of them below a tenth of the productivity of MTWT}. The mean of DQN therefore describes a mixture of working and collapsed models, not a typical level. \corr{\Cref{tab:runs_wait} gives the share of WAIT of each model. Except the working nominal model, seed 2, the DQN models wait in most of their decisions; under frequent breakdowns, the two models that wait least, seeds 4 and 5, still work, so that the share of WAIT alone does not identify a collapse. Under high load, the five PPO models differ in their use of WAIT, and the model that waits most, seed 5, is also the least productive. The fuel per tonne of PPO varies little between models, from 0.236 to 0.253~L/t.}
+
+\begin{corrbloc}
+\begin{table}[H]
+\centering
+\caption{Share of WAIT decisions of each of the 5 models of PPO and DQN, by training seed and regime (\%, means over 30 replications).}
+\label{tab:runs_wait}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+\textbf{Regime} & \textbf{Agent} & \textbf{Seed 1} & \textbf{Seed 2} & \textbf{Seed 3} & \textbf{Seed 4} & \textbf{Seed 5} \\
+\midrule
+\multirow{2}{*}{Nominal} & PPO & 0.0 & 0.0 & 0.1 & 0.0 & 0.1 \\
+ & DQN & 99.9 & 0.0 & 99.3 & 99.8 & 97.6 \\
+\midrule
+\multirow{2}{*}{High load} & PPO & 11.9 & 0.0 & 0.0 & 36.7 & 82.6 \\
+ & DQN & 99.8 & 100.0 & 99.9 & 97.6 & 100.0 \\
+\midrule
+\multirow{2}{*}{Frequent breakdowns} & PPO & 0.0 & 0.0 & 1.4 & 0.0 & 0.0 \\
+ & DQN & 99.7 & 99.9 & 97.4 & 88.5 & 94.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{corrbloc}
 
 \begin{table}[H]
 \centering
@@ -1440,7 +1633,7 @@ These comparisons concern the expected performance of each algorithm: for each r
 Aggregated as in Agarwal et al.~\cite{Agarwal2021}, normalised by Fixed Assignment and pooled over the three regimes, the IQMs of the agents are 1.037 for PPO [1.035; 1.037], 0.956 for Q-Learning [0.949; 0.961], 0.850 for SARSA [0.842; 0.857] and 0.187 for DQN [0.065; 0.438]. The probability that a PPO model does better than a DQN or Q-Learning model in the same regime is 1.
 \end{revbloc}
 
-\subsection{Convergence}
+\subsubsection{Convergence}
 \label{sec:convergence}
 
 \begin{revbloc}{T31}
@@ -1448,19 +1641,19 @@ Aggregated as in Agarwal et al.~\cite{Agarwal2021}, normalised by Fixed Assignme
 
 \begin{itemize}
   \item \textbf{PPO} improves from the start and reaches a plateau at about 10\% of the budget, then remains stable: under nominal conditions, from 4,243~t/h in the first interval to 4,409~t/h at 10\% and 4,423~t/h at the end. The same holds in the two disrupted regimes.
-  \item \textbf{DQN} starts at the level of the random policy, when exploration is total (about 4,170~t/h under nominal conditions), then declines as exploration decreases, down to about 3,460~t/h at the end. Played without exploration, the final model does much worse (1,287~t/h on average): during training, the rare random actions are enough to get trucks out of repeated waits.
+  \item \textbf{DQN} starts at the level of the random policy, when exploration is total (about 4,170~t/h under nominal conditions), then declines as exploration decreases, down to about 3,460~t/h at the end. Played without exploration, the final model does much worse \corr{(\cref{tab:productivity})}: during training, the rare random actions are enough to get trucks out of repeated waits.
   \item \textbf{Q-Learning and SARSA} also decline as exploration decreases. Q-Learning falls from 4,169 to about 4,060~t/h halfway, then recovers slightly (4,108~t/h at the end). SARSA declines until the end (3,559~t/h). Neither exceeds the level reached at the start with almost total exploration, i.e.\ that of the random policy. This convergence failure, already observed during tuning, is confirmed over the 5 models and the three regimes.
 \end{itemize}
 \end{revbloc}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/learning_curves_campagne.png}
+\includegraphics[width=\textwidth]{figures/learning_curves_campagne}
 \caption{Productivity of the training episodes, mean over the 5 models.}
 \label{fig:convergence}
 \end{figure}
 
-\subsection{Ablation study}
+\subsubsection{Ablation study}
 \label{sec:ablation}
 
 \begin{revbloc}{T31}
@@ -1485,7 +1678,29 @@ The ablation study concerns the weight of the waiting penalty $w_4$, under nomin
 \end{tabular}
 \end{table}
 
-PPO is insensitive to $w_4$: its productivity only varies from 4,411 to 4,417~t/h, and it almost never uses WAIT. DQN collapses for every value of $w_4$, including without a waiting penalty, with 2 to 4 collapsed models out of 5. With $w_4 = 0.5$, two models wait for the whole shift and haul no tonne at all; their fuel per tonne is undefined. The collapse of DQN therefore does not come from the weight of the waiting penalty, which is consistent with the explanation proposed in \cref{sec:tuning}: it stems from the very small value gap between WAIT and the best assignment.
+PPO is insensitive to $w_4$: its \corr{mean productivity varies by less than 0.2\%}, and it almost never uses WAIT. DQN collapses for every value of $w_4$, including without a waiting penalty. With $w_4 = 0.5$, two models wait for the whole shift and haul no tonne at all; their fuel per tonne is undefined. The collapse of DQN therefore does not come from the weight of the waiting penalty, which is consistent with the explanation proposed in \cref{sec:tuning}: it stems from the very small value gap between WAIT and the best assignment.
+
+\begin{corrbloc}
+\textbf{Why DQN collapses.} The value gap was measured directly on the five nominal DQN models, without retraining, on the 1{,}329 decision states met by MTWT on five selection seeds (\cref{tab:dqndiag}). The values $Q$ are of the order of 155 to 177, and a WAIT of 0.2~min should be worth about 0.1 less than the best assignment: $1-\gamma_{\min}^{0.2}$ times the value, plus the cost of the wait. This gap is about 0.06\% of the values. In the four collapsed models, WAIT is valued above the best assignment and comes first in most of these states, and in more than 99\% of the states that the model meets itself; in the only working model, seed 2, WAIT is valued below and never comes first. An error of 0.04 to 0.12\% of the values is therefore enough to reverse the order of WAIT and the best assignment, which supports the explanation of \corr{\cref{app:tuning}} with a measurement.
+
+\begin{table}[H]
+\centering
+\caption{Value of WAIT against the best assignment in the five nominal DQN models, on the decision states met by MTWT on five selection seeds. Gap: median of $Q(s,\mathrm{WAIT}) - \max_{a \neq \mathrm{WAIT}} Q(s,a)$; expected: gap of a WAIT of 0.2~min if the values were exact.}
+\label{tab:dqndiag}
+\small
+\begin{tabular}{@{}crrrrr@{}}
+\toprule
+\textbf{Seed} & \textbf{Productivity (t/h)} & \textbf{WAIT first (\%)} & \textbf{Gap} & \textbf{Expected} & \textbf{Scale of $Q$} \\
+\midrule
+1 & 194 & 95.5 & 0.19 & $-$0.10 & 166 \\
+2 & 3{,}932 & 0.0 & $-$0.20 & $-$0.09 & 155 \\
+3 & 934 & 93.7 & 0.08 & $-$0.10 & 174 \\
+4 & 210 & 95.5 & 0.17 & $-$0.10 & 168 \\
+5 & 1{,}164 & 75.8 & 0.07 & $-$0.10 & 166 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{corrbloc}
 \end{revbloc}
 
 \paragraph{Sensitivity to hyperparameters.}
@@ -1505,13 +1720,13 @@ This section interprets the results in light of the research questions, discusse
 \subsection{Answers to the research questions}
 
 \begin{revbloc}{T31}
-\textbf{RQ1.} MTWT achieves the highest productivity in all three regimes, and the top of the ranking is stable: MTWT, then PPO and LP within 1\%, then FIFO and Fixed Assignment. What changes from one regime to another is the bottom of the ranking: the distance rules collapse under high load, and the poorly performing agents (DQN, SARSA) vary strongly. The significant interaction between policy and regime comes from these policies, not from a change at the top.
+\textbf{RQ1.} MTWT achieves the highest productivity in all three regimes, and the top of the ranking is stable: MTWT, then PPO and \corr{Static LP} within 1\%, then FIFO and Fixed Assignment. What changes from one regime to another is the bottom of the ranking: the distance rules collapse under high load, and the poorly performing agents (DQN, SARSA) vary strongly. The significant interaction between policy and regime comes from these policies, not from a change at the top.
 
-\textbf{RQ2.} Productivity and queueing go together. The most productive policies are also those that queue the least, and the Pareto front reduces to Fixed Assignment and MTWT (and LP under high load), with a gap of less than one minute of queueing per truck. What separates the policies is how they take queues into account: the policies that ignore them (distance rules) or learn poorly to use them (tabular agents, DQN) are dominated everywhere.
+\textbf{RQ2.} Productivity and queueing go together. The most productive policies are also those that queue the least, and the Pareto front reduces to Fixed Assignment and MTWT (and \corr{Static LP} under high load), with a gap of less than one minute of queueing per truck. \corr{The policies that ignore queues (distance rules) and the agents that learn poorly (tabular agents, DQN) are dominated everywhere; \cref{sec:interpretation} discusses why.}
 
-\textbf{RQ3.} Yes for PPO: the nominal model, deployed without retraining, does as well as the specialised model under frequent breakdowns and loses 0.8\% under high load. It keeps its rank, just behind MTWT and ahead of Fixed Assignment, in the two disrupted regimes and in the two unseen intermediate regimes. Q-Learning also transfers, at its own low level. SARSA loses 25\% under high load.
+\textbf{RQ3.} Yes for PPO: the nominal model, deployed without retraining, does as well as the specialised model under frequent breakdowns and loses 0.8\% under high load. \corr{Equivalence within 1\% is established by a TOST under frequent breakdowns, and within 2\% only under high load.} It keeps its rank, just behind MTWT and ahead of Fixed Assignment, in the two disrupted regimes and in the two unseen intermediate regimes. Q-Learning also transfers, at its own low level. SARSA loses 25\% under high load. \corr{This robustness holds for moderate disruptions only: near the saturation of the shovels, PPO deployed without retraining falls 3 to 19\% below MTWT, and rules that spread the fleet overtake MTWT.}
 
-\textbf{RQ4.} No. The ranking by fuel per tonne does not follow the productivity ranking. Nearest Shovel, LP and PPO use the least fuel per tonne under nominal conditions and frequent breakdowns, and PPO the least under high load. FIFO and Fixed Assignment, although among the most productive, use 8 to 14\% more fuel per tonne than PPO depending on the regime.
+\textbf{RQ4.} No. The ranking by fuel per tonne does not follow the productivity ranking. Nearest Shovel, \corr{Static LP} and PPO use the least fuel per tonne under nominal conditions and frequent breakdowns, and PPO the least under high load. FIFO and Fixed Assignment, although among the most productive, use 8 to 14\% more fuel per tonne than PPO depending on the regime. \corr{A variant of MTWT that weighs fuel matches the fuel consumption of PPO under high load and frequent breakdowns, with a higher productivity; PPO keeps an advantage of 0.5\% only under nominal conditions.}
 \end{revbloc}
 
 \Cref{tab:hypotheses} summarises the status of the three hypotheses.
@@ -1525,28 +1740,49 @@ This section interprets the results in light of the research questions, discusse
 \textbf{Hyp.} & \textbf{Statement} & \textbf{Key evidence} & \textbf{Verdict} \\
 \midrule
 H1 & Under nominal conditions, the deep agents outperform the best heuristic in productivity. & \rev{T31}{PPO is $-22.8$~t/h ($-0.5\%$) below MTWT, DQN $-3{,}150$~t/h; $p<0.001$ after correction (\cref{tab:stats}). Mean over 5 models per agent.} & \rev{T31}{\textbf{Refuted}} \\[4pt]
-H2 & No policy dominates in all three regimes. & \rev{T31}{MTWT is the most productive in all three regimes. The interaction between policy and regime is significant ($F(18,783)=1{,}211$, $p<0.001$), but it comes from the bottom of the ranking.} & \rev{T31}{\textbf{Refuted}} \\[4pt]
-H3 & High productivity does not necessarily come with low queueing time. & \rev{T31}{Front reduced to Fixed Assignment and MTWT (and LP under high load), with less than one minute of queueing difference. A clear trade-off does exist, however, between productivity and fuel per tonne (additional analysis, not covered by the hypothesis).} & \rev{T31}{\textbf{Not supported}} \\
+\corr{H2a} & \corr{No policy dominates in all three regimes.} & \corr{MTWT is the most productive in all three regimes (\cref{tab:productivity}); near the saturation of the shovels, however, Fixed Assignment overtakes it (\cref{tab:disruptions}).} & \corr{\textbf{Refuted} in the three regimes} \\[4pt]
+\corr{H2b} & \corr{The interaction between policy and regime is significant.} & \corr{$F(18,783)=1{,}211$, $p<0.001$, carried by the bottom of the ranking; restricted to the five competitive policies, $F(8,348)=30.4$, $p<0.001$, $\eta^2_p=0.41$.} & \corr{\textbf{Supported}} \\[4pt]
+H3 & High productivity does not necessarily come with low queueing time. & \rev{T31}{Front reduced to Fixed Assignment and MTWT (and \corr{Static LP} under high load), with less than one minute of queueing difference. A clear trade-off does exist, however, between productivity and fuel per tonne (additional analysis, not covered by the hypothesis).} & \rev{T31}{\textbf{Not supported}} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \subsection{Interpretation}
+\label{sec:interpretation}
 
-\begin{revbloc}{T31}
+\begin{corrbloc}
+The points below are of three kinds, kept apart: observations measured in this study, interpretations that the measurements support without isolating them, and hypotheses that no experiment of the study tests.
+
+\textbf{Established observations.}
 \begin{itemize}
-  \item \textbf{Knowing the queues is what matters.} The three leading policies all use an estimate of future waiting: MTWT chooses the route with the smallest predicted waiting, LP follows a flow plan computed on capacities, and PPO observes the predicted waiting per route, added to the state during the tuning of \cref{sec:tuning}. It is therefore consistent that PPO almost reaches the level of MTWT: it has the same information, and does no better than the rule that exploits it directly. This reading is an interpretation; no experiment of the study removes this information from PPO once tuning was over.
-  \item \textbf{PPO trades a little productivity for fuel.} PPO's reward penalises the distance travelled ($w_3$). PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, for 0.5 to 0.9\% less productivity, by sending fewer cycles to the farthest shovel (\cref{tab:behaviour}): a trade-off consistent with this penalty, which MTWT, which only looks at waiting, does not make.
-  \item \textbf{The failure of DQN is reproducible and does not depend on $w_4$.} Four nominal models out of five collapse onto the WAIT action, and the collapse persists for every value of $w_4$, including without a waiting penalty. During training, exploration masks this collapse: training episodes produce about 3,460~t/h, the greedy policy 1,287~t/h on average. With a single model per agent, the result of DQN would have depended on the seed: 3,932~t/h with seed 2, whose model reproduces Nearest Shovel, 194~t/h with seed 1.
-  \item \textbf{The tabular agents do not converge.} Their productivity decreases as exploration diminishes, in the three regimes and for the 5 models. A representation of six discretised variables does not seem sufficient to distinguish the situations in which a detour to another shovel pays off.
-  \item \textbf{Evaluating across several regimes remains necessary,} even though the top of the ranking does not change here: it is under high load that the distance rules and SARSA lose the most, and an evaluation limited to nominal conditions would not have shown it.
+  \item \textbf{PPO approaches MTWT without imitating it.} Replayed on five selection seeds, PPO chooses the same shovel as MTWT in 55 to 65\% of its assignments in the three regimes, and the same route in 45 to 49\%; when the shovels differ, it chooses the closer one in 76 to 93\% of cases.
+  \item \textbf{PPO trades a little productivity for fuel.} It uses 1.4 to 2.8\% less fuel per tonne than MTWT, for 0.5 to 0.9\% less productivity, and sends fewer cycles to the farthest shovel (\cref{tab:behaviour}). A variant of MTWT that weighs fuel reaches a similar trade-off (\cref{sec:pareto}).
+  \item \textbf{The failure of DQN is reproducible and does not depend on $w_4$.} Four nominal models out of five collapse onto the WAIT action, for every value of $w_4$, including without a waiting penalty. Exploration masks this collapse during training: training episodes produce about 3,460~t/h, the greedy policy 1,287~t/h on average. With a single model per agent, the result of DQN would have depended on the seed: 3,932~t/h with seed 2, whose model reproduces Nearest Shovel, 194~t/h with seed 1. In the collapsed models, WAIT is valued slightly above the best assignment (\cref{tab:dqndiag}).
+  \item \textbf{The tabular agents do not converge.} Their productivity decreases as exploration diminishes, in the three regimes and for the 5 models.
+  \item \textbf{The high load regime shows what the nominal regime hides.} The top of the ranking does not change, but the distance rules and SARSA lose the most under high load, which an evaluation limited to nominal conditions would not have shown.
 \end{itemize}
-\end{revbloc}
+
+\textbf{Explanatory interpretations.}
+\begin{itemize}
+  \item \textbf{Knowing the queues is what matters.} MTWT chooses the route with the smallest predicted waiting, and PPO observes the same predicted waiting per route, added to its state during the tuning of \cref{sec:tuning}; Static LP predicts no waiting, but plans the flows with the utilisation of each shovel capped at 70\%, which limits queues. It is therefore consistent that PPO almost reaches the level of MTWT: it has the same information, and does no better than the rule that exploits it directly. The agreement measured above shows that PPO uses this information differently, trading part of the waiting for shorter trips.
+  \item \textbf{The fuel saving of PPO comes from its distance penalty.} Fuel does not enter the reward of PPO, and its preference for the closer shovel matches the penalty $w_3$ on distance. Since $w_3$ was not varied, this link is inferred, not measured.
+  \item \textbf{DQN collapses because WAIT and the best assignment have almost the same value.} Their gap is about 0.06\% of the values, so that a small estimation error reverses their order. \Cref{tab:dqndiag} supports this explanation with a measurement, but no variant of DQN was trained to test it.
+  \item \textbf{The representation of the tabular agents is too coarse.} Six discretised variables do not seem sufficient to distinguish the situations in which a detour to another shovel pays off.
+\end{itemize}
+
+\textbf{Hypotheses not tested.} Each of them would require new training runs, which the study did not carry out.
+\begin{itemize}
+  \item \textbf{Queue information in the state of PPO.} Whether PPO would keep its level without the predicted waiting times, that is, whether it relies on the estimate computed as for MTWT or could learn the queues from the rest of its state, is not known. Answering requires training PPO with a state from which these variables are removed.
+  \item \textbf{Weight of the distance penalty.} A different $w_3$ would presumably move PPO along the trade-off between productivity and fuel per tonne.
+  \item \textbf{Variants of DQN.} Reward normalisation, a double network or a dueling architecture could avoid the collapse; none was tried (\cref{sec:limitations}).
+  \item \textbf{Richer representation for the tabular agents.} A finer state might let them converge.
+\end{itemize}
+\end{corrbloc}
 
 \subsection{Implications for operations}
 
 \begin{revbloc}{T31}
-The results concern the relative performance of the policies in the proposed simulated environment, and transferring them to a real site would require prior calibration and validation. With this caveat, three lessons emerge. First, a rule that accounts for predicted waiting at shovels, such as MTWT, is a very demanding baseline: in this study, no learning agent outperforms it, and comparisons limited to simpler rules, such as Fixed Assignment, overestimate the value of learning. Second, the value of an agent such as PPO lies here less in productivity than in the trade-off with fuel and in the stability of its behaviour outside the training regime: under nominal conditions, it saves about 7~litres per 1,000~tonnes compared with MTWT, for about 23~t/h less. Third, a learning agent should first be used as decision support, its recommendations being validated by a dispatcher, and evaluated across several contrasting regimes before any deployment.
+The results concern the relative performance of the policies in the proposed simulated environment, and transferring them to a real site would require prior calibration and validation. With this caveat, three lessons emerge. First, a rule that accounts for predicted waiting at shovels, such as MTWT, is a very demanding baseline: in this study, no learning agent outperforms it, and comparisons limited to simpler rules, such as Fixed Assignment, overestimate the value of learning. \corr{Second, the fuel saving of an agent such as PPO, about 7~litres per 1,000~tonnes compared with MTWT under nominal conditions, is largely matched by a variant of MTWT that weighs fuel: its value lies rather in approaching the best rule by learning from a reward, given in its state the same predicted waiting times as MTWT, and in its stability under moderate disruptions.} Third, a learning agent should first be used as decision support, its recommendations being validated by a dispatcher, and evaluated across several contrasting regimes before any deployment.
 
 Scaling to large fleets of 50 to 200 trucks remains an important perspective. The state representation used here does not depend on the number of trucks, but it depends on the number of shovels and dumps, which also fixes the action space. Graph neural networks or multi-agent formulations \cite{Zhao2025} could remove this dependence. Pretraining on dispatching histories followed by fine-tuning in simulation could reduce the gap between simulation and reality; these avenues remain to be evaluated.
 \end{revbloc}
@@ -1572,7 +1808,7 @@ Fixed Assignment     & \textbf{96.1} & \textbf{94.4} & \textbf{90.4} & 34.6 & 50
 Nearest Shovel       & 85.6 & 59.6 & 82.0 & 31.9 & 33.0 & 30.7 \\
 Shortest Path        & 85.7 & 66.9 & 82.0 & 32.8 & 38.1 & 31.5 \\
 MTWT                 & 95.8 & 93.9 & 90.1 & \textbf{36.1} & \textbf{52.1} & \textbf{34.2} \\
-LP                   & 94.4 & 94.0 & 88.6 & 35.8 & 51.7 & 33.9 \\
+\corr{Static LP}                   & 94.4 & 94.0 & 88.6 & 35.8 & 51.7 & 33.9 \\
 \midrule
 Q-Learning           & 92.5 & 89.0 & 87.2 & 33.4 & 47.3 & 31.3 \\
 SARSA                & 90.9 & 89.1 & 85.0 & 29.3 & 44.3 & 27.5 \\
@@ -1597,7 +1833,7 @@ Fixed Assignment     & $0.270\pm0.001$ & $0.272\pm0.001$ & $0.272\pm0.001$ & 95.
 Nearest Shovel       & \boldmath{$0.235\pm0.002$} & $0.256\pm0.002$ & \boldmath{$0.235\pm0.003$} & 76.2 & 57.3 & 73.6 \\
 Shortest Path        & $0.239\pm0.004$ & $0.254\pm0.003$ & $0.240\pm0.004$ & 80.3 & 65.8 & 77.1 \\
 MTWT                 & $0.244\pm0.003$ & $0.253\pm0.005$ & $0.245\pm0.004$ & 90.1 & 89.4 & 85.5 \\
-LP                   & $0.235\pm0.002$ & $0.253\pm0.001$ & $0.236\pm0.002$ & 86.3 & 89.2 & 81.6 \\
+\corr{Static LP}                   & $0.235\pm0.002$ & $0.253\pm0.001$ & $0.236\pm0.002$ & 86.3 & 89.2 & 81.6 \\
 \midrule
 Q-Learning           & $0.271\pm0.002$ & $0.279\pm0.001$ & $0.275\pm0.002$ & 92.4 & 89.5 & 87.9 \\
 SARSA                & $0.304\pm0.003$ & $0.303\pm0.002$ & $0.313\pm0.004$ & 90.6 & 91.0 & 87.4 \\
@@ -1609,7 +1845,7 @@ PPO                  & $0.237\pm0.001$ & \boldmath{$0.248\pm0.002$} & $0.242\pm0
 
 \begin{itemize}
   \item \textbf{Utilisation.} The policies that spread the fleet keep the trucks active 88 to 96\% of the shift. The distance rules drop to 60 and 67\% under high load, their trucks waiting in front of the same shovel. Shovel utilisation remains below 53\% for all policies, which confirms that the fleet does not reach loading capacity, even under high load, consistently with the match factors of \cref{sec:scenarios}.
-  \item \textbf{Consumption per tonne.} PPO uses less fuel than MTWT in all three regimes: $-0.0067$~L/t ($-2.8\%$) under nominal conditions, $-0.0046$ ($-1.8\%$) under high load and $-0.0034$ ($-1.4\%$) under frequent breakdowns. Against Fixed Assignment, the gap reaches $-12.2$, $-8.8$ and $-11.0\%$. These six differences are significant (paired Wilcoxon test, Holm correction over the eight comparisons, $p<0.001$). FIFO and Fixed Assignment use the most fuel per tonne among the productive policies: they send a third of their cycles to the farthest shovel.
+  \item \textbf{Consumption per tonne.} PPO uses less fuel than MTWT in all three regimes: $-0.0067$~L/t ($-2.8\%$) under nominal conditions, $-0.0046$ ($-1.8\%$) under high load and $-0.0034$ ($-1.4\%$) under frequent breakdowns. Against Fixed Assignment, the gap reaches $-12.2$, $-8.8$ and $-11.0\%$. These six differences are significant (paired Wilcoxon test, Holm correction over the eight comparisons, $p<0.001$). FIFO and Fixed Assignment use the most fuel per tonne among the productive policies: they send a third of their cycles to the farthest shovel. \corr{These differences are measured against MTWT, which ignores fuel; against a variant that weighs it, the advantage of PPO remains only under nominal conditions, at 0.5\%.}
   \item \textbf{An indicator to be read with productivity.} Nearest Shovel uses the least fuel per tonne under nominal conditions and frequent breakdowns, because its trucks make short trips and queueing costs little (11.3~L/h when idling); yet it produces 12\% less than MTWT. The consumption per tonne of DQN is very high because its trucks idle for few tonnes hauled.
   \item \textbf{Scope of these figures.} The mean consumption level is set from the manufacturer (95~L/h for Fixed Assignment on the selection seeds, 95.4~L/h here), and the split between idling, load and grade comes from measurements on a Cat 785D, as described in \cref{sec:simulator}. Differences between policies therefore depend mainly on trip lengths and idle time. Effect sizes are very large because consumption varies very little from one replication to another: they say nothing about the practical importance of the difference. Since diesel combustion is the main source of direct emissions of haulage fleets, a reduction in consumption per tonne would in principle translate into a reduction of emissions of the same order; no emissions were computed, however.
 \end{itemize}
@@ -1620,18 +1856,18 @@ PPO                  & $0.237\pm0.001$ & \boldmath{$0.248\pm0.002$} & $0.242\pm0
 
 \begin{revbloc}{M7, M8, M9, M11, M12, M25, N1--N5, v3, T31}
 \begin{itemize}
-  \item \textbf{Simulation and lack of site validation:} the study relies entirely on a simulator whose structure is not calibrated on real data. A graph of seven nodes, three shovels and two dumps represent the mine. Weather conditions, operator behaviour, road incidents and maintenance decisions are not represented. The fuel model relies on measurements made on a single truck \cite{Kubler2015}, scaled to a published average by a factor that compensates for the absence of descents in the simulator; overconsumption on degraded roads is an assumption.
-  \item \textbf{Breakdowns:} only trucks break down, at most once per cycle, following a stationary process. Shovel breakdowns are not represented. With a match factor of 0.35, losing a shovel would remove a third of the loading capacity at once: it would test the reallocation ability of the policies far more than a truck breakdown. This is a natural extension of this work.
+  \item \textbf{Simulation and lack of site validation:} the study relies entirely on a simulator whose structure is not calibrated on real data. A graph of seven nodes, three shovels and two dumps represent the mine. Weather conditions, operator behaviour, road incidents and maintenance decisions are not represented. The fuel model relies on measurements made on a single truck \cite{Kubler2015}, scaled to a published average by a factor that compensates for the absence of descents in the simulator; overconsumption on degraded roads is an assumption. \corr{The reported performance differences are therefore conditional on a stochastic simulator that has not been calibrated on operational data from a site; they should not be interpreted as direct predictions for an operating mine.}
+  \item \textbf{Breakdowns:} \corr{trucks break down at random}, at most once per cycle, following a stationary process. \corr{A shovel breaks down only in one additional regime, as a single outage of shovel 1, from 120 to 240~min, announced to all policies when it starts (\cref{tab:disruptions}). Random and unannounced shovel breakdowns, of variable duration, are not represented; they would test the reallocation ability of the policies further.}
   \item \textbf{Partial common random numbers:} breakdowns are drawn from a stream specific to each truck and are identical across policies; travel and service times are drawn from streams shared by all trucks, in the order of events, which depends on the decisions. The pairing between policies is therefore strong, but not perfect.
   \item \textbf{Formulation and discounting:} a single agent decides successively for all trucks, and the reward of a step covers the cycles completed during that step, whatever the truck: credit assignment to a decision is not explicit. Discounting per minute relies on two approximations (reward counted at the start of the step; scale of PPO's normalisation estimated with the $\gamma$ per decision) and requires a single simulated environment per training run. The factor per minute is referred to the mean interval of Fixed Assignment under nominal conditions (1.89~min); another reference would give another horizon in minutes.
   \item \textbf{Agent tuning:} it was carried out under nominal conditions, with a single training seed, on grids of four configurations per algorithm, at the reduced budget of 200{,}000 steps for PPO and DQN and at the full budget for the tabular agents. The factor $\gamma$ of the tabular agents was not tuned. Two decisions were taken after seeing results on the selection seeds: the reward variant, then its abandonment in favour of discounting per minute, reported in \cref{sec:tuning}. They were taken under a rule written in advance for what followed and do not touch the evaluation seeds, but they remain choices informed by data.
-  \item \textbf{DQN:} in the retained version, DQN collapses onto the WAIT action in 4 nominal models out of 5, and for all values of $w_4$ studied. Its results describe this configuration, not the algorithm in general. Variants known to reduce the error of value estimation, such as reward normalisation, a dueling architecture or a double network, were not tried, since the tuning rule forbade it.
+  \item \textbf{DQN:} in the retained version, DQN collapses onto the WAIT action in 4 nominal models out of 5, and for all values of $w_4$ studied. Its results describe this configuration, not the algorithm in general. Variants known to reduce the error of value estimation, such as reward normalisation, a dueling architecture or a double network, were not tried, since the tuning rule forbade it. \corr{The DQN configuration evaluated in this study frequently converged to the WAIT action; this finding should not be extrapolated to other DQN variants or training protocols.}
   \item \textbf{Tabular agents:} they use only a representation reduced to six variables, and their policy degrades as exploration diminishes, for the 5 models and in the three regimes, as shown in \cref{sec:convergence}. Their performance is a lower bound of what these algorithms allow.
   \item \textbf{Training variability:} 5 training seeds per agent and per regime make it possible to report the variability between models, but remain few \cite{Henderson2018, Agarwal2021}. For DQN, whose models split between two very different levels, the proportion of collapsed models (4 out of 5 under nominal conditions) is estimated with large uncertainty.
   \item \textbf{Behaviour by replay:} the allocation of cycles among shovels (\cref{tab:behaviour}) is obtained by replaying the episodes of the evaluation, which did not record it. Each replayed episode was checked to be identical, and nothing was chosen on these episodes; the evaluation seeds were nevertheless played twice.
-  \item \textbf{Baselines:} MTWT does not anticipate the trucks that will be assigned after the current decision. The plan of the LP policy is computed once per shift, from mean quantities, and its utilisation cap is chosen once for all regimes. Industrial systems reoptimise more often and use more elaborate rules.
+  \item \textbf{Baselines:} MTWT does not anticipate the trucks that will be assigned after the current decision. The plan of the \corr{Static LP} policy is computed once per shift, from mean quantities, and its utilisation cap is chosen once for all regimes. Industrial systems reoptimise more often and use more elaborate rules.
   \item \textbf{Action space and algorithms:} the agent chooses among a discrete set of shovel--dump pairs; other algorithms, such as Soft Actor-Critic \cite{Haarnoja2018, SampsonNwachukwu2025}, Advantage Actor-Critic or multi-agent approaches \cite{Zhao2025}, were not compared.
-  \item \textbf{System size and transfer:} three shovels, two dumps and 12 to 18 trucks are far from large operations. The evaluation without retraining only covers changes in fleet size and breakdown rate, not a change of road network or number of shovels, which would change the size of the state and of the action space. The results describe relative performance within this framework.
+  \item \textbf{System size and transfer:} three shovels, two dumps and 12 to 18 trucks are far from large operations. The evaluation without retraining only covers changes in fleet size and breakdown rate\corr{, and one temporary outage of a shovel}, not a change of road network or number of shovels, which would change the size of the state and of the action space. The results describe relative performance within this framework.
 \end{itemize}
 \end{revbloc}
 
@@ -1642,13 +1878,15 @@ PPO                  & $0.237\pm0.001$ & \boldmath{$0.248\pm0.002$} & $0.242\pm0
 \label{sec:conclusion}
 
 \begin{revbloc}{T31}
-This study examined whether dispatching policies learned by reinforcement do better than reference rules in an open-pit mine, and whether their advantage holds when the operating regime changes. Ten policies, six heuristics and four learning agents, were compared in the same discrete-event simulator and in three regimes, over 30 paired replications, with 5 models per agent, tuning carried out on seeds distinct from the evaluation under a rule fixed in advance, and comparisons fixed before the campaign.
+\corr{This study examined under which operating conditions deep reinforcement learning provides measurable benefits over strong dispatching heuristics that account for queues in an \corr{open pit} mine, and whether these benefits persist when the operating regime changes.} Ten policies, six heuristics and four learning agents, were compared in the same discrete-event simulator and in three regimes, over 30 paired replications, with 5 models per agent, tuning carried out on seeds distinct from the evaluation under a rule fixed in advance, and comparisons fixed before the campaign.
 
-Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with a policy based on a linear program, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT, and its performance holds almost without loss when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: DQN collapses onto the waiting action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes.
+Three main results emerge. First, no agent outperforms the best heuristic: MTWT, which assigns each truck to the route with the smallest predicted waiting, is the most productive in all three regimes. PPO follows closely, 0.5 to 0.9\% below, on par with \corr{Static LP}, and clearly outperforms Fixed Assignment. Second, PPO uses 1.4 to 2.8\% less fuel per tonne than MTWT\corr{, an advantage that a variant of MTWT weighing fuel removes in two regimes out of three}, and \corr{it loses at most 0.8\% of productivity} when it is deployed without retraining under high load, under frequent breakdowns and in two unseen intermediate regimes. Third, the other agents fail reproducibly: \corr{the DQN configuration evaluated} collapses onto the \corr{WAIT} action in most of its models, whatever the waiting penalty, and the tabular agents degrade as exploration diminishes. \corr{PPO therefore approaches the best rule and transfers to moderate disruptions, but its fuel advantage largely disappears against a rule that also weighs fuel.} \corr{Near the saturation of the shovels, however, rules that spread the fleet overtake MTWT and PPO deployed without retraining loses 3 to 19\% against it: its robustness is established for moderate disruptions only.}
 
-These results suggest that the value of reinforcement learning for dispatching should be measured against rules that account for queues rather than static ones, and that it lies here less in productivity than in the trade-off with fuel and in stability outside the training regime. They remain conditional on the simulator used, which has not been calibrated on site data.
+\corr{In this setting, PPO is never more productive than MTWT. It is a credible alternative when a loss of productivity of 1 to 2\% is acceptable, when disruptions remain moderate and when the fleet stays within the sizes seen in training; it then needs no retraining. Its fuel advantage holds against MTWT as it is, but against a variant that weighs fuel only under nominal conditions, at 0.5\%. Its state contains the same predicted waiting times as MTWT, which most likely explains why it reaches this level; whether it would reach it without them was not tested. The value of reinforcement learning for dispatching should therefore be measured against rules that account for queues and, when energy matters, against rules that weigh fuel.}
 
-Future work will address DQN variants that reduce the error of value estimation, a reward that explicitly includes fuel, the representation of shovel breakdowns and larger networks, with representations independent of the number of shovels. In the longer term, validation on a digital twin calibrated with operational data will make it possible to assess the actual effect on productivity and fuel consumption.
+\corr{These results come from a synthetic setting: a stylised mine with three shovels, two dumps and 12 to 18 trucks, whose service, travel and fuel parameters come from the literature and the manufacturer and were not calibrated on data from a site. The disruptions tested are random truck breakdowns, larger fleets and a single announced outage of one shovel. The results describe the relative performance of the policies in this setting; they are not predictions for an operating mine.}
+
+Future work will address DQN variants that reduce the error of value estimation, \corr{a PPO trained without the predicted waiting times, to measure what it learns by itself,} a reward that explicitly includes fuel, \corr{random and unannounced shovel breakdowns} and larger networks, with representations independent of the number of shovels. In the longer term, validation on a digital twin calibrated with operational data will make it possible to assess the actual effect on productivity and fuel consumption.
 \end{revbloc}
 
 \newpage
@@ -1681,6 +1919,52 @@ The authors declare that they have no known competing financial interests or per
 \bibliography{RL_references}
 
 \adir{bibliography style: use the template of the target journal.}
+
+\appendix
+\section{Agent tuning trials}
+\label{app:tuning}
+
+\corr{This appendix reports the agent tuning trials summarised in \cref{sec:tuning}, in the order in which they were run.}
+
+\begin{table}[H]
+\centering
+\caption{Trials of agent tuning on the selection seeds (t/h). In brackets: share of WAIT decisions or of cycles sent to a single shovel.}
+\label{tab:tuning}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.6cm}}
+\toprule
+\textbf{No.} & \textbf{Trial} & \textbf{Result} & \textbf{Decision} \\
+\midrule
+\multicolumn{4}{l}{\emph{Discounting per decision}} \\
+0 & Tuning of PPO and DQN, 200{,}000 steps & PPO 3{,}953 (99\% shovel 1); DQN 3{,}992 & starting point \\
+1, 2, 4 & Reward estimated and paid at the decision, with or without a cost of queue minutes & PPO 3{,}915 to 3{,}981; DQN 4{,}106 to 4{,}191 (WAIT 52 to 65\%) & rejected \\
+3 & PPO, full budget, reward paid at the end of the cycle & PPO 4{,}260 & kept \\
+5 & Predicted waiting per route in the state (23 components) & PPO 4{,}345 & retained \\
+6 & Normalised reward and $\gamma = 0.995$ & PPO 4{,}405 (WAIT 36\%) & retained \\
+7 & DQN check, full budget, $\gamma = 0.995$ & DQN 3{,}593 (99\% shovel 3) & kept, no variant \\
+8, 9 & Q-Learning and SARSA, initial configuration & Q-Learning 3{,}955 (62\% shovel 3); SARSA 3{,}535 (98\% shovel 3) & starting point \\
+\midrule
+\multicolumn{4}{l}{\emph{Opportunity cost extended to all cycles (abandoned)}} \\
+10--13 & Same configuration, modified reward & PPO 210 (WAIT 99.8\%); DQN 3{,}532 (WAIT 94.8\%); Q-Learning 4{,}099; SARSA 4{,}134 & abandoned \\
+\midrule
+\multicolumn{4}{l}{\emph{Discounting per minute}} \\
+14--17 & Same configuration as trials 6 to 9 & PPO 4{,}414 (WAIT 0\%); DQN 121 (WAIT 99.8\%); Q-Learning 3{,}974; SARSA 3{,}602 (100\% shovel 3) & PPO and DQN frozen \\
+16--23 & Tabular tuning: $\alpha \in \{0.1; 0.2\}$ × \{6; 8\} intervals & Q-Learning 3{,}369 to \textbf{4{,}181} ($\alpha = 0.2$, 6 int.); SARSA 3{,}481 to \textbf{3{,}626} ($\alpha = 0.1$, 6 int.), 98 to 100\% shovel 3 & best configurations \\
+24, 25 & Sixth state variable: route of smallest predicted waiting & Q-Learning 4{,}062; SARSA 3{,}505 (95\% shovel 3) & rejected \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{revbloc}{v3}
+\textbf{What was retained, and why.} Each retained change is justified independently of its score. The block of predicted waiting per route gives the agent the same information as MTWT. Reward normalisation and a longer horizon are common practice for PPO. Discounting per minute corrects the formulation of the problem, as explained in \cref{sec:discount}. Over the same period, the reference heuristics were strengthened: prediction of trucks en route for MTWT and FIFO, and addition of the \corr{Static LP} policy. The comparison has therefore become harder for reinforcement learning.
+
+\textbf{The flaw found, and the abandoned variant.} With discounting per decision, the three value-based agents (DQN, Q-Learning, SARSA) drifted towards the farthest shovel, and their productivity decreased as exploration diminished. A measurement without retraining revealed the cause. Always going to shovel 3 rather than shovel 1 loses 9\% of productivity, but hardly changes the reward per decision (0.813 versus 0.820), because a cycle yields 1 whatever its duration. A first correction, decided with the research supervisor, extended the opportunity cost to all cycles (cycle duration divided by 23.2~min). The reward of a shift changed only by a constant, and the drift disappeared (trials 10 to 13). But a cycle then yielded a negative value on average. With discounting per decision, postponing a negative reward makes it less costly, and inserting waits of 0.2~min became the way to postpone it. PPO thus learned to wait in 99.8\% of its decisions. Both flaws therefore have the same cause: discounting per decision while decisions do not last the same time. This variant was abandoned, the reward returned to its previous definition, and discounting per minute was introduced for the four algorithms, with no other change. These two decisions were taken after seeing results on the selection seeds: they are declared as such.
+
+\textbf{The collapse of DQN.} With discounting per minute, DQN chooses WAIT in 99.8\% of its decisions (trial 15). Replayed greedily, the final model produces 840~t per shift, whereas the last training shifts, played with updates and exploration, produced 25{,}620 to 30{,}660~t. \corr{With discounting per minute, the target of WAIT is $r_{\mathrm{WAIT}} + \gamma_{\min}^{\Delta t}\max_{a'} Q(s',a')$, where $\Delta t$ is a fraction of a minute after a short wait and $r_{\mathrm{WAIT}}$ is close to zero. When $\Delta t$ is small, $\gamma_{\min}^{\Delta t}$ is close to 1 and $s'$ differs little from $s$, so that $Q(s,\mathrm{WAIT}) \approx \max_{a'} Q(s,a')$: the gap between WAIT and the best assignment almost vanishes, which is correct. The maximisation bias of DQN, which overestimates the largest of several noisy estimates, can then place WAIT first; once WAIT is chosen, the next state is almost the same, and the error repeats. \Cref{sec:ablation} measures this gap on the trained models.} PPO, which learns a policy rather than values to compare, is not affected. The equivalence test of \cref{sec:discount} rules out an implementation error. In accordance with the rule, DQN goes into the campaign in this version.
+
+\textbf{The tabular agents.} Tuning retained $\alpha = 0.2$ for Q-Learning and $\alpha = 0.1$ for SARSA, with 6 intervals in both cases. Giving the discrete state the route MTWT would choose, instead of the nearest shovel, cost both algorithms about 120~t/h (trials 24 and 25), and did not correct the concentration of SARSA on shovel 3. In the ten tabular trials with discounting per minute (16 to 25), the productivity measured during training starts at about 4{,}160~t/h, when exploration is almost random, then decreases as exploration diminishes. The best tabular agent (4{,}181~t/h) barely matches the random policy (4{,}167~t/h). We present this as a convergence failure of the tabular approach on this problem, with the reduced state and budget retained, not as a limitation of these algorithms in general.
+\end{revbloc}
 
 % ============================================================================
 % Working appendix: change log (shown only with \revmarkstrue)

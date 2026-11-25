@@ -227,7 +227,7 @@ def test_regime_absent_ne_produit_aucune_figure(campaign, tmp_path):
     with pytest.raises(FileNotFoundError):
         td_error.main(campaign, tmp_path / "figs", scenarios=[REGIME, "high_load"],
                       train_seeds=SEEDS)
-    assert {p.name for p in (tmp_path / "figs").iterdir()} <= {"td_error_nominal.png"}
+    assert {p.name for p in (tmp_path / "figs").iterdir()} <= {"td_error_nominal.png", "td_error_nominal.pdf"}
 
 
 # --- Réentraînements séparés supprimés (N7) ------------------------------------------

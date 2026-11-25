@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 
 from memoire_master_rl_logistique.config import experiment_config
 from memoire_master_rl_logistique.seeds import EVAL_SEEDS
+from memoire_master_rl_logistique.simulation.fuel_model import DEFAULT_FUEL, FuelParams
+from memoire_master_rl_logistique.simulation.variants import NOMINAL_VARIANT, SimulationVariant
 
 
 @dataclass
@@ -40,6 +42,10 @@ class Scenario:
     # les quatre, sauf pour l'ablation sur w4 (PPO et DQN, décision du 22 octobre 2026).
     algorithms: tuple[str, ...]
     seeds: list[int] = field(default_factory=lambda: list(EVAL_SEEDS))  # 30 réplications d'évaluation
+    # Analyse de sensibilité (M2) : mine modifiée et modèle de carburant ; nominaux partout
+    # ailleurs, jamais lus dans la configuration.
+    variant: SimulationVariant = NOMINAL_VARIANT
+    fuel: FuelParams = DEFAULT_FUEL
 
 
 ALGORITHMS = ("Q-Learning", "SARSA", "DQN", "PPO")

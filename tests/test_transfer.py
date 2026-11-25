@@ -257,3 +257,24 @@ def test_rejeu_sans_modele_refuse(monkeypatch, tmp_path):
     monkeypatch.setattr(rb, "_train", lambda *a: pytest.fail("le rejeu n'entraîne jamais"))
     with pytest.raises(FileNotFoundError, match="rien n'est entraîné"):
         behavior.campaign_runs(tmp_path, ["nominal"])
+
+
+# --- Test d'équivalence du transfert (TOST, rapport du 17/11/2026, M7) --------------------
+
+def test_tost_equivalence():
+    """Différences petites et peu dispersées : équivalence à ±10 ; différences centrées sur
+    20 : pas d'équivalence ; l'IC à 90 % encadre la moyenne ; marge nulle refusée."""
+    import numpy as np
+
+    from memoire_master_rl_logistique.analysis.transfer import tost
+
+    rng = np.random.default_rng(0)
+    small = rng.normal(0.0, 2.0, 30)
+    res = tost(small, 10.0)
+    assert res["equivalent"] and res["tost_p"] < 0.05
+    assert res["ci90_low"] < small.mean() < res["ci90_high"]
+    assert -10.0 < res["ci90_low"] and res["ci90_high"] < 10.0
+    shifted = tost(small + 20.0, 10.0)
+    assert not shifted["equivalent"] and shifted["tost_p"] > 0.5
+    with pytest.raises(ValueError):
+        tost(small, 0.0)

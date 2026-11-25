@@ -16,6 +16,7 @@ from memoire_master_rl_logistique.rl.train_q_learning import train_q_learning
 from memoire_master_rl_logistique.rl.train_sarsa import train_sarsa
 from memoire_master_rl_logistique.seeds import (
     EVAL_SEEDS,
+    EXTENSION_EVAL_SEEDS,
     TRAIN_SEEDS,
     TUNING_SEEDS,
     training_episode_range,
@@ -60,6 +61,17 @@ def test_ensembles_de_graines_disjoints():
     assert not set(TUNING_SEEDS) & training
     for scenario in SCENARIOS.values():
         assert set(scenario.seeds) <= set(EVAL_SEEDS)
+
+
+def test_graines_des_experiences_ajoutees():
+    """Rapport du 17/11/2026 : les nouvelles évaluations utilisent 72 à 101, disjointes de
+    l'évaluation de la campagne, de la sélection et des épisodes d'entraînement."""
+    training = set()
+    for s in TRAIN_SEEDS:
+        training |= set(training_episode_range(s))
+    assert EXTENSION_EVAL_SEEDS == tuple(range(72, 102))
+    for other in (set(EVAL_SEEDS), set(TUNING_SEEDS), training):
+        assert not set(EXTENSION_EVAL_SEEDS) & other
 
 
 def test_graines_d_episode_distinctes_entre_graines_d_entrainement():
